@@ -45,6 +45,18 @@ struct Recipe: Identifiable, Hashable {
         "\(Int(matchPercentage * 100))%"
     }
 
+    /// Stable seeded rating between 4.0 and 5.0 derived from the recipe title.
+    var rating: Double {
+        let seed = title.unicodeScalars.reduce(0) { $0 &+ Int($1.value) }
+        // Maps to range [4.0, 5.0] with one decimal place
+        let step = seed % 11  // 0...10
+        return 4.0 + Double(step) * 0.1
+    }
+
+    var ratingDisplay: String {
+        String(format: "%.1f", rating)
+    }
+
     var prepTimeDisplay: String {
         if prepTimeMinutes < 60 {
             return "\(prepTimeMinutes) min"

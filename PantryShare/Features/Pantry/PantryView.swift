@@ -22,7 +22,8 @@ struct PantryView: View {
     @State private var selectedCategory: FoodCategory?
     @State private var selectedItem: PantryItem?
     @State private var showFilterSheet = false
-    @State private var sortByExpiry = true
+    @State private var showHarvestCelebration = false
+    @State private var harvestIntensity: SparkleIntensity = .standard
 
     private var filteredItems: [PantryItem] {
         var items = allItems
@@ -35,6 +36,87 @@ struct PantryView: View {
         return items
     }
 
+    // MARK: - Action Handlers (deduplicated swipe + context menu actions)
+
+    private func consumeItem(_ item: PantryItem) {
+        // Trigger haptic harvest and sparkle celebration
+        HapticHarvestService.shared.harvestCelebration()
+        harvestIntensity = .standard
+        showHarvestCelebration = true
+
+        let itemName = item.name
+        withAnimation(PSMotion.springDefault) {
+            item.isConsumed = true
+            do {
+                try modelContext.save()
+                toastManager?.show(.itemConsumed(itemName))
+                celebrationManager?.onFoodSaved(modelContext: modelContext)
+                WidgetDataService.updateWidgetData(modelContext: modelContext)
+                if let userId = authManager?.currentUserId {
+                    Task {
+                        await syncService?.pushPantryItem(item, userId: userId)
+                        await syncService?.recordImpactEvent(
+                            userId: userId,
+                            eventType: "consumed",
+                            itemName: itemName,
+                            moneySaved: 3.50,
+                            co2Avoided: 2.5
+                        )
+                    }
+                }
+            } catch {
+                toastManager?.show(.error("Something went wrong. Please try again."))
+                PSHaptics.shared.warning()
+            }
+        }
+    }
+
+    private func deleteItem(_ item: PantryItem) {
+        PSHaptics.shared.heavyTap()
+        let itemName = item.name
+        let itemId = item.id
+        withAnimation(PSMotion.springDefault) {
+            modelContext.delete(item)
+            do {
+                try modelContext.save()
+                toastManager?.show(.itemDeleted(itemName))
+                if authManager?.currentUserId != nil {
+                    Task { await syncService?.deletePantryItem(id: itemId) }
+                }
+            } catch {
+                toastManager?.show(.error("Something went wrong. Please try again."))
+                PSHaptics.shared.warning()
+            }
+        }
+    }
+
+    private func shareItem(_ item: PantryItem) {
+        let itemName = item.name
+        withAnimation(PSMotion.springDefault) {
+            item.isShared = true
+            do {
+                try modelContext.save()
+                toastManager?.show(.itemShared(itemName))
+                celebrationManager?.onShareCompleted(itemName: itemName, modelContext: modelContext)
+                WidgetDataService.updateWidgetData(modelContext: modelContext)
+                if let userId = authManager?.currentUserId {
+                    Task {
+                        await syncService?.pushPantryItem(item, userId: userId)
+                        await syncService?.recordImpactEvent(
+                            userId: userId,
+                            eventType: "shared",
+                            itemName: itemName,
+                            co2Avoided: 2.5
+                        )
+                    }
+                }
+            } catch {
+                toastManager?.show(.error("Something went wrong. Please try again."))
+                PSHaptics.shared.warning()
+            }
+        }
+    }
+
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             VStack(spacing: 0) {
@@ -42,6 +124,7 @@ struct PantryView: View {
                 itemList
             }
             .background(PSColors.backgroundSecondary)
+            .harvestCelebration(isActive: $showHarvestCelebration, intensity: harvestIntensity)
 
             // Figma: FAB w-16 h-16 bg-green-500 rounded-[1.25rem]
             Button { showAddItem = true } label: {
@@ -51,11 +134,15 @@ struct PantryView: View {
                     .frame(width: PSLayout.fabSize, height: PSLayout.fabSize)
                     .background(PSColors.primaryGreen)
                     .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
-                    .shadow(color: PSColors.primaryGreen.opacity(0.3), radius: 16, y: 8)
+                    .shadow(color: PSColors.primaryGreen.opacity(0.4), radius: 16, y: 8)
+                    .shadow(color: PSColors.primaryGreen.opacity(0.15), radius: 24, y: 12)
             }
             .buttonStyle(PressableButtonStyle())
+            .accessibilityLabel(String(localized: "Add Item"))
+            .accessibilityHint(String(localized: "Double tap to add a new item to your pantry"))
             .padding(.trailing, PSLayout.adaptiveHorizontalPadding)
-            .padding(.bottom, PSLayout.adaptiveHorizontalPadding)
+            // Ensure FAB clears tab bar + safe area
+            .padding(.bottom, max(PSLayout.adaptiveHorizontalPadding + PSLayout.tabBarContentPadding, PSLayout.scaled(80)))
         }
         .navigationBarHidden(true)
         .sheet(item: $selectedItem) { item in
@@ -69,7 +156,7 @@ struct PantryView: View {
             NavigationStack {
                 PantryFilterSheet(
                     selectedCategory: $selectedCategory,
-                    sortByExpiry: $sortByExpiry
+                    sortByExpiry: .constant(true)
                 )
             }
             .presentationDragIndicator(.visible)
@@ -87,10 +174,14 @@ struct PantryView: View {
                     .font(.system(size: PSLayout.scaledFont(30), weight: .bold))
                     .tracking(-0.3)
                     .foregroundStyle(PSColors.textPrimary)
+                    .psAccessibleHeader(String(localized: "My Pantry, \(filteredItems.count) items"))
                 Spacer()
-                PSIconButton(icon: "line.3.horizontal.decrease", size: PSLayout.scaled(36), tint: PSColors.textSecondary) {
+                PSIconButton(icon: "line.3.horizontal.decrease", size: PSLayout.scaled(36), tint: selectedCategory != nil ? PSColors.primaryGreen : PSColors.textSecondary) {
                     showFilterSheet = true
                 }
+                .scaleEffect(selectedCategory != nil ? 1.08 : 1.0)
+                .accessibilityLabel(String(localized: "Filter and sort"))
+                .accessibilityHint(selectedCategory != nil ? String(localized: "Filter active: \(selectedCategory?.displayName ?? "Unknown")") : String(localized: "No filters applied"))
             }
 
             // Figma: search input — bg-neutral-100 rounded-2xl py-3.5
@@ -109,6 +200,7 @@ struct PantryView: View {
             .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
 
             // Figma: category chips — horizontal scroll
+            // Safe area handling with scroll clip disabled
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: PSSpacing.md) {
                     // "All Items" chip
@@ -127,7 +219,9 @@ struct PantryView: View {
                         }
                     }
                 }
+                .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
             }
+            .scrollClipDisabled()
         }
         .adaptiveHPadding()
         .padding(.top, PSSpacing.md)
@@ -172,18 +266,21 @@ struct PantryView: View {
     private var itemList: some View {
         Group {
             if filteredItems.isEmpty {
-                PSEmptyState(
-                    icon: searchText.isEmpty ? "refrigerator" : "magnifyingglass",
-                    title: searchText.isEmpty
-                        ? String(localized: "Your pantry is empty")
-                        : String(localized: "No matching ingredients"),
-                    message: searchText.isEmpty
-                        ? String(localized: "Start adding ingredients to keep track of what you have and get recipe suggestions.")
-                        : String(localized: "Try adjusting your search or category filter to find what you're looking for."),
-                    actionTitle: searchText.isEmpty ? String(localized: "Add Ingredient") : nil,
-                    action: searchText.isEmpty ? { showAddItem = true } : nil
-                )
-                .adaptiveCardPadding()
+                ScrollView {
+                    PSEmptyState(
+                        icon: searchText.isEmpty ? "refrigerator" : "magnifyingglass",
+                        title: searchText.isEmpty
+                            ? String(localized: "Your pantry is empty")
+                            : String(localized: "No matching ingredients"),
+                        message: searchText.isEmpty
+                            ? String(localized: "Start adding ingredients to keep track of what you have and get recipe suggestions.")
+                            : String(localized: "Try adjusting your search or category filter to find what you're looking for."),
+                        actionTitle: searchText.isEmpty ? String(localized: "Add Ingredient") : nil,
+                        action: searchText.isEmpty ? { showAddItem = true } : nil
+                    )
+                    .adaptiveCardPadding()
+                    .frame(maxHeight: .infinity)
+                }
                 .frame(maxHeight: .infinity)
             } else {
                 ScrollView {
@@ -197,108 +294,32 @@ struct PantryView: View {
                                 }
                                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                     Button(role: .destructive) {
-                                        PSHaptics.shared.heavyTap()
-                                        let itemName = item.name
-                                        let itemId = item.id
-                                        withAnimation(PSMotion.springDefault) {
-                                            modelContext.delete(item)
-                                            try? modelContext.save()
-                                        }
-                                        toastManager?.show(.itemDeleted(itemName))
-                                        if authManager?.currentUserId != nil {
-                                            Task { await syncService?.deletePantryItem(id: itemId) }
-                                        }
+                                        deleteItem(item)
                                     } label: {
                                         Label(String(localized: "Delete"), systemImage: "trash")
                                     }
                                     .tint(PSColors.expiredRed)
+                                    .accessibilityLabel(String(localized: "Delete \(item.name)"))
                                 }
                                 .swipeActions(edge: .leading, allowsFullSwipe: true) {
                                     Button {
-                                        PSHaptics.shared.success()
-                                        let itemName = item.name
-                                        withAnimation(PSMotion.springDefault) {
-                                            item.isConsumed = true
-                                            try? modelContext.save()
-                                        }
-                                        toastManager?.show(.itemConsumed(itemName))
-                                        celebrationManager?.onFoodSaved(modelContext: modelContext)
-                                        WidgetDataService.updateWidgetData(modelContext: modelContext)
-                                        if let userId = authManager?.currentUserId {
-                                            Task {
-                                                await syncService?.pushPantryItem(item, userId: userId)
-                                                await syncService?.recordImpactEvent(
-                                                    userId: userId,
-                                                    eventType: "consumed",
-                                                    itemName: itemName,
-                                                    moneySaved: 3.50,
-                                                    co2Avoided: 2.5
-                                                )
-                                            }
-                                        }
+                                        consumeItem(item)
                                     } label: {
                                         Label(String(localized: "Consume"), systemImage: "checkmark.circle")
                                     }
                                     .tint(PSColors.primaryGreen)
+                                    .accessibilityLabel(String(localized: "Mark \(item.name) as consumed"))
                                 }
                                 .contextMenu {
                                     Button(String(localized: "Mark as Consumed"), systemImage: "checkmark.circle") {
-                                        PSHaptics.shared.success()
-                                        let itemName = item.name
-                                        withAnimation(PSMotion.springDefault) {
-                                            item.isConsumed = true
-                                            try? modelContext.save()
-                                        }
-                                        toastManager?.show(.itemConsumed(itemName))
-                                        celebrationManager?.onFoodSaved(modelContext: modelContext)
-                                        WidgetDataService.updateWidgetData(modelContext: modelContext)
-                                        if let userId = authManager?.currentUserId {
-                                            Task {
-                                                await syncService?.pushPantryItem(item, userId: userId)
-                                                await syncService?.recordImpactEvent(
-                                                    userId: userId,
-                                                    eventType: "consumed",
-                                                    itemName: itemName,
-                                                    moneySaved: 3.50,
-                                                    co2Avoided: 2.5
-                                                )
-                                            }
-                                        }
+                                        consumeItem(item)
                                     }
                                     Button(String(localized: "Share"), systemImage: "hand.raised") {
-                                        let itemName = item.name
-                                        withAnimation(PSMotion.springDefault) {
-                                            item.isShared = true
-                                            try? modelContext.save()
-                                        }
-                                        toastManager?.show(.itemShared(itemName))
-                                        celebrationManager?.onShareCompleted(itemName: itemName, modelContext: modelContext)
-                                        WidgetDataService.updateWidgetData(modelContext: modelContext)
-                                        if let userId = authManager?.currentUserId {
-                                            Task {
-                                                await syncService?.pushPantryItem(item, userId: userId)
-                                                await syncService?.recordImpactEvent(
-                                                    userId: userId,
-                                                    eventType: "shared",
-                                                    itemName: itemName,
-                                                    co2Avoided: 2.5
-                                                )
-                                            }
-                                        }
+                                        shareItem(item)
                                     }
                                     Divider()
                                     Button(String(localized: "Delete"), systemImage: "trash", role: .destructive) {
-                                        PSHaptics.shared.heavyTap()
-                                        let itemName = item.name
-                                        let itemId = item.id
-                                        withAnimation(PSMotion.springDefault) {
-                                            modelContext.delete(item)
-                                            try? modelContext.save()
-                                        }
-                                        toastManager?.show(.itemDeleted(itemName))
-                                        if authManager?.currentUserId != nil {
-                                            Task { await syncService?.deletePantryItem(id: itemId) }
-                                        }
+                                        deleteItem(item)
                                     }
                                 }
                         }
@@ -373,4 +394,14 @@ struct PantryView: View {
         )
         .shadow(color: .black.opacity(0.04), radius: 2, y: 1)
     }
+}
+
+#Preview("PantryView - iPhone SE") {
+    PantryView(showAddItem: .constant(false))
+        .previewDevice(PreviewDevice(rawValue: "iPhone SE (3rd generation)"))
+}
+
+#Preview("PantryView - iPhone 16 Pro Max") {
+    PantryView(showAddItem: .constant(false))
+        .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro Max"))
 }

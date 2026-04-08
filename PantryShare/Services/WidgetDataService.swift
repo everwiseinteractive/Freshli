@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import WidgetKit
+import os
 
 // MARK: - Widget Data Service
 // Writes pantry and impact data to shared App Group UserDefaults
@@ -25,11 +26,25 @@ enum WidgetDataService {
         static let lastUpdated = "widget_last_updated"
     }
 
+    // MARK: - Debouncing
+
+    private static var lastUpdateTime: Date?
+    private static let minimumUpdateInterval: TimeInterval = 5.0 // 5 second debounce
+
+    private static let logger = PSLogger(category: .widget)
+
     // MARK: - Write from Main App
 
     @MainActor
     static func updateWidgetData(modelContext: ModelContext) {
         guard let defaults = sharedDefaults else { return }
+
+        // Debounce rapid updates
+        if let lastUpdate = lastUpdateTime, Date().timeIntervalSince(lastUpdate) < minimumUpdateInterval {
+            logger.debug("Widget update debounced - too soon since last update")
+            return
+        }
+        lastUpdateTime = Date()
 
         do {
             // Fetch pantry items
@@ -64,10 +79,11 @@ enum WidgetDataService {
 
             defaults.set(Date().timeIntervalSince1970, forKey: Keys.lastUpdated)
 
-            // Reload widget timelines
+            // Reload widget timelines to reflect updated data
             WidgetCenter.shared.reloadAllTimelines()
+            logger.info("Widget data updated successfully")
         } catch {
-            print("[WidgetDataService] Failed to update widget data: \(error)")
+            logger.error("Failed to update widget data: \(error.localizedDescription)")
         }
     }
 

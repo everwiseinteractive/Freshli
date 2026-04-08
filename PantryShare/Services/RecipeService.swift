@@ -1,21 +1,43 @@
 import Foundation
+import os
 
 @Observable
 final class RecipeService {
     private(set) var recipes: [Recipe] = []
+    private let logger = PSLogger(category: .recipe)
 
-    init() {
+    // Singleton instance with cached recipe database
+    static let shared = RecipeService()
+    private static let cachedRecipes = RecipeService.buildRecipeDatabase()
+
+    private init() {
         loadRecipes()
     }
 
-    func loadRecipes() {
-        recipes = allRecipes
+    // MARK: - Singleton Access
+
+    static func getInstance() -> RecipeService {
+        return shared
     }
 
+    func loadRecipes() {
+        recipes = Self.cachedRecipes
+        logger.debug("Loaded \(recipes.count) recipes from cache")
+    }
+
+    /// Find recipes that match pantry items with a minimum threshold.
+    /// Returns recipes sorted by match percentage (highest first).
+    /// Recipes with at least 1 matching ingredient are included.
     func recipesForPantry(items: [PantryItem]) -> [Recipe] {
+        // Handle empty pantry gracefully
+        guard !items.isEmpty else {
+            logger.debug("Empty pantry, returning no recipes")
+            return [] // Return empty list, not all recipes
+        }
+
         let pantryNames = Set(items.map { $0.name.lowercased() })
 
-        return allRecipes.map { recipe in
+        let recipesWithMatches = Self.cachedRecipes.map { recipe in
             let matching = recipe.ingredients.filter { ingredient in
                 pantryNames.contains { pantryName in
                     pantryName.localizedCaseInsensitiveContains(ingredient) ||
@@ -34,7 +56,14 @@ final class RecipeService {
                 imageSystemName: recipe.imageSystemName
             )
         }
-        .sorted { $0.matchPercentage > $1.matchPercentage }
+
+        // Apply minimum match threshold: at least 1 matching ingredient
+        let minThreshold = 1
+        let result = recipesWithMatches
+            .filter { $0.matchingIngredientCount >= minThreshold }
+            .sorted { $0.matchPercentage > $1.matchPercentage }
+        logger.info("Found \(result.count) matching recipes for \(items.count) items")
+        return result
     }
 
     func filteredRecipes(difficulty: RecipeDifficulty? = nil, maxTime: Int? = nil) -> [Recipe] {
@@ -45,12 +74,13 @@ final class RecipeService {
         if let maxTime {
             result = result.filter { $0.prepTimeMinutes <= maxTime }
         }
+        logger.debug("Filtered recipes: \(result.count) results")
         return result
     }
 
     // MARK: - Recipe Database
 
-    private var allRecipes: [Recipe] {
+    private static func buildRecipeDatabase() -> [Recipe] {
         [
             Recipe(title: "Banana Smoothie Bowl", summary: "A quick, healthy breakfast with ripe bananas and yogurt", ingredients: ["Bananas", "Greek Yogurt", "Honey", "Granola"], steps: ["Blend bananas and yogurt until smooth", "Pour into bowl", "Top with granola and honey"], prepTimeMinutes: 10, difficulty: .easy, matchingIngredientCount: 0, totalIngredientCount: 4, imageSystemName: "cup.and.saucer.fill"),
 

@@ -20,7 +20,7 @@ struct PantryFilterSheet: View {
                     .textCase(.uppercase)
                     .tracking(0.8)
 
-                HStack(spacing: 12) {
+                HStack(spacing: PSSpacing.md) {
                     sortChip(title: String(localized: "Expiry Date"), icon: "clock", isActive: sortByExpiry) {
                         withAnimation(PSMotion.springQuick) { sortByExpiry = true }
                     }
@@ -43,7 +43,7 @@ struct PantryFilterSheet: View {
                     .textCase(.uppercase)
                     .tracking(0.8)
 
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 10)], spacing: 10) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: PSSpacing.sm)], spacing: PSSpacing.sm) {
                     categoryFilterChip(title: String(localized: "All"), category: nil)
 
                     ForEach(FoodCategory.allCases) { cat in
@@ -68,7 +68,7 @@ struct PantryFilterSheet: View {
                     .font(.system(size: PSLayout.scaledFont(16), weight: .semibold))
                     .foregroundStyle(PSColors.primaryGreen)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 52)
+                    .frame(height: PSLayout.scaled(52))
                     .background(PSColors.emeraldSurface)
                     .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
             }
@@ -96,15 +96,15 @@ struct PantryFilterSheet: View {
 
     private func sortChip(title: String, icon: String, isActive: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 8) {
+            HStack(spacing: PSSpacing.xxs) {
                 Image(systemName: icon)
                     .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
                 Text(title)
                     .font(.system(size: PSLayout.scaledFont(14), weight: .bold))
                     .tracking(-0.2)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .padding(.horizontal, PSSpacing.lg)
+            .padding(.vertical, PSSpacing.sm)
             .foregroundStyle(isActive ? .white : PSColors.textSecondary)
             .background(isActive ? PSColors.headerGreen : PSColors.surfaceCard)
             .clipShape(Capsule())
@@ -112,6 +112,7 @@ struct PantryFilterSheet: View {
                 if !isActive { Capsule().strokeBorder(PSColors.border, lineWidth: 1) }
             }
             .shadow(color: isActive ? PSColors.headerGreen.opacity(0.2) : .clear, radius: 6, y: 3)
+            .scaleEffect(isActive ? 1.05 : 1.0)
         }
         .buttonStyle(PressableButtonStyle())
     }
@@ -119,17 +120,18 @@ struct PantryFilterSheet: View {
     private func categoryFilterChip(title: String, category: FoodCategory?) -> some View {
         let isActive = selectedCategory == category
         return Button {
-            withAnimation(PSMotion.springQuick) { selectedCategory = category }
+            withAnimation(PSMotion.springBouncy) { selectedCategory = category }
         } label: {
             Text(title)
                 .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
                 .lineLimit(1)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.horizontal, PSSpacing.md)
+                .padding(.vertical, PSSpacing.xxs)
                 .frame(maxWidth: .infinity)
                 .foregroundStyle(isActive ? .white : PSColors.textSecondary)
                 .background(isActive ? PSColors.primaryGreen : PSColors.backgroundSecondary)
                 .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
+                .scaleEffect(isActive ? 1.08 : 1.0)
         }
         .buttonStyle(PressableButtonStyle())
     }

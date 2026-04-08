@@ -45,8 +45,9 @@ struct FoodItemCard: View {
             .cardStyle()
         }
         .buttonStyle(PressableButtonStyle())
-        .accessibilityElement(children: .ignore)
+        .accessibilityElement(children: .combine)
         .accessibilityLabel("\(item.name), \(item.quantityDisplay), \(item.expiryStatus.displayName)")
+        .accessibilityHint(String(localized: "Double tap to view details"))
     }
 
     private var categoryIcon: some View {
@@ -93,5 +94,7 @@ struct FoodItemCardCompact: View {
             .cardStyle()
         }
         .buttonStyle(PressableButtonStyle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(item.name), \(item.expiryDate.expiryDisplayText)")
     }
 }

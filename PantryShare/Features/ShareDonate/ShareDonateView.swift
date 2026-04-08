@@ -86,7 +86,14 @@ struct ShareDonateView: View {
                         let itemName = listing.itemName
                         withAnimation(PSMotion.springDefault) {
                             listing.status = .completed
-                            try? modelContext.save()
+                            do {
+                                try modelContext.save()
+                                PSLogger.general.info("Listing marked as completed: \(itemName)")
+                            } catch {
+                                PSLogger.general.error("Failed to mark listing completed: \(error.localizedDescription)")
+                                toastManager?.show(.error(String(localized: "Failed to save")))
+                                return
+                            }
                         }
                         if listing.listingType == .share {
                             toastManager?.show(.itemShared(itemName))

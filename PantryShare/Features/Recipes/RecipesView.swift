@@ -13,13 +13,12 @@ struct RecipesView: View {
     @State private var activeFilter = "For You"
     @State private var selectedRecipe: Recipe?
     @State private var appeared = false
+    @State private var matchedRecipes: [Recipe] = []
 
     private let filters = ["For You", "Quick & Easy", "Breakfast", "Vegan", "Desserts"]
 
-    private var recipeService: RecipeService { RecipeService() }
-
     private var recipes: [Recipe] {
-        recipeService.recipesForPantry(items: pantryItems)
+        filterRecipes(matchedRecipes)
     }
 
     var body: some View {
@@ -29,23 +28,33 @@ struct RecipesView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: PSSpacing.xxl) {
-                    if activeFilter != "For You" {
-                        // Figma: empty state for non-default filters
+                    if recipes.isEmpty && activeFilter != "For You" {
+                        // Figma: empty state for filtered results
                         PSEmptyState(
                             icon: activeFilter == "Vegan" ? "leaf" : activeFilter == "Breakfast" ? "sunrise.fill" : activeFilter == "Desserts" ? "birthday.cake" : "timer",
                             title: String(localized: "\(activeFilter) Recipes"),
-                            message: String(localized: "We're curating \(activeFilter.lowercased()) recipes based on your pantry. Check back soon!"),
+                            message: String(localized: "No \(activeFilter.lowercased()) recipes match your current pantry. Try different items!"),
                             actionTitle: nil,
                             action: nil
                         )
                         .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
                         .padding(.top, 40)
-                    } else {
-                        if !recipes.isEmpty {
+                    } else if !recipes.isEmpty {
+                        if activeFilter == "For You" {
                             featuredRecipe
                                 .staggeredAppearance(index: 0)
                         }
                         recipeList
+                    } else {
+                        PSEmptyState(
+                            icon: "book",
+                            title: String(localized: "No Recipes Yet"),
+                            message: String(localized: "Add items to your pantry to discover recipes you can make!"),
+                            actionTitle: nil,
+                            action: nil
+                        )
+                        .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
+                        .padding(.top, 40)
                     }
                 }
                 .padding(.vertical, PSSpacing.lg)
@@ -58,6 +67,12 @@ struct RecipesView: View {
                 RecipeDetailView(recipe: recipe)
             }
             .presentationDragIndicator(.visible)
+        }
+        .task {
+            matchedRecipes = RecipeService.shared.recipesForPantry(items: pantryItems)
+        }
+        .onChange(of: pantryItems.count) { _, _ in
+            matchedRecipes = RecipeService.shared.recipesForPantry(items: pantryItems)
         }
     }
 
@@ -174,7 +189,7 @@ struct RecipesView: View {
                                     Image(systemName: "star.fill")
                                         .font(.system(size: PSLayout.scaledFont(16)))
                                         .foregroundStyle(.yellow)
-                                    Text("4.8")
+                                    Text(recipe.ratingDisplay)
                                         .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
                                         .foregroundStyle(.white)
                                 }
@@ -235,6 +250,40 @@ struct RecipesView: View {
                 }
             }
             .adaptiveHPadding()
+        }
+    }
+
+    // MARK: - Filter Logic
+
+    private func filterRecipes(_ recipes: [Recipe]) -> [Recipe] {
+        switch activeFilter {
+        case "Quick & Easy":
+            return recipes.filter { $0.prepTimeMinutes <= 20 }
+        case "Vegan":
+            return recipes.filter { recipe in
+                !recipe.ingredients.contains { ingredient in
+                    let lower = ingredient.lowercased()
+                    return lower.contains("meat") || lower.contains("dairy") || lower.contains("seafood") ||
+                           lower.contains("egg") || lower.contains("milk") || lower.contains("butter") ||
+                           lower.contains("cheese") || lower.contains("honey") || lower.contains("fish")
+                }
+            }
+        case "Breakfast":
+            return recipes.filter { recipe in
+                let lower = recipe.title.lowercased()
+                return lower.contains("breakfast") || lower.contains("oat") || lower.contains("egg") ||
+                       lower.contains("pancake") || lower.contains("toast") || lower.contains("hash") ||
+                       lower.contains("scrambl")
+            }
+        case "Desserts":
+            return recipes.filter { recipe in
+                let lower = recipe.title.lowercased()
+                return lower.contains("dessert") || lower.contains("cake") || lower.contains("cookie") ||
+                       lower.contains("brownie") || lower.contains("pie") || lower.contains("pudding") ||
+                       lower.contains("mousse") || lower.contains("tart") || lower.contains("cheesecake")
+            }
+        default: // "For You"
+            return recipes
         }
     }
 
@@ -300,7 +349,7 @@ struct RecipesView: View {
                         Image(systemName: "star.fill")
                             .font(.system(size: PSLayout.scaledFont(14)))
                             .foregroundStyle(.yellow)
-                        Text("4.8")
+                        Text(recipe.ratingDisplay)
                             .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
                             .foregroundStyle(PSColors.textPrimary)
                     }

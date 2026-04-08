@@ -93,7 +93,9 @@ struct PSButton: View {
             .shadow(color: shadowColor, radius: 10, x: 0, y: 10)
         }
         .buttonStyle(PressableButtonStyle())
-        .accessibilityLabel(title)
+        .accessibilityLabel(isLoading ? String(localized: "Loading") : title)
+        .accessibilityAddTraits([.isButton])
+        .accessibilityHint(isLoading ? String(localized: "Please wait") : "")
         .disabled(isLoading)
     }
 
@@ -144,9 +146,15 @@ struct PSIconButton: View {
                 .frame(width: size, height: size)
                 .background(background)
                 .clipShape(Circle())
+                .overlay(
+                    Circle()
+                        .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
+                )
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityLabel(icon)
+        .accessibilityAddTraits(.isButton)
+        .psMinTouchTarget()
     }
 }
 

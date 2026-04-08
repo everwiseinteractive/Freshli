@@ -58,10 +58,19 @@ struct PSQuantityStepper: View {
         .buttonStyle(BounceButtonStyle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(String(format: "%.0f", value)) \(unit)")
+        .accessibilityHint(String(localized: "Adjust quantity using swipe gestures"))
         .accessibilityAdjustableAction { direction in
             switch direction {
-            case .increment: value = min(maximum, value + step)
-            case .decrement: value = max(minimum, value - step)
+            case .increment:
+                PSHaptics.shared.tick()
+                withAnimation(PSMotion.springBouncy) {
+                    value = min(maximum, value + step)
+                }
+            case .decrement:
+                PSHaptics.shared.tick()
+                withAnimation(PSMotion.springBouncy) {
+                    value = max(minimum, value - step)
+                }
             @unknown default: break
             }
         }

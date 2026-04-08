@@ -59,8 +59,14 @@ struct PantryDetailView: View {
         .confirmationDialog(String(localized: "Delete Item"), isPresented: $showDeleteConfirmation) {
             Button(String(localized: "Delete"), role: .destructive) {
                 modelContext.delete(item)
-                try? modelContext.save()
-                dismiss()
+                do {
+                    try modelContext.save()
+                    PSLogger.general.info("Item deleted successfully")
+                    dismiss()
+                } catch {
+                    PSLogger.general.error("Failed to delete item: \(error.localizedDescription)")
+                    toastManager?.show(.error(String(localized: "Failed to delete item")))
+                }
             }
         } message: {
             Text(String(localized: "This will permanently remove \(item.name) from your pantry."))
@@ -77,7 +83,7 @@ struct PantryDetailView: View {
             Image(systemName: item.category.icon)
                 .font(.system(size: PSLayout.scaledFont(28), weight: .semibold))
                 .foregroundStyle(PSColors.categoryColor(for: item.category))
-                .frame(width: 60, height: 60)
+                .frame(width: PSLayout.scaled(60), height: PSLayout.scaled(60))
                 .background(PSColors.categoryColor(for: item.category).opacity(0.12))
                 .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
 
@@ -190,8 +196,15 @@ struct PantryDetailView: View {
                 let itemName = item.name
                 withAnimation(PSMotion.springBouncy) {
                     item.isConsumed = true
-                    try? modelContext.save()
-                    showSuccessAnimation = true
+                    do {
+                        try modelContext.save()
+                        PSLogger.general.info("Item marked as consumed")
+                        showSuccessAnimation = true
+                    } catch {
+                        PSLogger.general.error("Failed to mark item consumed: \(error.localizedDescription)")
+                        toastManager?.show(.error(String(localized: "Failed to save")))
+                        return
+                    }
                 }
                 celebrationManager?.onFoodSaved(modelContext: modelContext)
                 toastManager?.show(.itemConsumed(itemName))
@@ -210,7 +223,14 @@ struct PantryDetailView: View {
                     PSHaptics.shared.success()
                     let itemName = item.name
                     item.isShared = true
-                    try? modelContext.save()
+                    do {
+                        try modelContext.save()
+                        PSLogger.general.info("Item marked as shared")
+                    } catch {
+                        PSLogger.general.error("Failed to mark item shared: \(error.localizedDescription)")
+                        toastManager?.show(.error(String(localized: "Failed to save")))
+                        return
+                    }
                     celebrationManager?.onShareCompleted(itemName: itemName, modelContext: modelContext)
                     toastManager?.show(.itemShared(itemName))
                     WidgetDataService.updateWidgetData(modelContext: modelContext)
@@ -226,7 +246,14 @@ struct PantryDetailView: View {
                     PSHaptics.shared.success()
                     let itemName = item.name
                     item.isDonated = true
-                    try? modelContext.save()
+                    do {
+                        try modelContext.save()
+                        PSLogger.general.info("Item marked as donated")
+                    } catch {
+                        PSLogger.general.error("Failed to mark item donated: \(error.localizedDescription)")
+                        toastManager?.show(.error(String(localized: "Failed to save")))
+                        return
+                    }
                     celebrationManager?.onDonationCompleted(itemName: itemName, modelContext: modelContext)
                     toastManager?.show(.itemDonated(itemName))
                     WidgetDataService.updateWidgetData(modelContext: modelContext)
@@ -275,6 +302,13 @@ struct PantryDetailView: View {
     }
 
     private func saveEdits() {
+        // Validate name is not empty
+        guard !editedName.trimmingCharacters(in: .whitespaces).isEmpty else {
+            toastManager?.show(.error(String(localized: "Item name cannot be empty")))
+            return
+        }
+
+        let oldExpiryDate = item.expiryDate
         item.name = editedName
         item.quantity = editedQuantity
         item.unit = editedUnit
@@ -282,8 +316,23 @@ struct PantryDetailView: View {
         item.storageLocation = editedLocation
         item.expiryDate = editedExpiryDate
         item.notes = editedNotes.isEmpty ? nil : editedNotes
-        try? modelContext.save()
-        withAnimation(PSMotion.springDefault) { isEditing = false }
+
+        do {
+            try modelContext.save()
+            PSLogger.general.info("Item edited successfully")
+
+            // If expiry date changed, reschedule notification
+            if oldExpiryDate != editedExpiryDate {
+                // Re-add the notification with the new date
+                WidgetDataService.updateWidgetData(modelContext: modelContext)
+            }
+
+            withAnimation(PSMotion.springDefault) { isEditing = false }
+            toastManager?.show(.success(String(localized: "Item saved")))
+        } catch {
+            PSLogger.general.error("Failed to save edits: \(error.localizedDescription)")
+            toastManager?.show(.error(String(localized: "Failed to save changes")))
+        }
     }
 }
 

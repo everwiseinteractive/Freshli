@@ -9,6 +9,14 @@ enum PSMotion {
     static let springBouncy = Animation.spring(response: 0.31, dampingFraction: 0.375) // bouncy: stiffness 400, damping 15
     static let springSnappy = Animation.spring(response: 0.25, dampingFraction: 0.8)
 
+    // MARK: - Accessibility Helpers
+
+    /// Returns the animation or nil if reduce motion is preferred (for use with conditional animation).
+    /// Use in views that check reduce motion to conditionally apply animations.
+    static func psAdaptive(_ animation: Animation, reduceMotion: Bool) -> Animation? {
+        reduceMotion ? nil : animation
+    }
+
     // MARK: - Eased
 
     static let easeDefault = Animation.easeInOut(duration: 0.25)
@@ -147,11 +155,12 @@ struct SwipeActionModifier: ViewModifier {
 
 struct RefreshBounceModifier: ViewModifier {
     @Binding var isRefreshing: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func body(content: Content) -> some View {
         content
-            .scaleEffect(isRefreshing ? 0.98 : 1.0)
-            .animation(PSMotion.springBouncy, value: isRefreshing)
+            .scaleEffect(isRefreshing && !reduceMotion ? 0.98 : 1.0)
+            .animation(reduceMotion ? .none : PSMotion.springBouncy, value: isRefreshing)
     }
 }
 

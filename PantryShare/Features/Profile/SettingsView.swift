@@ -5,6 +5,8 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(SyncService.self) private var syncService: SyncService?
+    @Environment(NetworkMonitor.self) private var networkMonitor: NetworkMonitor?
     @AppStorage("isDarkMode") private var isDarkMode = false
     @AppStorage("notificationsEnabled") private var notificationsEnabled = true
     @AppStorage("reduceMotion") private var reduceMotion = false
@@ -46,15 +48,15 @@ struct SettingsView: View {
             // MARK: - About
             Section {
                 settingsRow(icon: "info.circle", title: String(localized: "Version"), detail: "1.0.0")
-                settingsRow(icon: "doc.text", title: String(localized: "Privacy Policy"), detail: nil)
-                settingsRow(icon: "doc.plaintext", title: String(localized: "Terms of Service"), detail: nil)
+                settingsLink(icon: "doc.text", title: String(localized: "Privacy Policy"), url: "https://pantryshare.app/privacy")
+                settingsLink(icon: "doc.plaintext", title: String(localized: "Terms of Service"), url: "https://pantryshare.app/terms")
             } header: {
                 Text(String(localized: "About"))
             }
 
             // MARK: - Data
             Section {
-                settingsRow(icon: "arrow.triangle.2.circlepath", title: String(localized: "Sync Status"), detail: String(localized: "Up to date"))
+                settingsRow(icon: "arrow.triangle.2.circlepath", title: String(localized: "Sync Status"), detail: syncStatusText)
             } header: {
                 Text(String(localized: "Data"))
             }
@@ -75,6 +77,26 @@ struct SettingsView: View {
                 appeared = true
             }
         }
+    }
+
+    // MARK: - Computed Properties
+
+    private var syncStatusText: String {
+        // Check offline status first
+        if networkMonitor?.isConnected == false {
+            return String(localized: "Offline")
+        }
+        // Check if syncing
+        if syncService?.isSyncing == true {
+            return String(localized: "Syncing...")
+        }
+        // Check pending items
+        let pendingCount = OfflineSyncQueue.shared.pendingCount
+        if pendingCount > 0 {
+            return String(localized: "\(pendingCount) pending")
+        }
+        // Default: up to date
+        return String(localized: "Up to date")
     }
 
     // MARK: - Row Helpers
@@ -116,6 +138,26 @@ struct SettingsView: View {
             if let detail {
                 Text(detail)
                     .font(.system(size: PSLayout.scaledFont(14)))
+                    .foregroundStyle(PSColors.textTertiary)
+            }
+        }
+    }
+
+    private func settingsLink(icon: String, title: String, url: String) -> some View {
+        Link(destination: URL(string: url)!) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: PSLayout.scaledFont(16)))
+                    .foregroundStyle(PSColors.textSecondary)
+                    .frame(width: 28, height: 28)
+                    .background(PSColors.backgroundSecondary)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                Text(title)
+                    .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
+                    .foregroundStyle(PSColors.textPrimary)
+                Spacer()
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
                     .foregroundStyle(PSColors.textTertiary)
             }
         }

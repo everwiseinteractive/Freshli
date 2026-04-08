@@ -26,7 +26,8 @@ struct CreateListingView: View {
 
     private var isFormValid: Bool {
         !itemName.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !quantity.trimmingCharacters(in: .whitespaces).isEmpty
+        !quantity.trimmingCharacters(in: .whitespaces).isEmpty &&
+        (Int(quantity) ?? 0) > 0
     }
 
     var body: some View {
@@ -199,6 +200,12 @@ struct CreateListingView: View {
     }
 
     private func createListing() {
+        // Validate quantity is positive integer
+        guard let qty = Int(quantity), qty > 0 else {
+            PSHaptics.shared.error()
+            return
+        }
+
         PSHaptics.shared.success()
         let listing = SharedListing(
             itemName: itemName.trimmingCharacters(in: .whitespaces),
@@ -219,14 +226,20 @@ struct CreateListingView: View {
             }
         }
 
-        try? modelContext.save()
+        do {
+            try modelContext.save()
+            PSLogger.general.info("Listing created and saved locally")
+        } catch {
+            PSLogger.general.error("Failed to save listing: \(error.localizedDescription)")
+            return
+        }
 
         // Sync to Supabase if authenticated
         if let userId = authManager?.currentUserId {
             let input = CreateListingInput(
                 itemName: listing.itemName,
                 description: listing.itemDescription.isEmpty ? nil : listing.itemDescription,
-                quantity: Int(listing.quantity) ?? 1,
+                quantity: qty,
                 listingType: listingType == .share ? "share" : "donate",
                 pickupAddress: listing.pickupAddress.isEmpty ? nil : listing.pickupAddress,
                 pickupNotes: listing.pickupNotes

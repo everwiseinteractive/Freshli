@@ -19,6 +19,7 @@ struct OnboardingView: View {
     @State private var currentStep = 0
     @State private var blobVisible = false
     @State private var iconRotation: Double = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let steps: [OnboardingStep] = [
         OnboardingStep(
@@ -178,23 +179,32 @@ struct OnboardingView: View {
         .animation(PSMotion.springDefault, value: currentStep)
         // Figma: initial rotate -20°, animate to 0 with springs.bouncy delay 0.2
         .onAppear {
-            withAnimation(PSMotion.springGentle) {
+            if reduceMotion {
                 blobVisible = true
-            }
-            withAnimation(PSMotion.springBouncy.delay(0.2)) {
-                iconRotation = -20
-            }
-            withAnimation(PSMotion.springBouncy.delay(0.5)) {
                 iconRotation = 0
+            } else {
+                withAnimation(PSMotion.springGentle) {
+                    blobVisible = true
+                }
+                withAnimation(PSMotion.springBouncy.delay(0.2)) {
+                    iconRotation = -20
+                }
+                withAnimation(PSMotion.springBouncy.delay(0.5)) {
+                    iconRotation = 0
+                }
             }
         }
         // Figma: icon re-enters each step with rotate -20 → 0
         .onChange(of: currentStep) { _, _ in
-            iconRotation = -20
-            withAnimation(PSMotion.springBouncy.delay(0.1)) {
-                iconRotation = 0
+            if !reduceMotion {
+                iconRotation = -20
+                withAnimation(PSMotion.springBouncy.delay(0.1)) {
+                    iconRotation = 0
+                }
             }
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(String(localized: "Onboarding step \(currentStep + 1) of \(steps.count)"))
     }
 }
 

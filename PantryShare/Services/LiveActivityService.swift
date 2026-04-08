@@ -1,5 +1,6 @@
 import ActivityKit
 import Foundation
+import os
 
 // MARK: - Live Activity Service
 // Manages food expiry rescue Live Activities.
@@ -9,7 +10,19 @@ import Foundation
 @Observable
 final class LiveActivityService {
 
+    private let logger = PSLogger(category: .lifecycle)
+
+    /// Check if Live Activities are supported and enabled on this device.
+    func areActivitiesAvailable() -> Bool {
+        if #available(iOS 16.1, *) {
+            return ActivityAuthorizationInfo().areActivitiesEnabled
+        } else {
+            return false
+        }
+    }
+
     /// Start an expiry rescue Live Activity for a pantry item.
+    /// Returns the Activity if successful, nil if Live Activities are unavailable or activation fails.
     @discardableResult
     func startExpiryRescue(
         itemName: String,
@@ -17,8 +30,8 @@ final class LiveActivityService {
         quantity: String,
         hoursRemaining: Int
     ) -> Activity<PantryShareWidgetsAttributes>? {
-        guard ActivityAuthorizationInfo().areActivitiesEnabled else {
-            print("[LiveActivityService] Live Activities not enabled")
+        guard areActivitiesAvailable() else {
+            logger.debug("Live Activities not available on this device")
             return nil
         }
 
@@ -39,10 +52,10 @@ final class LiveActivityService {
                 content: .init(state: state, staleDate: nil),
                 pushType: nil
             )
-            print("[LiveActivityService] Started expiry rescue for \(itemName): \(activity.id)")
+            logger.info("Started expiry rescue for \(itemName): \(activity.id)")
             return activity
         } catch {
-            print("[LiveActivityService] Failed to start: \(error)")
+            logger.error("Failed to start Live Activity: \(error.localizedDescription)")
             return nil
         }
     }

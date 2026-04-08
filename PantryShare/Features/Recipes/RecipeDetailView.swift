@@ -34,9 +34,9 @@ struct RecipeDetailView: View {
     private var headerSection: some View {
         VStack(spacing: PSSpacing.lg) {
             Image(systemName: recipe.imageSystemName)
-                .font(.system(size: 48, weight: .light))
+                .font(.system(size: PSLayout.scaledFont(48), weight: .light))
                 .foregroundStyle(PSColors.primaryGreen)
-                .frame(width: 100, height: 100)
+                .frame(width: PSLayout.scaled(100), height: PSLayout.scaled(100))
                 .background(PSColors.primaryGreen.opacity(0.1))
                 .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
                 .scaleEffect(appeared ? 1 : 0.7)
@@ -74,7 +74,7 @@ struct RecipeDetailView: View {
                 ForEach(Array(recipe.ingredients.enumerated()), id: \.offset) { index, ingredient in
                     HStack(spacing: PSSpacing.md) {
                         Image(systemName: index < recipe.matchingIngredientCount ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 18))
+                            .font(.system(size: PSLayout.scaledFont(18)))
                             .foregroundStyle(index < recipe.matchingIngredientCount ? PSColors.freshGreen : PSColors.textTertiary)
 
                         Text(ingredient)
@@ -122,12 +122,22 @@ struct RecipeDetailView: View {
                         }
                     } label: {
                         HStack(alignment: .top, spacing: PSSpacing.md) {
-                            Text("\(index + 1)")
-                                .font(PSTypography.caption1Medium)
-                                .foregroundStyle(completedSteps.contains(index) ? PSColors.textOnPrimary : PSColors.primaryGreen)
-                                .frame(width: 28, height: 28)
-                                .background(completedSteps.contains(index) ? PSColors.primaryGreen : PSColors.primaryGreen.opacity(0.12))
-                                .clipShape(Circle())
+                            ZStack {
+                                Circle()
+                                    .fill(completedSteps.contains(index) ? PSColors.primaryGreen : PSColors.primaryGreen.opacity(0.12))
+
+                                if completedSteps.contains(index) {
+                                    Image(systemName: "checkmark")
+                                        .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
+                                        .foregroundStyle(PSColors.textOnPrimary)
+                                        .scaleEffect(1.2)
+                                } else {
+                                    Text("\(index + 1)")
+                                        .font(PSTypography.caption1Medium)
+                                        .foregroundStyle(PSColors.primaryGreen)
+                                }
+                            }
+                            .frame(width: PSLayout.scaled(28), height: PSLayout.scaled(28))
 
                             Text(step)
                                 .font(PSTypography.body)
@@ -137,6 +147,10 @@ struct RecipeDetailView: View {
 
                             Spacer()
                         }
+                        .padding(.vertical, PSSpacing.sm)
+                        .padding(.horizontal, PSSpacing.md)
+                        .background(completedSteps.contains(index) ? PSColors.primaryGreen.opacity(0.05) : Color.clear)
+                        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
                     }
                     .buttonStyle(.plain)
                     .staggeredAppearance(index: index)
@@ -167,7 +181,7 @@ struct MetadataChip: View {
     var body: some View {
         VStack(spacing: PSSpacing.xs) {
             Image(systemName: icon)
-                .font(.system(size: 16, weight: .medium))
+                .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
                 .foregroundStyle(PSColors.primaryGreen)
             Text(value)
                 .font(PSTypography.calloutMedium)

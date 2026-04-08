@@ -18,6 +18,7 @@ struct ListingDetailView: View {
     @State private var isClaiming = false
     @State private var showClaimSuccess = false
     @State private var showConfirmDelete = false
+    @State private var errorMessage: String?
 
     private var isOwner: Bool {
         guard let userId = authManager?.currentUserId else { return false }
@@ -70,6 +71,15 @@ struct ListingDetailView: View {
                 icon: "hand.thumbsup.fill"
             )
         }
+        .alert(String(localized: "Error"), isPresented: .constant(errorMessage != nil)) {
+            Button(String(localized: "OK"), role: .cancel) {
+                errorMessage = nil
+            }
+        } message: {
+            if let error = errorMessage {
+                Text(error)
+            }
+        }
         .alert(String(localized: "Remove Listing"), isPresented: $showConfirmDelete) {
             Button(String(localized: "Cancel"), role: .cancel) {}
             Button(String(localized: "Remove"), role: .destructive) {
@@ -78,6 +88,8 @@ struct ListingDetailView: View {
                     if success {
                         onDismissAction?()
                         dismiss()
+                    } else {
+                        errorMessage = String(localized: "Failed to remove listing. Please try again.")
                     }
                 }
             }
@@ -423,6 +435,9 @@ struct ListingDetailView: View {
                 )
 
                 onDismissAction?()
+            } else {
+                errorMessage = String(localized: "Failed to claim this item. Please try again.")
+                PSHaptics.shared.warning()
             }
         }
     }

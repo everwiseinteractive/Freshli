@@ -34,6 +34,8 @@ struct PSProgressRing: View {
                 .rotationEffect(.degrees(-90))
         }
         .frame(width: size, height: size)
+        .accessibilityElement(children: .ignore)
+        .accessibilityValue("\(Int(animatedProgress * 100))%")
         .onAppear {
             withAnimation(PSMotion.springGentle.delay(0.3)) {
                 animatedProgress = min(progress, 1.0)
@@ -79,5 +81,8 @@ struct PSProgressRingLabeled: View {
                 .foregroundStyle(PSColors.textSecondary)
                 .lineLimit(1)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(label)
+        .accessibilityValue(value)
     }
 }

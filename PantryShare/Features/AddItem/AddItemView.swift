@@ -14,6 +14,7 @@ struct AddItemView: View {
     @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
     @Environment(AuthManager.self) private var authManager: AuthManager?
     @Environment(SyncService.self) private var syncService: SyncService?
+    @Environment(NetworkMonitor.self) private var networkMonitor: NetworkMonitor?
 
     @State private var name = ""
     @State private var category: FoodCategory = .other
@@ -25,14 +26,23 @@ struct AddItemView: View {
     @State private var showScanner = false
     @State private var showSuccess = false
     @State private var showReceiptInfo = false
+    @State private var saveError: String?
+    @State private var saveMessage: String?
 
     private var isFormValid: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty && quantity > 0
     }
 
+    private var expiryWarning: String? {
+        if expiryDate < Date() {
+            return String(localized: "This date is in the past")
+        }
+        return nil
+    }
+
     var body: some View {
         ZStack {
-            // Main form
+            // Main form with keyboard avoidance
             VStack(spacing: 0) {
                 ScrollView {
                     VStack(spacing: PSLayout.cardPadding) {
@@ -43,11 +53,21 @@ struct AddItemView: View {
                     .adaptiveHPadding()
                     .padding(.vertical, PSLayout.cardPadding)
                 }
+                .ignoresSafeArea(.keyboard)
 
                 // Figma: sticky save button at bottom
                 saveButton
             }
             .background(PSColors.surfaceCard)
+            .onAppear {
+                // Adjust scroll position when keyboard appears
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    UIApplication.shared.connectedScenes
+                        .compactMap { $0 as? UIWindowScene }
+                        .first?.windows
+                        .first?.rootViewController?.view.layoutIfNeeded()
+                }
+            }
 
             // Figma: success overlay — emerald-600/90 with CheckCircle
             if showSuccess {
@@ -56,6 +76,24 @@ struct AddItemView: View {
         }
         .navigationTitle(String(localized: "Add Item"))
         .navigationBarTitleDisplayMode(.inline)
+        .alert(String(localized: "Error Saving Item"), isPresented: .constant(saveError != nil)) {
+            Button(String(localized: "OK"), role: .cancel) {
+                saveError = nil
+            }
+        } message: {
+            if let error = saveError {
+                Text(error)
+            }
+        }
+        .alert(String(localized: "Item Saved"), isPresented: .constant(saveMessage != nil)) {
+            Button(String(localized: "OK"), role: .cancel) {
+                saveMessage = nil
+            }
+        } message: {
+            if let message = saveMessage {
+                Text(message)
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
@@ -85,10 +123,10 @@ struct AddItemView: View {
     // MARK: - Figma: Scan Barcode + Scan Receipt buttons
 
     private var scanButtons: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: PSSpacing.lg) {
             // Figma: Scan Barcode button
             Button { showScanner = true } label: {
-                VStack(spacing: 12) {
+                VStack(spacing: PSSpacing.md) {
                     Image(systemName: "barcode.viewfinder")
                         .font(.system(size: PSLayout.scaledFont(32), weight: .light))
                         .foregroundStyle(PSColors.primaryGreen)
@@ -97,7 +135,7 @@ struct AddItemView: View {
                         .foregroundStyle(Color(hex: 0x065F46))
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 20)
+                .padding(.vertical, PSSpacing.xl)
                 .background(PSColors.emeraldSurface)
                 .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
                 .overlay(
@@ -109,7 +147,7 @@ struct AddItemView: View {
 
             // Figma: Scan Receipt button
             Button { showReceiptInfo = true } label: {
-                VStack(spacing: 12) {
+                VStack(spacing: PSSpacing.md) {
                     Image(systemName: "camera.fill")
                         .font(.system(size: PSLayout.scaledFont(32), weight: .light))
                         .foregroundStyle(PSColors.primaryGreen)
@@ -118,7 +156,7 @@ struct AddItemView: View {
                         .foregroundStyle(Color(hex: 0x065F46))
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 20)
+                .padding(.vertical, PSSpacing.xl)
                 .background(PSColors.emeraldSurface)
                 .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
                 .overlay(
@@ -132,7 +170,7 @@ struct AddItemView: View {
 
     // Figma: "or manually" divider
     private var orDivider: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: PSSpacing.lg) {
             Rectangle()
                 .fill(PSColors.emeraldLight)
                 .frame(height: 1)
@@ -149,12 +187,12 @@ struct AddItemView: View {
     // MARK: - Figma: Form fields (emerald-50/50 bg, border-emerald-100, rounded-2xl)
 
     private var formFields: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: PSSpacing.xl) {
             // Item Name
             emeraldField(label: String(localized: "Item Name")) {
                 TextField(String(localized: "e.g. Organic Milk"), text: $name)
                     .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
-                    .padding(16)
+                    .padding(PSSpacing.lg)
             }
 
             // Quantity + Expiry Date (adaptive 2-col / 1-col)
@@ -163,28 +201,39 @@ struct AddItemView: View {
                     TextField(String(localized: "1"), value: $quantity, format: .number)
                         .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
                         .keyboardType(.decimalPad)
-                        .padding(16)
+                        .padding(PSSpacing.lg)
                 }
 
-                emeraldField(label: String(localized: "Expiry Date")) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "calendar")
-                            .font(.system(size: PSLayout.scaledFont(18)))
-                            .foregroundStyle(PSColors.primaryGreen.opacity(0.6))
-                        DatePicker("", selection: $expiryDate, displayedComponents: .date)
-                            .datePickerStyle(.compact)
-                            .labelsHidden()
-                            .tint(PSColors.primaryGreen)
+                VStack(alignment: .leading, spacing: PSSpacing.sm) {
+                    emeraldField(label: String(localized: "Expiry Date")) {
+                        HStack(spacing: PSSpacing.sm) {
+                            Image(systemName: "calendar")
+                                .font(.system(size: PSLayout.scaledFont(18)))
+                                .foregroundStyle(PSColors.primaryGreen.opacity(0.6))
+                            // Prevent DatePicker from expanding beyond bounds on SE
+                            DatePicker("", selection: $expiryDate, displayedComponents: .date)
+                                .datePickerStyle(.compact)
+                                .labelsHidden()
+                                .tint(PSColors.primaryGreen)
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.horizontal, PSSpacing.lg)
+                        .padding(.vertical, PSSpacing.md)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
+                    if let warning = expiryWarning {
+                        Text(warning)
+                            .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
+                            .foregroundStyle(PSColors.secondaryAmber)
+                            .padding(.leading, 4)
+                    }
                 }
             }
 
             // Location + Category (adaptive 2-col / 1-col)
             AdaptiveFormRow {
                 emeraldField(label: String(localized: "Location")) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: PSSpacing.sm) {
                         Image(systemName: "mappin")
                             .font(.system(size: PSLayout.scaledFont(18)))
                             .foregroundStyle(PSColors.primaryGreen.opacity(0.6))
@@ -197,12 +246,12 @@ struct AddItemView: View {
                         .labelsHidden()
                         Spacer()
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
+                    .padding(.horizontal, PSSpacing.lg)
+                    .padding(.vertical, PSSpacing.md)
                 }
 
                 emeraldField(label: String(localized: "Category")) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: PSSpacing.sm) {
                         Image(systemName: "tag")
                             .font(.system(size: PSLayout.scaledFont(18)))
                             .foregroundStyle(PSColors.primaryGreen.opacity(0.6))
@@ -215,19 +264,20 @@ struct AddItemView: View {
                         .labelsHidden()
                         Spacer()
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
+                    .padding(.horizontal, PSSpacing.lg)
+                    .padding(.vertical, PSSpacing.md)
                 }
             }
         }
     }
 
     private func emeraldField<Content: View>(label: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: PSSpacing.sm) {
             Text(label)
                 .font(.system(size: PSLayout.scaledFont(14), weight: .bold))
                 .foregroundStyle(Color(hex: 0x064E3B))
                 .padding(.leading, 4)
+                .accessibilityAddTraits(.isHeader)
             content()
                 .background(PSColors.emeraldSurface.opacity(0.5))
                 .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
@@ -263,7 +313,7 @@ struct AddItemView: View {
             PSColors.primaryGreen.opacity(0.9)
                 .ignoresSafeArea()
 
-            VStack(spacing: 24) {
+            VStack(spacing: PSSpacing.xxl) {
                 Image(systemName: "checkmark.circle")
                     .font(.system(size: PSLayout.scaledFont(80), weight: .regular))
                     .foregroundStyle(.white)
@@ -277,6 +327,9 @@ struct AddItemView: View {
         }
         .transition(.opacity.combined(with: .scale(scale: 0.9)))
         .animation(PSMotion.springBouncy, value: showSuccess)
+        .accessibilityLabel(String(localized: "Success"))
+        .accessibilityValue(String(localized: "\(name) added to pantry"))
+        .accessibilityElement(children: .ignore)
     }
 
     // MARK: - Actions
@@ -294,32 +347,48 @@ struct AddItemView: View {
             notes: nil
         )
         modelContext.insert(item)
-        try? modelContext.save()
 
-        let notificationService = NotificationService()
-        notificationService.scheduleExpiryReminder(for: item)
+        do {
+            try modelContext.save()
 
-        // Trigger celebration system
-        celebrationManager?.onItemAdded(modelContext: modelContext)
+            let notificationService = NotificationService()
+            notificationService.scheduleExpiryReminder(for: item)
 
-        // Update widget data
-        WidgetDataService.updateWidgetData(modelContext: modelContext)
+            // Trigger celebration system
+            celebrationManager?.onItemAdded(modelContext: modelContext)
 
-        // Sync to Supabase if authenticated
-        if let userId = authManager?.currentUserId {
-            Task {
-                await syncService?.pushPantryItem(item, userId: userId)
-                await syncService?.recordImpactEvent(
-                    userId: userId,
-                    eventType: "item_saved",
-                    itemName: item.name,
-                    quantity: item.quantity
-                )
+            // Update widget data
+            WidgetDataService.updateWidgetData(modelContext: modelContext)
+
+            let isOnline = networkMonitor?.isConnected ?? true
+
+            // Sync to Supabase if authenticated and online
+            if let userId = authManager?.currentUserId {
+                if isOnline {
+                    Task {
+                        await syncService?.pushPantryItem(item, userId: userId)
+                        await syncService?.recordImpactEvent(
+                            userId: userId,
+                            eventType: "item_saved",
+                            itemName: item.name,
+                            quantity: item.quantity
+                        )
+                    }
+                } else {
+                    // Add to offline sync queue
+                    if let data = try? JSONEncoder().encode(PantryItemDTO(from: item, userId: userId)) {
+                        OfflineSyncQueue.shared.enqueueItemPush(itemData: data)
+                    }
+                    saveMessage = String(localized: "Item saved. Will sync when you're back online.")
+                }
             }
-        }
 
-        withAnimation(PSMotion.springBouncy) { showSuccess = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { dismiss() }
+            withAnimation(PSMotion.springBouncy) { showSuccess = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { dismiss() }
+        } catch {
+            saveError = String(localized: "Failed to save item. Please try again.")
+            PSHaptics.shared.warning()
+        }
     }
 
     private func handleScannedBarcode(_ code: String) {
@@ -348,15 +417,29 @@ private struct AdaptiveFormRow<A: View, B: View>: View {
 
     var body: some View {
         if PSLayout.shouldStackFormFields {
-            VStack(spacing: 16) {
+            VStack(spacing: PSSpacing.lg) {
                 first
                 second
             }
         } else {
-            HStack(spacing: 16) {
+            HStack(spacing: PSSpacing.lg) {
                 first
                 second
             }
         }
     }
+}
+
+#Preview("AddItemView - iPhone SE") {
+    NavigationStack {
+        AddItemView()
+    }
+    .previewDevice(PreviewDevice(rawValue: "iPhone SE (3rd generation)"))
+}
+
+#Preview("AddItemView - iPhone 16 Pro Max") {
+    NavigationStack {
+        AddItemView()
+    }
+    .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro Max"))
 }

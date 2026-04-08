@@ -48,8 +48,8 @@ struct RecipeCard: View {
             .cardStyle()
         }
         .buttonStyle(PressableButtonStyle())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(recipe.title), \(recipe.matchPercentageDisplay) match, \(recipe.prepTimeDisplay)")
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(recipe.title), \(recipe.matchPercentageDisplay) match, \(recipe.prepTimeDisplay), \(recipe.difficulty.displayName) difficulty")
     }
 
     private var matchBadge: some View {
@@ -108,5 +108,7 @@ struct RecipeCardCompact: View {
             .cardStyle()
         }
         .buttonStyle(PressableButtonStyle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(recipe.title), \(recipe.prepTimeDisplay), \(recipe.matchPercentageDisplay)")
     }
 }

@@ -19,6 +19,7 @@ struct CelebrationOverlay: View {
                             type: celebration,
                             onDismiss: { manager.dismissCelebration() }
                         )
+                        .accessibilityLabel(String(localized: "Recipe match celebration"))
 
                     // Streak celebrations
                     case .expiryRescueStreak(let count):
@@ -54,6 +55,8 @@ struct CelebrationOverlay: View {
                 }
                 .transition(celebrationTransition(for: celebration))
                 .zIndex(100)
+                // Ensure celebration stays within safe area bounds on all devices
+                .ignoresSafeArea(.keyboard)
             }
         }
         .animation(

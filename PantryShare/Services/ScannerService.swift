@@ -1,5 +1,6 @@
 import Foundation
 import AVFoundation
+import os
 
 enum ScanResult {
     case barcode(String)
@@ -31,24 +32,41 @@ enum ScanError: LocalizedError {
 
 @Observable
 final class ScannerService {
+    private let logger = PSLogger(category: .pantry)
+
     var isCameraAvailable: Bool {
         AVCaptureDevice.default(for: .video) != nil
     }
 
+    /// Request camera permission for barcode scanning.
+    /// Returns true if permission is granted (or already authorized).
     func checkCameraPermission() async -> Bool {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
             return true
         case .notDetermined:
+            // User hasn't been asked yet
             return await AVCaptureDevice.requestAccess(for: .video)
-        default:
+        case .denied, .restricted:
+            // User denied or restricted access
+            logger.warning("Camera permission denied or restricted")
+            return false
+        @unknown default:
             return false
         }
     }
 
+    /// Look up a barcode and return the product information if available.
+    /// For unknown barcodes, returns nil so the user can enter details manually.
+    /// Note: In production, this should integrate with a product database API
+    /// (e.g., Open Food Facts, GS1 UPC database) to provide real-time data.
     func lookupBarcode(_ code: String) -> PantryItem? {
-        // In a production app, this would call a product database API.
-        // For the MVP, return a sample item based on barcode pattern.
+        guard !code.isEmpty else {
+            logger.warning("Barcode is empty")
+            return nil
+        }
+
+        // MVP: Sample product database with hardcoded barcodes
         let sampleProducts: [String: (String, FoodCategory, StorageLocation)] = [
             "5000159407236": ("Heinz Baked Beans", .canned, .pantry),
             "5010477348678": ("Cadbury Dairy Milk", .snacks, .pantry),
@@ -66,7 +84,8 @@ final class ScannerService {
             )
         }
 
-        // For unknown barcodes, return nil so the user can fill in manually.
+        // Unknown barcode: log and return nil for manual entry
+        logger.debug("Unknown barcode: \(code)")
         return nil
     }
 }

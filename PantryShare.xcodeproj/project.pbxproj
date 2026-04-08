@@ -53,11 +53,21 @@
 			);
 			target = CF101D602F86A4B300B10799 /* PantryShareWidgetsExtension */;
 		};
+		CF101D792F86A4B700B10799 /* Exceptions for "PantryShare" folder in "PantryShare" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = CF1017B72F85D97D00B10799 /* PantryShare */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		CF1017BA2F85D97D00B10799 /* PantryShare */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				CF101D792F86A4B700B10799 /* Exceptions for "PantryShare" folder in "PantryShare" target */,
+			);
 			path = PantryShare;
 			sourceTree = "<group>";
 		};
@@ -385,6 +395,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PantryShare/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "PantryShare uses the camera to scan barcodes and receipts for quick item entry.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "PantryShare uses your location to find nearby food sharing opportunities.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "PantryShare uses your photo library to scan receipts.";
@@ -433,6 +444,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PantryShare/Info.plist;
 				INFOPLIST_KEY_NSCameraUsageDescription = "PantryShare uses the camera to scan barcodes and receipts for quick item entry.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "PantryShare uses your location to find nearby food sharing opportunities.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "PantryShare uses your photo library to scan receipts.";

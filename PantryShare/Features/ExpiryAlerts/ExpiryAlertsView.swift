@@ -43,10 +43,10 @@ struct ExpiryAlertsView: View {
 
                     VStack(spacing: PSSpacing.sm) {
                         Text(String(localized: "All Clear!"))
-                            .font(.system(size: PSLayout.scaledFont(24), weight: .bold))
+                            .font(PSTypography.title2)
                             .foregroundStyle(PSColors.textPrimary)
                         Text(String(localized: "No items are expiring soon. Great job managing your pantry!"))
-                            .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
+                            .font(PSTypography.callout)
                             .foregroundStyle(PSColors.textSecondary)
                             .multilineTextAlignment(.center)
                     }
@@ -104,10 +104,10 @@ struct ExpiryAlertsView: View {
         HStack(spacing: PSSpacing.lg) {
             VStack(alignment: .leading, spacing: PSSpacing.xxs) {
                 Text(String(localized: "\(totalUrgentCount) items need attention"))
-                    .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
+                    .font(PSTypography.bodyMedium)
                     .foregroundStyle(.white)
                 Text(String(localized: "Rescue them before they go to waste"))
-                    .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
+                    .font(PSTypography.caption1)
                     .foregroundStyle(.white.opacity(0.8))
             }
             Spacer()
@@ -160,23 +160,32 @@ struct ExpiryAlertsView: View {
                 item.isConsumed = true
                 toastManager?.show(.itemConsumed(itemName))
                 celebrationManager?.onFoodSaved(modelContext: modelContext)
+                PSLogger.general.info("Item marked as consumed: \(itemName)")
             case .share:
                 PSHaptics.shared.success()
                 item.isShared = true
                 toastManager?.show(.itemShared(itemName))
                 celebrationManager?.onShareCompleted(itemName: itemName, modelContext: modelContext)
+                PSLogger.general.info("Item marked as shared: \(itemName)")
             case .donate:
                 PSHaptics.shared.success()
                 item.isDonated = true
                 toastManager?.show(.itemDonated(itemName))
                 celebrationManager?.onDonationCompleted(itemName: itemName, modelContext: modelContext)
+                PSLogger.general.info("Item marked as donated: \(itemName)")
             case .delete:
                 PSHaptics.shared.heavyTap()
                 modelContext.delete(item)
                 toastManager?.show(.itemDeleted(itemName))
+                PSLogger.general.info("Item deleted: \(itemName)")
             }
-            try? modelContext.save()
-            WidgetDataService.updateWidgetData(modelContext: modelContext)
+            do {
+                try modelContext.save()
+                WidgetDataService.updateWidgetData(modelContext: modelContext)
+            } catch {
+                PSLogger.general.error("Failed to save after expiry action: \(error.localizedDescription)")
+                toastManager?.show(.error(String(localized: "Failed to save changes")))
+            }
         }
     }
 }
@@ -196,11 +205,11 @@ struct ExpiryAlertCard: View {
         VStack(spacing: PSSpacing.md) {
             HStack(spacing: PSSpacing.md) {
                 Image(systemName: item.category.icon)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: PSLayout.scaledFont(18), weight: .semibold))
                     .foregroundStyle(PSColors.categoryColor(for: item.category))
-                    .frame(width: 40, height: 40)
+                    .frame(width: PSLayout.scaled(40), height: PSLayout.scaled(40))
                     .background(PSColors.categoryColor(for: item.category).opacity(0.12))
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusSm, style: .continuous))
 
                 VStack(alignment: .leading, spacing: PSSpacing.xxxs) {
                     Text(item.name)
@@ -246,7 +255,7 @@ struct ActionChip: View {
         Button(action: action) {
             HStack(spacing: PSSpacing.xxs) {
                 Image(systemName: icon)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.system(size: PSLayout.scaledFont(11), weight: .semibold))
                 Text(title)
                     .font(PSTypography.caption2Medium)
             }

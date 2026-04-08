@@ -25,12 +25,19 @@ struct PSBottomSheet<Content: View>: View {
 
                 // Sheet
                 VStack(spacing: 0) {
-                    // Figma: w-12 h-1.5 bg-neutral-200 rounded-full
-                    Capsule()
-                        .fill(PSColors.neutral200)
-                        .frame(width: 48, height: 6)
-                        .padding(.top, 12)
-                        .padding(.bottom, 20)
+                    // Figma: w-12 h-1.5 bg-neutral-200 rounded-full with glass header
+                    VStack {
+                        Capsule()
+                            .fill(PSColors.neutral200)
+                            .frame(width: 48, height: 6)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 12)
+                    .padding(.bottom, 20)
+                    .background(.ultraThinMaterial.opacity(0.3))
+                    .overlay(alignment: .bottom) {
+                        Divider().opacity(0.2)
+                    }
 
                     if let title {
                         HStack {

@@ -31,12 +31,18 @@ struct PSSegmentedControl<Item: Hashable & Identifiable>: View {
                         }
                 }
                 .buttonStyle(.plain)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(titleFor(item))
                 .accessibilityAddTraits(isSelected ? .isSelected : [])
             }
         }
         .padding(PSSpacing.xxxs + 1)
         .background(PSColors.backgroundSecondary)
         .clipShape(Capsule())
+        .overlay(
+            Capsule()
+                .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
+        )
     }
 }
 

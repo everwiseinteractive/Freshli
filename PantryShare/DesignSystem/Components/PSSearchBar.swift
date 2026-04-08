@@ -37,6 +37,10 @@ struct PSSearchBar: View {
         .padding(.vertical, PSSpacing.md)
         .background(PSColors.backgroundSecondary)
         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
+                .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
+        )
         .animation(PSMotion.springQuick, value: text.isEmpty)
     }
 }

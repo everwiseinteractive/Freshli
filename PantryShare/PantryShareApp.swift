@@ -11,6 +11,9 @@ struct PantryShareApp: App {
     @State private var syncService = SyncService()
     @State private var communityService = CommunityService()
     @State private var toastManager = PSToastManager()
+    @State private var networkMonitor = NetworkMonitor.shared
+    @State private var diagnosticsService = DiagnosticsService.shared
+    @State private var offlineSyncQueue = OfflineSyncQueue.shared
 
     var body: some Scene {
         WindowGroup {
@@ -49,8 +52,14 @@ struct PantryShareApp: App {
             .environment(syncService)
             .environment(communityService)
             .environment(toastManager)
+            .environment(networkMonitor)
+            .environment(offlineSyncQueue)
             .preferredColorScheme(isDarkMode ? .dark : .light)
             .task {
+                // Start diagnostics and network monitoring
+                diagnosticsService.start()
+                networkMonitor.start()
+
                 // Restore auth session
                 await authManager.restoreSession()
 
@@ -63,6 +72,14 @@ struct PantryShareApp: App {
                 // Listen for auth changes when authenticated
                 if authManager.authState == .authenticated {
                     await authManager.listenForAuthChanges()
+                }
+            }
+            .onChange(of: networkMonitor.isConnected) { oldValue, newValue in
+                // When connectivity is restored, process offline queue
+                if !oldValue && newValue {
+                    Task {
+                        await offlineSyncQueue.processQueue(using: syncService)
+                    }
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in

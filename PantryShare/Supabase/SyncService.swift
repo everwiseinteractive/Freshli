@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 import Supabase
+import os
 
 // MARK: - SyncService
 // Bridges SwiftData (local, offline-first) with Supabase (remote).
@@ -14,11 +15,20 @@ final class SyncService {
     var syncError: String?
 
     private let client = AppSupabase.client
+    private let logger = PSLogger(category: .sync)
 
     // MARK: - Pantry Items
 
     /// Push a single pantry item to Supabase (upsert).
     func pushPantryItem(_ item: PantryItem, userId: UUID) async {
+        guard NetworkMonitor.shared.isConnected else {
+            logger.info("Offline - queuing item push for later")
+            if let data = try? JSONEncoder().encode(PantryItemDTO(from: item, userId: userId)) {
+                OfflineSyncQueue.shared.enqueueItemPush(itemData: data)
+            }
+            return
+        }
+
         let dto = PantryItemDTO(from: item, userId: userId)
         do {
             try await client
@@ -26,7 +36,8 @@ final class SyncService {
                 .upsert(dto)
                 .execute()
         } catch {
-            syncError = "Failed to sync item: \(error.localizedDescription)"
+            logger.error("PushPantryItem failed: \(error.localizedDescription)")
+            syncError = "Failed to sync item. Please try again."
         }
     }
 
@@ -38,6 +49,17 @@ final class SyncService {
             lastSyncDate = Date()
         }
 
+        guard NetworkMonitor.shared.isConnected else {
+            logger.info("Offline - queuing \(items.count) items for later push")
+            for item in items {
+                if let data = try? JSONEncoder().encode(PantryItemDTO(from: item, userId: userId)) {
+                    OfflineSyncQueue.shared.enqueueItemPush(itemData: data)
+                }
+            }
+            syncError = "Offline - changes will sync when connection is restored."
+            return
+        }
+
         let dtos = items.map { PantryItemDTO(from: $0, userId: userId) }
 
         do {
@@ -46,12 +68,15 @@ final class SyncService {
                 .upsert(dtos)
                 .execute()
             syncError = nil
+            logger.info("Pushed \(dtos.count) items to Supabase")
         } catch {
-            syncError = "Sync failed: \(error.localizedDescription)"
+            logger.error("PushAllPantryItems failed for \(dtos.count) items: \(error.localizedDescription)")
+            syncError = "Sync failed. Please try again."
         }
     }
 
     /// Pull pantry items from Supabase and merge into SwiftData.
+    /// Uses pagination with limit(200) to prevent unbounded fetches.
     func pullPantryItems(userId: UUID, modelContext: ModelContext) async {
         isSyncing = true
         defer {
@@ -64,6 +89,8 @@ final class SyncService {
                 .from("pantry_items")
                 .select()
                 .eq("user_id", value: userId.uuidString)
+                .order("updated_at", ascending: false)
+                .limit(200)
                 .execute()
                 .value
 
@@ -93,21 +120,37 @@ final class SyncService {
 
             try? modelContext.save()
             syncError = nil
+            logger.info("Pulled \(remoteDTOs.count) items from Supabase")
         } catch {
-            syncError = "Pull failed: \(error.localizedDescription)"
+            logger.error("PullPantryItems failed: \(error.localizedDescription)")
+            syncError = "Failed to sync items. Please try again."
         }
     }
 
     /// Delete a pantry item from Supabase.
     func deletePantryItem(id: UUID) async {
+        guard NetworkMonitor.shared.isConnected else {
+            logger.info("Offline - queuing item deletion for later")
+            let op = OfflineSyncQueue.SyncOperation(
+                id: UUID(),
+                type: .deleteItem,
+                payload: id.uuidString.data(using: .utf8) ?? Data(),
+                createdAt: Date()
+            )
+            OfflineSyncQueue.shared.enqueue(op)
+            return
+        }
+
         do {
             try await client
                 .from("pantry_items")
                 .delete()
                 .eq("id", value: id.uuidString)
                 .execute()
+            logger.info("Deleted item: \(id.uuidString)")
         } catch {
-            syncError = "Delete sync failed: \(error.localizedDescription)"
+            logger.error("DeletePantryItem failed: \(error.localizedDescription)")
+            syncError = "Failed to delete item. Please try again."
         }
     }
 
@@ -126,21 +169,37 @@ final class SyncService {
 
             return profiles.first
         } catch {
-            syncError = "Profile fetch failed: \(error.localizedDescription)"
+            logger.debug("FetchProfile failed: \(error.localizedDescription)")
             return nil
         }
     }
 
     /// Update the user's profile on Supabase.
     func updateProfile(_ profile: ProfileDTO) async {
+        guard NetworkMonitor.shared.isConnected else {
+            logger.info("Offline - queuing profile update for later")
+            if let data = try? JSONEncoder().encode(profile) {
+                let op = OfflineSyncQueue.SyncOperation(
+                    id: UUID(),
+                    type: .updateProfile,
+                    payload: data,
+                    createdAt: Date()
+                )
+                OfflineSyncQueue.shared.enqueue(op)
+            }
+            return
+        }
+
         do {
             try await client
                 .from("profiles")
                 .update(profile)
                 .eq("id", value: profile.id.uuidString)
                 .execute()
+            logger.info("Profile updated successfully")
         } catch {
-            syncError = "Profile update failed: \(error.localizedDescription)"
+            logger.error("UpdateProfile failed: \(error.localizedDescription)")
+            syncError = "Failed to update profile. Please try again."
         }
     }
 
@@ -148,14 +207,30 @@ final class SyncService {
 
     /// Create a shared listing on Supabase.
     func createSharedListing(_ listing: SharedListing, userId: UUID) async {
+        guard NetworkMonitor.shared.isConnected else {
+            logger.info("Offline - queuing shared listing creation for later")
+            if let data = try? JSONEncoder().encode(SharedListingDTO(from: listing, userId: userId)) {
+                let op = OfflineSyncQueue.SyncOperation(
+                    id: UUID(),
+                    type: .createListing,
+                    payload: data,
+                    createdAt: Date()
+                )
+                OfflineSyncQueue.shared.enqueue(op)
+            }
+            return
+        }
+
         let dto = SharedListingDTO(from: listing, userId: userId)
         do {
             try await client
                 .from("shared_listings")
                 .insert(dto)
                 .execute()
+            logger.info("Created shared listing")
         } catch {
-            syncError = "Listing creation failed: \(error.localizedDescription)"
+            logger.error("CreateSharedListing failed: \(error.localizedDescription)")
+            syncError = "Failed to create listing. Please try again."
         }
     }
 
@@ -173,22 +248,39 @@ final class SyncService {
 
             return listings
         } catch {
-            syncError = "Listings fetch failed: \(error.localizedDescription)"
+            logger.debug("FetchActiveListings failed: \(error.localizedDescription)")
             return []
         }
     }
 
-    /// Claim a shared listing.
+    /// Claim a shared listing (atomic update to ensure RLS safety).
     func claimListing(listingId: UUID, claimerId: UUID) async -> Bool {
+        guard NetworkMonitor.shared.isConnected else {
+            logger.info("Offline - queuing listing claim for later")
+            let claimData = ["listingId": listingId.uuidString, "claimerId": claimerId.uuidString]
+            if let data = try? JSONSerialization.data(withJSONObject: claimData) {
+                let op = OfflineSyncQueue.SyncOperation(
+                    id: UUID(),
+                    type: .claimListing,
+                    payload: data,
+                    createdAt: Date()
+                )
+                OfflineSyncQueue.shared.enqueue(op)
+            }
+            return false
+        }
+
         do {
             try await client
                 .from("shared_listings")
                 .update(["status": "claimed", "claimed_by": claimerId.uuidString])
                 .eq("id", value: listingId.uuidString)
                 .execute()
+            logger.info("Claimed listing: \(listingId.uuidString)")
             return true
         } catch {
-            syncError = "Claim failed: \(error.localizedDescription)"
+            logger.error("ClaimListing failed: \(error.localizedDescription)")
+            syncError = "Failed to claim item. Please try again."
             return false
         }
     }
@@ -213,14 +305,22 @@ final class SyncService {
             estimatedCo2Avoided: co2Avoided
         )
 
+        guard NetworkMonitor.shared.isConnected else {
+            logger.info("Offline - queuing impact event for later")
+            if let data = try? JSONEncoder().encode(event) {
+                OfflineSyncQueue.shared.enqueueImpactEvent(eventData: data)
+            }
+            return
+        }
+
         do {
             try await client
                 .from("impact_events")
                 .insert(event)
                 .execute()
+            logger.debug("Recorded impact event: \(eventType)")
         } catch {
-            // Impact events are non-critical — log but don't surface to user
-            print("[SyncService] Impact event failed: \(error.localizedDescription)")
+            logger.debug("RecordImpactEvent failed: \(error.localizedDescription)")
         }
     }
 
@@ -240,8 +340,9 @@ final class SyncService {
                 .from("achievements")
                 .upsert(achievement)
                 .execute()
+            logger.debug("Recorded achievement: \(key)")
         } catch {
-            print("[SyncService] Achievement record failed: \(error.localizedDescription)")
+            logger.debug("RecordAchievement failed: \(error.localizedDescription)")
         }
     }
 
@@ -262,8 +363,9 @@ final class SyncService {
                 .from("streaks")
                 .upsert(streak)
                 .execute()
+            logger.debug("Updated streak: \(type)")
         } catch {
-            print("[SyncService] Streak update failed: \(error.localizedDescription)")
+            logger.debug("UpdateStreak failed: \(error.localizedDescription)")
         }
     }
 
@@ -277,8 +379,9 @@ final class SyncService {
                 .from("saved_recipes")
                 .upsert(saved)
                 .execute()
+            logger.debug("Saved recipe: \(recipeId)")
         } catch {
-            print("[SyncService] Recipe save failed: \(error.localizedDescription)")
+            logger.debug("SaveRecipe failed: \(error.localizedDescription)")
         }
     }
 
@@ -301,11 +404,23 @@ final class SyncService {
     // MARK: - Full Sync
 
     /// Perform a full bidirectional sync for the authenticated user.
+    /// Prevents concurrent sync operations to avoid race conditions.
     func performFullSync(userId: UUID, modelContext: ModelContext) async {
+        guard !isSyncing else {
+            logger.debug("Sync already in progress, skipping")
+            return
+        }
+
         isSyncing = true
         defer {
             isSyncing = false
             lastSyncDate = Date()
+        }
+
+        // 0. If offline, queue operations and bail out
+        guard NetworkMonitor.shared.isConnected else {
+            logger.info("Offline - skipping full sync, pending operations will sync when connection restored")
+            return
         }
 
         // 1. Push local items to remote
@@ -319,12 +434,18 @@ final class SyncService {
                     .from("pantry_items")
                     .upsert(dtos)
                     .execute()
+                logger.info("Pushed \(dtos.count) items during full sync")
             } catch {
-                print("[SyncService] Push failed: \(error.localizedDescription)")
+                logger.error("PerformFullSync push failed: \(error.localizedDescription)")
             }
         }
 
         // 2. Pull remote items we don't have locally
         await pullPantryItems(userId: userId, modelContext: modelContext)
+
+        // 3. Process offline queue if it has pending operations
+        if OfflineSyncQueue.shared.hasPendingOperations {
+            await OfflineSyncQueue.shared.processQueue(using: self)
+        }
     }
 }

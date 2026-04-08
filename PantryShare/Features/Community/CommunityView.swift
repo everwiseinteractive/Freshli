@@ -17,6 +17,7 @@ struct CommunityView: View {
     @Environment(AuthManager.self) private var authManager: AuthManager?
     @Environment(SyncService.self) private var syncService: SyncService?
     @Environment(CommunityService.self) private var communityService: CommunityService?
+    @Environment(NetworkMonitor.self) private var networkMonitor: NetworkMonitor?
 
     @State private var activeTab = 0
     @State private var showCreateListing = false
@@ -29,6 +30,7 @@ struct CommunityView: View {
     @State private var reportTarget: CommunityListingDTO?
     @State private var reportReason = ""
     @State private var reportDetails = ""
+    @State private var feedError: String?
     @Namespace private var tabNamespace
 
     private let tabs = [
@@ -41,6 +43,21 @@ struct CommunityView: View {
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             VStack(spacing: 0) {
+                // Offline banner
+                if networkMonitor?.isConnected == false {
+                    HStack(spacing: PSSpacing.sm) {
+                        Image(systemName: "wifi.slash")
+                            .font(.system(size: 14))
+                        Text(String(localized: "You're offline. Showing cached listings."))
+                            .font(PSTypography.caption1)
+                    }
+                    .foregroundStyle(PSColors.textSecondary)
+                    .padding(.horizontal, PSSpacing.screenHorizontal)
+                    .padding(.vertical, PSSpacing.xs)
+                    .frame(maxWidth: .infinity)
+                    .background(PSColors.warningAmber.opacity(0.1))
+                }
+
                 stickyHeader
                 feedContent
             }
@@ -97,26 +114,30 @@ struct CommunityView: View {
 
     private var stickyHeader: some View {
         VStack(spacing: 0) {
-            // Title row
+            // Title row - adaptive layout for SE
             HStack {
                 Text(String(localized: "Community"))
                     .font(.system(size: PSLayout.scaledFont(30), weight: .bold))
                     .tracking(-0.3)
                     .foregroundStyle(PSColors.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+                    .psAccessibleHeader(String(localized: "Community"))
 
-                Spacer()
+                Spacer(minLength: PSSpacing.md)
 
                 Button {
                     withAnimation(PSMotion.springQuick) { showSearch.toggle() }
                 } label: {
                     Image(systemName: "magnifyingglass")
-                        .font(.system(size: PSLayout.scaledFont(20), weight: .medium))
+                        .font(.system(size: PSLayout.scaledFont(18), weight: .medium))
                         .foregroundStyle(PSColors.textSecondary)
-                        .adaptiveFrame(width: 36, height: 36)
+                        .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
                         .background(PSColors.backgroundSecondary)
                         .clipShape(Circle())
                 }
                 .buttonStyle(PressableButtonStyle())
+                .accessibilityLabel(String(localized: "Search listings"))
             }
             .adaptiveHPadding()
             .padding(.top, PSSpacing.md)
@@ -161,8 +182,8 @@ struct CommunityView: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
 
-            // Tab row
-            HStack(spacing: PSLayout.scaled(24)) {
+            // Tab row with smooth animation
+            HStack(spacing: PSLayout.isCompact ? PSSpacing.lg : PSLayout.scaled(24)) {
                 ForEach(Array(tabs.enumerated()), id: \.offset) { index, tab in
                     Button {
                         if activeTab != index { PSHaptics.shared.selection() }
@@ -177,12 +198,14 @@ struct CommunityView: View {
                                 .foregroundStyle(activeTab == index ? PSColors.primaryGreen : PSColors.textSecondary)
                                 .padding(.horizontal, PSSpacing.sm)
                                 .padding(.bottom, PSSpacing.lg)
+                                .lineLimit(1)
 
                             if activeTab == index {
                                 Capsule()
                                     .fill(PSColors.primaryGreen)
                                     .frame(height: 4)
                                     .matchedGeometryEffect(id: "community_tab_underline", in: tabNamespace)
+                                    .transition(.scale)
                             } else {
                                 Capsule()
                                     .fill(Color.clear)
@@ -190,7 +213,11 @@ struct CommunityView: View {
                             }
                         }
                     }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(tab)
+                    .accessibilityAddTraits(activeTab == index ? .isSelected : [])
                 }
+                Spacer()
             }
             .adaptiveHPadding()
         }
@@ -204,7 +231,10 @@ struct CommunityView: View {
     private var fabButton: some View {
         Button {
             PSHaptics.shared.mediumTap()
-            if authManager?.authState == .authenticated {
+            if networkMonitor?.isConnected == false {
+                PSHaptics.shared.warning()
+                communityService?.error = String(localized: "You must be online to create a listing")
+            } else if authManager?.authState == .authenticated {
                 showCreateListing = true
             } else {
                 PSHaptics.shared.warning()
@@ -226,6 +256,8 @@ struct CommunityView: View {
             .shadow(color: Color(hex: 0x171717).opacity(0.2), radius: 16, y: 8)
         }
         .buttonStyle(PressableButtonStyle())
+        .accessibilityLabel(String(localized: "Create New Post"))
+        .accessibilityHint(String(localized: "Double tap to create a new community listing"))
         .padding(.trailing, PSLayout.adaptiveHorizontalPadding)
         .padding(.bottom, PSLayout.adaptiveHorizontalPadding)
     }
@@ -256,6 +288,39 @@ struct CommunityView: View {
                         .foregroundStyle(PSColors.textSecondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if let error = feedError ?? communityService?.error, feedListings.isEmpty {
+                // Error with no data — show retry
+                VStack(spacing: PSSpacing.lg) {
+                    Image(systemName: "wifi.exclamationmark")
+                        .font(.system(size: PSLayout.scaledFont(40)))
+                        .foregroundStyle(PSColors.textTertiary)
+                    Text(String(localized: "Couldn't load the feed"))
+                        .font(PSTypography.bodyMedium)
+                        .foregroundStyle(PSColors.textPrimary)
+                    Text(error)
+                        .font(PSTypography.caption1)
+                        .foregroundStyle(PSColors.textSecondary)
+                        .multilineTextAlignment(.center)
+                    Button {
+                        feedError = nil
+                        communityService?.error = nil
+                        Task { await refreshFeed() }
+                    } label: {
+                        HStack(spacing: PSSpacing.xs) {
+                            Image(systemName: "arrow.clockwise")
+                            Text(String(localized: "Try Again"))
+                        }
+                        .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, PSSpacing.xxl)
+                        .padding(.vertical, PSSpacing.md)
+                        .background(PSColors.primaryGreen)
+                        .clipShape(Capsule())
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                }
+                .padding(PSSpacing.screenHorizontal)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if feedListings.isEmpty {
                 PSEmptyState(
                     icon: "person.2",
@@ -266,6 +331,8 @@ struct CommunityView: View {
                 )
                 .padding(PSSpacing.screenHorizontal)
                 .frame(maxHeight: .infinity)
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel(String(localized: "No listings available"))
             } else {
                 ScrollView {
                     // Error banner
@@ -440,7 +507,12 @@ struct CommunityView: View {
                 // Claim / view CTA
                 if listing.status == "active" {
                     Button {
-                        selectedListing = listing
+                        if networkMonitor?.isConnected == false {
+                            PSHaptics.shared.warning()
+                            communityService?.error = String(localized: "You must be online to claim an item")
+                        } else {
+                            selectedListing = listing
+                        }
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "hand.raised.fill")
@@ -455,6 +527,7 @@ struct CommunityView: View {
                         .clipShape(Capsule())
                     }
                     .buttonStyle(PressableButtonStyle())
+                    .opacity(networkMonitor?.isConnected == false ? 0.5 : 1)
                 } else {
                     PSBadge(
                         text: listing.status.capitalized,
@@ -485,6 +558,10 @@ struct CommunityView: View {
             RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
                 .strokeBorder(PSColors.borderLight, lineWidth: 1)
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(listing.itemName), \(listing.categoryEmoji)")
+        .accessibilityValue("\(listing.displayName), \(listing.status.capitalized)")
+        .accessibilityHint(String(localized: "Double tap to view details"))
     }
 
     // MARK: - My Listing Card
@@ -588,6 +665,9 @@ struct CommunityView: View {
             RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
                 .strokeBorder(PSColors.borderLight, lineWidth: 1)
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(listing.itemName), \(listing.categoryEmoji)")
+        .accessibilityValue(statusDisplayText(listing.status))
     }
 
     // MARK: - Report Form
@@ -677,12 +757,16 @@ struct CommunityView: View {
             return listings
         }
         // Fallback: show seed data when unauthenticated or no results
-        return CommunityFeedData.seedListings
+        return CommunityFeedData.cachedSeedListings
     }
 
     private func refreshFeed() async {
         PSHaptics.shared.refreshSnap()
+        feedError = nil
         await communityService?.fetchFeed(searchQuery: searchText.isEmpty ? nil : searchText)
+        if let error = communityService?.error {
+            feedError = error
+        }
         if let userId = authManager?.currentUserId {
             await communityService?.fetchMyListings(userId: userId)
         }
@@ -752,7 +836,7 @@ struct CommunityView: View {
 // MARK: - Seed Data (offline/unauthenticated fallback)
 
 enum CommunityFeedData {
-    static let seedListings: [CommunityListingDTO] = [
+    static let cachedSeedListings: [CommunityListingDTO] = [
         CommunityListingDTO(
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
             userId: UUID(),
@@ -838,4 +922,14 @@ enum CommunityFeedData {
             profiles: ListingProfileDTO(displayName: "Michael Chen", avatarUrl: nil)
         ),
     ]
+}
+
+#Preview("CommunityView - iPhone SE") {
+    CommunityView()
+        .previewDevice(PreviewDevice(rawValue: "iPhone SE (3rd generation)"))
+}
+
+#Preview("CommunityView - iPhone 16 Pro Max") {
+    CommunityView()
+        .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro Max"))
 }

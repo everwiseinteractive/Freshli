@@ -29,6 +29,14 @@ enum PSLayout {
         (value * widthScale).rounded()
     }
 
+    /// Validates adaptive scaling for device class.
+    /// Returns true if device width produces reasonable scale factor.
+    static func validateAdaptiveScaling() -> Bool {
+        let scale = widthScale
+        // SE (375) should be ~0.95, 16 (393) should be ~1.0, Max (430) should be ~1.09
+        return scale >= 0.85 && scale <= 1.15
+    }
+
     /// Scales a font size with a gentler curve (less aggressive than full proportional).
     /// Fonts scale down on compact screens but barely grow on expanded — prevents text overflow.
     static func scaledFont(_ size: CGFloat) -> CGFloat {

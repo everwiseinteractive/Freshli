@@ -76,7 +76,10 @@ final class AuthManager {
             currentUserEmail = session.user.email
             currentDisplayName = session.user.userMetadata["display_name"]?.stringValue
             authState = .authenticated
+            PSLogger.auth.info("Session restored successfully")
         } catch {
+            // Session unavailable or expired — user is unauthenticated
+            PSLogger.auth.debug("No existing session found: \(error.localizedDescription)")
             authState = .unauthenticated
         }
     }
@@ -102,9 +105,12 @@ final class AuthManager {
             currentUserEmail = response.user.email
             currentDisplayName = displayName
             authState = .authenticated
+            PSLogger.auth.info("User signed up successfully: \(email)")
         } catch {
-            let message = error.localizedDescription
+            // Don't expose raw error details to user; use a generic message
+            let message = "Sign up failed. Please try again."
             errorMessage = message
+            PSLogger.auth.error("SignUp failed for \(email): \(error.localizedDescription)")
             throw AuthError.signUpFailed(message)
         }
     }
@@ -128,9 +134,12 @@ final class AuthManager {
             currentUserEmail = session.user.email
             currentDisplayName = session.user.userMetadata["display_name"]?.stringValue
             authState = .authenticated
+            PSLogger.auth.info("User signed in successfully: \(email)")
         } catch {
-            let message = error.localizedDescription
+            // Don't expose raw error details to user; use a generic message
+            let message = "Sign in failed. Check your email and password."
             errorMessage = message
+            PSLogger.auth.error("SignIn failed for \(email): \(error.localizedDescription)")
             throw AuthError.signInFailed(message)
         }
     }
@@ -143,15 +152,18 @@ final class AuthManager {
 
         do {
             try await client.auth.signOut()
+            PSLogger.auth.info("User signed out successfully")
         } catch {
             // Sign out locally even if the server call fails
-            errorMessage = error.localizedDescription
+            PSLogger.auth.debug("SignOut request to server failed: \(error.localizedDescription)")
         }
 
+        // Always clear local auth state
         currentUserId = nil
         currentUserEmail = nil
         currentDisplayName = nil
         authState = .unauthenticated
+        errorMessage = nil
     }
 
     // MARK: - Listen for Auth Changes
@@ -210,9 +222,14 @@ final class AuthManager {
             if let fullName = result.fullName, !fullName.isEmpty {
                 currentDisplayName = fullName
                 // Update the user metadata with the display name
-                try? await client.auth.update(user: .init(
-                    data: ["display_name": .string(fullName)]
-                ))
+                do {
+                    try await client.auth.update(user: .init(
+                        data: ["display_name": .string(fullName)]
+                    ))
+                    PSLogger.auth.info("Apple Sign-In metadata updated successfully")
+                } catch {
+                    PSLogger.auth.error("Failed to update Apple Sign-In metadata: \(error.localizedDescription)")
+                }
             } else {
                 currentDisplayName = session.user.userMetadata["display_name"]?.stringValue
                     ?? session.user.userMetadata["full_name"]?.stringValue
@@ -220,12 +237,16 @@ final class AuthManager {
             }
 
             authState = .authenticated
+            PSLogger.auth.info("User signed in with Apple successfully")
         } catch let error as AppleSignInError where error.errorDescription == nil {
             // User cancelled — don't show error
+            PSLogger.auth.debug("Apple Sign-In cancelled by user")
             return
         } catch {
-            let message = error.localizedDescription
+            // Don't expose raw error details to user; use a generic message
+            let message = "Sign in with Apple failed. Please try again."
             errorMessage = message
+            PSLogger.auth.error("SignInWithApple failed: \(error.localizedDescription)")
             throw AuthError.signInFailed(message)
         }
     }
@@ -241,7 +262,9 @@ final class AuthManager {
 
         do {
             try await client.auth.resetPasswordForEmail(email)
+            PSLogger.auth.info("Password reset email sent to: \(email)")
         } catch {
+            PSLogger.auth.error("Password reset failed for \(email): \(error.localizedDescription)")
             throw AuthError.unknown(error.localizedDescription)
         }
     }
@@ -249,8 +272,12 @@ final class AuthManager {
     // MARK: - Delete Account
 
     /// Request account deletion. The user must be authenticated.
+    /// Always signs out after deletion, regardless of RPC success.
     func deleteAccount() async throws {
-        guard authState == .authenticated else { return }
+        guard authState == .authenticated else {
+            PSLogger.auth.warning("deleteAccount called when not authenticated")
+            return
+        }
 
         isProcessing = true
         defer { isProcessing = false }
@@ -258,11 +285,15 @@ final class AuthManager {
         do {
             // Call the admin delete user RPC (requires server-side function)
             try await client.rpc("delete_user_account").execute()
-            await signOut()
+            PSLogger.auth.info("Account deletion RPC executed successfully")
         } catch {
-            // Fall back to just signing out if the RPC doesn't exist yet
-            await signOut()
+            PSLogger.auth.error("DeleteAccount RPC failed: \(error.localizedDescription)")
+            errorMessage = "Failed to delete account on server. Your local data has been cleared."
+            throw AuthError.unknown(errorMessage ?? "Account deletion failed")
         }
+
+        // Always sign out after deletion attempt (whether RPC succeeded or not)
+        await signOut()
     }
 
     // MARK: - Skip Auth

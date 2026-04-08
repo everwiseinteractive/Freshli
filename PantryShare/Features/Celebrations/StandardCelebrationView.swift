@@ -15,24 +15,29 @@ struct StandardCelebrationView: View {
     var body: some View {
         CelebrationContainer(type: type, onDismiss: onDismiss) {
             VStack(spacing: 0) {
-                Spacer()
+                Spacer(minLength: PSLayout.scaled(20))
 
-                // Figma: Hero graphic with confetti
+                // Figma: Hero graphic with confetti - adaptive sizing
                 CelebrationHeroGraphic(type: type, animate: showContent)
-                    .padding(.bottom, 40)
+                    .padding(.bottom, PSLayout.scaled(40))
+                    .frame(maxHeight: PSLayout.scaled(200))
 
-                // Figma: text-4xl font-black text-white tracking-tight
+                // Figma: text-4xl font-black text-white tracking-tight - adaptive
                 CelebrationHeadline(text: type.title, animate: showContent)
-                    .padding(.bottom, 16)
+                    .padding(.bottom, PSLayout.scaled(16))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
 
-                // Figma: text-green-100 text-lg font-medium
+                // Figma: text-green-100 text-lg font-medium - adaptive
                 CelebrationSubtitle(
                     text: type.subtitle,
                     color: descriptionColor,
                     animate: showContent
                 )
+                .lineLimit(3)
+                .minimumScaleFactor(0.9)
 
-                Spacer()
+                Spacer(minLength: PSLayout.scaled(20))
 
                 // Figma: CTA — only for medium/hero intensity
                 if type.intensity != .small {
@@ -43,7 +48,8 @@ struct StandardCelebrationView: View {
                         animate: showContent,
                         action: onDismiss
                     )
-                    .padding(.bottom, 40)
+                    .padding(.bottom, PSLayout.scaled(40))
+                    .frame(maxHeight: PSLayout.scaled(60))
                 }
             }
             .adaptiveHPadding()
@@ -90,47 +96,50 @@ struct ToastCelebrationView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        VStack {
+        VStack(spacing: 0) {
             Spacer()
 
-            HStack(spacing: 16) {
-                // Figma: Smaller icon container — 56x56
+            HStack(spacing: PSSpacing.lg) {
+                // Figma: Smaller icon container — adaptive sizing
                 ZStack {
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    RoundedRectangle(cornerRadius: PSLayout.scaled(18), style: .continuous)
                         .fill(type.iconBackgroundColor)
-                        .frame(width: 56, height: 56)
+                        .frame(width: PSLayout.scaled(56), height: PSLayout.scaled(56))
                         .shadow(color: type.backgroundColor.opacity(0.3), radius: 12, y: 4)
 
                     Image(systemName: type.icon)
-                        .font(.system(size: 24, weight: .semibold))
+                        .font(.system(size: PSLayout.scaledFont(24), weight: .semibold))
                         .foregroundStyle(.white)
+                        .minimumScaleFactor(0.8)
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(type.title)
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
                         .foregroundStyle(.white)
                         .lineLimit(1)
 
                     Text(type.subtitle)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
                         .foregroundStyle(.white.opacity(0.8))
                         .lineLimit(2)
                 }
 
-                Spacer(minLength: 0)
+                Spacer(minLength: PSSpacing.sm)
             }
-            .padding(20)
+            .padding(PSLayout.scaled(16))
             .background(type.backgroundColor)
             .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
             .shadow(color: type.backgroundColor.opacity(0.3), radius: 24, y: 12)
-            .padding(.horizontal, 16)
-            .padding(.bottom, PSLayout.tabBarContentPadding + PSSpacing.xl) // Above tab bar
+            .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
+            // Position above tab bar safely on all devices
+            .padding(.bottom, max(PSLayout.tabBarContentPadding + PSSpacing.xl, PSLayout.scaled(100)))
             .scaleEffect(showContent ? 1 : 0.8)
             .opacity(showContent ? 1 : 0)
-            .offset(y: showContent ? 0 : 60)
+            .offset(y: showContent ? 0 : PSLayout.scaled(60))
         }
         .transition(.move(edge: .bottom).combined(with: .opacity))
+        .ignoresSafeArea(.keyboard)
         .onAppear {
             if reduceMotion {
                 showContent = true
@@ -139,8 +148,16 @@ struct ToastCelebrationView: View {
                     showContent = true
                 }
             }
-            // Haptic
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            // Haptic with reduce motion awareness
+            if !reduceMotion {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+            }
+            // Auto-dismiss with appropriate timing
+            DispatchQueue.main.asyncAfter(deadline: .now() + (reduceMotion ? 2.5 : 3.0)) {
+                withAnimation(reduceMotion ? .none : PSMotion.easeDefault) {
+                    onDismiss()
+                }
+            }
         }
         .onTapGesture { onDismiss() }
     }

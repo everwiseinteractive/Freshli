@@ -20,19 +20,20 @@ struct AuthView: View {
             // Background
             PSColors.green50.ignoresSafeArea()
 
+            // Adaptive decorative circles - smaller on SE
             Circle()
                 .fill(PSColors.emeraldLight)
-                .frame(width: UIScreen.main.bounds.width * 1.2,
-                       height: UIScreen.main.bounds.width * 1.2)
-                .blur(radius: 100)
+                .frame(width: PSLayout.scaled(300),
+                       height: PSLayout.scaled(300))
+                .blur(radius: PSLayout.scaled(100))
                 .opacity(0.3)
-                .offset(x: 120, y: -200)
+                .offset(x: PSLayout.scaled(120), y: PSLayout.scaled(-200))
 
             Circle()
                 .fill(PSColors.primaryGreen.opacity(0.08))
-                .frame(width: 300, height: 300)
-                .blur(radius: 80)
-                .offset(x: -100, y: 300)
+                .frame(width: PSLayout.scaled(300), height: PSLayout.scaled(300))
+                .blur(radius: PSLayout.scaled(80))
+                .offset(x: PSLayout.scaled(-100), y: PSLayout.scaled(300))
 
             switch currentScreen {
             case .landing:
@@ -96,62 +97,65 @@ struct AuthLandingView: View {
 
     @State private var appeared = false
     @State private var showAppleError = false
+    @State private var isSigningIn = false
 
     var body: some View {
         VStack(spacing: 0) {
-            Spacer()
+            ScrollView {
+                VStack(spacing: 0) {
+                    Spacer()
 
-            // Hero section
-            VStack(spacing: PSSpacing.xl) {
-                // App icon
-                ZStack(alignment: .topTrailing) {
-                    RoundedRectangle(cornerRadius: PSSpacing.radiusHero, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [PSColors.primaryGreen, PSColors.primaryGreenDark],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 100, height: 100)
-                        .shadow(color: PSColors.primaryGreen.opacity(0.3), radius: 24, y: 12)
-                        .overlay {
-                            Image(systemName: "leaf.fill")
-                                .font(.system(size: 44, weight: .medium))
-                                .foregroundStyle(.white)
+                    // Hero section - adaptive sizing for SE
+                    VStack(spacing: PSSpacing.xl) {
+                        // App icon - scale down on SE
+                        ZStack(alignment: .topTrailing) {
+                            RoundedRectangle(cornerRadius: PSSpacing.radiusHero, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [PSColors.primaryGreen, PSColors.primaryGreenDark],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: PSLayout.scaled(100), height: PSLayout.scaled(100))
+                                .shadow(color: PSColors.primaryGreen.opacity(0.3), radius: 24, y: 12)
+                                .overlay {
+                                    Image(systemName: "leaf.fill")
+                                        .font(.system(size: PSLayout.scaledFont(44), weight: .medium))
+                                        .foregroundStyle(.white)
+                                }
+
+                            Circle()
+                                .fill(PSColors.secondaryAmber)
+                                .frame(width: PSLayout.scaled(28), height: PSLayout.scaled(28))
+                                .overlay {
+                                    Image(systemName: "sparkle")
+                                        .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
+                                        .foregroundStyle(.white)
+                                }
+                                .overlay(Circle().strokeBorder(.white, lineWidth: 2))
+                                .offset(x: 6, y: -6)
                         }
 
-                    Circle()
-                        .fill(PSColors.secondaryAmber)
-                        .frame(width: 28, height: 28)
-                        .overlay {
-                            Image(systemName: "sparkle")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundStyle(.white)
+                        VStack(spacing: PSSpacing.sm) {
+                            Text(String(localized: "PantryShare"))
+                                .font(.system(size: PSLayout.scaledFont(34), weight: .black))
+                                .tracking(-0.5)
+                                .foregroundStyle(PSColors.textPrimary)
+
+                            Text(String(localized: "Share food, reduce waste, build community"))
+                                .font(.system(size: PSLayout.scaledFont(17), weight: .medium))
+                                .foregroundStyle(PSColors.textSecondary)
+                                .multilineTextAlignment(.center)
                         }
-                        .overlay(Circle().strokeBorder(.white, lineWidth: 2))
-                        .offset(x: 6, y: -6)
-                }
+                    }
+                    .scaleEffect(appeared ? 1 : 0.9)
+                    .opacity(appeared ? 1 : 0)
 
-                VStack(spacing: PSSpacing.sm) {
-                    Text(String(localized: "PantryShare"))
-                        .font(.system(size: 34, weight: .black))
-                        .tracking(-0.5)
-                        .foregroundStyle(PSColors.textPrimary)
+                    Spacer()
 
-                    Text(String(localized: "Share food, reduce waste, build community"))
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(PSColors.textSecondary)
-                        .multilineTextAlignment(.center)
-                }
-            }
-            .scaleEffect(appeared ? 1 : 0.9)
-            .opacity(appeared ? 1 : 0)
-
-            Spacer()
-
-            // Auth buttons section
-            VStack(spacing: PSSpacing.lg) {
+                    // Auth buttons section
+                    VStack(spacing: PSSpacing.lg) {
                 // Sign in with Apple
                 SignInWithAppleButton(.signIn) { request in
                     request.requestedScopes = [.fullName, .email]
@@ -215,17 +219,32 @@ struct AuthLandingView: View {
             .opacity(appeared ? 1 : 0)
             .offset(y: appeared ? 0 : 30)
 
-            // Skip auth
-            Button {
-                authManager.skipAuth()
-            } label: {
-                Text(String(localized: "Continue without account"))
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(PSColors.textTertiary)
+            // Loading overlay for sign-in
+            if isSigningIn {
+                HStack(spacing: PSSpacing.sm) {
+                    ProgressView()
+                        .tint(PSColors.primaryGreen)
+                    Text(String(localized: "Signing in..."))
+                        .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
+                        .foregroundStyle(PSColors.textSecondary)
+                }
+                .padding(.top, PSSpacing.md)
             }
-            .padding(.top, PSSpacing.xl)
-            .padding(.bottom, 48)
-            .opacity(appeared ? 1 : 0)
+
+                    // Skip auth
+                    Button {
+                        authManager.skipAuth()
+                    } label: {
+                        Text(String(localized: "Continue without account"))
+                            .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
+                            .foregroundStyle(PSColors.textTertiary)
+                    }
+                    .padding(.top, PSSpacing.xl)
+                    .padding(.bottom, 48)
+                    .opacity(appeared ? 1 : 0)
+                }
+            }
+            .ignoresSafeArea(.keyboard)
         }
         .onAppear {
             withAnimation(PSMotion.springDefault.delay(0.1)) {
@@ -240,6 +259,7 @@ struct AuthLandingView: View {
     }
 
     private func signInWithApple() {
+        isSigningIn = true
         Task {
             do {
                 try await authManager.signInWithApple()
@@ -248,6 +268,7 @@ struct AuthLandingView: View {
                     showAppleError = true
                 }
             }
+            isSigningIn = false
         }
     }
 }

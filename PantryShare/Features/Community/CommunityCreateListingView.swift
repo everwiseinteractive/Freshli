@@ -13,6 +13,8 @@ struct CommunityCreateListingView: View {
     @Environment(AuthManager.self) private var authManager: AuthManager?
     @Environment(CommunityService.self) private var communityService: CommunityService?
     @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
+    @Environment(SyncService.self) private var syncService: SyncService?
+    @Environment(PSToastManager.self) private var toastManager: PSToastManager?
 
     // Form state
     @State private var itemName = ""
@@ -91,15 +93,15 @@ struct CommunityCreateListingView: View {
         Button {
             withAnimation(PSMotion.springQuick) { listingType = type }
         } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: PSSpacing.xs) {
                 Image(systemName: icon)
-                    .font(.system(size: 14))
+                    .font(.system(size: PSLayout.scaledFont(14)))
                 Text(title)
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: PSLayout.scaledFont(14), weight: .bold))
             }
             .foregroundStyle(listingType == type ? PSColors.textPrimary : PSColors.textTertiary)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
+            .padding(.vertical, PSSpacing.md)
             .background {
                 if listingType == type {
                     RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
@@ -391,7 +393,13 @@ struct CommunityCreateListingView: View {
                     expiryDate: Date.daysFromNow(7)
                 )
                 modelContext.insert(localListing)
-                try? modelContext.save()
+                do {
+                    try modelContext.save()
+                    PSLogger.general.info("Local listing created successfully")
+                } catch {
+                    PSLogger.general.error("Failed to save local listing: \(error.localizedDescription)")
+                    toastManager?.show(.error(String(localized: "Failed to save locally. Please try again.")))
+                }
 
                 // Mark pantry item if selected
                 if let pantryItem = selectedPantryItem {
@@ -400,7 +408,12 @@ struct CommunityCreateListingView: View {
                     } else {
                         pantryItem.isDonated = true
                     }
-                    try? modelContext.save()
+                    do {
+                        try modelContext.save()
+                        PSLogger.general.info("Pantry item marked successfully")
+                    } catch {
+                        PSLogger.general.error("Failed to mark pantry item: \(error.localizedDescription)")
+                    }
                 }
 
                 // Trigger celebration
@@ -423,8 +436,6 @@ struct CommunityCreateListingView: View {
             }
         }
     }
-
-    @Environment(SyncService.self) private var syncService: SyncService?
 
     // MARK: - Food Categories
 

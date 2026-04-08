@@ -1,5 +1,6 @@
 import Foundation
 import Supabase
+import os
 
 // MARK: - CommunityService
 // Dedicated service for all Community tab Supabase operations.
@@ -13,11 +14,12 @@ final class CommunityService {
     var error: String?
 
     private let client = AppSupabase.client
+    private let logger = PSLogger(category: .community)
 
     // MARK: - Fetch Community Feed
 
-    /// Fetch active listings for the community feed.
-    func fetchFeed(searchQuery: String? = nil) async {
+    /// Fetch active listings for the community feed with pagination.
+    func fetchFeed(searchQuery: String? = nil, page: Int = 0, pageSize: Int = 20) async {
         isLoading = true
         defer { isLoading = false }
         error = nil
@@ -34,15 +36,17 @@ final class CommunityService {
                 filterQuery = filterQuery.ilike("item_name", pattern: "%\(search)%")
             }
 
+            let offset = page * pageSize
             let results: [CommunityListingDTO] = try await filterQuery
                 .order("date_posted", ascending: false)
-                .limit(50)
+                .range(from: offset, to: offset + pageSize - 1)
                 .execute()
                 .value
             listings = results
+            logger.info("Fetched \(results.count) listings for page \(page)")
         } catch {
-            self.error = "Could not load community feed."
-            print("[CommunityService] fetchFeed failed: \(error)")
+            logger.error("FetchFeed failed: \(error.localizedDescription)")
+            self.error = "Could not load community feed. Please try again."
         }
     }
 
@@ -59,8 +63,9 @@ final class CommunityService {
                 .execute()
                 .value
             myListings = results
+            logger.info("Fetched \(results.count) my listings")
         } catch {
-            print("[CommunityService] fetchMyListings failed: \(error)")
+            logger.debug("FetchMyListings failed: \(error.localizedDescription)")
         }
     }
 
@@ -88,16 +93,18 @@ final class CommunityService {
                 .from("shared_listings")
                 .insert(payload)
                 .execute()
+            logger.info("Created listing: \(input.itemName)")
             return true
         } catch {
-            self.error = "Could not create listing."
-            print("[CommunityService] createListing failed: \(error)")
+            logger.error("CreateListing failed: \(error.localizedDescription)")
+            self.error = "Could not create listing. Please try again."
             return false
         }
     }
 
     // MARK: - Claim Listing
 
+    /// Claim a listing with atomic update (RLS ensures only active listings can be claimed)
     func claimListing(listingId: UUID, claimerId: UUID) async -> Bool {
         do {
             try await client
@@ -109,10 +116,11 @@ final class CommunityService {
                 .eq("id", value: listingId.uuidString)
                 .eq("status", value: "active")
                 .execute()
+            logger.info("Claimed listing: \(listingId.uuidString)")
             return true
         } catch {
-            self.error = "Could not claim this item."
-            print("[CommunityService] claimListing failed: \(error)")
+            logger.error("ClaimListing failed: \(error.localizedDescription)")
+            self.error = "Could not claim this item. Please try again."
             return false
         }
     }
@@ -130,10 +138,11 @@ final class CommunityService {
                 .update(updates)
                 .eq("id", value: listingId.uuidString)
                 .execute()
+            logger.info("Updated listing status to: \(newStatus)")
             return true
         } catch {
-            self.error = "Could not update listing."
-            print("[CommunityService] updateStatus failed: \(error)")
+            logger.error("UpdateListingStatus failed: \(error.localizedDescription)")
+            self.error = "Could not update listing. Please try again."
             return false
         }
     }
@@ -147,10 +156,11 @@ final class CommunityService {
                 .delete()
                 .eq("id", value: listingId.uuidString)
                 .execute()
+            logger.info("Deleted listing: \(listingId.uuidString)")
             return true
         } catch {
-            self.error = "Could not remove listing."
-            print("[CommunityService] deleteListing failed: \(error)")
+            logger.error("DeleteListing failed: \(error.localizedDescription)")
+            self.error = "Could not remove listing. Please try again."
             return false
         }
     }
@@ -175,11 +185,12 @@ final class CommunityService {
             try await client.rpc("increment_report_count", params: ["listing_uuid": listingId.uuidString])
                 .execute()
 
+            logger.info("Reported listing: \(listingId.uuidString) for reason: \(reason)")
             return true
         } catch {
-            // Non-critical — report silently
-            print("[CommunityService] reportListing failed: \(error)")
-            return true // Don't block the user
+            logger.error("ReportListing failed: \(error.localizedDescription)")
+            // Don't expose error to user - reporting is non-critical
+            return false
         }
     }
 }

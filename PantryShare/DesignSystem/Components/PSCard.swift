@@ -71,6 +71,31 @@ struct PSActionCard: View {
     }
 }
 
+// MARK: - Glass Card Variant
+
+/// A glass-morphism card that uses system material for a premium translucent feel.
+struct PSGlassCard<Content: View>: View {
+    let padding: CGFloat
+    @ViewBuilder let content: () -> Content
+
+    init(padding: CGFloat = PSSpacing.cardPadding, @ViewBuilder content: @escaping () -> Content) {
+        self.padding = padding
+        self.content = content
+    }
+
+    var body: some View {
+        content()
+            .padding(padding)
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg))
+            .overlay(
+                RoundedRectangle(cornerRadius: PSSpacing.radiusLg)
+                    .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+            )
+            .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
+    }
+}
+
 #Preview {
     VStack(spacing: 16) {
         PSCard {

@@ -25,10 +25,16 @@ struct PSFilterChip: View {
                 if !isSelected {
                     Capsule()
                         .strokeBorder(PSColors.borderLight, lineWidth: 1)
+                } else {
+                    Capsule()
+                        .stroke(Color.white.opacity(0.15), lineWidth: 0.5)
                 }
             }
+            .scaleEffect(isSelected ? 1.06 : 1.0)
         }
         .buttonStyle(PressableButtonStyle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(title)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
@@ -48,7 +54,7 @@ struct PSFilterChipRow<Item: Identifiable & Hashable>: View {
                         title: String(localized: "All"),
                         isSelected: selection == nil
                     ) {
-                        withAnimation(PSMotion.springQuick) { selection = nil }
+                        withAnimation(PSMotion.springBouncy) { selection = nil }
                     }
                 }
 
@@ -58,7 +64,7 @@ struct PSFilterChipRow<Item: Identifiable & Hashable>: View {
                         icon: iconFor?(item),
                         isSelected: selection == item
                     ) {
-                        withAnimation(PSMotion.springQuick) {
+                        withAnimation(PSMotion.springBouncy) {
                             selection = selection == item ? nil : item
                         }
                     }

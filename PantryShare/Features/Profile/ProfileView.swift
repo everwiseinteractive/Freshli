@@ -11,6 +11,7 @@ struct ProfileView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(AuthManager.self) private var authManager: AuthManager?
+    @Environment(NetworkMonitor.self) private var networkMonitor: NetworkMonitor?
 
     @State private var showExpiryAlerts = false
     @State private var showAuthSheet = false
@@ -18,6 +19,7 @@ struct ProfileView: View {
     @State private var showSettings = false
     @State private var showHouseholdSettings = false
     @State private var showLanguageSettings = false
+    @State private var householdSize: Int = 1
     @AppStorage("isDarkMode") private var isDarkMode = false
     @State private var appeared = false
 
@@ -37,7 +39,23 @@ struct ProfileView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
+            VStack(spacing: PSSpacing.xxl) {
+                // Sync status indicator
+                if networkMonitor?.isConnected == false {
+                    HStack(spacing: PSSpacing.sm) {
+                        Image(systemName: "wifi.slash")
+                            .font(.system(size: 12, weight: .semibold))
+                        Text(String(localized: "Offline"))
+                            .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
+                    }
+                    .foregroundStyle(PSColors.warningAmber)
+                    .padding(.horizontal, PSSpacing.md)
+                    .padding(.vertical, PSSpacing.sm)
+                    .background(PSColors.warningAmber.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusSm, style: .continuous))
+                    .padding(.horizontal, PSSpacing.screenHorizontal)
+                }
+
                 profileCard
                     .staggeredAppearance(index: 0)
                 statsGrid
@@ -86,10 +104,33 @@ struct ProfileView: View {
             .presentationDragIndicator(.visible)
             .presentationDetents([.large])
         }
-        .alert(String(localized: "Household Settings"), isPresented: $showHouseholdSettings) {
-            Button(String(localized: "OK"), role: .cancel) {}
-        } message: {
-            Text(String(localized: "Household sharing lets family members contribute to the same pantry. Coming in a future update!"))
+        .sheet(isPresented: $showHouseholdSettings) {
+            VStack(spacing: PSSpacing.lg) {
+                VStack(spacing: PSSpacing.sm) {
+                    Text(String(localized: "Household Size"))
+                        .font(PSTypography.title3)
+                        .foregroundStyle(PSColors.textPrimary)
+                    Text(String(localized: "How many people share this pantry?"))
+                        .font(PSTypography.caption1)
+                        .foregroundStyle(PSColors.textSecondary)
+                }
+
+                Picker(String(localized: "Household Members"), selection: $householdSize) {
+                    ForEach(1...10, id: \.self) { num in
+                        Text("\(num) \(num == 1 ? String(localized: "person") : String(localized: "people"))").tag(num)
+                    }
+                }
+                .pickerStyle(.wheel)
+
+                PSButton(title: String(localized: "Save"), icon: "checkmark.circle") {
+                    showHouseholdSettings = false
+                    try? modelContext.save()
+                }
+
+                Spacer()
+            }
+            .padding(PSSpacing.lg)
+            .presentationDragIndicator(.visible)
         }
         .alert(String(localized: "Language"), isPresented: $showLanguageSettings) {
             Button(String(localized: "Open Settings"), role: .cancel) {
@@ -111,7 +152,7 @@ struct ProfileView: View {
             Image(systemName: "person.crop.circle.fill")
                 .font(.system(size: PSLayout.avatarSize(64)))
                 .foregroundStyle(PSColors.primaryGreen.opacity(0.4))
-                .adaptiveFrame(width: 80, height: 80)
+                .adaptiveFrame(width: PSLayout.scaled(80), height: PSLayout.scaled(80))
                 .background(.white)
                 .clipShape(Circle())
                 .overlay(
@@ -151,46 +192,62 @@ struct ProfileView: View {
     private var statsGrid: some View {
         let stats = ImpactService(modelContext: modelContext).calculateStats()
 
-        return HStack(spacing: 12) {
-            // Figma: emerald-600 card
-            VStack(spacing: 8) {
-                Image(systemName: "leaf.fill")
-                    .font(.system(size: PSLayout.scaledFont(24)))
-                    .opacity(0.8)
-                Text("\(stats.itemsSaved)")
-                    .font(.system(size: PSLayout.scaledFont(30), weight: .bold))
-                Text(String(localized: "Food Saved"))
-                    .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
-                    .opacity(0.8)
-            }
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 20)
-            .background(PSColors.headerGreen)
-            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
-            .shadow(color: PSColors.headerGreen.opacity(0.2), radius: 16, y: 8)
+        return VStack(spacing: PSSpacing.lg) {
+            HStack(spacing: PSSpacing.md) {
+                // Figma: emerald-600 card
+                VStack(spacing: PSSpacing.sm) {
+                    Image(systemName: "leaf.fill")
+                        .font(.system(size: PSLayout.scaledFont(24)))
+                        .opacity(0.8)
+                    Text("\(stats.itemsSaved)")
+                        .font(.system(size: PSLayout.scaledFont(30), weight: .bold))
+                    Text(String(localized: "Food Saved"))
+                        .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                        .opacity(0.8)
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, PSSpacing.xl)
+                .background(PSColors.headerGreen)
+                .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
+                .shadow(color: PSColors.headerGreen.opacity(0.2), radius: 16, y: 8)
 
-            // Figma: white card with heart
-            VStack(spacing: 8) {
-                Image(systemName: "heart.fill")
-                    .font(.system(size: PSLayout.scaledFont(24)))
-                    .foregroundStyle(Color(hex: 0xFB7185)) // rose-400
-                Text("\(stats.itemsShared)")
-                    .font(.system(size: PSLayout.scaledFont(30), weight: .bold))
-                    .foregroundStyle(Color(hex: 0x022C22)) // emerald-950
-                Text(String(localized: "Meals Shared"))
-                    .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
-                    .foregroundStyle(PSColors.primaryGreen.opacity(0.6))
+                // Figma: white card with heart
+                VStack(spacing: PSSpacing.sm) {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: PSLayout.scaledFont(24)))
+                        .foregroundStyle(Color(hex: 0xFB7185)) // rose-400
+                    Text("\(stats.itemsShared)")
+                        .font(.system(size: PSLayout.scaledFont(30), weight: .bold))
+                        .foregroundStyle(Color(hex: 0x022C22)) // emerald-950
+                    Text(String(localized: "Meals Shared"))
+                        .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                        .foregroundStyle(PSColors.primaryGreen.opacity(0.6))
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, PSSpacing.xl)
+                .background(PSColors.surfaceCard)
+                .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
+                        .strokeBorder(PSColors.emeraldSurface, lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.03), radius: 8, y: 4)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 20)
-            .background(PSColors.surfaceCard)
-            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
-                    .strokeBorder(PSColors.emeraldSurface, lineWidth: 1)
-            )
-            .shadow(color: .black.opacity(0.03), radius: 8, y: 4)
+
+            // View Full Impact CTA
+            NavigationLink(destination: ImpactDashboardView()) {
+                HStack {
+                    Text(String(localized: "View Full Impact"))
+                        .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
+                        .foregroundStyle(PSColors.primaryGreen)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                        .foregroundStyle(PSColors.primaryGreen)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, PSSpacing.md)
+            }
         }
     }
 
@@ -257,7 +314,7 @@ struct ProfileView: View {
                 progress: milestone.progress,
                 lineWidth: 4,
                 color: milestone.isUnlocked ? PSColors.primaryGreen : PSColors.secondaryAmber,
-                size: 44
+                size: PSLayout.scaled(44)
             )
             .overlay {
                 Image(systemName: milestone.icon)
@@ -265,7 +322,7 @@ struct ProfileView: View {
                     .foregroundStyle(milestone.isUnlocked ? PSColors.primaryGreen : PSColors.secondaryAmber)
             }
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: PSSpacing.xxxs) {
                 Text(milestone.title)
                     .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
                     .foregroundStyle(PSColors.textPrimary)
@@ -337,9 +394,9 @@ struct ProfileView: View {
                 Button {
                     Task { await authManager?.signOut() }
                 } label: {
-                    HStack(spacing: 12) {
+                    HStack(spacing: PSSpacing.md) {
                         Image(systemName: "rectangle.portrait.and.arrow.right")
-                            .font(.system(size: 16))
+                            .font(.system(size: PSLayout.scaledFont(16)))
                         Text(String(localized: "Logout"))
                             .font(.system(size: PSLayout.scaledFont(16), weight: .semibold))
                         Spacer()
@@ -349,29 +406,29 @@ struct ProfileView: View {
                     }
                     .foregroundStyle(PSColors.expiredRed)
                     .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
-                    .padding(.vertical, 16)
+                    .padding(.vertical, PSSpacing.lg)
                 }
 
                 Divider().padding(.leading, 60)
 
                 // Delete Account
                 Button { showDeleteConfirm = true } label: {
-                    HStack(spacing: 12) {
+                    HStack(spacing: PSSpacing.md) {
                         Image(systemName: "trash.fill")
-                            .font(.system(size: 16))
+                            .font(.system(size: PSLayout.scaledFont(16)))
                         Text(String(localized: "Delete Account"))
                             .font(.system(size: PSLayout.scaledFont(16), weight: .semibold))
                         Spacer()
                     }
                     .foregroundStyle(PSColors.expiredRed.opacity(0.7))
                     .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
-                    .padding(.vertical, 16)
+                    .padding(.vertical, PSSpacing.lg)
                 }
             } else {
                 Button { showAuthSheet = true } label: {
-                    HStack(spacing: 12) {
+                    HStack(spacing: PSSpacing.md) {
                         Image(systemName: "person.badge.key.fill")
-                            .font(.system(size: 16))
+                            .font(.system(size: PSLayout.scaledFont(16)))
                         Text(String(localized: "Sign In"))
                             .font(.system(size: PSLayout.scaledFont(16), weight: .semibold))
                         Spacer()
@@ -381,7 +438,7 @@ struct ProfileView: View {
                     }
                     .foregroundStyle(PSColors.primaryGreen)
                     .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
-                    .padding(.vertical, 16)
+                    .padding(.vertical, PSSpacing.lg)
                 }
             }
         }
@@ -399,9 +456,9 @@ struct ProfileView: View {
             PSHaptics.shared.lightTap()
             action()
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: PSSpacing.md) {
                 Image(systemName: icon)
-                    .font(.system(size: 16))
+                    .font(.system(size: PSLayout.scaledFont(16)))
                     .foregroundStyle(Color(hex: 0x064E3B)) // emerald-900
                 Text(title)
                     .font(.system(size: PSLayout.scaledFont(16), weight: .semibold))
@@ -412,14 +469,14 @@ struct ProfileView: View {
                     .foregroundStyle(PSColors.emeraldMuted)
             }
             .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
-            .padding(.vertical, 16)
+            .padding(.vertical, PSSpacing.lg)
         }
     }
 
     private func settingsToggleRow(icon: String, title: String, tintColor: Color, isOn: Binding<Bool>) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: PSSpacing.md) {
             Image(systemName: icon)
-                .font(.system(size: 16))
+                .font(.system(size: PSLayout.scaledFont(16)))
                 .foregroundStyle(tintColor)
             Text(title)
                 .font(.system(size: PSLayout.scaledFont(16), weight: .semibold))
@@ -431,6 +488,6 @@ struct ProfileView: View {
                 .tint(PSColors.primaryGreen)
         }
         .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
-        .padding(.vertical, 12)
+        .padding(.vertical, PSSpacing.md)
     }
 }
