@@ -170,7 +170,7 @@ enum CelebrationType: Identifiable, Equatable {
     var subtitle: String {
         switch self {
         case .firstItemAdded:
-            return String(localized: "Welcome to PantryShare! Your journey to reduce food waste starts now.")
+            return String(localized: "Welcome to Freshli! Your journey to reduce food waste starts now.")
         case .firstFoodSaved:
             return String(localized: "You saved food from going to waste. Every item matters.")
         case .recipeMatchSuccess(let name):

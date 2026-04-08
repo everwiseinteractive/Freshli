@@ -23,7 +23,7 @@ struct OnboardingView: View {
 
     private let steps: [OnboardingStep] = [
         OnboardingStep(
-            title: String(localized: "Welcome to PantryShare"),
+            title: String(localized: "Welcome to Freshli"),
             description: String(localized: "Your digital kitchen assistant to organize, cook, and share."),
             icon: "leaf.fill",
             color: PSColors.primaryGreen,

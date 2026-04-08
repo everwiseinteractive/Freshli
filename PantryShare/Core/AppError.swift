@@ -39,7 +39,7 @@ enum AppError: LocalizedError {
         case .networkUnavailable:
             return String(localized: "Check your internet connection and try again.")
         case .notificationPermissionDenied:
-            return String(localized: "Open Settings → PantryShare → Notifications to enable.")
+            return String(localized: "Open Settings → Freshli → Notifications to enable.")
         case .authRequired:
             return String(localized: "Sign in from the Profile tab to unlock all features.")
         default:

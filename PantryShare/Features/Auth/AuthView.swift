@@ -138,7 +138,7 @@ struct AuthLandingView: View {
                         }
 
                         VStack(spacing: PSSpacing.sm) {
-                            Text(String(localized: "PantryShare"))
+                            Text(String(localized: "Freshli"))
                                 .font(.system(size: PSLayout.scaledFont(34), weight: .black))
                                 .tracking(-0.5)
                                 .foregroundStyle(PSColors.textPrimary)

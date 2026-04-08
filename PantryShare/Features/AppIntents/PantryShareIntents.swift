@@ -152,7 +152,7 @@ struct OpenCommunityIntent: AppIntent {
     static var openAppWhenRun: Bool = true
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        return .result(dialog: "Opening the PantryShare community...")
+        return .result(dialog: "Opening the Freshli community...")
     }
 }
 

@@ -133,7 +133,7 @@ struct EcoShareCard: View {
                 HStack(spacing: 6) {
                     Image(systemName: "leaf.fill")
                         .font(.system(size: 14, weight: .bold))
-                    Text("PantryShare")
+                    Text("Freshli")
                         .font(.system(size: 14, weight: .bold, design: .default))
                 }
                 .foregroundColor(PSColors.textOnPrimary)

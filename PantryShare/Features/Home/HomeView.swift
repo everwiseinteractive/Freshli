@@ -76,7 +76,7 @@ struct HomeView: View {
                         Text(greeting)
                             .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
                             .foregroundStyle(.white.opacity(0.7))
-                        Text(authManager?.currentDisplayName ?? String(localized: "PantryShare User"))
+                        Text(authManager?.currentDisplayName ?? String(localized: "Freshli User"))
                             .font(.system(size: PSLayout.scaledFont(24), weight: .bold))
                             .tracking(-0.3)
                             .foregroundStyle(.white)

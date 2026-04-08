@@ -212,7 +212,7 @@ struct ExpiringItemsWidgetView: View {
                 HStack(spacing: 5) {
                     Image(systemName: "leaf.fill")
                         .foregroundStyle(emeraldGreen)
-                    Text("PantryShare")
+                    Text("Freshli")
                         .font(.system(size: 13, weight: .bold))
                 }
 

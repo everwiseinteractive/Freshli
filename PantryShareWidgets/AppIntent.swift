@@ -6,7 +6,7 @@ import AppIntents
 
 struct PantryWidgetConfigIntent: WidgetConfigurationIntent {
     static var title: LocalizedStringResource { "Pantry Widget" }
-    static var description: IntentDescription { "Configure your PantryShare widget." }
+    static var description: IntentDescription { "Configure your Freshli widget." }
 
     @Parameter(title: "Show Category", default: .all)
     var category: WidgetCategoryFilter

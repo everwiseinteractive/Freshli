@@ -52,7 +52,7 @@ struct SignUpView: View {
                             .tracking(-0.5)
                             .foregroundStyle(PSColors.textPrimary)
 
-                        Text(String(localized: "Join PantryShare and reduce food waste together"))
+                        Text(String(localized: "Join Freshli and reduce food waste together"))
                             .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
                             .foregroundStyle(PSColors.textSecondary)
                             .multilineTextAlignment(.center)

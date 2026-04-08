@@ -140,7 +140,7 @@ struct ProfileView: View {
             }
             Button(String(localized: "Cancel"), role: .cancel) {}
         } message: {
-            Text(String(localized: "PantryShare uses your device language. To change it, update your language in iOS Settings."))
+            Text(String(localized: "Freshli uses your device language. To change it, update your language in iOS Settings."))
         }
     }
 
@@ -161,7 +161,7 @@ struct ProfileView: View {
                 .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
 
             VStack(alignment: .leading, spacing: PSSpacing.xxs) {
-                Text(authManager?.currentDisplayName ?? (profile.displayName.isEmpty ? String(localized: "PantryShare User") : profile.displayName))
+                Text(authManager?.currentDisplayName ?? (profile.displayName.isEmpty ? String(localized: "Freshli User") : profile.displayName))
                     .font(.system(size: PSLayout.scaledFont(24), weight: .bold))
                     .tracking(-0.3)
                     .foregroundStyle(Color(hex: 0x022C22)) // emerald-950

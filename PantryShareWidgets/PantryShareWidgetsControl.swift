@@ -20,7 +20,7 @@ struct PantryShareWidgetsControl: ControlWidget {
             }
         }
         .displayName("Open Pantry")
-        .description("Quick access to your PantryShare pantry.")
+        .description("Quick access to your Freshli pantry.")
     }
 
     private func expiringCount() -> String {
@@ -34,7 +34,7 @@ struct PantryShareWidgetsControl: ControlWidget {
 
 struct OpenPantryIntent: AppIntent {
     static var title: LocalizedStringResource = "Open Pantry"
-    static var description: IntentDescription = "Opens the PantryShare app."
+    static var description: IntentDescription = "Opens the Freshli app."
     static var openAppWhenRun: Bool = true
 
     func perform() async throws -> some IntentResult {

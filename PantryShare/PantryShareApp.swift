@@ -108,7 +108,7 @@ struct PantryShareApp: App {
                     .scaleEffect(launchIconScale)
                     .opacity(launchIconOpacity)
 
-                Text("PantryShare")
+                Text("Freshli")
                     .font(.system(size: PSLayout.scaledFont(28), weight: .bold))
                     .tracking(-0.3)
                     .foregroundStyle(PSColors.textPrimary)

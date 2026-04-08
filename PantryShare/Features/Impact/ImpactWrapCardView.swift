@@ -172,7 +172,7 @@ struct ImpactWrapCardView: View {
             HStack(spacing: PSSpacing.xs) {
                 Image(systemName: "leaf.fill")
                     .font(.system(size: 12, weight: .bold))
-                Text("PantryShare")
+                Text("Freshli")
                     .font(.system(size: 12, weight: .bold, design: .default))
             }
             .foregroundColor(PSColors.textOnPrimary)
