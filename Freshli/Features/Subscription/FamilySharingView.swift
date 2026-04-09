@@ -5,17 +5,29 @@ struct FamilySharingView: View {
     @Environment(SubscriptionService.self) var subscriptionService
     @State private var showInviteSheet = false
     @State private var showConfirmLeave = false
+    @State private var showJoinSheet = false
     @State private var memberToRemove: FamilyMember?
     @State private var familyName = ""
+    @State private var joinShareURL: String = ""
+    @State private var memberName = ""
+    @State private var isCreating = false
+    @State private var isJoining = false
+    @State private var errorMessage: String?
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: PSSpacing.xl) {
+                    syncStatusIndicator
+
                     if let family = familyService.currentFamily {
                         familyContent(family)
                     } else {
                         emptyState
+                    }
+
+                    if let error = errorMessage {
+                        errorBanner(error)
                     }
                 }
                 .padding(.horizontal, PSSpacing.screenHorizontal)
@@ -24,7 +36,78 @@ struct FamilySharingView: View {
             .navigationTitle("Family Sharing")
             .navigationBarTitleDisplayMode(.inline)
             .background(PSColors.backgroundPrimary)
+            .sheet(isPresented: $showJoinSheet) {
+                joinFamilySheet
+            }
         }
+    }
+
+    // MARK: - Sync Status Indicator
+
+    private var syncStatusIndicator: some View {
+        HStack(spacing: PSSpacing.sm) {
+            switch familyService.syncStatus {
+            case .idle:
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(PSColors.primaryGreen)
+                Text("Ready")
+                    .font(PSTypography.caption1)
+                    .foregroundStyle(PSColors.textSecondary)
+
+            case .syncing:
+                ProgressView()
+                    .tint(PSColors.primaryGreen)
+                Text("Syncing...")
+                    .font(PSTypography.caption1)
+                    .foregroundStyle(PSColors.textSecondary)
+
+            case .synced:
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(PSColors.primaryGreen)
+                Text("Synced")
+                    .font(PSTypography.caption1)
+                    .foregroundStyle(PSColors.textSecondary)
+
+            case .error(let message):
+                Image(systemName: "exclamationmark.circle.fill")
+                    .foregroundStyle(PSColors.expiredRed)
+                Text(message)
+                    .font(PSTypography.caption1)
+                    .foregroundStyle(PSColors.expiredRed)
+            }
+
+            Spacer()
+        }
+        .padding(PSSpacing.md)
+        .background(PSColors.backgroundSecondary)
+        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd))
+    }
+
+    // MARK: - Error Banner
+
+    private func errorBanner(_ error: String) -> some View {
+        VStack(alignment: .leading, spacing: PSSpacing.sm) {
+            HStack(spacing: PSSpacing.sm) {
+                Image(systemName: "exclamationmark.circle.fill")
+                    .foregroundStyle(PSColors.expiredRed)
+
+                Text(error)
+                    .font(PSTypography.caption1)
+                    .foregroundStyle(PSColors.textPrimary)
+
+                Spacer()
+
+                Button {
+                    errorMessage = nil
+                } label: {
+                    Image(systemName: "xmark")
+                        .foregroundStyle(PSColors.textSecondary)
+                }
+            }
+        }
+        .padding(PSSpacing.md)
+        .background(PSColors.expiredRed.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd))
     }
 
     // MARK: - Family Content
@@ -43,6 +126,12 @@ struct FamilySharingView: View {
                             Text("\(family.members.count) member\(family.members.count == 1 ? "" : "s")")
                                 .font(PSTypography.caption1)
                                 .foregroundStyle(PSColors.textSecondary)
+
+                            if familyService.isFamilyOwner {
+                                Text("Owner")
+                                    .font(PSTypography.caption2)
+                                    .foregroundStyle(PSColors.primaryGreen)
+                            }
                         }
 
                         Spacer()
@@ -69,8 +158,23 @@ struct FamilySharingView: View {
             // Shared pantry toggle
             sharedPantrySection
 
-            // Danger zone
-            if familyService.isAdmin {
+            // Leave family option (for non-owners)
+            if !familyService.isFamilyOwner {
+                VStack(spacing: PSSpacing.md) {
+                    PSButton(
+                        title: "Leave Family",
+                        style: .secondary,
+                        size: .medium,
+                        isFullWidth: true,
+                        action: {
+                            showConfirmLeave = true
+                        }
+                    )
+                }
+            }
+
+            // Danger zone (for owners)
+            if familyService.isFamilyOwner {
                 dangerZone
             }
         }
@@ -94,7 +198,7 @@ struct FamilySharingView: View {
 
             Spacer()
 
-            if familyService.isAdmin && member.role == .member {
+            if familyService.isFamilyOwner && member.role == .member {
                 Menu {
                     Button("Remove Member", role: .destructive) {
                         memberToRemove = member
@@ -103,6 +207,7 @@ struct FamilySharingView: View {
                     Image(systemName: "ellipsis")
                         .foregroundStyle(PSColors.textSecondary)
                 }
+                .accessibilityLabel("Remove \(member.name)")
             }
         }
         .padding(PSSpacing.md)
@@ -111,8 +216,16 @@ struct FamilySharingView: View {
         .confirmationDialog("Remove Member?", isPresented: .constant(memberToRemove != nil)) {
             if let member = memberToRemove {
                 Button("Remove", role: .destructive) {
-                    familyService.removeMember(member)
-                    memberToRemove = nil
+                    Task {
+                        do {
+                            try await familyService.removeMember(member)
+                            memberToRemove = nil
+                            PSHaptics.shared.success()
+                        } catch {
+                            errorMessage = error.localizedDescription
+                            memberToRemove = nil
+                        }
+                    }
                 }
                 Button("Cancel", role: .cancel) {
                     memberToRemove = nil
@@ -136,24 +249,25 @@ struct FamilySharingView: View {
 
             PSCard {
                 VStack(spacing: PSSpacing.md) {
-                    if let inviteCode = familyService.inviteCode {
+                    if let inviteURL = familyService.inviteURL {
                         HStack(spacing: PSSpacing.md) {
                             VStack(alignment: .leading, spacing: PSSpacing.xs) {
-                                Text("Invite Code")
+                                Text("Invite Link")
                                     .font(PSTypography.caption1)
                                     .foregroundStyle(PSColors.textSecondary)
 
-                                Text(inviteCode)
-                                    .font(.system(size: 18, weight: .bold, design: .monospaced))
+                                Text(inviteURL.host() ?? "Invite")
+                                    .font(PSTypography.callout)
                                     .foregroundStyle(PSColors.textPrimary)
-                                    .tracking(2)
+                                    .lineLimit(1)
                             }
 
                             Spacer()
 
                             VStack(spacing: PSSpacing.sm) {
                                 Button {
-                                    UIPasteboard.general.string = inviteCode
+                                    UIPasteboard.general.string = inviteURL.absoluteString
+                                    PSHaptics.shared.lightTap()
                                 } label: {
                                     Image(systemName: "doc.on.doc")
                                         .font(.system(size: 16, weight: .semibold))
@@ -162,10 +276,12 @@ struct FamilySharingView: View {
                                         .background(PSColors.primaryGreen.opacity(0.12))
                                         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
                                 }
+                                .accessibilityLabel("Copy invite link")
 
                                 ShareLink(
-                                    item: "Join my Freshli family! Use code: \(inviteCode)",
+                                    item: inviteURL,
                                     subject: Text("Join Freshli Family"),
+                                    message: Text("Join my Freshli family to share pantry items!"),
                                     label: {
                                         Image(systemName: "square.and.arrow.up")
                                             .font(.system(size: 16, weight: .semibold))
@@ -175,22 +291,17 @@ struct FamilySharingView: View {
                                             .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
                                     }
                                 )
+                                .accessibilityLabel("Share invite link")
                             }
                         }
                         .padding(PSSpacing.md)
                         .background(PSColors.green50)
                         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
+                    } else {
+                        Text("No invite link available")
+                            .font(PSTypography.caption1)
+                            .foregroundStyle(PSColors.textSecondary)
                     }
-
-                    PSButton(
-                        title: "Generate New Code",
-                        style: .secondary,
-                        size: .medium,
-                        isFullWidth: false,
-                        action: {
-                            familyService.generateInviteCode()
-                        }
-                    )
                 }
             }
         }
@@ -221,9 +332,19 @@ struct FamilySharingView: View {
 
                     Toggle("", isOn: Binding(
                         get: { familyService.currentFamily?.sharedPantryEnabled ?? false },
-                        set: { _ in familyService.toggleSharedPantry() }
+                        set: { _ in
+                            Task {
+                                do {
+                                    try await familyService.toggleSharedPantry()
+                                    PSHaptics.shared.lightTap()
+                                } catch {
+                                    errorMessage = error.localizedDescription
+                                }
+                            }
+                        }
                     ))
                     .tint(PSColors.primaryGreen)
+                    .accessibilityLabel("Enable shared pantry")
                 }
             }
         }
@@ -257,11 +378,18 @@ struct FamilySharingView: View {
             }
             .confirmationDialog("Leave Family?", isPresented: $showConfirmLeave) {
                 Button("Leave Family", role: .destructive) {
-                    familyService.leaveFamily()
+                    Task {
+                        do {
+                            try await familyService.leaveFamily()
+                            PSHaptics.shared.success()
+                        } catch {
+                            errorMessage = error.localizedDescription
+                        }
+                    }
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("You'll no longer have access to the shared pantry. You can rejoin with an invite code later.")
+                Text("You'll no longer have access to the shared pantry. You can rejoin with an invite link later.")
             }
         }
     }
@@ -269,15 +397,27 @@ struct FamilySharingView: View {
     // MARK: - Empty State
 
     private var emptyState: some View {
-        PSEmptyState(
-            icon: "person.2",
-            title: "No Family Group Yet",
-            message: "Create a family group to share your pantry with household members and sync across devices.",
-            actionTitle: "Create Family",
-            action: {
-                showInviteSheet = true
-            }
-        )
+        VStack(spacing: PSSpacing.lg) {
+            PSEmptyState(
+                icon: "person.2",
+                title: "No Family Group Yet",
+                message: "Create a family group to share your pantry with household members and sync across devices.",
+                actionTitle: "Create Family",
+                action: {
+                    showInviteSheet = true
+                }
+            )
+
+            PSButton(
+                title: "Join Existing Family",
+                style: .secondary,
+                size: .medium,
+                isFullWidth: true,
+                action: {
+                    showJoinSheet = true
+                }
+            )
+        }
         .sheet(isPresented: $showInviteSheet) {
             createFamilySheet
         }
@@ -296,15 +436,25 @@ struct FamilySharingView: View {
                         style: .primary,
                         size: .medium,
                         isFullWidth: true,
+                        isLoading: isCreating,
                         action: {
                             if !familyName.isEmpty {
-                                familyService.createFamily(name: familyName)
-                                showInviteSheet = false
-                                familyName = ""
+                                isCreating = true
+                                Task {
+                                    do {
+                                        try await familyService.createFamily(name: familyName)
+                                        showInviteSheet = false
+                                        familyName = ""
+                                        PSHaptics.shared.success()
+                                    } catch {
+                                        errorMessage = error.localizedDescription
+                                    }
+                                    isCreating = false
+                                }
                             }
                         }
                     )
-                    .disabled(familyName.isEmpty)
+                    .disabled(familyName.isEmpty || isCreating)
                 }
             }
             .navigationTitle("Create Family Group")
@@ -314,6 +464,65 @@ struct FamilySharingView: View {
                     Button("Cancel") {
                         showInviteSheet = false
                         familyName = ""
+                        isCreating = false
+                    }
+                }
+            }
+        }
+    }
+
+    private var joinFamilySheet: some View {
+        NavigationStack {
+            Form {
+                Section("Share Link or Code") {
+                    TextField("Paste invite link or code", text: $joinShareURL)
+                }
+
+                Section("Your Name") {
+                    TextField("Your name in the family", text: $memberName)
+                }
+
+                Section("") {
+                    PSButton(
+                        title: "Join Family",
+                        style: .primary,
+                        size: .medium,
+                        isFullWidth: true,
+                        isLoading: isJoining,
+                        action: {
+                            if !joinShareURL.isEmpty && !memberName.isEmpty {
+                                isJoining = true
+                                Task {
+                                    do {
+                                        if let url = URL(string: joinShareURL) {
+                                            try await familyService.joinFamily(shareURL: url, memberName: memberName)
+                                            showJoinSheet = false
+                                            joinShareURL = ""
+                                            memberName = ""
+                                            PSHaptics.shared.success()
+                                        } else {
+                                            errorMessage = "Invalid URL or code format"
+                                        }
+                                    } catch {
+                                        errorMessage = error.localizedDescription
+                                    }
+                                    isJoining = false
+                                }
+                            }
+                        }
+                    )
+                    .disabled(joinShareURL.isEmpty || memberName.isEmpty || isJoining)
+                }
+            }
+            .navigationTitle("Join Family")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        showJoinSheet = false
+                        joinShareURL = ""
+                        memberName = ""
+                        isJoining = false
                     }
                 }
             }
@@ -335,7 +544,8 @@ struct FamilySharingView: View {
             FamilyMember(name: "Bob", role: .member),
             FamilyMember(name: "Charlie", role: .member)
         ],
-        sharedPantryEnabled: true
+        sharedPantryEnabled: true,
+        zoneID: "FreshliFamily"
     )
 
     FamilySharingView()
@@ -343,6 +553,6 @@ struct FamilySharingView: View {
         .environment(subscriptionService)
         .onAppear {
             familyService.currentFamily = previewFamily
-            familyService.generateInviteCode()
+            familyService.inviteURL = URL(string: "https://freshli.app/family/invite")
         }
 }

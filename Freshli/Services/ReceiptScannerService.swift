@@ -154,18 +154,20 @@ final class ReceiptScannerService {
     private func filterNonFoodLines(_ lines: [String]) -> [String] {
         let storePatterns = [
             "store", "supermarket", "market", "grocery", "shop", "walmart", "target", "costco", "whole foods", "trader joe",
-            "kroger", "safeway", "publix", "wegmans", "albertsons", "waitrose", "tesco", "sainsbury", "asda", "morrisons"
+            "kroger", "safeway", "publix", "wegmans", "albertsons", "waitrose", "tesco", "sainsbury", "asda", "morrisons",
+            "dillons", "harris teeter", "king kullen", "winco", "sprouts"
         ]
 
         let nonFoodPatterns = [
             "^[0-9]{8,}$",              // Barcodes
             "^[0-9]{1,2}/[0-9]{1,2}/[0-9]{2,4}",  // Dates
             "^[0-9]{1,2}:[0-9]{2}",    // Times
-            "total", "subtotal", "tax", "change", "payment", "cash", "card", "credit",
-            "phone", "contact", "address", "street", "avenue", "road", "drive",
-            "thank you", "thanks", "welcome", "have a nice day", "return",
-            "quantity", "qty", "item", "price", "upc", "sku", "id",
-            "customer", "receipt", "invoice", "order", "transaction"
+            "total", "subtotal", "sub total", "tax", "sales tax", "change", "payment", "cash", "card", "credit",
+            "phone", "contact", "address", "street", "avenue", "road", "drive", "city", "state", "zip",
+            "thank you", "thanks", "welcome", "have a nice day", "return", "returns",
+            "quantity", "qty", "item", "price", "upc", "sku", "id", "bar code",
+            "customer", "receipt", "invoice", "order", "transaction", "register",
+            "department", "visa", "mastercard", "amex", "debit", "tender"
         ]
 
         return lines.filter { line in
@@ -174,12 +176,15 @@ final class ReceiptScannerService {
             // Skip empty lines
             if lowercaseLine.isEmpty { return false }
 
+            // Skip lines that are too short to be real items
+            if lowercaseLine.count < 2 { return false }
+
             // Skip store names
             if storePatterns.contains(where: { lowercaseLine.contains($0) }) { return false }
 
             // Skip non-food patterns
             for pattern in nonFoodPatterns {
-                if let regex = try? NSRegularExpression(pattern: pattern) {
+                if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
                     let range = NSRange(lowercaseLine.startIndex..<lowercaseLine.endIndex, in: lowercaseLine)
                     if regex.firstMatch(in: lowercaseLine, range: range) != nil {
                         return false
@@ -203,6 +208,7 @@ final class ReceiptScannerService {
     /// Extract an item from a receipt line.
     private func extractItemFromLine(_ line: String) -> ParsedReceiptItem? {
         var cleanedName = line.trimmingCharacters(in: .whitespaces)
+        var originalLine = cleanedName
 
         // Remove quantity prefixes (e.g., "2x Milk" -> "Milk")
         let quantityPattern = "^([0-9]+\\.?[0-9]*)\\s*[xX×]\\s*"
@@ -214,8 +220,11 @@ final class ReceiptScannerService {
         // Remove trailing prices/codes (common receipt format: "Item Name 4.99" or "Item Name #SKU")
         cleanedName = removePricingInfo(cleanedName)
 
+        // Additional cleanup: Remove excessive whitespace and normalize
+        cleanedName = cleanedName.split(separator: " ").map(String.init).joined(separator: " ")
+
         // Extract quantity if present
-        let quantity = extractQuantity(line)
+        let quantity = extractQuantity(originalLine)
         let unit = estimateUnit(cleanedName)
 
         guard !cleanedName.isEmpty && cleanedName.count > 1 else { return nil }
@@ -248,18 +257,29 @@ final class ReceiptScannerService {
         var result = line
 
         // Remove trailing prices (e.g., "Milk 3.99" -> "Milk")
-        let pricePattern = "\\s*[\\$£€¥]?\\s*[0-9]+\\.[0-9]{2}\\s*$"
+        // Matches: $3.99, 3.99, £3.99, €3.99, 3.99€, etc.
+        let pricePattern = "\\s+[\\$£€¥]?\\s*[0-9]+[.,][0-9]{2}[\\$£€¥]?\\s*$"
         if let regex = try? NSRegularExpression(pattern: pricePattern) {
             let range = NSRange(result.startIndex..<result.endIndex, in: result)
             result = regex.stringByReplacingMatches(in: result, range: range, withTemplate: "")
         }
 
-        // Remove product codes (e.g., "#123456" or "SKU: 123")
-        let codePattern = "\\s*[#]?[0-9]{5,}\\s*$|SKU:?\\s*[0-9]+\\s*$"
+        // Remove product codes (e.g., "#123456" or "SKU: 123" at the end)
+        let codePattern = "\\s+[#]?[0-9]{5,}\\s*$"
         if let regex = try? NSRegularExpression(pattern: codePattern) {
             let range = NSRange(result.startIndex..<result.endIndex, in: result)
             result = regex.stringByReplacingMatches(in: result, range: range, withTemplate: "")
         }
+
+        // Remove SKU patterns
+        let skuPattern = "\\s+(?:SKU|UPC|ITEM|ID):?\\s*[0-9A-Z]+\\s*$"
+        if let regex = try? NSRegularExpression(pattern: skuPattern, options: .caseInsensitive) {
+            let range = NSRange(result.startIndex..<result.endIndex, in: result)
+            result = regex.stringByReplacingMatches(in: result, range: range, withTemplate: "")
+        }
+
+        // Remove multiple spaces between item name and trailing info
+        result = result.split(separator: " ").map(String.init).joined(separator: " ")
 
         return result.trimmingCharacters(in: .whitespaces)
     }
@@ -292,23 +312,41 @@ final class ReceiptScannerService {
 
         // Liquid keywords
         if lowercased.contains("milk") || lowercased.contains("juice") || lowercased.contains("water") ||
-           lowercased.contains("beverage") || lowercased.contains("oil") || lowercased.contains("sauce") {
+           lowercased.contains("beverage") || lowercased.contains("oil") || lowercased.contains("sauce") ||
+           lowercased.contains("soda") || lowercased.contains("tea") || lowercased.contains("coffee") ||
+           lowercased.contains("wine") || lowercased.contains("beer") || lowercased.contains("soy") {
             return .milliliters
         }
 
         // Solid keywords suggesting weight
         if lowercased.contains("butter") || lowercased.contains("cheese") || lowercased.contains("flour") ||
-           lowercased.contains("sugar") || lowercased.contains("salt") {
+           lowercased.contains("sugar") || lowercased.contains("salt") || lowercased.contains("spice") ||
+           lowercased.contains("coffee") || lowercased.contains("cocoa") {
             return .grams
         }
 
-        // Container keywords
-        if lowercased.contains("bottle") || lowercased.contains("can") || lowercased.contains("jar") {
+        // Container/packaged keywords
+        if lowercased.contains("bottle") {
+            return .bottles
+        }
+
+        if lowercased.contains("can") || lowercased.contains("tin") {
             return .cans
         }
 
-        if lowercased.contains("pack") || lowercased.contains("box") || lowercased.contains("bag") {
+        if lowercased.contains("pack") || lowercased.contains("box") {
             return .packs
+        }
+
+        if lowercased.contains("bag") {
+            return .bags
+        }
+
+        // Weight-based for meats/produce sold by pound
+        if lowercased.contains("beef") || lowercased.contains("chicken") || lowercased.contains("pork") ||
+           lowercased.contains("lamb") || lowercased.contains("steak") || lowercased.contains("salmon") ||
+           lowercased.contains("ground") {
+            return .pounds
         }
 
         // Default to pieces for items like fruits, vegetables
@@ -320,18 +358,30 @@ final class ReceiptScannerService {
         let lowercased = itemName.lowercased()
 
         let categoryKeywords: [(FoodCategory, [String])] = [
-            (.fruits, ["apple", "banana", "orange", "grape", "berry", "mango", "pineapple", "strawberry", "blueberry", "peach", "pear", "watermelon", "melon", "lemon", "lime"]),
-            (.vegetables, ["carrot", "broccoli", "spinach", "lettuce", "tomato", "cucumber", "pepper", "onion", "garlic", "potato", "celery", "kale", "zucchini", "squash", "bean", "pea"]),
-            (.dairy, ["milk", "cheese", "yogurt", "butter", "cream", "ice cream", "whipped cream", "sour cream"]),
-            (.meat, ["beef", "chicken", "pork", "lamb", "steak", "burger", "sausage", "bacon", "ham", "turkey", "duck"]),
-            (.seafood, ["fish", "salmon", "tuna", "shrimp", "crab", "lobster", "cod", "tilapia", "halibut", "anchovy"]),
-            (.grains, ["bread", "rice", "pasta", "cereal", "oat", "barley", "quinoa", "wheat", "flour", "cornmeal"]),
-            (.bakery, ["bread", "bagel", "muffin", "donut", "croissant", "cake", "cookie", "biscuit", "pastry"]),
-            (.frozen, ["frozen", "ice", "freezer"]),
-            (.canned, ["canned", "can", "tin", "conserve"]),
-            (.condiments, ["sauce", "ketchup", "mustard", "mayo", "mayonnaise", "vinegar", "oil", "spice", "salt", "pepper", "seasoning"]),
-            (.snacks, ["chip", "cracker", "popcorn", "candy", "chocolate", "nut", "granola", "bar", "pretzel"]),
-            (.beverages, ["juice", "soda", "coffee", "tea", "wine", "beer", "water", "drink", "smoothie", "lemonade"])
+            (.fruits, ["apple", "apples", "banana", "bananas", "orange", "oranges", "grape", "grapes", "berry", "berries",
+                       "mango", "pineapple", "strawberry", "strawberries", "blueberry", "blueberries", "peach", "pear",
+                       "watermelon", "melon", "cantaloupe", "lemon", "limes", "lime", "tangerine", "clementine", "avocado"]),
+            (.vegetables, ["carrot", "carrots", "broccoli", "spinach", "lettuce", "tomato", "tomatoes", "cucumber", "bell pepper",
+                          "onion", "onions", "garlic", "potato", "potatoes", "celery", "kale", "zucchini", "squash", "bean",
+                          "beans", "pea", "peas", "cauliflower", "cabbage", "asparagus", "green beans", "brussels sprouts"]),
+            (.dairy, ["milk", "cheese", "yogurt", "yoghurt", "butter", "cream", "ice cream", "whipped cream", "sour cream",
+                     "cottage cheese", "mozzarella", "cheddar", "feta", "parmesan", "ricotta"]),
+            (.meat, ["beef", "chicken", "pork", "lamb", "steak", "burger", "sausage", "bacon", "ham", "turkey", "duck",
+                    "ground beef", "ground turkey", "ground pork", "ribeye", "sirloin", "chuck", "brisket"]),
+            (.seafood, ["fish", "salmon", "tuna", "shrimp", "crab", "lobster", "cod", "tilapia", "halibut", "anchovy",
+                       "mussels", "clams", "scallops", "oysters", "calamari"]),
+            (.grains, ["bread", "rice", "pasta", "cereal", "oat", "oats", "barley", "quinoa", "wheat", "flour", "cornmeal",
+                      "whole wheat", "white rice", "brown rice", "jasmine rice"]),
+            (.bakery, ["bagel", "bagels", "muffin", "muffins", "donut", "donuts", "doughnut", "croissant", "cake", "cookie",
+                      "cookies", "biscuit", "biscuits", "pastry", "pastries", "crescent", "croissants"]),
+            (.frozen, ["frozen", "ice", "freezer", "frozen vegetables", "frozen pizza", "ice cream", "popsicle"]),
+            (.canned, ["canned", "can", "tin", "conserve", "canned vegetables", "canned beans", "canned soup"]),
+            (.condiments, ["sauce", "ketchup", "mustard", "mayo", "mayonnaise", "vinegar", "oil", "spice", "salt", "pepper",
+                          "seasoning", "dressing", "soy sauce", "worcestershire", "hot sauce", "pesto", "salsa"]),
+            (.snacks, ["chip", "chips", "cracker", "crackers", "popcorn", "candy", "chocolate", "nut", "nuts", "granola",
+                      "bar", "bars", "pretzel", "pretzels", "cookie", "cookies", "crackers", "trail mix"]),
+            (.beverages, ["juice", "soda", "coffee", "tea", "wine", "beer", "water", "drink", "smoothie", "lemonade",
+                         "orange juice", "apple juice", "cranberry juice", "cola", "sprite", "coconut water", "almond milk"])
         ]
 
         for (category, keywords) in categoryKeywords {
@@ -395,21 +445,38 @@ final class ReceiptScannerService {
 
     /// Estimate confidence score based on item characteristics.
     private func estimateConfidence(for itemName: String, quantity: Double) -> Double {
-        var confidence: Double = 0.8
+        var confidence: Double = 0.75
 
-        // Reduce confidence for very short names
+        // Length-based adjustments
         if itemName.count < 3 {
             confidence -= 0.2
+        } else if itemName.count > 20 {
+            confidence += 0.15
         }
 
-        // Increase confidence for longer, more detailed names
-        if itemName.count > 15 {
-            confidence += 0.1
+        // Word count heuristic (more words = more detail = higher confidence)
+        let wordCount = itemName.split(separator: " ").count
+        if wordCount >= 2 {
+            confidence += Double(min(wordCount - 1, 2)) * 0.05
         }
 
-        // Adjust for unusual quantities
-        if quantity > 10 {
+        // Quantity adjustments
+        if quantity <= 0 || quantity > 20 {
+            confidence -= 0.1
+        } else if quantity > 5 {
             confidence -= 0.05
+        }
+
+        // Check for common item keywords (higher confidence if recognized)
+        let knownKeywords = [
+            "milk", "cheese", "yogurt", "butter", "bread", "apple", "banana", "chicken",
+            "beef", "pork", "rice", "pasta", "oil", "eggs", "tomato", "lettuce",
+            "water", "juice", "coffee", "tea", "chips", "cookie", "yogurt", "yoghurt"
+        ]
+
+        let lowerName = itemName.lowercased()
+        if knownKeywords.contains(where: { lowerName.contains($0) }) {
+            confidence += 0.1
         }
 
         return max(0.0, min(1.0, confidence))

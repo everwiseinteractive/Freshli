@@ -18,6 +18,7 @@ struct HomeView: View {
 
     @State private var selectedImpactStat: String?
     @State private var impactStats: ImpactService.ImpactStats?
+    @State private var showWeeklyWrap = false
 
     private var expiringItems: [FreshliItem] {
         activeItems.filter { $0.expiryStatus != .fresh }.prefix(5).map { $0 }
@@ -39,6 +40,9 @@ struct HomeView: View {
         }
         .background(PSColors.backgroundSecondary)
         .ignoresSafeArea(edges: .top)
+        .navigationDestination(isPresented: $showWeeklyWrap) {
+            WeeklyWrapView()
+        }
         .task {
             impactStats = ImpactService(modelContext: modelContext).calculateStats()
         }
@@ -67,10 +71,12 @@ struct HomeView: View {
                 // Figma: avatar + greeting + bell row
                 HStack(alignment: .center) {
                     // Figma: w-12 h-12 rounded-full border-2 border-white avatar
-                    Image(systemName: "person.crop.circle.fill")
-                        .font(.system(size: PSLayout.scaledFont(44)))
-                        .foregroundStyle(.white.opacity(0.8))
-                        .overlay(Circle().strokeBorder(.white, lineWidth: 2))
+                    NavigationLink(destination: ProfileView()) {
+                        Image(systemName: "person.crop.circle.fill")
+                            .font(.system(size: PSLayout.scaledFont(44)))
+                            .foregroundStyle(.white.opacity(0.8))
+                            .overlay(Circle().strokeBorder(.white, lineWidth: 2))
+                    }
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text(greeting)
@@ -84,28 +90,45 @@ struct HomeView: View {
 
                     Spacer()
 
-                    // Figma: notification bell with badge — navigates to ExpiryAlertsView
-                    NavigationLink(destination: ExpiryAlertsView()) {
-                        ZStack(alignment: .topTrailing) {
-                            Image(systemName: "bell.fill")
+                    HStack(spacing: PSSpacing.sm) {
+                        // Weekly wrap button
+                        Button {
+                            PSHaptics.shared.lightTap()
+                            showWeeklyWrap = true
+                        } label: {
+                            Image(systemName: "chart.line.uptrend.xyaxis")
                                 .font(.system(size: PSLayout.scaledFont(20)))
                                 .foregroundStyle(.white)
                                 .frame(width: PSLayout.iconButtonSize, height: PSLayout.iconButtonSize)
                                 .background(.white.opacity(0.2))
                                 .clipShape(Circle())
+                        }
+                        .accessibilityLabel(String(localized: "View Weekly Wrap"))
+                        .accessibilityHint(String(localized: "See your weekly impact summary"))
 
-                            // Figma: w-2 h-2 bg-red-500 border border-green-600
-                            if !expiringItems.isEmpty {
-                                Circle()
-                                    .fill(PSColors.expiredRed)
-                                    .frame(width: PSLayout.scaled(8), height: PSLayout.scaled(8))
-                                    .overlay(Circle().strokeBorder(PSColors.headerGreen, lineWidth: 1))
-                                    .offset(x: -2, y: 2)
+                        // Figma: notification bell with badge — navigates to ExpiryAlertsView
+                        NavigationLink(destination: ExpiryAlertsView()) {
+                            ZStack(alignment: .topTrailing) {
+                                Image(systemName: "bell.fill")
+                                    .font(.system(size: PSLayout.scaledFont(20)))
+                                    .foregroundStyle(.white)
+                                    .frame(width: PSLayout.iconButtonSize, height: PSLayout.iconButtonSize)
+                                    .background(.white.opacity(0.2))
+                                    .clipShape(Circle())
+
+                                // Figma: w-2 h-2 bg-red-500 border border-green-600
+                                if !expiringItems.isEmpty {
+                                    Circle()
+                                        .fill(PSColors.expiredRed)
+                                        .frame(width: PSLayout.scaled(8), height: PSLayout.scaled(8))
+                                        .overlay(Circle().strokeBorder(PSColors.headerGreen, lineWidth: 1))
+                                        .offset(x: -2, y: 2)
+                                }
                             }
                         }
+                        .accessibilityLabel(String(localized: "View Expiry Alerts"))
+                        .accessibilityHint(String(localized: "Notifications: \(expiringItems.count) items expiring soon"))
                     }
-                    .accessibilityLabel(String(localized: "View Expiry Alerts"))
-                    .accessibilityHint(String(localized: "Notifications: \(expiringItems.count) items expiring soon"))
                 }
                 .padding(.top, PSLayout.headerTopPadding)
                 .adaptiveHPadding()

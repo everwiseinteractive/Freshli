@@ -64,6 +64,36 @@ struct ProfileView: View {
                     .staggeredAppearance(index: 2)
                 settingsCard
                     .staggeredAppearance(index: 3)
+
+                // Premium/Pro Section
+                NavigationLink(destination: FreshliProView()) {
+                    VStack(alignment: .leading, spacing: PSSpacing.md) {
+                        HStack(spacing: PSSpacing.sm) {
+                            Image(systemName: "crown.fill")
+                                .font(.system(size: PSLayout.scaledFont(18)))
+                                .foregroundStyle(PSColors.secondaryAmber)
+                            Text(String(localized: "Freshli+"))
+                                .font(.system(size: PSLayout.scaledFont(18), weight: .bold))
+                                .foregroundStyle(PSColors.textPrimary)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
+                                .foregroundStyle(PSColors.primaryGreen.opacity(0.5))
+                        }
+                        Text(String(localized: "Unlock premium features and insights"))
+                            .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
+                            .foregroundStyle(PSColors.textSecondary)
+                    }
+                    .adaptiveCardPadding()
+                    .background(PSColors.surfaceCard)
+                    .clipShape(RoundedRectangle(cornerRadius: PSLayout.profileCardRadius, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: PSLayout.profileCardRadius, style: .continuous)
+                            .strokeBorder(PSColors.emeraldSurface, lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.03), radius: 8, y: 4)
+                }
+                .staggeredAppearance(index: 4)
             }
             .adaptiveHPadding()
             .padding(.vertical, PSSpacing.lg)

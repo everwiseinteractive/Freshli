@@ -185,3 +185,6 @@ extension View {
         modifier(RefreshBounceModifier(isRefreshing: isRefreshing))
     }
 }
+
+// MARK: - Backward Compatibility
+typealias PSMotion = FLMotion

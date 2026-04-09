@@ -151,3 +151,7 @@ extension View {
         modifier(FLToastOverlay(manager: manager))
     }
 }
+
+// MARK: - Backward Compatibility
+typealias PSToastManager = FLToastManager
+typealias PSToastType = FLToastType

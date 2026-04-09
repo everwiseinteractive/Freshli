@@ -1,5 +1,6 @@
 import SwiftUI
 import PhotosUI
+import Vision
 
 struct ReceiptPhotoScannerView: View {
     @State private var selectedPhotoItem: PhotosPickerItem?
@@ -8,9 +9,9 @@ struct ReceiptPhotoScannerView: View {
     @State private var isScanning = false
     @State private var showError = false
     @State private var errorMessage = ""
-    @State private var scanProgress: Double = 0
 
-    let service = ReceiptImportService()
+    @State private var receiptScanner = ReceiptScannerService()
+    let importService = ReceiptImportService()
 
     var body: some View {
         NavigationStack {
@@ -25,12 +26,24 @@ struct ReceiptPhotoScannerView: View {
                             .frame(height: 300)
                             .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd))
 
-                        if isScanning {
+                        if case .scanning = receiptScanner.scanningState {
                             VStack(spacing: PSSpacing.md) {
-                                ProgressView(value: scanProgress)
+                                ProgressView()
                                     .tint(PSColors.primaryGreen)
 
-                                Text("Scanning receipt...")
+                                Text("Scanning receipt with OCR...")
+                                    .font(PSTypography.callout)
+                                    .foregroundStyle(PSColors.textSecondary)
+                            }
+                            .padding(PSSpacing.lg)
+                            .background(PSColors.backgroundSecondary)
+                            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd))
+                        } else if case .parsing = receiptScanner.scanningState {
+                            VStack(spacing: PSSpacing.md) {
+                                ProgressView()
+                                    .tint(PSColors.primaryGreen)
+
+                                Text("Extracting items...")
                                     .font(PSTypography.callout)
                                     .foregroundStyle(PSColors.textSecondary)
                             }
@@ -39,45 +52,80 @@ struct ReceiptPhotoScannerView: View {
                             .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd))
                         }
 
-                        if let receipt = scannedReceipt {
+                        if case .complete = receiptScanner.scanningState, !receiptScanner.scannedItems.isEmpty {
                             VStack(alignment: .leading, spacing: PSSpacing.md) {
-                                Text("Detected Items")
-                                    .font(PSTypography.headline)
-                                    .foregroundStyle(PSColors.textPrimary)
+                                HStack(spacing: PSSpacing.md) {
+                                    Text("Detected Items")
+                                        .font(PSTypography.headline)
+                                        .foregroundStyle(PSColors.textPrimary)
 
-                                ForEach(receipt.items.prefix(5), id: \.name) { item in
+                                    Spacer()
+
+                                    PSBadge(text: "\(receiptScanner.scannedItems.count) items", variant: .default)
+                                }
+
+                                ForEach(receiptScanner.scannedItems.prefix(5), id: \.id) { item in
                                     HStack(spacing: PSSpacing.md) {
                                         VStack(alignment: .leading, spacing: PSSpacing.xs) {
                                             Text(item.name)
                                                 .font(PSTypography.callout)
                                                 .foregroundStyle(PSColors.textPrimary)
+                                                .lineLimit(1)
 
-                                            Text("\(String(format: "%.1f", item.quantity)) \(item.unit)")
-                                                .font(PSTypography.caption2)
-                                                .foregroundStyle(PSColors.textSecondary)
+                                            HStack(spacing: PSSpacing.md) {
+                                                Text("\(String(format: "%.1f", item.quantity)) \(item.unit.displayName)")
+                                                    .font(PSTypography.caption2)
+                                                    .foregroundStyle(PSColors.textSecondary)
+
+                                                Text(String(format: "%.0f%% confident", item.confidenceScore * 100))
+                                                    .font(PSTypography.caption2)
+                                                    .foregroundStyle(PSColors.textTertiary)
+                                            }
                                         }
 
                                         Spacer()
 
-                                        PSBadge(text: item.category.uppercased(), variant: .default)
+                                        Text(item.category.emoji)
+                                            .font(.system(size: 16))
                                     }
                                     .padding(PSSpacing.md)
                                     .background(PSColors.backgroundSecondary)
                                     .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusSm))
                                 }
 
-                                if receipt.items.count > 5 {
-                                    Text("+ \(receipt.items.count - 5) more items")
+                                if receiptScanner.scannedItems.count > 5 {
+                                    Text("+ \(receiptScanner.scannedItems.count - 5) more items")
                                         .font(PSTypography.caption1)
                                         .foregroundStyle(PSColors.textSecondary)
+                                        .padding(.top, PSSpacing.xs)
                                 }
                             }
+                        } else if case .error(let message) = receiptScanner.scanningState {
+                            VStack(spacing: PSSpacing.md) {
+                                Image(systemName: "exclamationmark.circle.fill")
+                                    .font(.system(size: 32))
+                                    .foregroundStyle(PSColors.expiredRed)
+
+                                VStack(spacing: PSSpacing.sm) {
+                                    Text("Scan Failed")
+                                        .font(PSTypography.headline)
+                                        .foregroundStyle(PSColors.textPrimary)
+
+                                    Text(message)
+                                        .font(PSTypography.body)
+                                        .foregroundStyle(PSColors.textSecondary)
+                                        .multilineTextAlignment(.center)
+                                }
+                            }
+                            .padding(PSSpacing.lg)
+                            .background(PSColors.backgroundSecondary)
+                            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd))
                         }
 
                         Spacer()
 
                         VStack(spacing: PSSpacing.md) {
-                            if scannedReceipt != nil {
+                            if case .complete = receiptScanner.scanningState, !receiptScanner.scannedItems.isEmpty {
                                 NavigationLink(destination: ReceiptImportView()) {
                                     PSButton(
                                         title: "Review & Import",
@@ -87,7 +135,7 @@ struct ReceiptPhotoScannerView: View {
                                         action: {}
                                     )
                                 }
-                            } else if !isScanning {
+                            } else if case .idle = receiptScanner.scanningState, selectedImage != nil {
                                 PSButton(
                                     title: "Scan Receipt",
                                     style: .primary,
@@ -111,8 +159,7 @@ struct ReceiptPhotoScannerView: View {
                                     if let data = try await newItem?.loadTransferable(type: Data.self),
                                        let uiImage = UIImage(data: data) {
                                         selectedImage = uiImage
-                                        scannedReceipt = nil
-                                        scanProgress = 0
+                                        receiptScanner.reset()
                                     }
                                 }
                             }
@@ -133,7 +180,7 @@ struct ReceiptPhotoScannerView: View {
                                         .font(PSTypography.headline)
                                         .foregroundStyle(PSColors.textPrimary)
 
-                                    Text("Align the entire receipt within the frame and ensure good lighting")
+                                    Text("Align the entire receipt within the frame and ensure good lighting for best results")
                                         .font(PSTypography.callout)
                                         .foregroundStyle(PSColors.textSecondary)
                                         .multilineTextAlignment(.center)
@@ -157,6 +204,7 @@ struct ReceiptPhotoScannerView: View {
                                 if let data = try await newItem?.loadTransferable(type: Data.self),
                                    let uiImage = UIImage(data: data) {
                                     selectedImage = uiImage
+                                    receiptScanner.reset()
                                 }
                             }
                         }
@@ -169,9 +217,17 @@ struct ReceiptPhotoScannerView: View {
             .navigationTitle("Scan Receipt")
             .navigationBarTitleDisplayMode(.inline)
             .alert("Scan Error", isPresented: $showError) {
-                Button("OK", role: .cancel) { }
+                Button("OK", role: .cancel) {
+                    receiptScanner.reset()
+                }
             } message: {
                 Text(errorMessage)
+            }
+        }
+        .onChange(of: receiptScanner.errorMessage) { _, newValue in
+            if let error = newValue {
+                errorMessage = error
+                showError = true
             }
         }
     }
@@ -179,61 +235,9 @@ struct ReceiptPhotoScannerView: View {
     private func performOCRScan() {
         guard let image = selectedImage else { return }
 
-        isScanning = true
-        scanProgress = 0
-
-        // Simulate OCR processing with progress
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            scanProgress = 0.3
+        Task {
+            await receiptScanner.scanReceipt(image)
         }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            scanProgress = 0.7
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            // Stub for VNRecognizeTextRequest integration
-            // let request = VNRecognizeTextRequest()
-            // request.recognitionLevel = .accurate
-            // let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-            // do {
-            //     try handler.perform([request])
-            //     guard let results = request.results else {
-            //         showOCRError()
-            //         return
-            //     }
-            //     let recognizedText = results.compactMap { $0.topCandidates(1).first?.string }.joined(separator: "\n")
-            //     let receipt = service.parseReceiptFromText(recognizedText)
-            //     scannedReceipt = receipt
-            // } catch {
-            //     showOCRError()
-            // }
-
-            // Mock result for demo
-            let mockReceipt = GroceryReceipt(
-                id: UUID(),
-                storeName: "Whole Foods Market",
-                date: Date(),
-                items: [
-                    ReceiptItem(name: "Organic Bananas", quantity: 2.0, unit: "bunches", price: 1.99, category: "fruits"),
-                    ReceiptItem(name: "Greek Yogurt", quantity: 2.0, unit: "containers", price: 4.49, category: "dairy"),
-                    ReceiptItem(name: "Salmon Fillets", quantity: 1.0, unit: "packages", price: 12.99, category: "seafood"),
-                    ReceiptItem(name: "Broccoli", quantity: 1.0, unit: "heads", price: 3.49, category: "vegetables")
-                ],
-                totalAmount: 22.96,
-                receiptSource: .photoScan
-            )
-
-            scannedReceipt = mockReceipt
-            scanProgress = 1.0
-            isScanning = false
-        }
-    }
-
-    private func showOCRError() {
-        errorMessage = "Unable to read receipt. Please try again with better lighting and a clearer image."
-        showError = true
-        isScanning = false
     }
 }
 

@@ -14,6 +14,7 @@ struct RecipesView: View {
     @State private var selectedRecipe: Recipe?
     @State private var appeared = false
     @State private var matchedRecipes: [Recipe] = []
+    @State private var showRescueChef = false
 
     private let filters = ["For You", "Quick & Easy", "Breakfast", "Vegan", "Desserts"]
 
@@ -68,6 +69,9 @@ struct RecipesView: View {
             }
             .presentationDragIndicator(.visible)
         }
+        .navigationDestination(isPresented: $showRescueChef) {
+            RescueChefView()
+        }
         .task {
             matchedRecipes = RecipeService.shared.recipesForFreshli(items: pantryItems)
         }
@@ -81,11 +85,24 @@ struct RecipesView: View {
     private var recipesHeader: some View {
         VStack(alignment: .leading, spacing: PSSpacing.lg) {
             // Figma: text-3xl font-bold text-neutral-900 tracking-tight
-            Text(String(localized: "Recipes"))
-                .font(.system(size: PSLayout.scaledFont(30), weight: .bold))
-                .tracking(-0.3)
-                .foregroundStyle(PSColors.textPrimary)
-                .adaptiveHPadding()
+            HStack {
+                Text(String(localized: "Recipes"))
+                    .font(.system(size: PSLayout.scaledFont(30), weight: .bold))
+                    .tracking(-0.3)
+                    .foregroundStyle(PSColors.textPrimary)
+                Spacer()
+                NavigationLink(destination: RescueChefView()) {
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: PSLayout.scaledFont(18)))
+                        .foregroundStyle(PSColors.expiredRed)
+                        .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
+                        .background(PSColors.expiredRed.opacity(0.1))
+                        .clipShape(Circle())
+                }
+                .accessibilityLabel(String(localized: "Rescue Chef"))
+                .accessibilityHint(String(localized: "See recipes for items that need rescuing"))
+            }
+            .adaptiveHPadding()
 
             // Filter chips extend full width with their own horizontal padding
             filterChips

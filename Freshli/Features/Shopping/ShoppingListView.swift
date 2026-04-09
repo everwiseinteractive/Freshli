@@ -7,6 +7,7 @@ final class ShoppingListViewModel {
     var showAddItemSheet = false
     var showMissingIngredientSheet = false
     var selectedMissingIngredient: ShoppingItem?
+    var enableAutoReplenish = false
 
     func deleteItem(_ item: ShoppingItem) {
         service.removeItem(id: item.id)
@@ -18,6 +19,14 @@ final class ShoppingListViewModel {
 
     func toggleUrgent(_ item: ShoppingItem) {
         service.toggleUrgent(id: item.id)
+    }
+
+    func syncToReminders() async {
+        await service.exportToReminders()
+    }
+
+    func requestEventKitAccess() async {
+        _ = await service.requestEventKitAccess()
     }
 }
 
@@ -153,15 +162,77 @@ struct ShoppingListView: View {
                                 }
                             }
 
-                            // Export to Reminders
-                            PSButton(
-                                title: "Add to Apple Reminders",
-                                icon: "checkmark.circle",
-                                style: .secondary,
-                                size: .medium,
-                                isFullWidth: true,
-                                action: { viewModel.service.exportToReminders() }
-                            )
+                            // Reminders Section
+                            VStack(spacing: PSSpacing.md) {
+                                if viewModel.service.isAuthorized {
+                                    // Auto-Replenish Toggle
+                                    HStack(spacing: PSSpacing.md) {
+                                        VStack(alignment: .leading, spacing: PSSpacing.xs) {
+                                            Text("Auto-Replenish")
+                                                .font(PSTypography.callout)
+                                                .foregroundStyle(PSColors.textPrimary)
+
+                                            Text("Sync with Apple Reminders")
+                                                .font(PSTypography.caption1)
+                                                .foregroundStyle(PSColors.textSecondary)
+                                        }
+
+                                        Spacer()
+
+                                        Toggle("", isOn: $viewModel.enableAutoReplenish)
+                                            .tint(PSColors.primaryGreen)
+                                    }
+                                    .padding(PSSpacing.lg)
+                                    .background(PSColors.surfaceCard)
+                                    .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg))
+
+                                    // Sync Button
+                                    PSButton(
+                                        title: "Sync to Apple Reminders",
+                                        icon: "checkmark.circle",
+                                        style: .secondary,
+                                        size: .medium,
+                                        isFullWidth: true,
+                                        isLoading: viewModel.service.isSyncing,
+                                        action: {
+                                            Task {
+                                                await viewModel.syncToReminders()
+                                                PSHaptics.shared.success()
+                                            }
+                                        }
+                                    )
+                                } else {
+                                    // Authorization Request Button
+                                    PSButton(
+                                        title: "Enable Apple Reminders Sync",
+                                        icon: "bell.badge.fill",
+                                        style: .primary,
+                                        size: .medium,
+                                        isFullWidth: true,
+                                        action: {
+                                            Task {
+                                                await viewModel.requestEventKitAccess()
+                                                PSHaptics.shared.lightTap()
+                                            }
+                                        }
+                                    )
+
+                                    if viewModel.service.authorizationStatus == .denied {
+                                        HStack(spacing: PSSpacing.sm) {
+                                            Image(systemName: "exclamationmark.triangle.fill")
+                                                .font(.system(size: 12))
+                                                .foregroundStyle(PSColors.warningAmber)
+
+                                            Text("Enable in Settings to sync with Reminders")
+                                                .font(PSTypography.caption1)
+                                                .foregroundStyle(PSColors.textSecondary)
+
+                                            Spacer()
+                                        }
+                                        .padding(.top, PSSpacing.sm)
+                                    }
+                                }
+                            }
                             .padding(.horizontal, PSSpacing.screenHorizontal)
                             .padding(.bottom, PSSpacing.lg)
                         }

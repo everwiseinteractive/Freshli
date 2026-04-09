@@ -15,6 +15,9 @@ struct FreshliApp: App {
     @State private var networkMonitor = NetworkMonitor.shared
     @State private var diagnosticsService = DiagnosticsService.shared
     @State private var offlineSyncQueue = OfflineSyncQueue.shared
+    @State private var subscriptionService = SubscriptionService()
+    @State private var familySyncService = FamilySyncService()
+    @State private var shoppingListService = ShoppingListService()
 
     // MARK: - Splash → Dashboard Transition State
     @Namespace private var splashNamespace
@@ -75,6 +78,9 @@ struct FreshliApp: App {
             .environment(toastManager)
             .environment(networkMonitor)
             .environment(offlineSyncQueue)
+            .environment(subscriptionService)
+            .environment(familySyncService)
+            .environment(shoppingListService)
             .preferredColorScheme(isDarkMode ? .dark : .light)
             .task {
                 // Start diagnostics and network monitoring

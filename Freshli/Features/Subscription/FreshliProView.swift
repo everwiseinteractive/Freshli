@@ -1,9 +1,11 @@
 import SwiftUI
+import StoreKit
 
 struct FreshliProView: View {
     @Environment(SubscriptionService.self) var subscriptionService
-    @State private var selectedTier: SubscriptionTier = .pro
+    @State private var selectedProduct: Product?
     @State private var showRestoreAlert = false
+    @State private var showErrorAlert = false
 
     var body: some View {
         NavigationStack {
@@ -33,11 +35,28 @@ struct FreshliProView: View {
         }
         .alert("Restore Purchases", isPresented: $showRestoreAlert) {
             Button("Restore") {
-                subscriptionService.restorePurchases()
+                Task {
+                    await subscriptionService.restorePurchases()
+                }
             }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Restore your previous purchases from the App Store.")
+        }
+        .alert("Purchase Error", isPresented: $showErrorAlert, presenting: subscriptionService.error) { _ in
+            Button("OK") {
+                subscriptionService.error = nil
+            }
+        } message: { error in
+            Text(error.localizedDescription)
+        }
+        .task {
+            await subscriptionService.loadProducts()
+        }
+        .onChange(of: subscriptionService.error) {
+            if subscriptionService.error != nil {
+                showErrorAlert = true
+            }
         }
     }
 
@@ -166,35 +185,51 @@ struct FreshliProView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             VStack(spacing: PSSpacing.md) {
-                // Pro Tier
-                pricingCard(
-                    tier: .pro,
-                    monthlyPrice: 4.99,
-                    annualPrice: 39.99,
-                    annualSavings: 20,
-                    description: "For individuals"
-                )
+                // Pro products
+                let proMonthly = subscriptionService.products.first { $0.id == SubscriptionProductID.proMonthly.rawValue }
+                let proYearly = subscriptionService.products.first { $0.id == SubscriptionProductID.proYearly.rawValue }
 
-                // Family Pro Tier
-                pricingCard(
-                    tier: .familyPro,
-                    monthlyPrice: 7.99,
-                    annualPrice: 59.99,
-                    annualSavings: 36,
-                    description: "For families up to 6 members"
-                )
+                if let proMonthly, let proYearly {
+                    pricingCard(
+                        monthlyProduct: proMonthly,
+                        yearlyProduct: proYearly,
+                        tier: .pro,
+                        description: "For individuals"
+                    )
+                }
+
+                // Family Pro product
+                let familyMonthly = subscriptionService.products.first { $0.id == SubscriptionProductID.familyMonthly.rawValue }
+
+                if let familyMonthly {
+                    familyPricingCard(
+                        product: familyMonthly,
+                        description: "For families up to 6 members"
+                    )
+                }
+
+                if subscriptionService.products.isEmpty && !subscriptionService.isLoading {
+                    Text("Unable to load pricing. Please check your connection and try again.")
+                        .font(PSTypography.caption1)
+                        .foregroundStyle(PSColors.textSecondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(PSSpacing.lg)
+                }
             }
         }
     }
 
     private func pricingCard(
+        monthlyProduct: Product,
+        yearlyProduct: Product,
         tier: SubscriptionTier,
-        monthlyPrice: Double,
-        annualPrice: Double,
-        annualSavings: Int,
         description: String
     ) -> some View {
-        VStack(spacing: PSSpacing.md) {
+        let monthlyCost = monthlyProduct.price
+        let yearlyCost = yearlyProduct.price
+        let monthlySavings = (monthlyCost * 12 - yearlyCost) / (monthlyCost * 12) * 100
+
+        return VStack(spacing: PSSpacing.md) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: PSSpacing.xs) {
                     Text(tier.displayName)
@@ -208,57 +243,118 @@ struct FreshliProView: View {
 
                 Spacer()
 
-                if annualSavings > 0 {
-                    PSBadge(text: "Save \(annualSavings)%", variant: .fresh)
+                if monthlySavings > 0 {
+                    PSBadge(
+                        text: "Save \(NSDecimalNumber(decimal: monthlySavings).intValue)%",
+                        variant: .fresh
+                    )
                 }
             }
 
             // Price options
             HStack(spacing: PSSpacing.md) {
-                priceOption(
-                    price: monthlyPrice,
-                    period: "/month",
-                    isSelected: selectedTier == tier
+                priceOptionButton(
+                    product: monthlyProduct,
+                    isSelected: selectedProduct?.id == monthlyProduct.id
                 ) {
-                    selectedTier = tier
+                    selectedProduct = monthlyProduct
                 }
 
-                priceOption(
-                    price: annualPrice,
-                    period: "/year",
-                    isSelected: selectedTier == tier
+                priceOptionButton(
+                    product: yearlyProduct,
+                    isSelected: selectedProduct?.id == yearlyProduct.id
                 ) {
-                    selectedTier = tier
+                    selectedProduct = yearlyProduct
                 }
             }
         }
         .padding(PSSpacing.lg)
-        .background(PSColors.surfaceCard)
+        .background(
+            selectedProduct?.id == monthlyProduct.id || selectedProduct?.id == yearlyProduct.id ?
+                PSColors.primaryGreen.opacity(0.05) :
+                PSColors.surfaceCard
+        )
         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
                 .stroke(
-                    selectedTier == tier ? PSColors.primaryGreen : PSColors.border,
-                    lineWidth: selectedTier == tier ? 2 : 1
+                    selectedProduct?.id == monthlyProduct.id || selectedProduct?.id == yearlyProduct.id ?
+                        PSColors.primaryGreen : PSColors.border,
+                    lineWidth: selectedProduct?.id == monthlyProduct.id || selectedProduct?.id == yearlyProduct.id ? 2 : 1
                 )
         )
     }
 
-    private func priceOption(
-        price: Double,
-        period: String,
+    private func familyPricingCard(
+        product: Product,
+        description: String
+    ) -> some View {
+        VStack(spacing: PSSpacing.md) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: PSSpacing.xs) {
+                    Text("Freshli+ Family")
+                        .font(PSTypography.headline)
+                        .foregroundStyle(PSColors.textPrimary)
+
+                    Text(description)
+                        .font(PSTypography.caption1)
+                        .foregroundStyle(PSColors.textSecondary)
+                }
+
+                Spacer()
+
+                PSBadge(text: "Best Value", variant: .fresh)
+            }
+
+            VStack(spacing: PSSpacing.xs) {
+                Text("\(product.displayPrice)")
+                    .font(PSTypography.title2)
+                    .foregroundStyle(PSColors.textPrimary)
+
+                Text("/month")
+                    .font(PSTypography.caption1)
+                    .foregroundStyle(PSColors.textSecondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(PSSpacing.md)
+            .background(selectedProduct?.id == product.id ? PSColors.primaryGreen.opacity(0.1) : PSColors.backgroundSecondary)
+            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
+        }
+        .padding(PSSpacing.lg)
+        .background(
+            selectedProduct?.id == product.id ?
+                PSColors.primaryGreen.opacity(0.05) :
+                PSColors.surfaceCard
+        )
+        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
+                .stroke(
+                    selectedProduct?.id == product.id ? PSColors.primaryGreen : PSColors.border,
+                    lineWidth: selectedProduct?.id == product.id ? 2 : 1
+                )
+        )
+        .onTapGesture {
+            selectedProduct = product
+        }
+    }
+
+    private func priceOptionButton(
+        product: Product,
         isSelected: Bool,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             VStack(spacing: PSSpacing.xxs) {
-                Text(String(format: "$%.2f", price))
+                Text(product.displayPrice)
                     .font(PSTypography.title2)
                     .foregroundStyle(PSColors.textPrimary)
 
-                Text(period)
-                    .font(PSTypography.caption1)
-                    .foregroundStyle(PSColors.textSecondary)
+                if let subscription = product.subscription {
+                    Text(product.localizedPeriod)
+                        .font(PSTypography.caption1)
+                        .foregroundStyle(PSColors.textSecondary)
+                }
             }
             .frame(maxWidth: .infinity)
             .padding(PSSpacing.md)
@@ -271,18 +367,24 @@ struct FreshliProView: View {
     // MARK: - CTA Button
 
     private var ctaButton: some View {
-        PSButton(
-            title: subscriptionService.isProUser ? "You're Subscribed" : "Start Free Trial",
+        let isDisabled = subscriptionService.isProUser || selectedProduct == nil || subscriptionService.isLoading
+
+        return PSButton(
+            title: subscriptionService.isProUser ? "You're Subscribed" : "Subscribe Now",
             style: subscriptionService.isProUser ? .secondary : .primary,
             size: .large,
             isFullWidth: true,
+            isLoading: subscriptionService.isLoading,
             action: {
-                if !subscriptionService.isProUser {
-                    subscriptionService.upgradeToPro(tier: selectedTier)
+                if let selectedProduct {
+                    Task {
+                        await subscriptionService.purchase(selectedProduct)
+                    }
                 }
             }
         )
-        .disabled(subscriptionService.isProUser)
+        .disabled(isDisabled)
+        .accessibilityLabel(subscriptionService.isProUser ? "You're already subscribed to Freshli+" : "Subscribe to Freshli+")
     }
 
     // MARK: - Restore Purchases Button
@@ -297,14 +399,26 @@ struct FreshliProView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(PSSpacing.md)
+        .accessibilityLabel("Restore previous purchases from the App Store")
     }
 }
 
 // MARK: - Preview
 
-#Preview {
+#Preview("FreshliProView - Not Subscribed") {
     @Previewable @State var subscriptionService = SubscriptionService()
 
     FreshliProView()
         .environment(subscriptionService)
+}
+
+#Preview("FreshliProView - Subscribed") {
+    @Previewable @State var subscriptionService = SubscriptionService()
+
+    FreshliProView()
+        .environment(subscriptionService)
+        .onAppear {
+            subscriptionService.currentTier = .pro
+            subscriptionService.subscriptionStatus = .pro
+        }
 }

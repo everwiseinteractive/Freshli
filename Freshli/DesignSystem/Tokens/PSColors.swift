@@ -109,3 +109,6 @@ enum FLColors {
         expiryColor(for: status).opacity(0.12)
     }
 }
+
+// MARK: - Backward Compatibility
+typealias PSColors = FLColors

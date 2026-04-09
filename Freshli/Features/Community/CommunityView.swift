@@ -126,18 +126,40 @@ struct CommunityView: View {
 
                 Spacer(minLength: PSSpacing.md)
 
-                Button {
-                    withAnimation(PSMotion.springQuick) { showSearch.toggle() }
-                } label: {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: PSLayout.scaledFont(18), weight: .medium))
-                        .foregroundStyle(PSColors.textSecondary)
-                        .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
-                        .background(PSColors.backgroundSecondary)
-                        .clipShape(Circle())
+                HStack(spacing: PSSpacing.sm) {
+                    NavigationLink(destination: CirclesView()) {
+                        Image(systemName: "person.2.circle.fill")
+                            .font(.system(size: PSLayout.scaledFont(18), weight: .medium))
+                            .foregroundStyle(PSColors.primaryGreen)
+                            .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
+                            .background(PSColors.primaryGreen.opacity(0.1))
+                            .clipShape(Circle())
+                    }
+                    .accessibilityLabel(String(localized: "View Circles"))
+
+                    NavigationLink(destination: ShoppingListView()) {
+                        Image(systemName: "cart.fill")
+                            .font(.system(size: PSLayout.scaledFont(18), weight: .medium))
+                            .foregroundStyle(PSColors.accentTeal)
+                            .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
+                            .background(PSColors.accentTeal.opacity(0.1))
+                            .clipShape(Circle())
+                    }
+                    .accessibilityLabel(String(localized: "View Shopping List"))
+
+                    Button {
+                        withAnimation(PSMotion.springQuick) { showSearch.toggle() }
+                    } label: {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: PSLayout.scaledFont(18), weight: .medium))
+                            .foregroundStyle(PSColors.textSecondary)
+                            .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
+                            .background(PSColors.backgroundSecondary)
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                    .accessibilityLabel(String(localized: "Search listings"))
                 }
-                .buttonStyle(PressableButtonStyle())
-                .accessibilityLabel(String(localized: "Search listings"))
             }
             .adaptiveHPadding()
             .padding(.top, PSSpacing.md)

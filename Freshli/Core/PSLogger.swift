@@ -1,7 +1,7 @@
 import os
 
 enum PSLogCategory: String {
-    case auth, sync, pantry, community, notifications, impact, ui, performance, lifecycle, recipe, general, widget
+    case auth, sync, pantry, community, notifications, impact, ui, performance, lifecycle, recipe, general, widget, shopping
 }
 
 struct PSLogger {
@@ -47,4 +47,5 @@ struct PSLogger {
     static let recipe = PSLogger(category: .recipe)
     static let general = PSLogger(category: .general)
     static let widget = PSLogger(category: .widget)
+    static let shopping = PSLogger(category: .shopping)
 }

@@ -10,6 +10,7 @@ enum AppTab: String, CaseIterable, Identifiable {
     case pantry
     case recipes
     case community
+    case profile
 
     var id: String { rawValue }
 
@@ -19,6 +20,7 @@ enum AppTab: String, CaseIterable, Identifiable {
         case .pantry: return String(localized: "Pantry")
         case .recipes: return String(localized: "Recipes")
         case .community: return String(localized: "Community")
+        case .profile: return String(localized: "Profile")
         }
     }
 
@@ -28,6 +30,7 @@ enum AppTab: String, CaseIterable, Identifiable {
         case .pantry: return "leaf.fill"       // Figma: Apple icon
         case .recipes: return "fork.knife"      // Figma: Utensils
         case .community: return "person.2.fill" // Figma: Users
+        case .profile: return "person.fill"     // Figma: Profile
         }
     }
 }
@@ -62,6 +65,10 @@ struct AppTabView: View {
                 case .community:
                     NavigationStack {
                         CommunityView()
+                    }
+                case .profile:
+                    NavigationStack {
+                        ProfileView()
                     }
                 }
             }

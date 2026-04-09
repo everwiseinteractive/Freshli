@@ -24,6 +24,11 @@ struct FreshliView: View {
     @State private var showFilterSheet = false
     @State private var showHarvestCelebration = false
     @State private var harvestIntensity: SparkleIntensity = .standard
+    @State private var showSmartAdd = false
+    @State private var showReplenish = false
+    @State private var showDepletionInsights = false
+    @State private var showReceiptScanner = false
+    @State private var showDepletion = false
 
     private var filteredItems: [FreshliItem] {
         var items = allItems
@@ -176,13 +181,51 @@ struct FreshliView: View {
                     .foregroundStyle(PSColors.textPrimary)
                     .psAccessibleHeader(String(localized: "My Pantry, \(filteredItems.count) items"))
                 Spacer()
-                PSIconButton(icon: "line.3.horizontal.decrease", size: PSLayout.scaled(36), tint: selectedCategory != nil ? PSColors.primaryGreen : PSColors.textSecondary) {
-                    showFilterSheet = true
+                HStack(spacing: PSSpacing.sm) {
+                    NavigationLink(destination: DepletionInsightsView()) {
+                        PSIconButton(icon: "chart.bar.fill", size: PSLayout.scaled(36), tint: PSColors.primaryGreen) {}
+                    }
+                    PSIconButton(icon: "line.3.horizontal.decrease", size: PSLayout.scaled(36), tint: selectedCategory != nil ? PSColors.primaryGreen : PSColors.textSecondary) {
+                        showFilterSheet = true
+                    }
+                    .scaleEffect(selectedCategory != nil ? 1.08 : 1.0)
                 }
-                .scaleEffect(selectedCategory != nil ? 1.08 : 1.0)
                 .accessibilityLabel(String(localized: "Filter and sort"))
                 .accessibilityHint(selectedCategory != nil ? String(localized: "Filter active: \(selectedCategory?.displayName ?? "Unknown")") : String(localized: "No filters applied"))
             }
+
+            // Quick action buttons for Smart Add, Replenish, Receipt Scanner
+            HStack(spacing: PSSpacing.md) {
+                NavigationLink(destination: SmartAddView()) {
+                    Label(String(localized: "Smart Add"), systemImage: "camera.viewfinder")
+                        .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                        .foregroundStyle(PSColors.primaryGreen)
+                        .padding(.horizontal, PSSpacing.md)
+                        .padding(.vertical, PSSpacing.sm)
+                        .background(PSColors.primaryGreen.opacity(0.1))
+                        .clipShape(Capsule())
+                }
+                NavigationLink(destination: ReceiptScannerView()) {
+                    Label(String(localized: "Receipt"), systemImage: "doc.text.viewfinder")
+                        .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                        .foregroundStyle(PSColors.accentTeal)
+                        .padding(.horizontal, PSSpacing.md)
+                        .padding(.vertical, PSSpacing.sm)
+                        .background(PSColors.accentTeal.opacity(0.1))
+                        .clipShape(Capsule())
+                }
+                NavigationLink(destination: ReplenishView()) {
+                    Label(String(localized: "Replenish"), systemImage: "cart.fill")
+                        .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                        .foregroundStyle(PSColors.secondaryAmber)
+                        .padding(.horizontal, PSSpacing.md)
+                        .padding(.vertical, PSSpacing.sm)
+                        .background(PSColors.secondaryAmber.opacity(0.1))
+                        .clipShape(Capsule())
+                }
+                Spacer()
+            }
+            .padding(.top, PSSpacing.sm)
 
             // Figma: search input — bg-neutral-100 rounded-2xl py-3.5
             HStack(spacing: PSSpacing.sm) {

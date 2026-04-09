@@ -87,6 +87,10 @@ struct MissingIngredientSheet: View {
                                 size: .medium,
                                 isFullWidth: true,
                                 action: {
+                                    // Add to shopping list
+                                    viewModel.service.currentList.items.append(item)
+                                    viewModel.service.toggleUrgent(id: item.id)
+                                    PSHaptics.shared.success()
                                     dismiss()
                                 }
                             )
