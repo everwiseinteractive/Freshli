@@ -53,7 +53,7 @@ struct AppTabView: View {
                     }
                 case .pantry:
                     NavigationStack {
-                        PantryView(showAddItem: $showAddItem)
+                        FreshliView(showAddItem: $showAddItem)
                     }
                 case .recipes:
                     NavigationStack {
@@ -137,7 +137,7 @@ struct AppTabView: View {
     }
 
     private func seedDataIfNeeded() {
-        let pantryService = PantryService(modelContext: modelContext)
+        let pantryService = FreshliService(modelContext: modelContext)
         pantryService.seedSampleDataIfNeeded()
     }
 }

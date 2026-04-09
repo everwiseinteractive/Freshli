@@ -9,5 +9,8 @@ struct PantryShareWidgetsBundle: WidgetBundle {
         FreshnessRingWidget()
         PantryShareWidgetsControl()
         PantryShareWidgetsLiveActivity()
+        FreshliExpiryLiveActivity()
+        FreshliClaimLiveActivity()
+        FreshliRecipeTimerLiveActivity()
     }
 }

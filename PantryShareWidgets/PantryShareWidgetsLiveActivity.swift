@@ -5,7 +5,7 @@ import SwiftUI
 // MARK: - Expiry Rescue Live Activity
 // Shows when a food item is about to expire and needs to be used, shared, or donated.
 
-struct PantryShareWidgetsAttributes: ActivityAttributes {
+struct FreshliWidgetsAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         /// Hours remaining until expiry.
         var hoursRemaining: Int
@@ -23,7 +23,7 @@ struct PantryShareWidgetsAttributes: ActivityAttributes {
 
 struct PantryShareWidgetsLiveActivity: Widget {
     var body: some WidgetConfiguration {
-        ActivityConfiguration(for: PantryShareWidgetsAttributes.self) { context in
+        ActivityConfiguration(for: FreshliWidgetsAttributes.self) { context in
             // Lock screen / notification banner
             lockScreenView(context: context)
                 .activityBackgroundTint(Color(red: 0.133, green: 0.773, blue: 0.369).opacity(0.15))
@@ -95,7 +95,7 @@ struct PantryShareWidgetsLiveActivity: Widget {
 
     // MARK: - Lock Screen View
 
-    private func lockScreenView(context: ActivityViewContext<PantryShareWidgetsAttributes>) -> some View {
+    private func lockScreenView(context: ActivityViewContext<FreshliWidgetsAttributes>) -> some View {
         HStack(spacing: 16) {
             // Item info
             HStack(spacing: 10) {
@@ -184,25 +184,25 @@ struct PantryShareWidgetsLiveActivity: Widget {
 
 // MARK: - Previews
 
-extension PantryShareWidgetsAttributes {
-    fileprivate static var preview: PantryShareWidgetsAttributes {
-        PantryShareWidgetsAttributes(itemName: "Organic Milk", category: "dairy", quantity: "1 carton")
+extension FreshliWidgetsAttributes {
+    fileprivate static var preview: FreshliWidgetsAttributes {
+        FreshliWidgetsAttributes(itemName: "Organic Milk", category: "dairy", quantity: "1 carton")
     }
 }
 
-extension PantryShareWidgetsAttributes.ContentState {
-    fileprivate static var expiring: PantryShareWidgetsAttributes.ContentState {
-        PantryShareWidgetsAttributes.ContentState(hoursRemaining: 6, status: "expiring")
+extension FreshliWidgetsAttributes.ContentState {
+    fileprivate static var expiring: FreshliWidgetsAttributes.ContentState {
+        FreshliWidgetsAttributes.ContentState(hoursRemaining: 6, status: "expiring")
     }
 
-    fileprivate static var rescued: PantryShareWidgetsAttributes.ContentState {
-        PantryShareWidgetsAttributes.ContentState(hoursRemaining: 0, status: "rescued")
+    fileprivate static var rescued: FreshliWidgetsAttributes.ContentState {
+        FreshliWidgetsAttributes.ContentState(hoursRemaining: 0, status: "rescued")
     }
 }
 
-#Preview("Notification", as: .content, using: PantryShareWidgetsAttributes.preview) {
+#Preview("Notification", as: .content, using: FreshliWidgetsAttributes.preview) {
     PantryShareWidgetsLiveActivity()
 } contentStates: {
-    PantryShareWidgetsAttributes.ContentState.expiring
-    PantryShareWidgetsAttributes.ContentState.rescued
+    FreshliWidgetsAttributes.ContentState.expiring
+    FreshliWidgetsAttributes.ContentState.rescued
 }

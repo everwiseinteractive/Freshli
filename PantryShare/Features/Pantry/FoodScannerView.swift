@@ -434,9 +434,9 @@ struct FoodScannerView: View {
 
         let itemsToAdd = foodScanner.results.enumerated()
             .filter { selectedResultIndices.contains($0.offset) }
-            .map { index, result -> PantryItem in
+            .map { index, result -> FreshliItem in
                 let quantity = resultQuantityEdits[result.id] ?? 1.0
-                return foodScanner.convertToPantryItem(result, quantity: quantity)
+                return foodScanner.convertToFreshliItem(result, quantity: quantity)
             }
 
         do {
@@ -457,7 +457,7 @@ struct FoodScannerView: View {
 
     private func addSingleItemToPantry(_ result: FoodIdentificationResult) {
         let quantity = resultQuantityEdits[result.id] ?? 1.0
-        let item = foodScanner.convertToPantryItem(result, quantity: quantity)
+        let item = foodScanner.convertToFreshliItem(result, quantity: quantity)
 
         do {
             modelContext.insert(item)
@@ -479,5 +479,5 @@ struct FoodScannerView: View {
 
 #Preview {
     FoodScannerView()
-        .modelContainer(for: PantryItem.self, inMemory: true)
+        .modelContainer(for: FreshliItem.self, inMemory: true)
 }

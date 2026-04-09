@@ -7,7 +7,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PantryShare"
+            "value" : "Freshli"
           }
         }
       }
@@ -30,7 +30,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PantryShare uses your camera to scan barcodes and receipts for quick item entry."
+            "value" : "Freshli uses your camera to scan barcodes and receipts for quick item entry."
           }
         }
       }
@@ -41,7 +41,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PantryShare uses your location to show nearby community food listings and set pickup locations."
+            "value" : "Freshli uses your location to show nearby community food listings and set pickup locations."
           }
         }
       }
@@ -52,7 +52,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PantryShare accesses your photos to add images to pantry items and community listings."
+            "value" : "Freshli accesses your photos to add images to pantry items and community listings."
           }
         }
       }
