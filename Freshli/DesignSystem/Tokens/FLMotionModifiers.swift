@@ -22,7 +22,6 @@
 //
 
 import SwiftUI
-import UIKit
 
 // MARK: - Motion Presets (semantic, not raw)
 //
@@ -215,29 +214,24 @@ struct CelebrationPopModifier: ViewModifier {
             .onChange(of: trigger) { _, newValue in
                 guard newValue else { return }
                 if haptic { PSHaptics.shared.celebrate() }
-
                 if reduceMotion {
-                    // Tiny fade of the glow ring, no scale drama.
-                    withAnimation(.easeOut(duration: 0.2)) { glow = 0.6 }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                    Task { @MainActor in
+                        withAnimation(.easeOut(duration: 0.2)) { glow = 0.6 }
+                        try? await Task.sleep(for: .milliseconds(250))
                         withAnimation(.easeIn(duration: 0.2)) { glow = 0 }
                         trigger = false
                     }
                 } else {
-                    withAnimation(FLMotion.celebrationPop) {
-                        scale = 1.12
-                        glow = 0.85
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-                        withAnimation(FLMotion.springDefault) {
-                            scale = 1.0
+                    Task { @MainActor in
+                        withAnimation(FLMotion.celebrationPop) {
+                            scale = 1.12
+                            glow = 0.85
                         }
-                        withAnimation(.easeOut(duration: 0.45)) {
-                            glow = 0
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            trigger = false
-                        }
+                        try? await Task.sleep(for: .milliseconds(180))
+                        withAnimation(FLMotion.springDefault) { scale = 1.0 }
+                        withAnimation(.easeOut(duration: 0.45)) { glow = 0 }
+                        try? await Task.sleep(for: .milliseconds(500))
+                        trigger = false
                     }
                 }
             }
@@ -295,27 +289,24 @@ struct SuccessFlashModifier: ViewModifier {
             .onChange(of: trigger) { _, newValue in
                 guard newValue else { return }
                 if reduceMotion {
-                    withAnimation(.easeOut(duration: 0.2)) { tint = 0.25 }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    Task { @MainActor in
+                        withAnimation(.easeOut(duration: 0.2)) { tint = 0.25 }
+                        try? await Task.sleep(for: .milliseconds(300))
                         withAnimation(.easeIn(duration: 0.2)) { tint = 0 }
                         trigger = false
                     }
                     return
                 }
-                withAnimation(FLMotion.successFlash) {
-                    scale = 1.03
-                    tint = 0.28
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-                    withAnimation(FLMotion.springDefault) {
-                        scale = 1.0
+                Task { @MainActor in
+                    withAnimation(FLMotion.successFlash) {
+                        scale = 1.03
+                        tint = 0.28
                     }
-                    withAnimation(.easeOut(duration: 0.45)) {
-                        tint = 0
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        trigger = false
-                    }
+                    try? await Task.sleep(for: .milliseconds(180))
+                    withAnimation(FLMotion.springDefault) { scale = 1.0 }
+                    withAnimation(.easeOut(duration: 0.45)) { tint = 0 }
+                    try? await Task.sleep(for: .milliseconds(500))
+                    trigger = false
                 }
             }
     }
@@ -338,16 +329,14 @@ struct ErrorShakeModifier: ViewModifier {
                     trigger = false
                     return
                 }
-                PSHaptics.shared.error()
+                // Haptic comes from `.sensoryFeedback(.error, trigger:)` above
+                // — don't double-fire it here.
                 let sequence: [CGFloat] = [-8, 8, -6, 6, -3, 3, 0]
-                for (i, dx) in sequence.enumerated() {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.055) {
-                        withAnimation(FLMotion.errorShake) {
-                            offset = dx
-                        }
+                Task { @MainActor in
+                    for dx in sequence {
+                        withAnimation(FLMotion.errorShake) { offset = dx }
+                        try? await Task.sleep(for: .milliseconds(55))
                     }
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + Double(sequence.count) * 0.055) {
                     trigger = false
                 }
             }

@@ -50,8 +50,9 @@ struct HarvestOverlayModifier: ViewModifier {
             savedTextOffset = -40
         }
 
-        // Dismiss overlay after animation
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+        // Dismiss overlay after animation — Swift 6 concurrency-clean Task.
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(2))
             withAnimation(.easeOut(duration: 0.2)) {
                 isActive.wrappedValue = false
             }

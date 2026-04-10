@@ -11,7 +11,9 @@ struct SignInView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var showError = false
+    @State private var errorShakeTrigger = false
     @State private var appeared = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ScrollView {
@@ -144,6 +146,7 @@ struct SignInView: View {
                         .background(PSColors.expiredRed.opacity(0.08))
                         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
                         .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                        .errorShake(trigger: $errorShakeTrigger)
                     }
                 }
                 .padding(.horizontal, PSLayout.formHorizontalPadding)
@@ -202,10 +205,12 @@ struct SignInView: View {
                 try await authManager.signIn(email: email, password: password)
                 PSHaptics.shared.success()
             } catch {
-                PSHaptics.shared.error()
                 withAnimation(PSMotion.springQuick) {
                     showError = true
                 }
+                // Error shake handles haptic internally; only trigger when
+                // motion is allowed so we don't double-haptic with sensoryFeedback.
+                errorShakeTrigger = true
             }
         }
     }
