@@ -150,7 +150,7 @@ struct FreshliCardStyle: ViewModifier {
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
             )
-            .shadow(color: .black.opacity(shadowOpacity), radius: shadowRadius, y: 4)
+            .shadow(color: PSColors.textPrimary.opacity(shadowOpacity), radius: shadowRadius, y: 4)
     }
 }
 

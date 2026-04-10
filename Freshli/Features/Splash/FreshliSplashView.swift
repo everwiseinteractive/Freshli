@@ -158,7 +158,7 @@ struct FreshliSplashView: View {
         }
 
         // Phase 3: Text tracking collapses (0.4–1.1s)
-        withAnimation(.spring(response: 0.7, dampingFraction: 0.7).delay(0.4)) {
+        withAnimation(FLMotion.freshliCurve.delay(0.4)) {
             textTracking = 0
             textOpacity = 1.0
         }

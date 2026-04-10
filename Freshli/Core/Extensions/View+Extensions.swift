@@ -8,13 +8,13 @@ extension View {
     func cardStyle() -> some View {
         background(PSColors.surfaceCard)
             .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
-            .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
+            .shadow(color: PSColors.textPrimary.opacity(0.06), radius: 8, x: 0, y: 2)
     }
 
     func elevatedCardStyle() -> some View {
         background(PSColors.surfaceElevated)
             .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
-            .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
+            .shadow(color: PSColors.textPrimary.opacity(0.08), radius: 12, x: 0, y: 4)
     }
 
     /// Emerald surface card style (profile, add item screens)
@@ -25,7 +25,7 @@ extension View {
                 RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
                     .strokeBorder(PSColors.emeraldSurface, lineWidth: 1)
             )
-            .shadow(color: .black.opacity(0.03), radius: 8, y: 4)
+            .shadow(color: PSColors.primaryGreen.opacity(0.03), radius: 8, y: 4)
     }
 
     @ViewBuilder
@@ -64,7 +64,7 @@ extension View {
                 RoundedRectangle(cornerRadius: PSSpacing.radiusLg)
                     .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
             )
-            .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
+            .shadow(color: PSColors.textPrimary.opacity(0.04), radius: 8, y: 2)
     }
 
     /// Subtle glass background for floating elements

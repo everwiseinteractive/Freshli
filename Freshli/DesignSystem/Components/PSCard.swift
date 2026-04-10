@@ -92,7 +92,7 @@ struct PSGlassCard<Content: View>: View {
                 RoundedRectangle(cornerRadius: PSSpacing.radiusLg)
                     .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
             )
-            .shadow(color: .black.opacity(0.04), radius: 8, y: 2)
+            .shadow(color: PSColors.textPrimary.opacity(0.04), radius: 8, y: 2)
     }
 }
 

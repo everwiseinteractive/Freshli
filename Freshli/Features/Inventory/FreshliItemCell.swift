@@ -48,6 +48,8 @@ struct FreshliItemCell: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
         .contentShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
+        // GPU-offload complex cell rendering to eliminate jitter in LazyVStack/List
+        .drawingGroup(opaque: false, colorMode: .nonLinear)
     }
 
     // MARK: - Swipe Background
@@ -199,7 +201,7 @@ struct FreshliItemCell: View {
                 RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
                     .stroke(Color.white.opacity(0.15), lineWidth: 0.5)
             )
-            .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
+            .shadow(color: PSColors.textPrimary.opacity(0.06), radius: 8, y: 2)
     }
 
     // MARK: - Swipe Gesture
@@ -227,22 +229,22 @@ struct FreshliItemCell: View {
                 let translation = value.translation.width
 
                 if translation > swipeThreshold {
-                    // Swipe right → Consumed
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                    // Swipe right → Consumed — use Freshli Curve for satisfying completion
+                    withAnimation(FLMotion.freshliCurve) {
                         swipeOffset = UIScreen.main.bounds.width
                     }
                     PSHaptics.shared.mediumTap()
                     onConsumed()
                 } else if translation < -swipeThreshold {
-                    // Swipe left → Share
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                    // Swipe left → Share — use Freshli Curve
+                    withAnimation(FLMotion.freshliCurve) {
                         swipeOffset = -UIScreen.main.bounds.width
                     }
                     PSHaptics.shared.lightTap()
                     onShare()
                 } else {
-                    // Spring back
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    // Spring back — use snappy spring for crisp rubber-band return
+                    withAnimation(FLMotion.springSnappy) {
                         swipeOffset = 0
                     }
                 }
@@ -256,11 +258,13 @@ struct FreshliItemCell: View {
 // MARK: - Glass Cell Button Style
 
 struct GlassCellButtonStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1.0)
             .opacity(configuration.isPressed ? 0.85 : 1.0)
-            .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
+            .animation(reduceMotion ? .none : FLMotion.springQuick, value: configuration.isPressed)
     }
 }
 

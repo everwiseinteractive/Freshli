@@ -148,7 +148,7 @@ final class InventoryViewModel {
         hapticService.harvestCelebration()
 
         // Trigger confetti
-        withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+        withAnimation(FLMotion.freshliCurve) {
             showConfetti = true
         }
 
@@ -177,7 +177,7 @@ final class InventoryViewModel {
         // Gentle haptic
         PSHaptics.shared.selection()
 
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+        withAnimation(FLMotion.freshliCurve) {
             showSharePreview = true
         }
 
@@ -201,13 +201,13 @@ final class InventoryViewModel {
 
     func selectItem(_ item: SupabaseFreshliItem) {
         selectedItemId = item.id
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+        withAnimation(FLMotion.freshliCurve) {
             showDetail = true
         }
     }
 
     func dismissDetail() {
-        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+        withAnimation(FLMotion.freshliCurve) {
             showDetail = false
         }
         // Small delay so matchedGeometry animates back

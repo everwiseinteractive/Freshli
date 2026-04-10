@@ -37,6 +37,7 @@ enum AppTab: String, CaseIterable, Identifiable {
 
 struct AppTabView: View {
     @State private var selectedTab: AppTab = .home
+    @State private var previousTab: AppTab = .home
     @State private var showAddItem = false
     @Environment(\.modelContext) private var modelContext
     @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
@@ -45,14 +46,22 @@ struct AppTabView: View {
 
     @Namespace private var tabNamespace
 
+    /// Determines the slide direction based on tab order for organic transition
+    private var slideDirection: FLMotion.TabSlideDirection {
+        let allTabs = AppTab.allCases
+        let currentIndex = allTabs.firstIndex(of: selectedTab) ?? 0
+        let previousIndex = allTabs.firstIndex(of: previousTab) ?? 0
+        return currentIndex >= previousIndex ? .forward : .backward
+    }
+
     var body: some View {
         ZStack(alignment: .bottom) {
-            // Content
+            // Content with custom Slide & Scale transition for organic tab switching
             Group {
                 switch selectedTab {
                 case .home:
                     NavigationStack {
-                        HomeView(showAddItem: $showAddItem, switchToTab: { selectedTab = $0 })
+                        HomeView(showAddItem: $showAddItem, switchToTab: { switchTab(to: $0) })
                     }
                 case .pantry:
                     NavigationStack {
@@ -72,6 +81,8 @@ struct AppTabView: View {
                     }
                 }
             }
+            .transition(FLMotion.tabSlideTransition(direction: slideDirection))
+            .id(selectedTab)
             .padding(.bottom, PSLayout.tabBarContentPadding)
 
             // Figma: custom tab bar — bg-white/80 backdrop-blur-xl border-t
@@ -79,6 +90,8 @@ struct AppTabView: View {
         }
         .ignoresSafeArea(.container, edges: .bottom)
         .ignoresSafeArea(.keyboard)
+        // SensoryFeedback (.selection) on tab change — tactile click between Pantry & Community
+        .sensoryFeedback(.selection, trigger: selectedTab)
         .sheet(isPresented: $showAddItem) {
             NavigationStack {
                 AddItemView()
@@ -98,23 +111,30 @@ struct AppTabView: View {
         }
     }
 
+    /// Switches tab with direction tracking for organic slide + scale transition
+    private func switchTab(to tab: AppTab) {
+        guard tab != selectedTab else { return }
+        previousTab = selectedTab
+        withAnimation(FLMotion.tabTransition) {
+            selectedTab = tab
+        }
+    }
+
     // Figma: iOS-style bottom navigation
     // Uses explicit bottom safe area inset so the material fills to the screen edge.
     private var customTabBar: some View {
         HStack {
             ForEach(AppTab.allCases) { tab in
                 Button {
-                    if selectedTab != tab {
-                        PSHaptics.shared.selection()
-                    }
-                    withAnimation(PSMotion.springBouncy) {
-                        selectedTab = tab
-                    }
+                    switchTab(to: tab)
                 } label: {
                     VStack(spacing: PSSpacing.xxs) {
                         Image(systemName: tab.icon)
                             .font(.system(size: PSLayout.scaledFont(24), weight: selectedTab == tab ? .semibold : .regular))
                             .foregroundStyle(selectedTab == tab ? PSColors.primaryGreen : PSColors.textTertiary)
+                            // Subtle scale pulse on active icon
+                            .scaleEffect(selectedTab == tab ? 1.08 : 1.0)
+                            .animation(FLMotion.freshliCurve, value: selectedTab)
 
                         Text(tab.title)
                             .font(.system(size: PSLayout.scaledFont(10), weight: .medium))

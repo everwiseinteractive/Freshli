@@ -175,12 +175,16 @@ struct HomeView: View {
             // Clamp overlap to prevent clipping on SE
             expiringSoonCard
                 .padding(.top, max(PSLayout.headerOverlap, PSLayout.scaled(-20)))
+                .dashboardEntrance(index: 0)
 
             impactSummaryCard
+                .dashboardEntrance(index: 1)
 
             recipeSuggestionCard
+                .dashboardEntrance(index: 2)
 
             communitySwapCard
+                .dashboardEntrance(index: 3)
         }
         .adaptiveHPadding()
         .padding(.bottom, PSSpacing.xxxl)
@@ -239,7 +243,7 @@ struct HomeView: View {
             RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
                 .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
         )
-        .shadow(color: .black.opacity(0.04), radius: 12, y: 4)
+        .shadow(color: PSColors.primaryGreen.opacity(0.08), radius: 12, y: 4)
     }
 
     // MARK: - Impact Summary Card
@@ -331,7 +335,6 @@ struct HomeView: View {
                     .strokeBorder(PSColors.primaryGreen.opacity(0.15), lineWidth: 1)
             )
         }
-        .staggeredAppearance(index: 1)
     }
 
     private func impactStatTile(icon: String, value: String, label: String) -> some View {
@@ -440,7 +443,7 @@ struct HomeView: View {
                                 endPoint: .bottomTrailing
                             ), lineWidth: 1)
                     )
-                    .shadow(color: .black.opacity(0.04), radius: 4, y: 2)
+                    .shadow(color: PSColors.primaryGreen.opacity(0.06), radius: 4, y: 2)
                 }
                 .buttonStyle(PressableButtonStyle())
                 }
@@ -454,7 +457,6 @@ struct HomeView: View {
                 )
             }
         }
-        .staggeredAppearance(index: 2)
     }
 
     // MARK: - Figma: Community Swap Card
@@ -484,7 +486,7 @@ struct HomeView: View {
                     .frame(width: PSLayout.communityAvatarSize, height: PSLayout.communityAvatarSize)
                     .background(PSColors.primaryGreen)
                     .clipShape(Circle())
-                    .shadow(color: PSColors.primaryGreen.opacity(0.3), radius: 12, y: 4)
+                    .shadow(color: PSColors.primaryGreen.opacity(0.25), radius: 12, y: 4)
             }
             .buttonStyle(PressableButtonStyle())
         }
@@ -495,7 +497,6 @@ struct HomeView: View {
             RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
                 .strokeBorder(PSColors.primaryGreen.opacity(0.15), lineWidth: 1)
         )
-        .staggeredAppearance(index: 3)
     }
 }
 

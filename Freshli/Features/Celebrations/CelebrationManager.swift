@@ -189,7 +189,7 @@ final class CelebrationManager {
     }
 
     func dismissCelebration() {
-        withAnimation(PSMotion.springDefault) {
+        withAnimation(PSMotion.freshliCurve) {
             activeCelebration = nil
             isPresenting = false
         }

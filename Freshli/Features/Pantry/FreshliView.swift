@@ -435,7 +435,9 @@ struct FreshliView: View {
             RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous)
                 .strokeBorder(PSColors.borderLight, lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.04), radius: 2, y: 1)
+        .shadow(color: PSColors.textPrimary.opacity(0.04), radius: 2, y: 1)
+        // GPU-offload complex cell rendering to eliminate jitter in LazyVStack
+        .drawingGroup(opaque: false, colorMode: .nonLinear)
     }
 }
 

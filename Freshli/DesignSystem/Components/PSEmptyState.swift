@@ -21,7 +21,7 @@ struct PSEmptyState: View {
                 .frame(width: 96, height: 96)
                 .background(PSColors.surfaceCard)
                 .clipShape(Circle())
-                .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 4)
+                .shadow(color: PSColors.textPrimary.opacity(0.04), radius: 8, x: 0, y: 4)
                 .scaleEffect(appeared ? 1 : 0.5)
                 .opacity(appeared ? 1 : 0)
 

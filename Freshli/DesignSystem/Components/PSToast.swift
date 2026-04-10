@@ -114,7 +114,7 @@ struct FLToastView: View {
         .background {
             RoundedRectangle(cornerRadius: FLSpacing.radiusLg, style: .continuous)
                 .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.1), radius: 20, y: 10)
+                .shadow(color: PSColors.textPrimary.opacity(0.1), radius: 20, y: 10)
         }
         .overlay {
             RoundedRectangle(cornerRadius: FLSpacing.radiusLg, style: .continuous)

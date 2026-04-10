@@ -1,8 +1,9 @@
 import SwiftUI
 
 // MARK: - CelebrationOverlay
-// Master overlay that sits at the app root level and renders the active celebration
-// Routes each CelebrationType to its correct view implementation
+// Master overlay that sits at the ROOT ZStack level (above all navigation bars and tab bars)
+// and renders the active celebration without clipping.
+// Routes each CelebrationType to its correct view implementation.
 
 struct CelebrationOverlay: View {
     @Bindable var manager: CelebrationManager
@@ -10,9 +11,34 @@ struct CelebrationOverlay: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Namespace private var celebrationNamespace
 
+    /// Animated blur intensity for celebration backdrop (0 → 1 over 0.5s)
+    @State private var blurIntensity: CGFloat = 0
+
     var body: some View {
         ZStack {
             if let celebration = manager.activeCelebration {
+                // Visual Effect Blur backdrop — animates intensity from 0 to 1 over 0.5s
+                // Only for medium/hero celebrations (not toasts)
+                if celebration.intensity != .small {
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .opacity(blurIntensity)
+                        .ignoresSafeArea()
+                        .allowsHitTesting(false)
+                        .onAppear {
+                            if !reduceMotion {
+                                withAnimation(.easeInOut(duration: 0.5)) {
+                                    blurIntensity = 1.0
+                                }
+                            } else {
+                                blurIntensity = 1.0
+                            }
+                        }
+                        .onDisappear {
+                            blurIntensity = 0
+                        }
+                }
+
                 Group {
                     if useFreshliCelebrations && celebration.intensity != .small {
                         // Enhanced Freshli celebration with Canvas particles + spatial audio
@@ -28,11 +54,12 @@ struct CelebrationOverlay: View {
                 }
                 .transition(celebrationTransition(for: celebration))
                 .zIndex(100)
-                .ignoresSafeArea(.keyboard)
+                // Ensure celebrations appear ABOVE Dynamic Island and Home Indicator
+                .ignoresSafeArea(.all)
             }
         }
         .animation(
-            reduceMotion ? .none : PSMotion.springBouncy,
+            reduceMotion ? .none : FLMotion.freshliCurve,
             value: manager.activeCelebration?.id
         )
     }
@@ -98,10 +125,13 @@ struct CelebrationOverlay: View {
 }
 
 // MARK: - View Extension for Easy Integration
+// Uses a root-level ZStack instead of .overlay to ensure celebrations
+// appear ABOVE all navigation bars and tab bars without clipping.
 
 extension View {
     func celebrationOverlay(manager: CelebrationManager) -> some View {
-        self.overlay {
+        ZStack {
+            self
             CelebrationOverlay(manager: manager)
         }
     }
