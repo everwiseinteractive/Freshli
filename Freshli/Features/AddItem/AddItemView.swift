@@ -371,7 +371,7 @@ struct AddItemView: View {
             notificationService.scheduleExpiryReminder(for: item)
 
             // Trigger celebration system
-            celebrationManager?.onItemAdded(modelContext: modelContext)
+            celebrationManager?.fireItemAdded(modelContext: modelContext)
 
             // Update widget data
             WidgetDataService.updateWidgetData(modelContext: modelContext)
@@ -450,12 +450,10 @@ private struct AdaptiveFormRow<A: View, B: View>: View {
     NavigationStack {
         AddItemView()
     }
-    .previewDevice(PreviewDevice(rawValue: "iPhone SE (3rd generation)"))
 }
 
 #Preview("AddItemView - iPhone 16 Pro Max") {
     NavigationStack {
         AddItemView()
     }
-    .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro Max"))
 }

@@ -247,7 +247,7 @@ struct SmartAddView: View {
         PSHaptics.shared.success()
 
         // Trigger celebration
-        celebrationManager?.onItemAdded(modelContext: modelContext)
+        celebrationManager?.fireItemAdded(modelContext: modelContext)
 
         toastManager?.show(.itemAdded("\(count) items added to pantry!"))
 

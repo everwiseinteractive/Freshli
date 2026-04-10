@@ -94,17 +94,10 @@ struct FreshliExpandingCelebrationContainer<Content: View>: View {
         }
     }
 
-    /// Device corner radius — matches physical display corners
-    private var deviceCornerRadius: CGFloat {
-        // iOS 18+ UIScreen corner radius via displayCornerRadius
-        // Falls back to 44pt (iPhone 15/16 family standard)
-        let screen = UIScreen.main
-        let key = "_displayCornerRadius"
-        if let radius = screen.value(forKey: key) as? CGFloat, radius > 0 {
-            return radius
-        }
-        return 44
-    }
+    /// Device corner radius — matches physical display corners.
+    /// Fixed at 44pt (iPhone 15/16/17 family standard). We intentionally
+    /// avoid the private `_displayCornerRadius` KVC path that some apps use.
+    private var deviceCornerRadius: CGFloat { 44 }
 }
 
 // MARK: - Celebration Expand Transition Modifier

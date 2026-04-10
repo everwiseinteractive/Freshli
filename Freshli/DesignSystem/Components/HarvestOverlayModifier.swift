@@ -74,9 +74,9 @@ extension View {
 // MARK: - Preview
 
 #Preview("Harvest Celebration - Standard") {
-    @State var isActive = true
+    @Previewable @State var isActive = true
 
-    return ZStack {
+    ZStack {
         VStack {
             Text("Tap to trigger harvest")
                 .font(.headline)
@@ -89,9 +89,9 @@ extension View {
 }
 
 #Preview("Harvest Celebration - Gentle") {
-    @State var isActive = true
+    @Previewable @State var isActive = true
 
-    return ZStack {
+    ZStack {
         VStack {
             Text("Gentle sparkle celebration")
                 .font(.headline)

@@ -231,14 +231,14 @@ struct FreshliItemCell: View {
                 if translation > swipeThreshold {
                     // Swipe right → Consumed — use Freshli Curve for satisfying completion
                     withAnimation(FLMotion.freshliCurve) {
-                        swipeOffset = UIScreen.main.bounds.width
+                        swipeOffset = ScreenMetrics.bounds.width
                     }
                     PSHaptics.shared.mediumTap()
                     onConsumed()
                 } else if translation < -swipeThreshold {
                     // Swipe left → Share — use Freshli Curve
                     withAnimation(FLMotion.freshliCurve) {
-                        swipeOffset = -UIScreen.main.bounds.width
+                        swipeOffset = -ScreenMetrics.bounds.width
                     }
                     PSHaptics.shared.lightTap()
                     onShare()
@@ -341,7 +341,7 @@ struct ConfettiView: View {
 
     private func spawnParticles() {
         animationProgress = 0
-        let screenWidth = UIScreen.main.bounds.width
+        let screenWidth = ScreenMetrics.bounds.width
         particles = (0..<30).map { _ in
             InventoryConfettiParticle(
                 startX: screenWidth / 2 + CGFloat.random(in: -40...40),

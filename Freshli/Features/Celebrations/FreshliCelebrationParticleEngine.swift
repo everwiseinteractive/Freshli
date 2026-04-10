@@ -98,7 +98,7 @@ final class FreshliParticleEngine {
         let colorCount = flavor.colors.count
 
         // Build initial particles on background thread
-        Task.detached(priority: .userInitiated) { [gravity = self.gravity] in
+        Task.detached(priority: .userInitiated) {
             var newParticles: [FreshliCelebrationParticle] = []
             newParticles.reserveCapacity(count)
 

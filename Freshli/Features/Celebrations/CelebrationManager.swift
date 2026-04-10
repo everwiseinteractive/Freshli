@@ -22,6 +22,26 @@ final class CelebrationManager {
     private static let lastWeeklyRecapKey = "celebration_lastWeeklyRecap"
     private static let unlockedMilestonesKey = "celebration_unlockedMilestones"
 
+    // MARK: - Fire-and-Forget Wrappers
+    // Synchronous entry points for SwiftUI views that call from non-async contexts.
+    // Each schedules the underlying async work on the main actor.
+
+    func fireItemAdded(modelContext: ModelContext) {
+        Task { await self.onItemAdded(modelContext: modelContext) }
+    }
+
+    func fireFoodSaved(modelContext: ModelContext) {
+        Task { await self.onFoodSaved(modelContext: modelContext) }
+    }
+
+    func fireShareCompleted(itemName: String, modelContext: ModelContext) {
+        Task { await self.onShareCompleted(itemName: itemName, modelContext: modelContext) }
+    }
+
+    func fireDonationCompleted(itemName: String, modelContext: ModelContext) {
+        Task { await self.onDonationCompleted(itemName: itemName, modelContext: modelContext) }
+    }
+
     // MARK: - Trigger: Item Added to Pantry
 
     func onItemAdded(modelContext: ModelContext) async {

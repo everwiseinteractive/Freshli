@@ -28,16 +28,16 @@ struct PSSuccessCelebration: View {
                 // Figma: decorative circles with springs.slow entrance
                 Circle()
                     .fill(PSColors.green400.opacity(0.3))
-                    .frame(width: UIScreen.main.bounds.width * 1.2,
-                           height: UIScreen.main.bounds.width * 1.2)
+                    .frame(width: ScreenMetrics.bounds.width * 1.2,
+                           height: ScreenMetrics.bounds.width * 1.2)
                     .scaleEffect(showContent ? 1 : 0)
                     .opacity(showContent ? 1 : 0)
                     .blendMode(.overlay)
 
                 Circle()
                     .fill(Color(hex: 0x86EFAC).opacity(0.4)) // green-300
-                    .frame(width: UIScreen.main.bounds.width * 0.8,
-                           height: UIScreen.main.bounds.width * 0.8)
+                    .frame(width: ScreenMetrics.bounds.width * 0.8,
+                           height: ScreenMetrics.bounds.width * 0.8)
                     .scaleEffect(showContent ? 1 : 0)
                     .opacity(showContent ? 1 : 0)
                     .blendMode(.overlay)

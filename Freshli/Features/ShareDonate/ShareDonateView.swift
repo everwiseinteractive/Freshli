@@ -97,10 +97,10 @@ struct ShareDonateView: View {
                         }
                         if listing.listingType == .share {
                             toastManager?.show(.itemShared(itemName))
-                            celebrationManager?.onShareCompleted(itemName: itemName, modelContext: modelContext)
+                            celebrationManager?.fireShareCompleted(itemName: itemName, modelContext: modelContext)
                         } else {
                             toastManager?.show(.itemDonated(itemName))
-                            celebrationManager?.onDonationCompleted(itemName: itemName, modelContext: modelContext)
+                            celebrationManager?.fireDonationCompleted(itemName: itemName, modelContext: modelContext)
                         }
                         WidgetDataService.updateWidgetData(modelContext: modelContext)
                     }

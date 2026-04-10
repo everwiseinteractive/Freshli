@@ -68,7 +68,7 @@ struct PSBottomSheet<Content: View>: View {
                             .padding(24)
                     }
                 }
-                .frame(maxHeight: UIScreen.main.bounds.height * 0.9)
+                .frame(maxHeight: ScreenMetrics.bounds.height * 0.9)
                 // Figma: bg-white, dark:bg-neutral-900
                 .background(PSColors.surfaceCard)
                 .clipShape(
@@ -85,18 +85,20 @@ struct PSBottomSheet<Content: View>: View {
                         }
                         .onEnded { value in
                             if value.translation.height > 150 || value.velocity.height > 500 {
+                                PSHaptics.shared.swipeThreshold()
                                 dismiss()
                             } else {
-                                withAnimation(PSMotion.springQuick) {
+                                withAnimation(PSMotion.sheetPresent) {
                                     dragOffset = 0
                                 }
                             }
                         }
                 )
-                .transition(.move(edge: .bottom))
+                .sheetTransition()
+                .transition(.flSheetRise)
             }
         }
-        .animation(PSMotion.springBouncy, value: isPresented)
+        .animation(PSMotion.sheetPresent, value: isPresented)
         .ignoresSafeArea()
     }
 

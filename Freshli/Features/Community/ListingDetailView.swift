@@ -411,7 +411,7 @@ struct ListingDetailView: View {
                 showClaimSuccess = true
 
                 // Trigger celebration
-                celebrationManager?.onShareCompleted(
+                celebrationManager?.fireShareCompleted(
                     itemName: listing.itemName,
                     modelContext: modelContext
                 )

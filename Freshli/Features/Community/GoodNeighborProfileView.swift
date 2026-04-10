@@ -60,11 +60,11 @@ struct GoodNeighborProfileView: View {
                     let score = goodNeighborService.calculateScore()
                     let fillColor = scoreColor(for: score)
 
-                    var path = Path(roundedRect: CGRect(x: 0, y: 0, width: 300, height: 8), cornerRadius: 4)
+                    let path = Path(roundedRect: CGRect(x: 0, y: 0, width: 300, height: 8), cornerRadius: 4)
                     context.fill(path, with: .color(PSColors.borderLight))
 
                     let fillWidth = (score / 5.0) * 300
-                    var fillPath = Path(roundedRect: CGRect(x: 0, y: 0, width: fillWidth, height: 8), cornerRadius: 4)
+                    let fillPath = Path(roundedRect: CGRect(x: 0, y: 0, width: fillWidth, height: 8), cornerRadius: 4)
                     context.fill(fillPath, with: .color(fillColor))
                 }
                 .frame(height: 8)
@@ -168,11 +168,11 @@ struct GoodNeighborProfileView: View {
                             VStack(alignment: .leading, spacing: PSSpacing.xs) {
                                 let progress = goodNeighborService.progressToNextBadge()
                                 Canvas { context, size in
-                                    var path = Path(roundedRect: CGRect(x: 0, y: 0, width: 240, height: 6), cornerRadius: 3)
+                                    let path = Path(roundedRect: CGRect(x: 0, y: 0, width: 240, height: 6), cornerRadius: 3)
                                     context.fill(path, with: .color(PSColors.borderLight))
 
                                     let fillWidth = progress * 240
-                                    var fillPath = Path(roundedRect: CGRect(x: 0, y: 0, width: fillWidth, height: 6), cornerRadius: 3)
+                                    let fillPath = Path(roundedRect: CGRect(x: 0, y: 0, width: fillWidth, height: 6), cornerRadius: 3)
                                     context.fill(fillPath, with: .color(nextBadge.color))
                                 }
                                 .frame(height: 6)

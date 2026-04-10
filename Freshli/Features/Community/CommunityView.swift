@@ -952,10 +952,8 @@ enum CommunityFeedData {
 
 #Preview("CommunityView - iPhone SE") {
     CommunityView()
-        .previewDevice(PreviewDevice(rawValue: "iPhone SE (3rd generation)"))
 }
 
 #Preview("CommunityView - iPhone 16 Pro Max") {
     CommunityView()
-        .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro Max"))
 }

@@ -58,7 +58,7 @@ struct FreshliView: View {
             do {
                 try modelContext.save()
                 toastManager?.show(.itemConsumed(itemName))
-                celebrationManager?.onFoodSaved(modelContext: modelContext)
+                celebrationManager?.fireFoodSaved(modelContext: modelContext)
                 WidgetDataService.updateWidgetData(modelContext: modelContext)
                 if let userId = authManager?.currentUserId {
                     Task {
@@ -105,7 +105,7 @@ struct FreshliView: View {
             do {
                 try modelContext.save()
                 toastManager?.show(.itemShared(itemName))
-                celebrationManager?.onShareCompleted(itemName: itemName, modelContext: modelContext)
+                celebrationManager?.fireShareCompleted(itemName: itemName, modelContext: modelContext)
                 WidgetDataService.updateWidgetData(modelContext: modelContext)
                 if let userId = authManager?.currentUserId {
                     Task {
@@ -449,10 +449,8 @@ struct FreshliView: View {
 
 #Preview("FreshliView - iPhone SE") {
     FreshliView(showAddItem: .constant(false))
-        .previewDevice(PreviewDevice(rawValue: "iPhone SE (3rd generation)"))
 }
 
 #Preview("FreshliView - iPhone 16 Pro Max") {
     FreshliView(showAddItem: .constant(false))
-        .previewDevice(PreviewDevice(rawValue: "iPhone 16 Pro Max"))
 }

@@ -32,15 +32,14 @@ final class FreshliCelebrationAudio {
 
         isPlaying = true
 
-        Task.detached(priority: .userInitiated) { [weak self] in
+        Task { [weak self] in
+            guard let self else { return }
             do {
-                try await self?.generateAndPlayShimmer(pan: position, flavor: flavor)
+                try await self.generateAndPlayShimmer(pan: position, flavor: flavor)
             } catch {
                 // Audio failure is non-critical — silently degrade
             }
-            await MainActor.run {
-                self?.isPlaying = false
-            }
+            self.isPlaying = false
         }
     }
 
@@ -118,11 +117,8 @@ final class FreshliCelebrationAudio {
         engine.connect(playerNode, to: engine.mainMixerNode, format: format)
 
         try engine.start()
-        playerNode.scheduleBuffer(buffer, at: nil, options: [], completionHandler: nil)
         playerNode.play()
-
-        // Wait for playback to complete
-        try await Task.sleep(for: .milliseconds(Int(duration * 1000) + 100))
+        _ = await playerNode.scheduleBuffer(buffer, completionCallbackType: .dataPlayedBack)
 
         playerNode.stop()
         engine.stop()

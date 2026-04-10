@@ -418,9 +418,9 @@ struct CommunityCreateListingView: View {
 
                 // Trigger celebration
                 if listingType == "share" {
-                    celebrationManager?.onShareCompleted(itemName: itemName, modelContext: modelContext)
+                    celebrationManager?.fireShareCompleted(itemName: itemName, modelContext: modelContext)
                 } else {
-                    celebrationManager?.onDonationCompleted(itemName: itemName, modelContext: modelContext)
+                    celebrationManager?.fireDonationCompleted(itemName: itemName, modelContext: modelContext)
                 }
 
                 // Record impact

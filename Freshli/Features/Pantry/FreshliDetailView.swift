@@ -206,7 +206,7 @@ struct FreshliDetailView: View {
                         return
                     }
                 }
-                celebrationManager?.onFoodSaved(modelContext: modelContext)
+                celebrationManager?.fireFoodSaved(modelContext: modelContext)
                 toastManager?.show(.itemConsumed(itemName))
                 WidgetDataService.updateWidgetData(modelContext: modelContext)
                 if let userId = authManager?.currentUserId {
@@ -231,7 +231,7 @@ struct FreshliDetailView: View {
                         toastManager?.show(.error(String(localized: "Failed to save")))
                         return
                     }
-                    celebrationManager?.onShareCompleted(itemName: itemName, modelContext: modelContext)
+                    celebrationManager?.fireShareCompleted(itemName: itemName, modelContext: modelContext)
                     toastManager?.show(.itemShared(itemName))
                     WidgetDataService.updateWidgetData(modelContext: modelContext)
                     if let userId = authManager?.currentUserId {
@@ -254,7 +254,7 @@ struct FreshliDetailView: View {
                         toastManager?.show(.error(String(localized: "Failed to save")))
                         return
                     }
-                    celebrationManager?.onDonationCompleted(itemName: itemName, modelContext: modelContext)
+                    celebrationManager?.fireDonationCompleted(itemName: itemName, modelContext: modelContext)
                     toastManager?.show(.itemDonated(itemName))
                     WidgetDataService.updateWidgetData(modelContext: modelContext)
                     if let userId = authManager?.currentUserId {

@@ -5,6 +5,7 @@ import Supabase
 // MARK: - Freshli App Shortcuts Provider
 // Registers all Freshli intents with Siri, Shortcuts app, and Spotlight.
 
+@MainActor
 struct FreshliShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(

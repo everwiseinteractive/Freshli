@@ -148,7 +148,7 @@ enum CelebrationType: Identifiable, Equatable {
             return String(localized: "First Item Added!")
         case .firstFoodSaved:
             return String(localized: "Food Saved!")
-        case .recipeMatchSuccess(let name):
+        case .recipeMatchSuccess:
             return String(localized: "Recipe Match!")
         case .shareCompleted:
             return String(localized: "Shared Successfully!")

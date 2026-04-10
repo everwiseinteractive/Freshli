@@ -284,7 +284,7 @@ struct RecipeCookingView: View {
 
         if marked.count > 0 {
             showHarvestCelebration = true
-            celebrationManager?.onFoodSaved(modelContext: modelContext)
+            celebrationManager?.fireFoodSaved(modelContext: modelContext)
 
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 showCompletionSheet = true

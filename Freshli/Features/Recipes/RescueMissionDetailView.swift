@@ -340,7 +340,7 @@ struct RescueMissionDetailView: View {
 
         do {
             try modelContext.save()
-            celebrationManager?.onFoodSaved(modelContext: modelContext)
+            celebrationManager?.fireFoodSaved(modelContext: modelContext)
 
             // Dismiss after celebration
             DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {

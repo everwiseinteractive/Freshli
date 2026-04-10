@@ -159,19 +159,19 @@ struct ExpiryAlertsView: View {
                 PSHaptics.shared.success()
                 item.isConsumed = true
                 toastManager?.show(.itemConsumed(itemName))
-                celebrationManager?.onFoodSaved(modelContext: modelContext)
+                celebrationManager?.fireFoodSaved(modelContext: modelContext)
                 PSLogger.general.info("Item marked as consumed: \(itemName)")
             case .share:
                 PSHaptics.shared.success()
                 item.isShared = true
                 toastManager?.show(.itemShared(itemName))
-                celebrationManager?.onShareCompleted(itemName: itemName, modelContext: modelContext)
+                celebrationManager?.fireShareCompleted(itemName: itemName, modelContext: modelContext)
                 PSLogger.general.info("Item marked as shared: \(itemName)")
             case .donate:
                 PSHaptics.shared.success()
                 item.isDonated = true
                 toastManager?.show(.itemDonated(itemName))
-                celebrationManager?.onDonationCompleted(itemName: itemName, modelContext: modelContext)
+                celebrationManager?.fireDonationCompleted(itemName: itemName, modelContext: modelContext)
                 PSLogger.general.info("Item marked as donated: \(itemName)")
             case .delete:
                 PSHaptics.shared.heavyTap()

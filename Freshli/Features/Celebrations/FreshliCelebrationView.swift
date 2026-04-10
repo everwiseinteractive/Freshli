@@ -67,7 +67,7 @@ struct FreshliCelebrationView: View {
                 ],
                 center: .center,
                 startRadius: 20,
-                endRadius: UIScreen.main.bounds.width * 0.7
+                endRadius: ScreenMetrics.bounds.width * 0.7
             )
             .ignoresSafeArea()
             .opacity(showContent ? 1 : 0)
@@ -299,10 +299,10 @@ struct FreshliCelebrationView: View {
             burstTriggered = true
 
             let center = CGPoint(
-                x: UIScreen.main.bounds.midX,
-                y: UIScreen.main.bounds.height * 0.3
+                x: ScreenMetrics.bounds.midX,
+                y: ScreenMetrics.bounds.height * 0.3
             )
-            let size = UIScreen.main.bounds.size
+            let size = ScreenMetrics.bounds.size
             let count = type.intensity == .hero ? 60 : 35
 
             particleEngine.emit(

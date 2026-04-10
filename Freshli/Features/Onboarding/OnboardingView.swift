@@ -56,14 +56,14 @@ struct OnboardingView: View {
             // Figma: 150vw blur-3xl decorative blob with entrance animation
             Circle()
                 .fill(step.lightColor)
-                .frame(width: UIScreen.main.bounds.width * 1.5,
-                       height: UIScreen.main.bounds.width * 1.5)
+                .frame(width: ScreenMetrics.bounds.width * 1.5,
+                       height: ScreenMetrics.bounds.width * 1.5)
                 .blur(radius: 80)
                 // Figma: animate: { opacity: 0.4 }
                 .opacity(blobVisible ? 0.4 : 0)
                 .scaleEffect(blobVisible ? 1 : 0.6)
-                .offset(x: UIScreen.main.bounds.width * 0.37,
-                         y: -UIScreen.main.bounds.width * 0.37)
+                .offset(x: ScreenMetrics.bounds.width * 0.37,
+                         y: -ScreenMetrics.bounds.width * 0.37)
 
             VStack {
                 Spacer()

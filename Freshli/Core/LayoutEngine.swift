@@ -1,4 +1,32 @@
 import SwiftUI
+import UIKit
+
+// MARK: - ScreenMetrics (iOS 26+ replacement for UIScreen.main)
+// In iOS 26 `UIScreen.main` is deprecated; callers must derive the screen
+// from the active `UIWindowScene`. This helper centralises that lookup so
+// the rest of the app can keep using a single, concise call site.
+
+@MainActor
+enum ScreenMetrics {
+    /// Bounds of the screen backing the currently-active window scene.
+    /// Falls back to a sensible iPhone-sized rectangle if no scene is active
+    /// yet (e.g. during very early launch or in certain previews).
+    static var bounds: CGRect {
+        if let scene = activeWindowScene {
+            return scene.screen.bounds
+        }
+        return CGRect(x: 0, y: 0, width: 390, height: 844)
+    }
+
+    static var size: CGSize { bounds.size }
+    static var width: CGFloat { bounds.width }
+    static var height: CGFloat { bounds.height }
+
+    private static var activeWindowScene: UIWindowScene? {
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        return scenes.first { $0.activationState == .foregroundActive } ?? scenes.first
+    }
+}
 
 // MARK: - LayoutEngine
 // Universal Scaling Engine for Freshli.
@@ -20,14 +48,9 @@ final class LayoutEngine {
     // MARK: - Published Geometry
 
     /// Current viewport width (updated by GeometryReader or scene phase).
-    private(set) var viewportWidth: CGFloat = {
-        // Fallback initial value; the GeometryReader will overwrite immediately.
-        UIScreen.main.bounds.width
-    }()
+    private(set) var viewportWidth: CGFloat = ScreenMetrics.width
     /// Current viewport height.
-    private(set) var viewportHeight: CGFloat = {
-        UIScreen.main.bounds.height
-    }()
+    private(set) var viewportHeight: CGFloat = ScreenMetrics.height
     /// Safe area insets captured from the root GeometryReader.
     private(set) var safeArea: EdgeInsets = .init()
 
@@ -143,10 +166,10 @@ final class LayoutEngine {
         }
     }
 
-    /// Lightweight update from UIScreen (use when GeometryReader isn't available).
-    /// Note: UIScreen.main is deprecated in iOS 26; prefer the GeometryReader path.
+    /// Lightweight update from the active window scene's screen.
+    /// Prefer the GeometryReader path when possible.
     func syncFromScreen() {
-        let bounds = UIScreen.main.bounds
+        let bounds = ScreenMetrics.bounds
         if viewportWidth != bounds.width || viewportHeight != bounds.height {
             viewportWidth = bounds.width
             viewportHeight = bounds.height

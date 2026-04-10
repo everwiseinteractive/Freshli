@@ -16,18 +16,19 @@ import SwiftUI
 //   Refresh rate       : ProMotion 120 Hz
 //   Notch style        : Dynamic Island
 
+@MainActor
 enum PSLayout {
     /// Base reference width (iPhone 16/17 standard).
     static let referenceWidth: CGFloat = 393
 
     /// Current screen width.
     static var screenWidth: CGFloat {
-        UIScreen.main.bounds.width
+        ScreenMetrics.bounds.width
     }
 
     /// Current screen height.
     static var screenHeight: CGFloat {
-        UIScreen.main.bounds.height
+        ScreenMetrics.bounds.height
     }
 
     /// Scale factor relative to reference width.

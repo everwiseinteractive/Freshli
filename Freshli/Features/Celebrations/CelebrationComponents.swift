@@ -24,8 +24,8 @@ struct CelebrationContainer<Content: View>: View {
             Circle()
                 .fill(type.iconBackgroundColor.opacity(0.3))
                 .frame(
-                    width: UIScreen.main.bounds.width * 1.2,
-                    height: UIScreen.main.bounds.width * 1.2
+                    width: ScreenMetrics.bounds.width * 1.2,
+                    height: ScreenMetrics.bounds.width * 1.2
                 )
                 .scaleEffect(showPulse1 ? 1 : 0)
                 .opacity(showPulse1 ? 1 : 0)
@@ -35,8 +35,8 @@ struct CelebrationContainer<Content: View>: View {
             Circle()
                 .fill(type.pulseColor.opacity(0.4))
                 .frame(
-                    width: UIScreen.main.bounds.width * 0.8,
-                    height: UIScreen.main.bounds.width * 0.8
+                    width: ScreenMetrics.bounds.width * 0.8,
+                    height: ScreenMetrics.bounds.width * 0.8
                 )
                 .scaleEffect(showPulse2 ? 1 : 0)
                 .opacity(showPulse2 ? 1 : 0)

@@ -84,7 +84,7 @@ struct PickupLocationView: View {
 
     private var mapSection: some View {
         VStack(spacing: PSSpacing.sm) {
-            if let userLoc = userLocation {
+            if userLocation != nil {
                 Map(position: $mapPosition) {
                     UserAnnotation()
 

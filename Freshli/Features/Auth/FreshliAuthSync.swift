@@ -179,10 +179,15 @@ final class FreshliRealtimeSync {
             AnyAction.self,
             schema: "public",
             table: "pantry_items",
-            filter: "user_id=eq.\(userId.uuidString)"
+            filter: .eq("user_id", value: userId.uuidString)
         )
 
-        await channel.subscribe()
+        do {
+            try await channel.subscribeWithError()
+        } catch {
+            logger.error("Realtime subscribe failed: \(error)")
+            return
+        }
         self.channel = channel
         realtimeConnected = true
         logger.info("Realtime subscribed for user \(self.userId)")
@@ -190,10 +195,8 @@ final class FreshliRealtimeSync {
         // Listen for changes
         for await change in changes {
             let action = Self.parseAction(change)
-            if let action {
-                lastRealtimeEvent = "\(action)"
-                await onItemChanged?(action)
-            }
+            lastRealtimeEvent = "\(action)"
+            await onItemChanged?(action)
         }
     }
 
@@ -209,7 +212,7 @@ final class FreshliRealtimeSync {
 
     // MARK: Helpers
 
-    private static func parseAction(_ change: AnyAction) -> RealtimeAction? {
+    private static func parseAction(_ change: AnyAction) -> RealtimeAction {
         switch change {
         case .insert(let action):
             let id = action.record["id"]?.stringValue ?? "unknown"
@@ -222,8 +225,6 @@ final class FreshliRealtimeSync {
         case .delete(let action):
             let id = action.oldRecord["id"]?.stringValue ?? "unknown"
             return .deleted(itemId: id)
-        default:
-            return nil
         }
     }
 }
