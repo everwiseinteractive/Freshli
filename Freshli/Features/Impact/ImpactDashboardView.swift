@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import os
 
 struct ImpactDashboardView: View {
     @Environment(\.modelContext) private var modelContext
@@ -15,7 +16,15 @@ struct ImpactDashboardView: View {
     @State private var milestones: [ImpactService.Milestone] = []
     @State private var appeared = false
 
+    private let logger = Logger(subsystem: "com.freshli.app", category: "ImpactDashboardView")
+
     private var profile: UserProfile? { profiles.first }
+
+    /// Whether the user has meaningful impact data to display
+    private var hasImpactData: Bool {
+        guard let stats else { return false }
+        return stats.itemsSaved > 0 || stats.itemsShared > 0 || stats.itemsDonated > 0
+    }
 
     var body: some View {
         ScrollView {
@@ -23,24 +32,29 @@ struct ImpactDashboardView: View {
                 // MARK: - Hero Header
                 heroSection
 
-                // MARK: - Primary Stats Grid
-                if let stats {
-                    primaryStatsGrid(stats)
+                if hasImpactData {
+                    // MARK: - Primary Stats Grid
+                    if let stats {
+                        primaryStatsGrid(stats)
+                    }
+
+                    // MARK: - Global Context Card
+                    globalImpactCard
+
+                    // MARK: - Milestones Progress
+                    if !milestones.isEmpty {
+                        milestonesSection
+                    }
+
+                    // MARK: - Food Waste Facts
+                    educationSection
+
+                    // MARK: - Call to Action
+                    ctaSection
+                } else {
+                    // MARK: - Empty State — motivational onramp
+                    emptyImpactState
                 }
-
-                // MARK: - Global Context Card
-                globalImpactCard
-
-                // MARK: - Milestones Progress
-                if !milestones.isEmpty {
-                    milestonesSection
-                }
-
-                // MARK: - Food Waste Facts
-                educationSection
-
-                // MARK: - Call to Action
-                ctaSection
             }
             .padding(.horizontal, PSSpacing.screenHorizontal)
             .padding(.bottom, PSSpacing.xxxl)
@@ -49,12 +63,94 @@ struct ImpactDashboardView: View {
         .navigationTitle(String(localized: "Your Impact"))
         .navigationBarTitleDisplayMode(.inline)
         .task {
+            logger.info("ImpactDashboardView appeared — hasData: \(hasImpactData)")
             let service = ImpactService(modelContext: modelContext)
             stats = service.calculateStats()
             milestones = service.milestones(for: service.calculateStats())
             withAnimation(PSMotion.springDefault) {
                 appeared = true
             }
+        }
+    }
+
+    // MARK: - Empty Impact State
+
+    private var emptyImpactState: some View {
+        VStack(spacing: PSSpacing.xxl) {
+            // Animated illustration
+            VStack(spacing: PSSpacing.lg) {
+                ZStack {
+                    // Pulsing ring
+                    Circle()
+                        .stroke(PSColors.primaryGreen.opacity(0.15), lineWidth: 2)
+                        .frame(width: 180, height: 180)
+                        .scaleEffect(appeared ? 1.1 : 0.9)
+                        .opacity(appeared ? 0.6 : 0.0)
+                        .animation(
+                            .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
+                            value: appeared
+                        )
+
+                    Circle()
+                        .fill(PSColors.primaryGreen.opacity(0.06))
+                        .frame(width: 140, height: 140)
+
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .font(.system(size: 56, weight: .medium))
+                        .foregroundStyle(PSColors.primaryGreen.opacity(0.5))
+                        .symbolEffect(.pulse, isActive: appeared)
+                }
+
+                VStack(spacing: PSSpacing.sm) {
+                    Text(String(localized: "Your Impact Starts Here"))
+                        .font(PSTypography.title2)
+                        .foregroundStyle(PSColors.textPrimary)
+
+                    Text(String(localized: "Save your first food item to start tracking your sustainability impact. Every item you rescue from waste makes a real difference."))
+                        .font(PSTypography.body)
+                        .foregroundStyle(PSColors.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            // Quick facts
+            VStack(spacing: PSSpacing.md) {
+                impactFactRow(
+                    icon: "leaf.fill",
+                    fact: String(localized: "The average household wastes £700 of food per year")
+                )
+                impactFactRow(
+                    icon: "globe.europe.africa.fill",
+                    fact: String(localized: "Food waste generates 8-10% of global greenhouse emissions")
+                )
+                impactFactRow(
+                    icon: "heart.fill",
+                    fact: String(localized: "Sharing surplus food can feed families in your community")
+                )
+            }
+            .padding(PSSpacing.xl)
+            .background(PSColors.emeraldSurface)
+            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
+                    .strokeBorder(PSColors.primaryGreen.opacity(0.15), lineWidth: 1)
+            )
+        }
+        .dashboardEntrance(index: 1)
+    }
+
+    private func impactFactRow(icon: String, fact: String) -> some View {
+        HStack(alignment: .top, spacing: PSSpacing.md) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(PSColors.primaryGreen)
+                .frame(width: 28)
+
+            Text(fact)
+                .font(PSTypography.callout)
+                .foregroundStyle(PSColors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -334,6 +430,7 @@ private struct StatCard: View {
         .padding(.vertical, PSSpacing.xl)
         .background(color.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg))
+        .impactShimmer()
     }
 }
 

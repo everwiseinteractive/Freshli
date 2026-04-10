@@ -269,6 +269,74 @@ extension View {
     func tabFeedback<V: Hashable>(trigger: V) -> some View {
         modifier(TabSensoryFeedbackModifier(trigger: AnyHashable(trigger)))
     }
+
+    /// Subtle shimmer sweep for Impact cards — draws eye toward sustainability stats
+    func impactShimmer() -> some View {
+        modifier(ShimmerModifier())
+    }
+}
+
+// MARK: - Shimmer Effect (Impact Cards — draws eye toward sustainability progress)
+
+struct ShimmerModifier: ViewModifier {
+    @State private var phase: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        if reduceMotion {
+            content
+        } else {
+            content
+                .overlay(
+                    GeometryReader { geo in
+                        LinearGradient(
+                            colors: [
+                                .clear,
+                                .white.opacity(0.08),
+                                .white.opacity(0.15),
+                                .white.opacity(0.08),
+                                .clear
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        .frame(width: geo.size.width * 0.6)
+                        .offset(x: -geo.size.width * 0.3 + (geo.size.width * 1.6) * phase)
+                    }
+                    .clipped()
+                    .allowsHitTesting(false)
+                )
+                .onAppear {
+                    withAnimation(
+                        .easeInOut(duration: 2.5)
+                        .repeatForever(autoreverses: false)
+                        .delay(1.0)
+                    ) {
+                        phase = 1.0
+                    }
+                }
+        }
+    }
+}
+
+// MARK: - SensoryFeedback Button Modifier (primary buttons)
+
+struct PrimarySensoryFeedbackModifier: ViewModifier {
+    let trigger: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .sensoryFeedback(.impact(weight: .light), trigger: trigger)
+    }
+}
+
+struct SuccessSensoryFeedbackModifier: ViewModifier {
+    let trigger: Bool
+
+    func body(content: Content) -> some View {
+        content
+            .sensoryFeedback(.success, trigger: trigger)
+    }
 }
 
 // MARK: - Backward Compatibility

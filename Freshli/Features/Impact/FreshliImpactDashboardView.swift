@@ -252,6 +252,7 @@ struct FreshliImpactDashboardView: View {
         )
         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl))
         .shadow(color: PSColors.primaryGreen.opacity(0.1), radius: 12, y: 4)
+        .impactShimmer()
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title): \(value) \(unit)".trimmingCharacters(in: .whitespaces))
     }

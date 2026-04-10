@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import os
 
 // Figma: Community.tsx — bg-neutral-50, sticky white header
 // Title row: text-3xl font-bold text-neutral-900 tracking-tight + search button (p-2 bg-neutral-100 rounded-full)
@@ -32,6 +33,8 @@ struct CommunityView: View {
     @State private var reportDetails = ""
     @State private var feedError: String?
     @Namespace private var tabNamespace
+
+    private let logger = Logger(subsystem: "com.freshli.app", category: "CommunityView")
 
     private let tabs = [
         String(localized: "Local Feed"),
@@ -105,6 +108,7 @@ struct CommunityView: View {
             )
         }
         .task {
+            logger.info("CommunityView appeared — tab: \(activeTab)")
             await refreshFeed()
         }
     }

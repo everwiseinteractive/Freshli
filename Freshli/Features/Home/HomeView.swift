@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import os
 
 // Figma: Home — bg-green-600 rounded-b-[40px] header with avatar, greeting, bell
 // Search bar inside header with bg-white/20 backdrop-blur
@@ -19,6 +20,8 @@ struct HomeView: View {
     @State private var selectedImpactStat: String?
     @State private var impactStats: ImpactService.ImpactStats?
     @State private var showWeeklyWrap = false
+
+    private let logger = Logger(subsystem: "com.freshli.app", category: "HomeView")
 
     private var expiringItems: [FreshliItem] {
         activeItems.filter { $0.expiryStatus != .fresh }.prefix(5).map { $0 }
@@ -44,6 +47,7 @@ struct HomeView: View {
             WeeklyWrapView()
         }
         .task {
+            logger.info("HomeView appeared — \(activeItems.count) active items")
             impactStats = ImpactService(modelContext: modelContext).calculateStats()
         }
         .onChange(of: activeItems.count) { _, _ in

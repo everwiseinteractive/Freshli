@@ -70,4 +70,25 @@ enum FoodCategory: String, Codable, CaseIterable, Identifiable {
         case .other: return "📦"
         }
     }
+
+    // MARK: - Smart Default Expiry (days from today)
+    /// Pre-populates expiry date based on typical shelf life for each category.
+    /// Reduces user typing and improves data accuracy.
+    var defaultExpiryDays: Int {
+        switch self {
+        case .fruits: return 7
+        case .vegetables: return 7
+        case .dairy: return 10
+        case .meat: return 4
+        case .seafood: return 3
+        case .grains: return 90
+        case .bakery: return 5
+        case .frozen: return 180
+        case .canned: return 365
+        case .condiments: return 180
+        case .snacks: return 60
+        case .beverages: return 30
+        case .other: return 14
+        }
+    }
 }

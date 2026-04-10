@@ -1,5 +1,6 @@
 import SwiftUI
 import AuthenticationServices
+import os
 
 // MARK: - Auth Container
 // Beautiful Apple-premium auth landing with social sign in, email options, and smooth transitions.
@@ -14,6 +15,8 @@ enum AuthScreen {
 struct AuthView: View {
     @Environment(AuthManager.self) private var authManager
     @State private var currentScreen: AuthScreen = .landing
+
+    private let logger = Logger(subsystem: "com.freshli.app", category: "AuthView")
 
     var body: some View {
         ZStack {
@@ -85,6 +88,9 @@ struct AuthView: View {
             }
         }
         .animation(PSMotion.springDefault, value: currentScreen)
+        .onAppear {
+            logger.info("AuthView appeared — screen: \(String(describing: currentScreen))")
+        }
     }
 }
 

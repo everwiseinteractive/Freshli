@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import os
 
 // Figma: Add Item — full-screen emerald theme (bg-white, emerald accents)
 // Scan Barcode + Scan Receipt buttons (emerald-50, rounded-3xl, border-dashed)
@@ -28,6 +29,8 @@ struct AddItemView: View {
     @State private var showReceiptInfo = false
     @State private var saveError: String?
     @State private var saveMessage: String?
+
+    private let logger = Logger(subsystem: "com.freshli.app", category: "AddItemView")
 
     private var isFormValid: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty && quantity > 0
@@ -60,6 +63,7 @@ struct AddItemView: View {
             }
             .background(PSColors.surfaceCard)
             .onAppear {
+                logger.info("AddItemView appeared — category: \(category.rawValue)")
                 // Adjust scroll position when keyboard appears
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     UIApplication.shared.connectedScenes
@@ -74,6 +78,7 @@ struct AddItemView: View {
                 successOverlay
             }
         }
+        .sensoryFeedback(.success, trigger: showSuccess)
         .navigationTitle(String(localized: "Add Item"))
         .navigationBarTitleDisplayMode(.inline)
         .alert(String(localized: "Error Saving Item"), isPresented: .constant(saveError != nil)) {
@@ -105,6 +110,17 @@ struct AddItemView: View {
                         .frame(width: PSLayout.iconButtonSize, height: PSLayout.iconButtonSize)
                         .background(PSColors.emeraldSurface)
                         .clipShape(Circle())
+                }
+            }
+        }
+        // Smart Defaults: auto-update expiry date when category changes
+        .onChange(of: category) { _, newCategory in
+            // Only auto-adjust if expiry hasn't been manually changed from the default
+            let previousDefault = Date.daysFromNow(7) // original default
+            let tolerance: TimeInterval = 86400 // 1 day tolerance
+            if abs(expiryDate.timeIntervalSince(previousDefault)) < tolerance || barcode == nil {
+                withAnimation(FLMotion.springQuick) {
+                    expiryDate = Date.daysFromNow(newCategory.defaultExpiryDays)
                 }
             }
         }

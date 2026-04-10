@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import os
 
 // Figma: Pantry — bg-neutral-50, sticky white header, search (bg-neutral-100 rounded-2xl)
 // Category chips: active bg-green-600 text-white shadow-md, icons (Carrot, Milk, Wheat, Beef)
@@ -29,6 +30,8 @@ struct FreshliView: View {
     @State private var showDepletionInsights = false
     @State private var showReceiptScanner = false
     @State private var showDepletion = false
+
+    private let logger = Logger(subsystem: "com.freshli.app", category: "FreshliView")
 
     private var filteredItems: [FreshliItem] {
         var items = allItems
@@ -150,6 +153,9 @@ struct FreshliView: View {
             .padding(.bottom, max(PSLayout.adaptiveHorizontalPadding + PSLayout.tabBarContentPadding, PSLayout.scaled(80)))
         }
         .navigationBarHidden(true)
+        .onAppear {
+            logger.info("FreshliView (Pantry) appeared — \(allItems.count) items, category: \(String(describing: selectedCategory))")
+        }
         .sheet(item: $selectedItem) { item in
             NavigationStack {
                 FreshliDetailView(item: item)

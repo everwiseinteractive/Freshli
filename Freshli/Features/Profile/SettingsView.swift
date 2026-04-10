@@ -1,4 +1,5 @@
 import SwiftUI
+import os
 
 // MARK: - Settings View
 // Opened from Profile gear button. Provides app-level settings.
@@ -12,6 +13,8 @@ struct SettingsView: View {
     @AppStorage("reduceMotion") private var reduceMotion = false
 
     @State private var appeared = false
+
+    private let logger = Logger(subsystem: "com.freshli.app", category: "SettingsView")
 
     var body: some View {
         List {
@@ -60,6 +63,25 @@ struct SettingsView: View {
             } header: {
                 Text(String(localized: "Data"))
             }
+
+            #if DEBUG
+            // MARK: - Debug (only in debug builds)
+            Section {
+                NavigationLink {
+                    ImpactDiagnosticView()
+                } label: {
+                    Label {
+                        Text("Impact Diagnostics")
+                            .font(.system(size: 15, weight: .medium))
+                    } icon: {
+                        Image(systemName: "stethoscope")
+                            .foregroundStyle(Color.orange)
+                    }
+                }
+            } header: {
+                Text("Debug")
+            }
+            #endif
         }
         .navigationTitle(String(localized: "Settings"))
         .navigationBarTitleDisplayMode(.inline)
@@ -73,6 +95,7 @@ struct SettingsView: View {
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 12)
         .onAppear {
+            logger.info("SettingsView appeared")
             withAnimation(PSMotion.springDefault.delay(0.05)) {
                 appeared = true
             }

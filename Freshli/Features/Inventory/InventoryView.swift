@@ -1,4 +1,5 @@
 import SwiftUI
+import os
 
 // MARK: - Inventory View
 
@@ -11,6 +12,8 @@ struct InventoryView: View {
 
     @State private var showSortMenu = false
     @State private var showAddItem = false
+
+    private let logger = Logger(subsystem: "com.freshli.app", category: "InventoryView")
 
     // Auth — in production this comes from AuthManager environment
     private let userId = UUID()
@@ -67,6 +70,7 @@ struct InventoryView: View {
             }
         }
         .task {
+            logger.info("InventoryView appeared — loading items")
             await viewModel.loadItems(userId: userId)
         }
         .sheet(isPresented: $showAddItem) {

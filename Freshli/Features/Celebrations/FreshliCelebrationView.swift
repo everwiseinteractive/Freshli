@@ -1,4 +1,5 @@
 import SwiftUI
+import os
 
 // MARK: - Freshli Celebration View
 // Unified full-screen celebration with Canvas confetti, matchedGeometryEffect
@@ -17,6 +18,8 @@ struct FreshliCelebrationView: View {
     @State private var burstTriggered = false
     @State private var particleEngine = FreshliParticleEngine()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private let logger = Logger(subsystem: "com.freshli.app", category: "CelebrationView")
 
     var body: some View {
         FreshliExpandingCelebrationContainer(

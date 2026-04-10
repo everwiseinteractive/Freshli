@@ -57,6 +57,8 @@ struct PSButton: View {
     var isLoading: Bool = false
     let action: () -> Void
 
+    @State private var tapTrigger = false
+
     var body: some View {
         Button {
             // Haptic feedback based on button style
@@ -66,6 +68,7 @@ struct PSButton: View {
             case .destructive:
                 PSHaptics.shared.heavyTap()
             }
+            tapTrigger.toggle()
             action()
         } label: {
             HStack(spacing: PSSpacing.sm) {
@@ -93,6 +96,7 @@ struct PSButton: View {
             .shadow(color: shadowColor, radius: 10, x: 0, y: 10)
         }
         .buttonStyle(PressableButtonStyle())
+        .sensoryFeedback(.impact(weight: .light), trigger: tapTrigger)
         .accessibilityLabel(isLoading ? String(localized: "Loading") : title)
         .accessibilityAddTraits([.isButton])
         .accessibilityHint(isLoading ? String(localized: "Please wait") : "")
