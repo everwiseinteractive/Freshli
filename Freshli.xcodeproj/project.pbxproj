@@ -56,7 +56,27 @@
 		CF101D792F86A4B700B10799 /* Exceptions for "Freshli" folder in "Freshli" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				FreshliApp.swift,
 				Info.plist,
+				Services/AddItemView.swift,
+				Services/AppSupabase.swift,
+				Services/CommunityView.swift,
+				"Services/Date+Extensions.swift",
+				Services/FreshliDetailView.swift,
+				Services/NetworkMonitor.swift,
+				Services/OfflineSyncQueue.swift,
+				Services/ProfileView.swift,
+				Services/PSColors.swift,
+				Services/PSEmptyState.swift,
+				Services/PSHaptics.swift,
+				Services/PSLayout.swift,
+				Services/PSLogger.swift,
+				Services/PSMotion.swift,
+				Services/PSShimmerView.swift,
+				Services/PSSpacing.swift,
+				Services/RecipesView.swift,
+				"Services/View+Extensions.swift",
+				Services/WeeklyWrapView.swift,
 			);
 			target = CF1017B72F85D97D00B10799 /* Freshli */;
 		};

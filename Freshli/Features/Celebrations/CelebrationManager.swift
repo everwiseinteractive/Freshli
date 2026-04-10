@@ -24,7 +24,7 @@ final class CelebrationManager {
 
     // MARK: - Trigger: Item Added to Pantry
 
-    func onItemAdded(modelContext: ModelContext) {
+    func onItemAdded(modelContext: ModelContext) async {
         // Check "First Item Added" — one-time celebration
         if !defaults.bool(forKey: Self.firstItemKey) {
             defaults.set(true, forKey: Self.firstItemKey)
@@ -33,23 +33,23 @@ final class CelebrationManager {
         }
 
         // Check streak
-        updateStreak()
+        await updateStreak()
 
         // Check milestones
-        checkMilestones(modelContext: modelContext)
+        await checkMilestones(modelContext: modelContext)
     }
 
     // MARK: - Trigger: Item Consumed (Food Saved)
 
-    func onFoodSaved(modelContext: ModelContext) {
+    func onFoodSaved(modelContext: ModelContext) async {
         if !defaults.bool(forKey: Self.firstSaveKey) {
             defaults.set(true, forKey: Self.firstSaveKey)
             queueCelebration(.firstFoodSaved)
             return
         }
 
-        updateStreak()
-        checkMilestones(modelContext: modelContext)
+        await updateStreak()
+        await checkMilestones(modelContext: modelContext)
     }
 
     // MARK: - Trigger: Recipe Matched
@@ -60,27 +60,27 @@ final class CelebrationManager {
 
     // MARK: - Trigger: Share Completed
 
-    func onShareCompleted(itemName: String, modelContext: ModelContext) {
+    func onShareCompleted(itemName: String, modelContext: ModelContext) async {
         if !defaults.bool(forKey: Self.firstShareKey) {
             defaults.set(true, forKey: Self.firstShareKey)
         }
         queueCelebration(.shareCompleted(itemName: itemName))
-        checkMilestones(modelContext: modelContext)
+        await checkMilestones(modelContext: modelContext)
     }
 
     // MARK: - Trigger: Donation Completed
 
-    func onDonationCompleted(itemName: String, modelContext: ModelContext) {
+    func onDonationCompleted(itemName: String, modelContext: ModelContext) async {
         if !defaults.bool(forKey: Self.firstDonationKey) {
             defaults.set(true, forKey: Self.firstDonationKey)
         }
         queueCelebration(.donationCompleted(itemName: itemName))
-        checkMilestones(modelContext: modelContext)
+        await checkMilestones(modelContext: modelContext)
     }
 
     // MARK: - Trigger: Weekly Recap
 
-    func checkWeeklyRecap(modelContext: ModelContext) {
+    func checkWeeklyRecap(modelContext: ModelContext) async {
         let lastRecap = defaults.object(forKey: Self.lastWeeklyRecapKey) as? Date ?? .distantPast
         guard Calendar.current.dateComponents([.day], from: lastRecap, to: Date()).day ?? 0 >= 7 else { return }
 
@@ -99,7 +99,7 @@ final class CelebrationManager {
 
     // MARK: - Streak Tracking
 
-    private func updateStreak() {
+    private func updateStreak() async {
         let today = Calendar.current.startOfDay(for: Date())
         let lastDate = defaults.object(forKey: Self.lastStreakDateKey) as? Date ?? .distantPast
         let lastDay = Calendar.current.startOfDay(for: lastDate)
@@ -130,7 +130,7 @@ final class CelebrationManager {
 
     // MARK: - Milestone Checking
 
-    private func checkMilestones(modelContext: ModelContext) {
+    private func checkMilestones(modelContext: ModelContext) async {
         let service = ImpactService(modelContext: modelContext)
         let stats = service.calculateStats()
         let milestones = service.milestones(for: stats)
@@ -182,8 +182,9 @@ final class CelebrationManager {
 
         // Auto-dismiss for small celebrations
         if type.intensity == .small {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
-                self?.dismissCelebration()
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(2.0))
+                self.dismissCelebration()
             }
         }
     }
@@ -197,8 +198,9 @@ final class CelebrationManager {
         // Present next queued celebration after brief pause
         if !celebrationQueue.isEmpty {
             let next = celebrationQueue.removeFirst()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
-                self?.presentCelebration(next)
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(400))
+                self.presentCelebration(next)
             }
         }
     }

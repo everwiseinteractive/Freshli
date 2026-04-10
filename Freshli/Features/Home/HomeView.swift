@@ -15,7 +15,7 @@ struct HomeView: View {
     private var activeItems: [FreshliItem]
 
     @Environment(\.modelContext) private var modelContext
-    @Environment(AuthManager.self) private var authManager: AuthManager?
+    @Environment(AuthManager.self) private var authManager
 
     @State private var selectedImpactStat: String?
     @State private var impactStats: ImpactService.ImpactStats?

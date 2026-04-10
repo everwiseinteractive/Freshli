@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 import os
 
-@Observable
+@Observable @MainActor
 final class FreshliService {
     private let modelContext: ModelContext
     private let notificationService: NotificationService?

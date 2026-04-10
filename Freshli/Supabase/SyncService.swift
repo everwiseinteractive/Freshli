@@ -8,8 +8,8 @@ import os
 // Strategy: SwiftData is the source of truth. Sync pushes local changes
 // to Supabase and pulls remote changes on demand.
 
-@Observable
-final class SyncService {
+@Observable @MainActor
+final class SyncService: @unchecked Sendable {
     var isSyncing = false
     var lastSyncDate: Date?
     var syncError: String?

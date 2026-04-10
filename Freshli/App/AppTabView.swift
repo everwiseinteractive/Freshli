@@ -40,9 +40,9 @@ struct AppTabView: View {
     @State private var previousTab: AppTab = .home
     @State private var showAddItem = false
     @Environment(\.modelContext) private var modelContext
-    @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
-    @Environment(AuthManager.self) private var authManager: AuthManager?
-    @Environment(SyncService.self) private var syncService: SyncService?
+    @Environment(CelebrationManager.self) private var celebrationManager
+    @Environment(AuthManager.self) private var authManager
+    @Environment(SyncService.self) private var syncService
 
     @Namespace private var tabNamespace
 
@@ -98,15 +98,14 @@ struct AppTabView: View {
             }
             .presentationDragIndicator(.visible)
         }
-        .onAppear {
+        .task {
             seedDataIfNeeded()
             // Check for weekly recap celebration
-            celebrationManager?.checkWeeklyRecap(modelContext: modelContext)
-        }
-        .task {
+            await celebrationManager.checkWeeklyRecap(modelContext: modelContext)
+            
             // Perform initial sync if authenticated
-            if let userId = authManager?.currentUserId {
-                await syncService?.performFullSync(userId: userId, modelContext: modelContext)
+            if let userId = authManager.currentUserId {
+                await syncService.performFullSync(userId: userId, modelContext: modelContext)
             }
         }
     }
@@ -163,10 +162,13 @@ struct AppTabView: View {
     }
 
     /// Bottom safe area inset for the current window.
+    @MainActor
     private var bottomSafeAreaInset: CGFloat {
-        UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first?.windows.first?.safeAreaInsets.bottom ?? 34
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let window = windowScene.windows.first else {
+            return 34 // Default safe area for devices with notch
+        }
+        return window.safeAreaInsets.bottom
     }
 
     private func seedDataIfNeeded() {
