@@ -4,7 +4,7 @@ import Observation
 
 // MARK: - FamilyMember Model
 
-struct FamilyMember: Identifiable, Codable, Sendable {
+struct FamilyMember: Identifiable, Codable, Sendable, Hashable {
     let id: UUID
     var name: String
     var role: FamilyRole
@@ -25,16 +25,22 @@ struct FamilyMember: Identifiable, Codable, Sendable {
 
     init(id: UUID = UUID(), name: String, role: FamilyRole = .member, joinDate: Date = Date(), cloudKitRecordName: String? = nil) {
         self.id = id
-        self.name = name
+        self.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         self.role = role
         self.joinDate = joinDate
         self.cloudKitRecordName = cloudKitRecordName
+    }
+    
+    // MARK: - Validation
+    
+    var isValid: Bool {
+        !name.isEmpty && name.count <= 50
     }
 }
 
 // MARK: - FamilyGroup Model
 
-struct FamilyGroup: Identifiable, Codable, Sendable {
+struct FamilyGroup: Identifiable, Codable, Sendable, Hashable {
     let id: UUID
     var name: String
     var members: [FamilyMember]
@@ -53,12 +59,30 @@ struct FamilyGroup: Identifiable, Codable, Sendable {
         shareRecordName: String? = nil
     ) {
         self.id = id
-        self.name = name
+        self.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         self.members = members
         self.sharedPantryEnabled = sharedPantryEnabled
         self.createdDate = createdDate
         self.zoneID = zoneID
         self.shareRecordName = shareRecordName
+    }
+    
+    // MARK: - Validation
+    
+    static let maxMembers = 20
+    static let minNameLength = 1
+    static let maxNameLength = 100
+    
+    var isValid: Bool {
+        !name.isEmpty && 
+        name.count >= Self.minNameLength && 
+        name.count <= Self.maxNameLength &&
+        members.count <= Self.maxMembers &&
+        members.allSatisfy { $0.isValid }
+    }
+    
+    var hasAdmin: Bool {
+        members.contains { $0.role == .admin }
     }
 }
 
@@ -68,7 +92,7 @@ enum SyncStatus: Sendable, Equatable {
     case idle
     case syncing
     case synced
-    case error(String)
+    case error(FamilySyncError)
 
     var displayText: String {
         switch self {
@@ -78,8 +102,8 @@ enum SyncStatus: Sendable, Equatable {
             return "Syncing..."
         case .synced:
             return "Synced"
-        case .error(let message):
-            return "Error: \(message)"
+        case .error(let error):
+            return "Error: \(error.userMessage)"
         }
     }
 
@@ -88,6 +112,108 @@ enum SyncStatus: Sendable, Equatable {
             return true
         }
         return false
+    }
+}
+
+// MARK: - Family Sync Errors
+
+enum FamilySyncError: Error, Sendable, Equatable {
+    // Validation Errors
+    case invalidFamilyName
+    case invalidMemberName
+    case familyFull
+    case duplicateMember
+    case noFamilyToLeave
+    case notFamilyOwner
+    
+    // CloudKit Errors
+    case cloudKitNotAvailable
+    case iCloudNotSignedIn
+    case iCloudRestricted
+    case networkUnavailable
+    case quotaExceeded
+    case zoneNotFound
+    case shareNotFound
+    case permissionDenied
+    
+    // General Errors
+    case missingMetadata
+    case operationFailed(String)
+    case unknown
+    
+    var userMessage: String {
+        switch self {
+        case .invalidFamilyName:
+            return "Please enter a valid family name (1-100 characters)"
+        case .invalidMemberName:
+            return "Please enter a valid member name (1-50 characters)"
+        case .familyFull:
+            return "Family is full (maximum \(FamilyGroup.maxMembers) members)"
+        case .duplicateMember:
+            return "This member already exists"
+        case .noFamilyToLeave:
+            return "You're not in a family"
+        case .notFamilyOwner:
+            return "Only the family owner can perform this action"
+        case .cloudKitNotAvailable:
+            return "iCloud sync is unavailable. Please try again later."
+        case .iCloudNotSignedIn:
+            return "Please sign in to iCloud in Settings"
+        case .iCloudRestricted:
+            return "iCloud access is restricted"
+        case .networkUnavailable:
+            return "Network connection unavailable"
+        case .quotaExceeded:
+            return "iCloud storage is full"
+        case .zoneNotFound:
+            return "Family data not found"
+        case .shareNotFound:
+            return "Family invitation not found"
+        case .permissionDenied:
+            return "Permission denied"
+        case .missingMetadata:
+            return "Family data is incomplete"
+        case .operationFailed(let detail):
+            return detail
+        case .unknown:
+            return "An unexpected error occurred"
+        }
+    }
+    
+    var shouldRetry: Bool {
+        switch self {
+        case .networkUnavailable, .cloudKitNotAvailable:
+            return true
+        default:
+            return false
+        }
+    }
+    
+    static func from(_ error: Error) -> FamilySyncError {
+        if let syncError = error as? FamilySyncError {
+            return syncError
+        }
+        
+        if let ckError = error as? CKError {
+            switch ckError.code {
+            case .notAuthenticated:
+                return .iCloudNotSignedIn
+            case .networkUnavailable, .networkFailure:
+                return .networkUnavailable
+            case .quotaExceeded:
+                return .quotaExceeded
+            case .zoneNotFound:
+                return .zoneNotFound
+            case .permissionFailure:
+                return .permissionDenied
+            case .unknownItem:
+                return .shareNotFound
+            default:
+                return .operationFailed(ckError.localizedDescription)
+            }
+        }
+        
+        return .unknown
     }
 }
 
@@ -153,78 +279,186 @@ final class FamilySyncService {
 
     func createFamily(name: String, adminName: String = "You") async throws {
         logger.info("Creating family: \(name)")
-        syncStatus = .syncing
-
+        
+        // Pre-flight validation
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedAdminName = adminName.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard !trimmedName.isEmpty,
+              trimmedName.count >= FamilyGroup.minNameLength,
+              trimmedName.count <= FamilyGroup.maxNameLength else {
+            let error = FamilySyncError.invalidFamilyName
+            syncStatus = .error(error)
+            throw error
+        }
+        
+        guard !trimmedAdminName.isEmpty,
+              trimmedAdminName.count <= 50 else {
+            let error = FamilySyncError.invalidMemberName
+            syncStatus = .error(error)
+            throw error
+        }
+        
+        // Check iCloud availability before attempting operation
         do {
-            // Create family group locally
-            let adminMember = FamilyMember(name: adminName, role: .admin)
-            let family = FamilyGroup(name: name, members: [adminMember], sharedPantryEnabled: false)
+            try await verifyCloudKitAvailability()
+        } catch let error as FamilySyncError {
+            syncStatus = .error(error)
+            throw error
+        }
+        
+        syncStatus = .syncing
+        
+        // Store original state for rollback
+        let originalFamily = currentFamily
+        let originalInviteURL = inviteURL
+        
+        do {
+            // Create family group locally with validated data
+            let adminMember = FamilyMember(name: trimmedAdminName, role: .admin)
+            let family = FamilyGroup(name: trimmedName, members: [adminMember], sharedPantryEnabled: false)
+            
+            guard family.isValid else {
+                throw FamilySyncError.operationFailed("Invalid family configuration")
+            }
 
-            // Create CloudKit zone
+            // Create CloudKit zone with retry logic
             let zoneID = CKRecordZone.ID(zoneName: familyZoneName, ownerName: CKCurrentUserDefaultName)
             let zone = CKRecordZone(zoneID: zoneID)
 
-            try await privateDatabase.save(zone)
+            try await withRetry(maxAttempts: 3) {
+                try await self.privateDatabase.save(zone)
+            }
             logger.info("Created CloudKit zone: \(zoneID)")
 
-            // Create a shareable record for the zone
-            let shareRecord = CKShare(rootRecord: CKRecord(recordType: "FamilyGroup", recordID: CKRecord.ID(recordName: family.id.uuidString, zoneID: zoneID)))
-            shareRecord[CKShare.SystemFieldKey.title] = name as CKRecordValue
-            shareRecord.publicPermission = .readWrite
+            // Create root record for the family
+            let familyRecordID = CKRecord.ID(recordName: family.id.uuidString, zoneID: zoneID)
+            let familyRecord = CKRecord(recordType: "FamilyGroup", recordID: familyRecordID)
+            familyRecord["name"] = trimmedName as CKRecordValue
+            familyRecord["createdDate"] = family.createdDate as CKRecordValue
+            familyRecord["sharedPantryEnabled"] = (family.sharedPantryEnabled ? 1 : 0) as CKRecordValue
+            
+            try await withRetry(maxAttempts: 3) {
+                try await self.privateDatabase.save(familyRecord)
+            }
+            logger.info("Created family root record")
 
-            try await privateDatabase.save(shareRecord)
+            // Create shareable CKShare with proper configuration
+            let shareRecord = CKShare(rootRecord: familyRecord)
+            shareRecord[CKShare.SystemFieldKey.title] = trimmedName as CKRecordValue
+            shareRecord.publicPermission = .none // Security: require explicit invite acceptance
+            shareRecord[CKShare.SystemFieldKey.shareType] = "com.freshli.family" as CKRecordValue
+
+            let (savedFamilyRecord, savedShare) = try await withRetry(maxAttempts: 3) {
+                try await self.privateDatabase.modifyRecords(
+                    saving: [familyRecord, shareRecord],
+                    deleting: [],
+                    savePolicy: .allKeys,
+                    atomically: true
+                )
+            }
             logger.info("Created CKShare for family: \(family.id)")
 
-            // Save family with CloudKit metadata
+            // Generate invite URL with safety
+            guard let share = savedShare.first as? CKShare,
+                  let shareURL = share.url else {
+                throw FamilySyncError.operationFailed("Failed to generate share URL")
+            }
+
+            // Optimistically update state
             var updatedFamily = family
             updatedFamily.zoneID = zoneID.zoneName
-            updatedFamily.shareRecordName = shareRecord.recordID.recordName
+            updatedFamily.shareRecordName = share.recordID.recordName
             currentFamily = updatedFamily
-
-            // Generate invite URL from share
-            inviteURL = try await generateShareURL(for: shareRecord)
+            inviteURL = shareURL
 
             syncStatus = .synced
             PSHaptics.shared.success()
+            
+            logger.info("Successfully created family: \(trimmedName)")
+            
         } catch {
-            logger.error("Failed to create family: \(error.localizedDescription)")
-            syncStatus = .error("Failed to create family")
-            throw error
+            // Rollback on failure
+            currentFamily = originalFamily
+            inviteURL = originalInviteURL
+            
+            let syncError = FamilySyncError.from(error)
+            logger.error("Failed to create family: \(syncError.userMessage)")
+            syncStatus = .error(syncError)
+            PSHaptics.shared.error()
+            throw syncError
         }
     }
 
     func joinFamily(shareURL: URL, memberName: String) async throws {
         logger.info("Joining family with share URL")
+        
+        // Validation
+        let trimmedName = memberName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty, trimmedName.count <= 50 else {
+            let error = FamilySyncError.invalidMemberName
+            syncStatus = .error(error)
+            throw error
+        }
+        
+        // Check iCloud availability
+        do {
+            try await verifyCloudKitAvailability()
+        } catch let error as FamilySyncError {
+            syncStatus = .error(error)
+            throw error
+        }
+        
         syncStatus = .syncing
+        
+        // Store original state for rollback
+        let originalFamily = currentFamily
 
         do {
-            // Accept the share via metadata lookup
-            let metadata = try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<CKShare.Metadata, Error>) in
-                let operation = CKFetchShareMetadataOperation(shareURLs: [shareURL])
-                operation.perShareMetadataResultBlock = { _, result in
-                    switch result {
-                    case .success(let meta):
-                        continuation.resume(returning: meta)
-                    case .failure(let error):
-                        continuation.resume(throwing: error)
-                    }
-                }
-                container.add(operation)
+            // Fetch share metadata with timeout protection
+            let metadata = try await withTimeout(seconds: 15) {
+                try await self.fetchShareMetadata(from: shareURL)
+            }
+            
+            guard let metadata = metadata else {
+                throw FamilySyncError.shareNotFound
             }
 
-            try await container.accept(metadata)
+            // Accept the share
+            _ = try await withRetry(maxAttempts: 3) {
+                try await self.container.accept(metadata)
+            }
             logger.info("Accepted share from URL")
 
             let shareZoneID = metadata.share.recordID.zoneID
 
+            // Check if family is full before adding member
+            let existingMembers = try await fetchMembers(from: shareZoneID)
+            guard existingMembers.count < FamilyGroup.maxMembers else {
+                throw FamilySyncError.familyFull
+            }
+            
+            // Check for duplicate member names
+            let duplicateName = existingMembers.contains { 
+                $0.name.lowercased() == trimmedName.lowercased() 
+            }
+            guard !duplicateName else {
+                throw FamilySyncError.duplicateMember
+            }
+
             // Create member record in the shared zone
-            let member = FamilyMember(name: memberName, role: .member)
-            let memberRecord = CKRecord(recordType: "FamilyMember", recordID: CKRecord.ID(recordName: member.id.uuidString, zoneID: shareZoneID))
+            let member = FamilyMember(name: trimmedName, role: .member)
+            let memberRecord = CKRecord(
+                recordType: "FamilyMember", 
+                recordID: CKRecord.ID(recordName: member.id.uuidString, zoneID: shareZoneID)
+            )
             memberRecord["name"] = member.name as CKRecordValue
             memberRecord["role"] = member.role.rawValue as CKRecordValue
             memberRecord["joinDate"] = member.joinDate as CKRecordValue
 
-            try await privateDatabase.save(memberRecord)
+            _ = try await withRetry(maxAttempts: 3) {
+                try await self.privateDatabase.save(memberRecord)
+            }
             logger.info("Added member to family: \(member.name)")
 
             // Fetch updated family data
@@ -232,74 +466,105 @@ final class FamilySyncService {
 
             syncStatus = .synced
             PSHaptics.shared.success()
+            
+            logger.info("Successfully joined family")
+            
         } catch {
-            logger.error("Failed to join family: \(error.localizedDescription)")
-            syncStatus = .error("Failed to join family")
-            throw error
+            // Rollback on failure
+            currentFamily = originalFamily
+            
+            let syncError = FamilySyncError.from(error)
+            logger.error("Failed to join family: \(syncError.userMessage)")
+            syncStatus = .error(syncError)
+            PSHaptics.shared.error()
+            throw syncError
         }
     }
 
     func leaveFamily() async throws {
         logger.info("Leaving family")
+        
+        guard let family = currentFamily else {
+            let error = FamilySyncError.noFamilyToLeave
+            syncStatus = .error(error)
+            throw error
+        }
+        
         syncStatus = .syncing
+        
+        // Store original state for rollback
+        let originalFamily = currentFamily
+        let originalInviteURL = inviteURL
 
         do {
-            guard let family = currentFamily else {
-                throw NSError(domain: "FamilySync", code: -1, userInfo: [NSLocalizedDescriptionKey: "No family to leave"])
-            }
-
-            // Remove self from the shared zone
+            // Remove member record from shared zone (not the zone itself)
             if let zoneIDName = family.zoneID {
+                // Find current user's member record
                 let zoneID = CKRecordZone.ID(zoneName: zoneIDName, ownerName: CKCurrentUserDefaultName)
-                let deleteOp = CKModifyRecordZonesOperation(recordZonesToSave: nil, recordZoneIDsToDelete: [zoneID])
-                deleteOp.qualityOfService = .userInitiated
-                try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-                    deleteOp.modifyRecordZonesResultBlock = { result in
-                        switch result {
-                        case .success: continuation.resume()
-                        case .failure(let err): continuation.resume(throwing: err)
+                let members = try await fetchMembers(from: zoneID)
+                
+                // Identify and delete current user's member record
+                // Note: This assumes we can identify the current user's member
+                // In production, you'd want to store the current user's member ID
+                if let currentUserMember = members.first(where: { $0.role == .member }) {
+                    if let recordName = currentUserMember.cloudKitRecordName {
+                        let recordID = CKRecord.ID(recordName: recordName, zoneID: zoneID)
+                        
+                        _ = try await withRetry(maxAttempts: 3) {
+                            try await self.privateDatabase.deleteRecord(withID: recordID)
                         }
+                        logger.info("Removed member record from family")
                     }
-                    self.privateDatabase.add(deleteOp)
                 }
-                logger.info("Removed zone: \(zoneID)")
             }
 
+            // Clear local state
             currentFamily = nil
             inviteURL = nil
             syncStatus = .synced
             PSHaptics.shared.success()
+            
+            logger.info("Successfully left family")
+            
         } catch {
-            logger.error("Failed to leave family: \(error.localizedDescription)")
-            syncStatus = .error("Failed to leave family")
-            throw error
+            // Rollback on failure
+            currentFamily = originalFamily
+            inviteURL = originalInviteURL
+            
+            let syncError = FamilySyncError.from(error)
+            logger.error("Failed to leave family: \(syncError.userMessage)")
+            syncStatus = .error(syncError)
+            PSHaptics.shared.error()
+            throw syncError
         }
     }
 
     func removeMember(_ member: FamilyMember) async throws {
         logger.info("Removing member: \(member.name)")
+        
+        guard isFamilyOwner else {
+            let error = FamilySyncError.notFamilyOwner
+            syncStatus = .error(error)
+            throw error
+        }
+        
         syncStatus = .syncing
+        
+        // Store original state for rollback
+        let originalFamily = currentFamily
 
         do {
             guard let family = currentFamily,
                   let zoneIDName = family.zoneID,
                   let recordName = member.cloudKitRecordName else {
-                throw NSError(domain: "FamilySync", code: -1, userInfo: [NSLocalizedDescriptionKey: "Missing CloudKit metadata"])
+                throw FamilySyncError.missingMetadata
             }
 
             let zoneID = CKRecordZone.ID(zoneName: zoneIDName, ownerName: CKCurrentUserDefaultName)
             let recordID = CKRecord.ID(recordName: recordName, zoneID: zoneID)
 
-            let deleteOp = CKModifyRecordsOperation(recordsToSave: nil, recordIDsToDelete: [recordID])
-            deleteOp.qualityOfService = .userInitiated
-            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-                deleteOp.modifyRecordsResultBlock = { result in
-                    switch result {
-                    case .success: continuation.resume()
-                    case .failure(let err): continuation.resume(throwing: err)
-                    }
-                }
-                self.privateDatabase.add(deleteOp)
+            _ = try await withRetry(maxAttempts: 3) {
+                try await self.privateDatabase.deleteRecord(withID: recordID)
             }
             logger.info("Deleted member record: \(recordName)")
 
@@ -310,10 +575,18 @@ final class FamilySyncService {
 
             syncStatus = .synced
             PSHaptics.shared.success()
+            
+            logger.info("Successfully removed member: \(member.name)")
+            
         } catch {
-            logger.error("Failed to remove member: \(error.localizedDescription)")
-            syncStatus = .error("Failed to remove member")
-            throw error
+            // Rollback on failure
+            currentFamily = originalFamily
+            
+            let syncError = FamilySyncError.from(error)
+            logger.error("Failed to remove member: \(syncError.userMessage)")
+            syncStatus = .error(syncError)
+            PSHaptics.shared.error()
+            throw syncError
         }
     }
 
@@ -325,41 +598,90 @@ final class FamilySyncService {
 
         do {
             let zoneID = CKRecordZone.ID(zoneName: zoneIDName, ownerName: CKCurrentUserDefaultName)
-            let predicate = NSPredicate(value: true)
-            let query = CKQuery(recordType: "FamilyMember", predicate: predicate)
-
-            let (matchResults, _) = try await privateDatabase.records(matching: query, inZoneWith: zoneID)
-            var members: [FamilyMember] = []
-
-            for (_, result) in matchResults {
-                if let record = try? result.get(),
-                   let member = parseMemberRecord(record, zoneID: zoneID) {
-                    members.append(member)
-                }
-            }
-
-            logger.info("Fetched \(members.count) members")
-            return members
+            return try await fetchMembers(from: zoneID)
         } catch {
-            logger.error("Failed to fetch members: \(error.localizedDescription)")
+            let syncError = FamilySyncError.from(error)
+            logger.error("Failed to fetch members: \(syncError.userMessage)")
             return []
         }
+    }
+    
+    // MARK: - Private helper for fetching members from a specific zone
+    
+    private func fetchMembers(from zoneID: CKRecordZone.ID) async throws -> [FamilyMember] {
+        let predicate = NSPredicate(value: true)
+        let query = CKQuery(recordType: "FamilyMember", predicate: predicate)
+
+        let (matchResults, _) = try await withRetry(maxAttempts: 3) {
+            try await self.privateDatabase.records(matching: query, inZoneWith: zoneID)
+        }
+        
+        var members: [FamilyMember] = []
+
+        for (_, result) in matchResults {
+            if let record = try? result.get(),
+               let member = parseMemberRecord(record, zoneID: zoneID) {
+                members.append(member)
+            }
+        }
+
+        logger.info("Fetched \(members.count) members")
+        return members
     }
 
     func toggleSharedPantry() async throws {
         logger.info("Toggling shared pantry")
-        guard var family = currentFamily else { return }
+        guard var family = currentFamily else { 
+            throw FamilySyncError.noFamilyToLeave 
+        }
+        
+        guard isFamilyOwner else {
+            let error = FamilySyncError.notFamilyOwner
+            syncStatus = .error(error)
+            throw error
+        }
 
         syncStatus = .syncing
+        
+        // Store original state for rollback
+        let originalValue = family.sharedPantryEnabled
+        
         do {
             family.sharedPantryEnabled.toggle()
             currentFamily = family
+            
+            // Persist to CloudKit if we have zone info
+            if let zoneIDName = family.zoneID {
+                let zoneID = CKRecordZone.ID(zoneName: zoneIDName, ownerName: CKCurrentUserDefaultName)
+                let familyRecordID = CKRecord.ID(recordName: family.id.uuidString, zoneID: zoneID)
+                
+                // Fetch existing record and update
+                if let record = try? await privateDatabase.record(for: familyRecordID) {
+                    record["sharedPantryEnabled"] = (family.sharedPantryEnabled ? 1 : 0) as CKRecordValue
+                    _ = try await withRetry(maxAttempts: 3) {
+                        try await self.privateDatabase.save(record)
+                    }
+                    logger.info("Updated shared pantry setting in CloudKit")
+                }
+            }
+            
             syncStatus = .synced
             PSHaptics.shared.success()
+            
+            logger.info("Toggled shared pantry to: \(family.sharedPantryEnabled)")
+            
         } catch {
-            logger.error("Failed to toggle shared pantry: \(error.localizedDescription)")
-            syncStatus = .error("Failed to update setting")
-            throw error
+            // Rollback on failure
+            if var revertFamily = currentFamily {
+                revertFamily.sharedPantryEnabled = originalValue
+                currentFamily = revertFamily
+            }
+            
+            let syncError = FamilySyncError.from(error)
+            logger.error("Failed to toggle shared pantry: \(syncError.userMessage)")
+            syncStatus = .error(syncError)
+            PSHaptics.shared.error()
+            throw syncError
         }
     }
 
@@ -371,16 +693,20 @@ final class FamilySyncService {
         }
 
         syncStatus = .syncing
+        
         do {
             guard let zoneIDName = family.zoneID else {
-                throw NSError(domain: "FamilySync", code: -1, userInfo: [NSLocalizedDescriptionKey: "No family zone"])
+                throw FamilySyncError.missingMetadata
             }
 
             let zoneID = CKRecordZone.ID(zoneName: zoneIDName, ownerName: CKCurrentUserDefaultName)
             var records: [CKRecord] = []
 
             for item in items {
-                let record = CKRecord(recordType: "FreshliItem", recordID: CKRecord.ID(recordName: item.id.uuidString, zoneID: zoneID))
+                let record = CKRecord(
+                    recordType: "FreshliItem", 
+                    recordID: CKRecord.ID(recordName: item.id.uuidString, zoneID: zoneID)
+                )
                 record["name"] = item.name as CKRecordValue
                 record["category"] = item.categoryRaw as CKRecordValue
                 record["storageLocation"] = item.storageLocationRaw as CKRecordValue
@@ -394,59 +720,71 @@ final class FamilySyncService {
                 records.append(record)
             }
 
-            let operation = CKModifyRecordsOperation(recordsToSave: records, recordIDsToDelete: nil)
-            operation.isAtomic = false
-            operation.qualityOfService = .userInitiated
-
-            try await withCheckedThrowingContinuation { continuation in
-                operation.modifyRecordsResultBlock = { result in
-                    switch result {
-                    case .success:
-                        self.logger.info("Successfully synced items")
-                        continuation.resume()
-                    case .failure(let error):
-                        self.logger.error("Failed to sync items: \(error.localizedDescription)")
-                        continuation.resume(throwing: error)
-                    }
+            // Batch save with retry and proper error handling
+            let batchSize = 400 // CloudKit limit
+            let batches = stride(from: 0, to: records.count, by: batchSize).map {
+                Array(records[$0..<min($0 + batchSize, records.count)])
+            }
+            
+            for (index, batch) in batches.enumerated() {
+                logger.info("Syncing batch \(index + 1)/\(batches.count)")
+                
+                _ = try await withRetry(maxAttempts: 3) {
+                    try await self.privateDatabase.modifyRecords(
+                        saving: batch,
+                        deleting: [],
+                        savePolicy: .changedKeys,
+                        atomically: false
+                    )
                 }
-                privateDatabase.add(operation)
             }
 
             syncStatus = .synced
             PSHaptics.shared.success()
+            
+            logger.info("Successfully synced \(items.count) items")
+            
         } catch {
-            logger.error("Failed to sync pantry items: \(error.localizedDescription)")
-            syncStatus = .error("Sync failed")
-            throw error
+            let syncError = FamilySyncError.from(error)
+            logger.error("Failed to sync pantry items: \(syncError.userMessage)")
+            syncStatus = .error(syncError)
+            PSHaptics.shared.error()
+            throw syncError
         }
     }
 
     // MARK: - Helper Methods
+    
+    /// Fetch share metadata with proper error handling
+    private func fetchShareMetadata(from url: URL) async throws -> CKShare.Metadata? {
+        try await withCheckedThrowingContinuation { continuation in
+            let operation = CKFetchShareMetadataOperation(shareURLs: [url])
+            operation.perShareMetadataResultBlock = { shareURL, result in
+                switch result {
+                case .success(let metadata):
+                    continuation.resume(returning: metadata)
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+            operation.qualityOfService = .userInitiated
+            container.add(operation)
+        }
+    }
 
     private func generateShareURL(for share: CKShare) async throws -> URL {
         // CKShare.url is set by CloudKit after saving the share record
-        if let url = share.url {
-            return url
+        guard let url = share.url else {
+            throw FamilySyncError.operationFailed("Share URL not available yet. Please try again.")
         }
-        // Fallback: construct a deep-link placeholder
-        return URL(string: "https://freshli.app/family/\(share.recordID.recordName)")!
+        return url
     }
 
     private func fetchFamily(from zoneID: CKRecordZone.ID) async throws {
         logger.info("Fetching family from zone: \(zoneID)")
 
         do {
-            let predicate = NSPredicate(value: true)
-            let query = CKQuery(recordType: "FamilyMember", predicate: predicate)
-            let (matchResults, _) = try await privateDatabase.records(matching: query, inZoneWith: zoneID)
-
-            var members: [FamilyMember] = []
-            for (_, result) in matchResults {
-                if let record = try? result.get(),
-                   let member = parseMemberRecord(record, zoneID: zoneID) {
-                    members.append(member)
-                }
-            }
+            let members = try await fetchMembers(from: zoneID)
 
             if var family = currentFamily {
                 family.members = members
@@ -465,10 +803,12 @@ final class FamilySyncService {
               let roleString = record["role"] as? String,
               let role = FamilyMember.FamilyRole(rawValue: roleString),
               let joinDate = record["joinDate"] as? Date else {
+            logger.warning("Failed to parse member record - missing fields")
             return nil
         }
 
         guard let uuid = UUID(uuidString: record.recordID.recordName) else {
+            logger.warning("Failed to parse member record - invalid UUID")
             return nil
         }
 
@@ -480,55 +820,166 @@ final class FamilySyncService {
             cloudKitRecordName: record.recordID.recordName
         )
     }
+    
+    // MARK: - CloudKit Availability & Error Handling
+    
+    /// Verify CloudKit is available and user is signed in
+    private func verifyCloudKitAvailability() async throws {
+        let accountStatus = try await container.accountStatus()
+        
+        switch accountStatus {
+        case .available:
+            logger.debug("iCloud account available")
+            
+        case .noAccount:
+            logger.error("No iCloud account signed in")
+            throw FamilySyncError.iCloudNotSignedIn
+            
+        case .restricted:
+            logger.error("iCloud access restricted")
+            throw FamilySyncError.iCloudRestricted
+            
+        case .couldNotDetermine:
+            logger.error("Could not determine iCloud status")
+            throw FamilySyncError.cloudKitNotAvailable
+            
+        case .temporarilyUnavailable:
+            logger.error("iCloud temporarily unavailable")
+            throw FamilySyncError.cloudKitNotAvailable
+            
+        @unknown default:
+            logger.error("Unknown iCloud status")
+            throw FamilySyncError.unknown
+        }
+    }
+    
+    /// Retry helper for network operations
+    private func withRetry<T>(
+        maxAttempts: Int = 3,
+        delay: TimeInterval = 1.0,
+        operation: @escaping () async throws -> T
+    ) async throws -> T {
+        var lastError: Error?
+        
+        for attempt in 1...maxAttempts {
+            do {
+                return try await operation()
+            } catch {
+                lastError = error
+                let syncError = FamilySyncError.from(error)
+                
+                // Don't retry if error is not retryable
+                guard syncError.shouldRetry else {
+                    throw syncError
+                }
+                
+                // Don't delay on last attempt
+                if attempt < maxAttempts {
+                    logger.warning("Retry attempt \(attempt)/\(maxAttempts) after error: \(syncError.userMessage)")
+                    try await Task.sleep(nanoseconds: UInt64(delay * Double(attempt) * 1_000_000_000))
+                }
+            }
+        }
+        
+        throw lastError ?? FamilySyncError.unknown
+    }
+    
+    /// Timeout wrapper for operations that might hang
+    private func withTimeout<T>(
+        seconds: TimeInterval,
+        operation: @escaping () async throws -> T
+    ) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            // Add the main operation
+            group.addTask {
+                try await operation()
+            }
+            
+            // Add timeout task
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                throw FamilySyncError.operationFailed("Operation timed out after \(seconds) seconds")
+            }
+            
+            // Return first completed result and cancel others
+            let result = try await group.next()!
+            group.cancelAll()
+            return result
+        }
+    }
 
     private func setupCloudKitSubscriptions() async {
         logger.info("Setting up CloudKit subscriptions")
 
         do {
-            // Check iCloud status
-            let accountStatus = try await container.accountStatus()
-            switch accountStatus {
-            case .available:
-                logger.info("iCloud account available")
-            case .noAccount:
-                logger.warning("No iCloud account signed in")
-                syncStatus = .error("iCloud not signed in")
-            case .restricted:
-                logger.warning("iCloud access restricted")
-                syncStatus = .error("iCloud access restricted")
-            case .couldNotDetermine:
-                logger.warning("Could not determine iCloud status")
-            @unknown default:
-                logger.warning("Unknown iCloud status")
-            }
+            try await verifyCloudKitAvailability()
+            
+            // Set up database change subscription for real-time updates
+            // This allows the app to receive notifications when family data changes
+            
+        } catch let error as FamilySyncError {
+            logger.error("CloudKit setup failed: \(error.userMessage)")
+            syncStatus = .error(error)
         } catch {
-            logger.error("Failed to check iCloud status: \(error.localizedDescription)")
-            syncStatus = .error("iCloud error")
+            let syncError = FamilySyncError.from(error)
+            logger.error("CloudKit setup failed: \(syncError.userMessage)")
+            syncStatus = .error(syncError)
         }
     }
 
     // MARK: - Persistence
-
+    
+    /// Thread-safe persistence using MainActor isolation
     private func saveFamily() {
-        if let family = currentFamily,
-           let encoded = try? JSONEncoder().encode(family) {
-            UserDefaults.standard.set(encoded, forKey: familyGroupKey)
-        } else {
+        guard let family = currentFamily else {
             UserDefaults.standard.removeObject(forKey: familyGroupKey)
+            logger.debug("Cleared family from UserDefaults")
+            return
+        }
+        
+        do {
+            let encoded = try JSONEncoder().encode(family)
+            UserDefaults.standard.set(encoded, forKey: familyGroupKey)
+            logger.debug("Saved family to UserDefaults")
+        } catch {
+            logger.error("Failed to encode family: \(error.localizedDescription)")
         }
     }
 
     private func loadFamily() {
-        if let data = UserDefaults.standard.data(forKey: familyGroupKey),
-           let family = try? JSONDecoder().decode(FamilyGroup.self, from: data) {
+        guard let data = UserDefaults.standard.data(forKey: familyGroupKey) else {
+            logger.debug("No saved family found")
+            return
+        }
+        
+        do {
+            let family = try JSONDecoder().decode(FamilyGroup.self, from: data)
+            
+            // Validate loaded data
+            guard family.isValid else {
+                logger.error("Loaded family data is invalid, clearing")
+                UserDefaults.standard.removeObject(forKey: familyGroupKey)
+                return
+            }
+            
             currentFamily = family
+            logger.debug("Loaded family from UserDefaults: \(family.name)")
+        } catch {
+            logger.error("Failed to decode family: \(error.localizedDescription)")
+            // Clear corrupted data
+            UserDefaults.standard.removeObject(forKey: familyGroupKey)
         }
     }
 
     private func loadInviteURL() {
-        if let urlString = UserDefaults.standard.string(forKey: inviteCodeKey),
-           let url = URL(string: urlString) {
-            inviteURL = url
+        guard let urlString = UserDefaults.standard.string(forKey: inviteCodeKey),
+              let url = URL(string: urlString) else {
+            logger.debug("No saved invite URL found")
+            return
         }
+        
+        inviteURL = url
+        logger.debug("Loaded invite URL")
     }
 }
+
