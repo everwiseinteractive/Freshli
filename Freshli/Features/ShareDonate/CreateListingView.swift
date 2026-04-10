@@ -9,6 +9,7 @@ struct CreateListingView: View {
     @Environment(AuthManager.self) private var authManager: AuthManager?
     @Environment(CommunityService.self) private var communityService: CommunityService?
     @Environment(SyncService.self) private var syncService: SyncService?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var itemName = ""
     @State private var description = ""
@@ -260,8 +261,11 @@ struct CreateListingView: View {
             celebrationManager?.fireDonationCompleted(itemName: itemName, modelContext: modelContext)
         }
 
-        withAnimation(PSMotion.springBouncy) { showSuccess = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { dismiss() }
+        withAnimation(FLMotion.adaptive(PSMotion.springBouncy, reduceMotion: reduceMotion)) { showSuccess = true }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(1200))
+            dismiss()
+        }
     }
 
     private var successOverlay: some View {

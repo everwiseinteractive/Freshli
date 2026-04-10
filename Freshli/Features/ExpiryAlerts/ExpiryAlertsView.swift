@@ -10,6 +10,7 @@ struct ExpiryAlertsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
     @Environment(PSToastManager.self) private var toastManager: PSToastManager?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var expiredItems: [FreshliItem] {
         allItems.filter { $0.expiryStatus == .expired }
@@ -153,7 +154,7 @@ struct ExpiryAlertsView: View {
 
     private func handleAction(_ action: ExpiryAction, for item: FreshliItem) {
         let itemName = item.name
-        withAnimation(PSMotion.springDefault) {
+        withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) {
             switch action {
             case .cook:
                 PSHaptics.shared.success()

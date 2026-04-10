@@ -12,6 +12,8 @@ struct RescueMissionDetailView: View {
     @State private var appeared = false
     @State private var showCompletionCelebration = false
     @State private var showHarvestCelebration = false
+    @State private var completePopTrigger = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var allStepsCompleted: Bool {
         completedSteps.count == mission.steps.count && !mission.steps.isEmpty
@@ -40,7 +42,8 @@ struct RescueMissionDetailView: View {
             VStack(spacing: PSSpacing.md) {
                 if allStepsCompleted {
                     markAsDoneButton
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .transition(.flSheetRise)
+                        .celebrationPop(trigger: $completePopTrigger)
                 }
             }
             .padding(PSSpacing.lg)
@@ -49,7 +52,8 @@ struct RescueMissionDetailView: View {
         }
         .harvestCelebration(isActive: $showHarvestCelebration, intensity: .celebration)
         .onAppear {
-            withAnimation(PSMotion.springGentle.delay(0.1)) { appeared = true }
+            let anim: Animation = reduceMotion ? .easeOut(duration: 0.2) : PSMotion.springGentle.delay(0.1)
+            withAnimation(anim) { appeared = true }
         }
     }
 
@@ -231,15 +235,15 @@ struct RescueMissionDetailView: View {
                 ForEach(Array(mission.steps.enumerated()), id: \.offset) { index, step in
                     Button {
                         PSHaptics.shared.lightTap()
-                        withAnimation(PSMotion.springBouncy) {
+                        withAnimation(FLMotion.adaptive(PSMotion.springBouncy, reduceMotion: reduceMotion)) {
                             if completedSteps.contains(index) {
                                 completedSteps.remove(index)
                             } else {
                                 completedSteps.insert(index)
-                                if allStepsCompleted {
-                                    PSHaptics.shared.celebrate()
-                                }
                             }
+                        }
+                        if allStepsCompleted {
+                            completePopTrigger = true
                         }
                     } label: {
                         HStack(alignment: .top, spacing: PSSpacing.md) {
@@ -343,7 +347,8 @@ struct RescueMissionDetailView: View {
             celebrationManager?.fireFoodSaved(modelContext: modelContext)
 
             // Dismiss after celebration
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(2500))
                 dismiss()
             }
         } catch {

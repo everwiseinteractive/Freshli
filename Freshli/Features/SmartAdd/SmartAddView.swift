@@ -68,7 +68,7 @@ struct SmartAddView: View {
                             .transition(PSMotion.slideUp)
                     }
                 }
-                .animation(PSMotion.springDefault, value: viewModel.pendingItems.isEmpty)
+                .flAnimation(PSMotion.springDefault, value: viewModel.pendingItems.isEmpty)
             }
             .ignoresSafeArea(edges: .bottom)
             .navigationBarTitleDisplayMode(.inline)
@@ -138,7 +138,8 @@ struct SmartAddView: View {
         .ignoresSafeArea()
         .onAppear {
             // Start scanning after a brief delay to let the camera warm up
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(500))
                 scannerCoordinator?.startScanning()
             }
         }
@@ -237,7 +238,7 @@ struct SmartAddView: View {
         .overlay(
             Capsule().strokeBorder(.white.opacity(0.2), lineWidth: 0.5)
         )
-        .animation(PSMotion.springQuick, value: viewModel.scanState)
+        .flAnimation(PSMotion.springQuick, value: viewModel.scanState)
     }
 
     // MARK: - Actions
@@ -251,7 +252,8 @@ struct SmartAddView: View {
 
         toastManager?.show(.itemAdded("\(count) items added to pantry!"))
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1))
             dismiss()
         }
     }

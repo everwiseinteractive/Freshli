@@ -122,7 +122,7 @@ struct FreshliOnboardingView: View {
                         Capsule()
                             .fill(index == currentPage ? pageColor(for: currentPage) : PSColors.neutral200)
                             .frame(width: index == currentPage ? 32 : 10, height: 10)
-                            .animation(PSMotion.springBouncy, value: currentPage)
+                            .flAnimation(PSMotion.springBouncy, value: currentPage)
                     }
                 }
 
@@ -157,7 +157,7 @@ struct FreshliOnboardingView: View {
                     .shadow(color: pageColor(for: currentPage).opacity(0.3), radius: 20, y: 8)
                 }
                 .buttonStyle(PressableButtonStyle())
-                .animation(PSMotion.springDefault, value: currentPage)
+                .flAnimation(PSMotion.springDefault, value: currentPage)
 
                 // Skip for pages
                 if currentPage < 2 {
@@ -201,7 +201,8 @@ struct FreshliOnboardingView: View {
         withAnimation(.easeInOut(duration: 0.5)) {
             zoomOut = true
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(500))
             onComplete()
         }
     }

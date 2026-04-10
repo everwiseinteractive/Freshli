@@ -20,6 +20,8 @@ struct FreshliDetailView: View {
     @State private var editedExpiryDate: Date = Date()
     @State private var editedNotes: String = ""
     @State private var showSuccessAnimation = false
+    @State private var successFlashTrigger = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ScrollView {
@@ -29,8 +31,9 @@ struct FreshliDetailView: View {
                 Group {
                     if isEditing { editSection } else { infoSection }
                 }
-                .animation(PSMotion.springDefault, value: isEditing)
+                .flAnimation(PSMotion.springDefault, value: isEditing)
                 actionsSection
+                    .successFlash(trigger: $successFlashTrigger)
             }
             .padding(.vertical, PSSpacing.lg)
             .padding(.horizontal, PSSpacing.screenHorizontal)
@@ -194,7 +197,8 @@ struct FreshliDetailView: View {
             PSButton(title: String(localized: "Mark as Consumed"), icon: "checkmark.circle", style: .secondary) {
                 PSHaptics.shared.success()
                 let itemName = item.name
-                withAnimation(PSMotion.springBouncy) {
+                successFlashTrigger = true
+                withAnimation(FLMotion.adaptive(PSMotion.springBouncy, reduceMotion: reduceMotion)) {
                     item.isConsumed = true
                     do {
                         try modelContext.save()
@@ -215,7 +219,10 @@ struct FreshliDetailView: View {
                         await syncService?.recordImpactEvent(userId: userId, eventType: "consumed", itemName: itemName, moneySaved: 3.50, co2Avoided: 2.5)
                     }
                 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { dismiss() }
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(1200))
+                    dismiss()
+                }
             }
 
             HStack(spacing: PSSpacing.md) {
@@ -298,7 +305,7 @@ struct FreshliDetailView: View {
         editedLocation = item.storageLocation
         editedExpiryDate = item.expiryDate
         editedNotes = item.notes ?? ""
-        withAnimation(PSMotion.springDefault) { isEditing = true }
+        withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) { isEditing = true }
     }
 
     private func saveEdits() {
@@ -327,7 +334,8 @@ struct FreshliDetailView: View {
                 WidgetDataService.updateWidgetData(modelContext: modelContext)
             }
 
-            withAnimation(PSMotion.springDefault) { isEditing = false }
+            successFlashTrigger = true
+            withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) { isEditing = false }
             toastManager?.show(.success(String(localized: "Item saved")))
         } catch {
             PSLogger.general.error("Failed to save edits: \(error.localizedDescription)")

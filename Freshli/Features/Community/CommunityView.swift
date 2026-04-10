@@ -33,6 +33,7 @@ struct CommunityView: View {
     @State private var reportDetails = ""
     @State private var feedError: String?
     @Namespace private var tabNamespace
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let logger = Logger(subsystem: "com.freshli.app", category: "CommunityView")
 
@@ -75,7 +76,8 @@ struct CommunityView: View {
                 CommunityCreateListingView { success in
                     if success {
                         showCreateListing = false
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .milliseconds(300))
                             showPostSuccess = true
                         }
                         // Refresh feed
@@ -152,7 +154,7 @@ struct CommunityView: View {
                     .accessibilityLabel(String(localized: "View Shopping List"))
 
                     Button {
-                        withAnimation(PSMotion.springQuick) { showSearch.toggle() }
+                        withAnimation(FLMotion.adaptive(PSMotion.springQuick, reduceMotion: reduceMotion)) { showSearch.toggle() }
                     } label: {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: PSLayout.scaledFont(18), weight: .medium))
@@ -213,7 +215,7 @@ struct CommunityView: View {
                 ForEach(Array(tabs.enumerated()), id: \.offset) { index, tab in
                     Button {
                         if activeTab != index { PSHaptics.shared.selection() }
-                        withAnimation(PSMotion.springDefault) {
+                        withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) {
                             activeTab = index
                         }
                     } label: {
@@ -376,6 +378,7 @@ struct CommunityView: View {
                     .adaptiveHPadding()
                     .padding(.top, PSSpacing.xl)
                     .padding(.bottom, PSLayout.tabBarContentPadding + PSSpacing.xl)
+                    .listChangeAnimation(feedListings.map(\.id))
                 }
                 .refreshable { await refreshFeed() }
             }
@@ -406,6 +409,7 @@ struct CommunityView: View {
                     .adaptiveHPadding()
                     .padding(.top, PSSpacing.xl)
                     .padding(.bottom, PSLayout.tabBarContentPadding + PSSpacing.xl)
+                    .listChangeAnimation(myListings.map(\.id))
                 }
                 .refreshable {
                     if let userId = authManager?.currentUserId {

@@ -13,6 +13,7 @@ struct PickupLocationView: View {
     @State private var showCustomPinMode = false
     @State private var customPinLocation: CLLocationCoordinate2D?
     @State private var isLoadingSpots = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var onLocationSelected: ((NeutralSpot) -> Void)?
 
@@ -69,7 +70,10 @@ struct PickupLocationView: View {
                         title: category.displayName,
                         isSelected: selectedCategory == category,
                         action: {
-                            selectedCategory = selectedCategory == category ? nil : category
+                            PSHaptics.shared.selection()
+                            withAnimation(FLMotion.adaptive(PSMotion.springQuick, reduceMotion: reduceMotion)) {
+                                selectedCategory = selectedCategory == category ? nil : category
+                            }
                         }
                     )
                 }
@@ -156,7 +160,12 @@ struct PickupLocationView: View {
     }
 
     private func spotCard(_ spot: NeutralSpot) -> some View {
-        Button(action: { neutralSpotService.selectSpot(spot) }) {
+        Button(action: {
+            PSHaptics.shared.selection()
+            withAnimation(FLMotion.adaptive(PSMotion.springBouncy, reduceMotion: reduceMotion)) {
+                neutralSpotService.selectSpot(spot)
+            }
+        }) {
             HStack(spacing: PSSpacing.md) {
                 VStack(alignment: .center, spacing: PSSpacing.xs) {
                     Image(systemName: spot.category.icon)

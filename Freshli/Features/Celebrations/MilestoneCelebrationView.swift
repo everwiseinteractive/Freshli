@@ -95,7 +95,8 @@ struct MilestoneCelebrationView: View {
             }
             // Strong haptic for milestone
             UINotificationFeedbackGenerator().notificationOccurred(.success)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(300))
                 UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
             }
         }

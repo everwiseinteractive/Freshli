@@ -13,6 +13,9 @@ struct ForgotPasswordView: View {
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var appeared = false
+    @State private var errorShakeTrigger = false
+    @State private var successFlashTrigger = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ScrollView {
@@ -50,6 +53,7 @@ struct ForgotPasswordView: View {
                 }
                 .padding(.top, PSLayout.scaled(80))
                 .padding(.bottom, PSLayout.scaled(40))
+                .cardEntrance(index: 0)
 
                 if showSuccess {
                     // Success state
@@ -79,7 +83,7 @@ struct ForgotPasswordView: View {
                         }
                     }
                     .padding(.horizontal, PSLayout.formHorizontalPadding)
-                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                    .transition(.flCelebrationPop)
                 } else {
                     // Email form
                     VStack(spacing: PSSpacing.xl) {
@@ -152,15 +156,17 @@ struct ForgotPasswordView: View {
                         }
                     }
                     .padding(.horizontal, PSLayout.formHorizontalPadding)
+                    .cardEntrance(index: 1)
+                    .errorShake(trigger: $errorShakeTrigger)
+                    .successFlash(trigger: $successFlashTrigger)
                 }
             }
         }
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 20)
         .onAppear {
-            withAnimation(PSMotion.springDefault.delay(0.1)) {
-                appeared = true
-            }
+            let base: Animation = reduceMotion ? .easeOut(duration: 0.2) : PSMotion.springDefault.delay(0.1)
+            withAnimation(base) { appeared = true }
         }
     }
 
@@ -169,17 +175,17 @@ struct ForgotPasswordView: View {
         showError = false
         isSending = true
 
-        Task {
+        Task { @MainActor in
             do {
                 try await authManager.resetPassword(email: email.trimmingCharacters(in: .whitespaces))
-                PSHaptics.shared.success()
-                withAnimation(PSMotion.springDefault) {
+                successFlashTrigger = true
+                withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) {
                     showSuccess = true
                 }
             } catch {
-                PSHaptics.shared.error()
                 errorMessage = error.localizedDescription
-                withAnimation(PSMotion.springQuick) { showError = true }
+                withAnimation(FLMotion.adaptive(PSMotion.springQuick, reduceMotion: reduceMotion)) { showError = true }
+                errorShakeTrigger = true
             }
             isSending = false
         }

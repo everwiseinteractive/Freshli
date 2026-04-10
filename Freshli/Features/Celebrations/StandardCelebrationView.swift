@@ -153,7 +153,9 @@ struct ToastCelebrationView: View {
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
             }
             // Auto-dismiss with appropriate timing
-            DispatchQueue.main.asyncAfter(deadline: .now() + (reduceMotion ? 2.5 : 3.0)) {
+            let dismissDelayMs = reduceMotion ? 2500 : 3000
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(dismissDelayMs))
                 withAnimation(reduceMotion ? .none : PSMotion.easeDefault) {
                     onDismiss()
                 }

@@ -22,6 +22,8 @@ struct RecipeCookingView: View {
     @State private var showCompletionSheet = false
     @State private var showHarvestCelebration = false
     @State private var markedItemCount = 0
+    @State private var celebrateStepTrigger = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(spacing: 0) {
@@ -32,7 +34,8 @@ struct RecipeCookingView: View {
                     stepsSection
                     if engine.allStepsCompleted {
                         completionSection
-                            .transition(PSMotion.slideUp)
+                            .transition(.flCelebrationPop)
+                            .celebrationPop(trigger: $celebrateStepTrigger)
                     }
                 }
                 .padding(.vertical, PSSpacing.lg)
@@ -50,7 +53,8 @@ struct RecipeCookingView: View {
             }
         }
         .onAppear {
-            withAnimation(PSMotion.springGentle.delay(0.1)) { appeared = true }
+            let anim: Animation = reduceMotion ? .easeOut(duration: 0.2) : PSMotion.springGentle.delay(0.1)
+            withAnimation(anim) { appeared = true }
             engine.startCooking(recipe: recipe)
         }
         .harvestCelebration(isActive: $showHarvestCelebration, intensity: .celebration)
@@ -117,7 +121,7 @@ struct RecipeCookingView: View {
                     RoundedRectangle(cornerRadius: PSSpacing.radiusSm, style: .continuous)
                         .fill(PSColors.primaryGreen)
                         .frame(width: geo.size.width * engine.cookingProgress, height: PSLayout.scaled(8))
-                        .animation(PSMotion.springBouncy, value: engine.cookingProgress)
+                        .flAnimation(PSMotion.springBouncy, value: engine.cookingProgress)
                 }
             }
             .frame(height: PSLayout.scaled(8))
@@ -148,11 +152,11 @@ struct RecipeCookingView: View {
                 ForEach(Array(recipe.steps.enumerated()), id: \.offset) { index, step in
                     Button {
                         PSHaptics.shared.lightTap()
-                        withAnimation(PSMotion.springBouncy) {
+                        withAnimation(FLMotion.adaptive(PSMotion.springBouncy, reduceMotion: reduceMotion)) {
                             engine.toggleStep(index)
-                            if engine.allStepsCompleted {
-                                PSHaptics.shared.celebrate()
-                            }
+                        }
+                        if engine.allStepsCompleted {
+                            celebrateStepTrigger = true
                         }
                     } label: {
                         stepRow(index: index, step: step)
@@ -286,7 +290,8 @@ struct RecipeCookingView: View {
             showHarvestCelebration = true
             celebrationManager?.fireFoodSaved(modelContext: modelContext)
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(1500))
                 showCompletionSheet = true
             }
         } else {

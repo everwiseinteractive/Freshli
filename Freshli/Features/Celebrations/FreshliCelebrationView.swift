@@ -295,7 +295,8 @@ struct FreshliCelebrationView: View {
         }
 
         // 3. Particle burst (slightly delayed for dramatic effect)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(250))
             burstTriggered = true
 
             let center = CGPoint(
@@ -322,7 +323,8 @@ struct FreshliCelebrationView: View {
 
         // 4. Second haptic for hero celebrations
         if type.intensity == .hero {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(400))
                 PSHaptics.shared.celebrate()
             }
         }

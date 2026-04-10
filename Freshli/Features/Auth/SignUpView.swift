@@ -14,6 +14,9 @@ struct SignUpView: View {
     @State private var showError = false
     @State private var localError: String?
     @State private var appeared = false
+    @State private var errorShakeTrigger = false
+    @State private var successFlashTrigger = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ScrollView {
@@ -60,6 +63,7 @@ struct SignUpView: View {
                 }
                 .padding(.top, PSLayout.headerTopPadding)
                 .padding(.bottom, PSLayout.formHorizontalPadding)
+                .cardEntrance(index: 0)
 
                 // Form
                 VStack(spacing: PSSpacing.lg) {
@@ -155,6 +159,9 @@ struct SignUpView: View {
                 }
                 .padding(.horizontal, PSLayout.formHorizontalPadding)
                 .padding(.bottom, 32)
+                .cardEntrance(index: 1)
+                .errorShake(trigger: $errorShakeTrigger)
+                .successFlash(trigger: $successFlashTrigger)
 
                 // CTA
                 VStack(spacing: PSSpacing.xl) {
@@ -188,14 +195,14 @@ struct SignUpView: View {
                 }
                 .padding(.horizontal, PSLayout.formHorizontalPadding)
                 .padding(.bottom, PSLayout.scaled(48))
+                .cardEntrance(index: 2)
             }
         }
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 20)
         .onAppear {
-            withAnimation(PSMotion.springDefault.delay(0.1)) {
-                appeared = true
-            }
+            let base: Animation = reduceMotion ? .easeOut(duration: 0.2) : PSMotion.springDefault.delay(0.1)
+            withAnimation(base) { appeared = true }
         }
     }
 
@@ -247,32 +254,32 @@ struct SignUpView: View {
         localError = nil
 
         guard !displayName.trimmingCharacters(in: .whitespaces).isEmpty else {
-            PSHaptics.shared.error()
             localError = String(localized: "Please enter your name.")
-            withAnimation(PSMotion.springQuick) { showError = true }
+            withAnimation(FLMotion.adaptive(PSMotion.springQuick, reduceMotion: reduceMotion)) { showError = true }
+            errorShakeTrigger = true
             return
         }
 
         guard password == confirmPassword else {
-            PSHaptics.shared.error()
             localError = String(localized: "Passwords don't match.")
-            withAnimation(PSMotion.springQuick) { showError = true }
+            withAnimation(FLMotion.adaptive(PSMotion.springQuick, reduceMotion: reduceMotion)) { showError = true }
+            errorShakeTrigger = true
             return
         }
 
-        Task {
+        Task { @MainActor in
             do {
                 try await authManager.signUp(
                     email: email,
                     password: password,
                     displayName: displayName.trimmingCharacters(in: .whitespaces)
                 )
-                PSHaptics.shared.success()
+                successFlashTrigger = true
             } catch {
-                PSHaptics.shared.error()
-                withAnimation(PSMotion.springQuick) {
+                withAnimation(FLMotion.adaptive(PSMotion.springQuick, reduceMotion: reduceMotion)) {
                     showError = true
                 }
+                errorShakeTrigger = true
             }
         }
     }

@@ -10,6 +10,8 @@ struct ShareDonateView: View {
     @State private var selectedType: ListingType = .share
     @State private var showCreateListing = false
     @State private var showConfirmation = false
+    @State private var successFlashTrigger = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var activeListings: [SharedListing] {
         listings.filter { $0.listingType == selectedType && $0.status == .active }
@@ -41,6 +43,7 @@ struct ShareDonateView: View {
         .sheet(isPresented: $showCreateListing) {
             NavigationStack {
                 CreateListingView(listingType: selectedType)
+                    .sheetTransition()
             }
             .presentationDragIndicator(.visible)
         }
@@ -84,7 +87,8 @@ struct ShareDonateView: View {
                     ListingCard(listing: listing) {
                         PSHaptics.shared.success()
                         let itemName = listing.itemName
-                        withAnimation(PSMotion.springDefault) {
+                        successFlashTrigger = true
+                        withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) {
                             listing.status = .completed
                             do {
                                 try modelContext.save()
@@ -109,7 +113,9 @@ struct ShareDonateView: View {
             }
             .padding(.horizontal, PSSpacing.screenHorizontal)
             .padding(.vertical, PSSpacing.md)
+            .listChangeAnimation(activeListings.map(\.id))
         }
+        .successFlash(trigger: $successFlashTrigger)
     }
 
     private var emptyState: some View {

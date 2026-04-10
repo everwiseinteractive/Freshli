@@ -11,6 +11,7 @@ struct SettingsView: View {
     @AppStorage("isDarkMode") private var isDarkMode = false
     @AppStorage("notificationsEnabled") private var notificationsEnabled = true
     @AppStorage("reduceMotion") private var reduceMotion = false
+    @Environment(\.accessibilityReduceMotion) private var a11yReduceMotion
 
     @State private var appeared = false
 
@@ -96,7 +97,10 @@ struct SettingsView: View {
         .offset(y: appeared ? 0 : 12)
         .onAppear {
             logger.info("SettingsView appeared")
-            withAnimation(PSMotion.springDefault.delay(0.05)) {
+            let base: Animation = (a11yReduceMotion || reduceMotion)
+                ? .easeOut(duration: 0.2)
+                : PSMotion.springDefault.delay(0.05)
+            withAnimation(base) {
                 appeared = true
             }
         }

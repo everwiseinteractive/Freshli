@@ -30,6 +30,8 @@ struct FreshliView: View {
     @State private var showDepletionInsights = false
     @State private var showReceiptScanner = false
     @State private var showDepletion = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Namespace private var pantryHeroNS
 
     private let logger = Logger(subsystem: "com.freshli.app", category: "FreshliView")
 
@@ -53,7 +55,7 @@ struct FreshliView: View {
         showHarvestCelebration = true
 
         let itemName = item.name
-        withAnimation(PSMotion.springDefault) {
+        withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) {
             item.isConsumed = true
             do {
                 try modelContext.save()
@@ -83,7 +85,7 @@ struct FreshliView: View {
         PSHaptics.shared.heavyTap()
         let itemName = item.name
         let itemId = item.id
-        withAnimation(PSMotion.springDefault) {
+        withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) {
             modelContext.delete(item)
             do {
                 try modelContext.save()
@@ -100,7 +102,7 @@ struct FreshliView: View {
 
     private func shareItem(_ item: FreshliItem) {
         let itemName = item.name
-        withAnimation(PSMotion.springDefault) {
+        withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) {
             item.isShared = true
             do {
                 try modelContext.save()
@@ -159,6 +161,7 @@ struct FreshliView: View {
         .sheet(item: $selectedItem) { item in
             NavigationStack {
                 FreshliDetailView(item: item)
+                    .sheetTransition()
             }
             .presentationDragIndicator(.visible)
             .presentationDetents([.medium, .large])
@@ -169,6 +172,7 @@ struct FreshliView: View {
                     selectedCategory: $selectedCategory,
                     sortByExpiry: .constant(true)
                 )
+                .sheetTransition()
             }
             .presentationDragIndicator(.visible)
             .presentationDetents([.medium])
@@ -255,14 +259,16 @@ struct FreshliView: View {
                     // "All Items" chip
                     categoryChip(title: String(localized: "All Items"), icon: nil, isActive: selectedCategory == nil) {
                         PSHaptics.shared.selection()
-                        withAnimation(PSMotion.springQuick) { selectedCategory = nil }
+                        withAnimation(FLMotion.adaptive(PSMotion.springQuick, reduceMotion: reduceMotion)) {
+                            selectedCategory = nil
+                        }
                     }
 
                     // Category chips with icons
                     ForEach([FoodCategory.fruits, .vegetables, .dairy, .meat, .grains, .bakery], id: \.self) { cat in
                         categoryChip(title: cat.displayName, icon: cat.icon, isActive: selectedCategory == cat) {
                             PSHaptics.shared.selection()
-                            withAnimation(PSMotion.springQuick) {
+                            withAnimation(FLMotion.adaptive(PSMotion.springQuick, reduceMotion: reduceMotion)) {
                                 selectedCategory = selectedCategory == cat ? nil : cat
                             }
                         }
@@ -337,6 +343,7 @@ struct FreshliView: View {
                         ForEach(Array(filteredItems.enumerated()), id: \.element.id) { index, item in
                             freshliItemCard(item: item)
                                 .staggeredAppearance(index: index)
+                                .bounceButtonModifier(pressedScale: 0.97, haptic: false)
                                 .onTapGesture {
                                     PSHaptics.shared.lightTap()
                                     selectedItem = item
@@ -376,6 +383,7 @@ struct FreshliView: View {
                     .adaptiveHPadding()
                     .padding(.vertical, PSLayout.cardPadding)
                     .padding(.bottom, PSLayout.tabBarContentPadding)
+                    .listChangeAnimation(filteredItems.map(\.id))
                 }
                 .refreshable {
                     PSHaptics.shared.refreshSnap()

@@ -10,15 +10,19 @@ struct GoodNeighborProfileView: View {
             VStack(alignment: .leading, spacing: PSSpacing.xxl) {
                 // Score Card
                 scoreCard
+                    .cardEntrance(index: 0)
 
                 // Badges Section
                 badgesSection
+                    .cardEntrance(index: 1)
 
                 // Stats Section
                 statsSection
+                    .cardEntrance(index: 2)
 
                 // Next Badge Progress
                 nextBadgeSection
+                    .cardEntrance(index: 3)
             }
             .padding(.horizontal, PSSpacing.screenHorizontal)
             .padding(.vertical, PSSpacing.xxl)

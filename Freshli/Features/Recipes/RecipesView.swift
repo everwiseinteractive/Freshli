@@ -15,6 +15,7 @@ struct RecipesView: View {
     @State private var appeared = false
     @State private var matchedRecipes: [Recipe] = []
     @State private var showRescueChef = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let filters = ["For You", "Quick & Easy", "Breakfast", "Vegan", "Desserts"]
 
@@ -123,7 +124,7 @@ struct RecipesView: View {
                 ForEach(filters, id: \.self) { filter in
                     Button {
                         PSHaptics.shared.selection()
-                        withAnimation(PSMotion.springQuick) { activeFilter = filter }
+                        withAnimation(FLMotion.adaptive(PSMotion.springQuick, reduceMotion: reduceMotion)) { activeFilter = filter }
                     } label: {
                         Text(filter)
                             .font(.system(size: PSLayout.scaledFont(14), weight: .bold))
@@ -267,6 +268,7 @@ struct RecipesView: View {
                 }
             }
             .adaptiveHPadding()
+            .listChangeAnimation("\(activeFilter)-\(recipes.count)")
         }
     }
 

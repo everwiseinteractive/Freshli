@@ -12,6 +12,7 @@ struct SignInView: View {
     @State private var password = ""
     @State private var showError = false
     @State private var errorShakeTrigger = false
+    @State private var successFlashTrigger = false
     @State private var appeared = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -61,6 +62,7 @@ struct SignInView: View {
                 }
                 .padding(.top, PSLayout.headerTopPadding)
                 .padding(.bottom, PSLayout.formHorizontalPadding)
+                .cardEntrance(index: 0)
 
                 // Form
                 VStack(spacing: PSSpacing.lg) {
@@ -151,6 +153,8 @@ struct SignInView: View {
                 }
                 .padding(.horizontal, PSLayout.formHorizontalPadding)
                 .padding(.bottom, 32)
+                .cardEntrance(index: 1)
+                .successFlash(trigger: $successFlashTrigger)
 
                 // CTA
                 VStack(spacing: PSSpacing.xl) {
@@ -186,12 +190,14 @@ struct SignInView: View {
                 }
                 .padding(.horizontal, PSLayout.formHorizontalPadding)
                 .padding(.bottom, PSLayout.scaled(48))
+                .cardEntrance(index: 2)
             }
         }
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 20)
         .onAppear {
-            withAnimation(PSMotion.springDefault.delay(0.1)) {
+            let base: Animation = reduceMotion ? .easeOut(duration: 0.2) : PSMotion.springDefault.delay(0.1)
+            withAnimation(base) {
                 appeared = true
             }
         }
@@ -200,12 +206,13 @@ struct SignInView: View {
     private func signIn() {
         PSHaptics.shared.mediumTap()
         showError = false
-        Task {
+        Task { @MainActor in
             do {
                 try await authManager.signIn(email: email, password: password)
-                PSHaptics.shared.success()
+                // SuccessFlashModifier owns the haptic via .sensoryFeedback(.success, ...)
+                successFlashTrigger = true
             } catch {
-                withAnimation(PSMotion.springQuick) {
+                withAnimation(FLMotion.adaptive(PSMotion.springQuick, reduceMotion: reduceMotion)) {
                     showError = true
                 }
                 // Error shake handles haptic internally; only trigger when

@@ -16,6 +16,7 @@ struct AddItemView: View {
     @Environment(AuthManager.self) private var authManager: AuthManager?
     @Environment(SyncService.self) private var syncService: SyncService?
     @Environment(NetworkMonitor.self) private var networkMonitor: NetworkMonitor?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var name = ""
     @State private var category: FoodCategory = .other
@@ -65,7 +66,8 @@ struct AddItemView: View {
             .onAppear {
                 logger.info("AddItemView appeared — category: \(category.rawValue)")
                 // Adjust scroll position when keyboard appears
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(100))
                     UIApplication.shared.connectedScenes
                         .compactMap { $0 as? UIWindowScene }
                         .first?.windows
@@ -341,8 +343,8 @@ struct AddItemView: View {
                     .foregroundStyle(.white)
             }
         }
-        .transition(.opacity.combined(with: .scale(scale: 0.9)))
-        .animation(PSMotion.springBouncy, value: showSuccess)
+        .transition(.flCelebrationPop)
+        .flAnimation(PSMotion.springBouncy, value: showSuccess)
         .accessibilityLabel(String(localized: "Success"))
         .accessibilityValue(String(localized: "\(name) added to pantry"))
         .accessibilityElement(children: .ignore)
@@ -399,8 +401,11 @@ struct AddItemView: View {
                 }
             }
 
-            withAnimation(PSMotion.springBouncy) { showSuccess = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { dismiss() }
+            withAnimation(FLMotion.adaptive(PSMotion.springBouncy, reduceMotion: reduceMotion)) { showSuccess = true }
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(1200))
+                dismiss()
+            }
         } catch {
             saveError = String(localized: "Failed to save item. Please try again.")
             PSHaptics.shared.warning()

@@ -19,6 +19,9 @@ struct ListingDetailView: View {
     @State private var showClaimSuccess = false
     @State private var showConfirmDelete = false
     @State private var errorMessage: String?
+    @State private var successFlashTrigger = false
+    @State private var errorShakeTrigger = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var isOwner: Bool {
         guard let userId = authManager?.currentUserId else { return false }
@@ -51,6 +54,8 @@ struct ListingDetailView: View {
         .overlay(alignment: .bottom) {
             bottomActionBar
         }
+        .successFlash(trigger: $successFlashTrigger)
+        .errorShake(trigger: $errorShakeTrigger)
         .navigationTitle(String(localized: "Listing Details"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -408,6 +413,7 @@ struct ListingDetailView: View {
 
             if success {
                 PSHaptics.shared.celebrate()
+                successFlashTrigger = true
                 showClaimSuccess = true
 
                 // Trigger celebration
@@ -437,7 +443,7 @@ struct ListingDetailView: View {
                 onDismissAction?()
             } else {
                 errorMessage = String(localized: "Failed to claim this item. Please try again.")
-                PSHaptics.shared.warning()
+                errorShakeTrigger = true
             }
         }
     }

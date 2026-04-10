@@ -19,6 +19,7 @@ struct OnboardingView: View {
     @State private var currentStep = 0
     @State private var blobVisible = false
     @State private var iconRotation: Double = 0
+    @State private var celebrateTrigger = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let steps: [OnboardingStep] = [
@@ -136,7 +137,7 @@ struct OnboardingView: View {
                             Capsule()
                                 .fill(index == currentStep ? step.color : PSColors.neutral200)
                                 .frame(width: index == currentStep ? 32 : 10, height: 10)
-                                .animation(PSMotion.springBouncy, value: currentStep)
+                                .flAnimation(PSMotion.springBouncy, value: currentStep)
                         }
                     }
 
@@ -144,12 +145,15 @@ struct OnboardingView: View {
                     Button {
                         PSHaptics.shared.mediumTap()
                         if currentStep < steps.count - 1 {
-                            withAnimation(PSMotion.springBouncy) {
+                            withAnimation(FLMotion.adaptive(PSMotion.springBouncy, reduceMotion: reduceMotion)) {
                                 currentStep += 1
                             }
                         } else {
-                            PSHaptics.shared.celebrate()
-                            onComplete()
+                            celebrateTrigger = true
+                            Task { @MainActor in
+                                try? await Task.sleep(for: .milliseconds(450))
+                                onComplete()
+                            }
                         }
                     } label: {
                         HStack(spacing: 8) {
@@ -176,7 +180,9 @@ struct OnboardingView: View {
                 .padding(.bottom, PSLayout.scaled(48))
             }
         }
-        .animation(PSMotion.springDefault, value: currentStep)
+        .flAnimation(PSMotion.springDefault, value: currentStep)
+        .celebrationPop(trigger: $celebrateTrigger)
+        .sensoryFeedback(.selection, trigger: currentStep)
         // Figma: initial rotate -20°, animate to 0 with springs.bouncy delay 0.2
         .onAppear {
             if reduceMotion {

@@ -16,6 +16,7 @@ struct HomeView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(AuthManager.self) private var authManager
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var selectedImpactStat: String?
     @State private var impactStats: ImpactService.ImpactStats?
@@ -344,7 +345,7 @@ struct HomeView: View {
     private func impactStatTile(icon: String, value: String, label: String) -> some View {
         Button {
             PSHaptics.shared.lightTap()
-            withAnimation(PSMotion.springBouncy) {
+            withAnimation(FLMotion.adaptive(FLMotion.celebrationPop, reduceMotion: reduceMotion)) {
                 selectedImpactStat = label
             }
         } label: {
