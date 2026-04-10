@@ -353,7 +353,8 @@ final class FreshliHapticManager {
         case .hero:
             crispSnap()
             // Second burst offset to land on the confetti peak
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [self] in
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(250))
                 communityHeartbeat()
             }
             return Self.crispSnapDuration + 0.25 + Self.communityHeartbeatDuration

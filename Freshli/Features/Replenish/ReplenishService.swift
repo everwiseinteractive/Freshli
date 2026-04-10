@@ -9,7 +9,7 @@ import os
 // - Supports drag-and-drop of recipe ingredients
 // - Persists via UserDefaults (mirrors ShoppingListService pattern)
 
-@Observable
+@Observable @MainActor
 final class ReplenishService {
     var items: [ReplenishItem] = []
     var archivedItems: [ReplenishItem] = []

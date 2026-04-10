@@ -3,7 +3,7 @@ import SwiftUI
 struct RecipeDetailView: View {
     let recipe: Recipe
     @Environment(\.dismiss) private var dismiss
-    @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
+    @Environment(CelebrationManager.self) private var celebrationManager
     @State private var appeared = false
     @State private var completedSteps: Set<Int> = []
 
@@ -168,7 +168,7 @@ struct RecipeDetailView: View {
         let key = "recipe_celebrated_\(recipe.id)"
         if !UserDefaults.standard.bool(forKey: key) {
             UserDefaults.standard.set(true, forKey: key)
-            celebrationManager?.onRecipeMatch(recipeName: recipe.title)
+            celebrationManager.onRecipeMatch(recipeName: recipe.title)
         }
     }
 }

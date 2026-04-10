@@ -8,8 +8,8 @@ struct ExpiryAlertsView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
-    @Environment(PSToastManager.self) private var toastManager: PSToastManager?
+    @Environment(CelebrationManager.self) private var celebrationManager
+    @Environment(PSToastManager.self) private var toastManager
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var expiredItems: [FreshliItem] {
@@ -159,25 +159,25 @@ struct ExpiryAlertsView: View {
             case .cook:
                 PSHaptics.shared.success()
                 item.isConsumed = true
-                toastManager?.show(.itemConsumed(itemName))
-                celebrationManager?.fireFoodSaved(modelContext: modelContext)
+                toastManager.show(.itemConsumed(itemName))
+                celebrationManager.fireFoodSaved(modelContext: modelContext)
                 PSLogger.general.info("Item marked as consumed: \(itemName)")
             case .share:
                 PSHaptics.shared.success()
                 item.isShared = true
-                toastManager?.show(.itemShared(itemName))
-                celebrationManager?.fireShareCompleted(itemName: itemName, modelContext: modelContext)
+                toastManager.show(.itemShared(itemName))
+                celebrationManager.fireShareCompleted(itemName: itemName, modelContext: modelContext)
                 PSLogger.general.info("Item marked as shared: \(itemName)")
             case .donate:
                 PSHaptics.shared.success()
                 item.isDonated = true
-                toastManager?.show(.itemDonated(itemName))
-                celebrationManager?.fireDonationCompleted(itemName: itemName, modelContext: modelContext)
+                toastManager.show(.itemDonated(itemName))
+                celebrationManager.fireDonationCompleted(itemName: itemName, modelContext: modelContext)
                 PSLogger.general.info("Item marked as donated: \(itemName)")
             case .delete:
                 PSHaptics.shared.heavyTap()
                 modelContext.delete(item)
-                toastManager?.show(.itemDeleted(itemName))
+                toastManager.show(.itemDeleted(itemName))
                 PSLogger.general.info("Item deleted: \(itemName)")
             }
             do {
@@ -185,7 +185,7 @@ struct ExpiryAlertsView: View {
                 WidgetDataService.updateWidgetData(modelContext: modelContext)
             } catch {
                 PSLogger.general.error("Failed to save after expiry action: \(error.localizedDescription)")
-                toastManager?.show(.error(String(localized: "Failed to save changes")))
+                toastManager.show(.error(String(localized: "Failed to save changes")))
             }
         }
     }

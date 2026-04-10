@@ -28,7 +28,7 @@ enum ReceiptScanningState {
 
 // MARK: - Receipt Scanner Service
 
-@Observable
+@Observable @MainActor
 final class ReceiptScannerService {
     private(set) var scanningState: ReceiptScanningState = .idle
     private(set) var scannedItems: [ParsedReceiptItem] = []

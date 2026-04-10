@@ -12,7 +12,7 @@ struct RecipeCookingView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
+    @Environment(CelebrationManager.self) private var celebrationManager
 
     @Query(filter: #Predicate<FreshliItem> { !$0.isConsumed && !$0.isShared && !$0.isDonated },
            sort: [SortDescriptor(\FreshliItem.expiryDate)])
@@ -288,7 +288,7 @@ struct RecipeCookingView: View {
 
         if marked.count > 0 {
             showHarvestCelebration = true
-            celebrationManager?.fireFoodSaved(modelContext: modelContext)
+            celebrationManager.fireFoodSaved(modelContext: modelContext)
 
             Task { @MainActor in
                 try? await Task.sleep(for: .milliseconds(1500))

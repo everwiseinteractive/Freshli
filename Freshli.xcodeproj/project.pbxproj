@@ -11,10 +11,6 @@
 		CF101D662F86A4B400B10799 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CF101D652F86A4B400B10799 /* SwiftUI.framework */; };
 		CF101D772F86A4B600B10799 /* FreshliWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CF101D612F86A4B300B10799 /* FreshliWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		CF2017A22F86000100B10799 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = CF2017A12F86000100B10799 /* Supabase */; };
-		CF4429692F89471F00A58E81 /* DELETE_THESE_FILES.md in Resources */ = {isa = PBXBuildFile; fileRef = CF4429682F89471F00A58E81 /* DELETE_THESE_FILES.md */; };
-		CF44296B2F89473D00A58E81 /* FIX_42_ERRORS.md in Resources */ = {isa = PBXBuildFile; fileRef = CF44296A2F89473D00A58E81 /* FIX_42_ERRORS.md */; };
-		CF44296D2F89474B00A58E81 /* QUICK_FIX_CHECKLIST.md in Resources */ = {isa = PBXBuildFile; fileRef = CF44296C2F89474B00A58E81 /* QUICK_FIX_CHECKLIST.md */; };
-		CF44296F2F89476500A58E81 /* CORRECT_FILE_STRUCTURE.md in Resources */ = {isa = PBXBuildFile; fileRef = CF44296E2F89476500A58E81 /* CORRECT_FILE_STRUCTURE.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,10 +43,6 @@
 		CF101D632F86A4B300B10799 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		CF101D652F86A4B400B10799 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		CF101D842F86A8C100B10799 /* FreshliWidgetsExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FreshliWidgetsExtension.entitlements; sourceTree = "<group>"; };
-		CF4429682F89471F00A58E81 /* DELETE_THESE_FILES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = DELETE_THESE_FILES.md; sourceTree = "<group>"; };
-		CF44296A2F89473D00A58E81 /* FIX_42_ERRORS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FIX_42_ERRORS.md; sourceTree = "<group>"; };
-		CF44296C2F89474B00A58E81 /* QUICK_FIX_CHECKLIST.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = QUICK_FIX_CHECKLIST.md; sourceTree = "<group>"; };
-		CF44296E2F89476500A58E81 /* CORRECT_FILE_STRUCTURE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CORRECT_FILE_STRUCTURE.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -65,26 +57,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				Services/AddItemView.swift,
-				Services/AppSupabase.swift,
-				Services/CommunityView.swift,
-				"Services/Date+Extensions.swift",
-				Services/FreshliApp.swift,
-				Services/FreshliDetailView.swift,
-				Services/NetworkMonitor.swift,
-				Services/OfflineSyncQueue.swift,
-				Services/ProfileView.swift,
-				Services/PSColors.swift,
-				Services/PSEmptyState.swift,
-				Services/PSHaptics.swift,
-				Services/PSLayout.swift,
-				Services/PSLogger.swift,
-				Services/PSMotion.swift,
-				Services/PSShimmerView.swift,
-				Services/PSSpacing.swift,
-				Services/RecipesView.swift,
-				"Services/View+Extensions.swift",
-				Services/WeeklyWrapView.swift,
 			);
 			target = CF1017B72F85D97D00B10799 /* Freshli */;
 		};
@@ -138,10 +110,6 @@
 				CF101D672F86A4B400B10799 /* FreshliWidgets */,
 				CF101D622F86A4B300B10799 /* Frameworks */,
 				CF1017B92F85D97D00B10799 /* Products */,
-				CF4429682F89471F00A58E81 /* DELETE_THESE_FILES.md */,
-				CF44296A2F89473D00A58E81 /* FIX_42_ERRORS.md */,
-				CF44296C2F89474B00A58E81 /* QUICK_FIX_CHECKLIST.md */,
-				CF44296E2F89476500A58E81 /* CORRECT_FILE_STRUCTURE.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -259,10 +227,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CF44296B2F89473D00A58E81 /* FIX_42_ERRORS.md in Resources */,
-				CF44296D2F89474B00A58E81 /* QUICK_FIX_CHECKLIST.md in Resources */,
-				CF44296F2F89476500A58E81 /* CORRECT_FILE_STRUCTURE.md in Resources */,
-				CF4429692F89471F00A58E81 /* DELETE_THESE_FILES.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -460,7 +424,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
 				XROS_DEPLOYMENT_TARGET = 26.4;
 			};
@@ -509,7 +473,7 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
 				XROS_DEPLOYMENT_TARGET = 26.4;
 			};
@@ -543,7 +507,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -576,7 +540,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
 			};

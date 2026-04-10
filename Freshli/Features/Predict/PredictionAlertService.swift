@@ -5,7 +5,7 @@ import UserNotifications
 
 /// Schedules "Gentle Reminder" notifications exactly 24 hours before
 /// the AI predicts an item will expire or run out — whichever comes first.
-@Observable
+@Observable @MainActor
 final class FreshliPredictionAlertService {
     private let logger = PSLogger(category: .notifications)
     private let notificationCenter = UNUserNotificationCenter.current()

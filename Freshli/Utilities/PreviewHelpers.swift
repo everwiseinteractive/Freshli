@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-@Observable
+@Observable @MainActor
 final class PreviewSampleData {
     static let shared = PreviewSampleData()
 

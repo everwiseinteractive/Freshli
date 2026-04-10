@@ -82,7 +82,7 @@ struct NeutralSpot: Identifiable {
 
 // MARK: - Neutral Spot Service
 
-@Observable
+@Observable @MainActor
 final class NeutralSpotService {
     var spots: [NeutralSpot] = []
     var isSearching = false

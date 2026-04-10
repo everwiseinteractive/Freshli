@@ -10,10 +10,10 @@ struct ListingDetailView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    @Environment(AuthManager.self) private var authManager: AuthManager?
-    @Environment(CommunityService.self) private var communityService: CommunityService?
-    @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
-    @Environment(SyncService.self) private var syncService: SyncService?
+    @Environment(AuthManager.self) private var authManager
+    @Environment(CommunityService.self) private var communityService
+    @Environment(CelebrationManager.self) private var celebrationManager
+    @Environment(SyncService.self) private var syncService
 
     @State private var isClaiming = false
     @State private var showClaimSuccess = false
@@ -24,12 +24,12 @@ struct ListingDetailView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var isOwner: Bool {
-        guard let userId = authManager?.currentUserId else { return false }
+        guard let userId = authManager.currentUserId else { return false }
         return listing.userId == userId
     }
 
     private var canClaim: Bool {
-        authManager?.authState == .authenticated && !isOwner && listing.status == "active"
+        authManager.authState == .authenticated && !isOwner && listing.status == "active"
     }
 
     var body: some View {
@@ -89,7 +89,7 @@ struct ListingDetailView: View {
             Button(String(localized: "Cancel"), role: .cancel) {}
             Button(String(localized: "Remove"), role: .destructive) {
                 Task {
-                    let success = await communityService?.deleteListing(listingId: listing.id) ?? false
+                    let success = await communityService.deleteListing(listingId: listing.id) ?? false
                     if success {
                         onDismissAction?()
                         dismiss()
@@ -338,7 +338,7 @@ struct ListingDetailView: View {
                     size: .medium
                 ) {
                     Task {
-                        let success = await communityService?.updateListingStatus(
+                        let success = await communityService.updateListingStatus(
                             listingId: listing.id, newStatus: "completed"
                         ) ?? false
                         if success {
@@ -400,12 +400,12 @@ struct ListingDetailView: View {
     // MARK: - Actions
 
     private func claimItem() {
-        guard let userId = authManager?.currentUserId else { return }
+        guard let userId = authManager.currentUserId else { return }
         PSHaptics.shared.mediumTap()
         isClaiming = true
 
         Task {
-            let success = await communityService?.claimListing(
+            let success = await communityService.claimListing(
                 listingId: listing.id, claimerId: userId
             ) ?? false
 
@@ -417,13 +417,13 @@ struct ListingDetailView: View {
                 showClaimSuccess = true
 
                 // Trigger celebration
-                celebrationManager?.fireShareCompleted(
+                celebrationManager.fireShareCompleted(
                     itemName: listing.itemName,
                     modelContext: modelContext
                 )
 
                 // Record impact event
-                await syncService?.recordImpactEvent(
+                await syncService.recordImpactEvent(
                     userId: userId,
                     eventType: "item_rescued",
                     itemName: listing.itemName

@@ -4,8 +4,8 @@ import SwiftData
 struct ShareDonateView: View {
     @Query private var listings: [SharedListing]
     @Environment(\.modelContext) private var modelContext
-    @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
-    @Environment(PSToastManager.self) private var toastManager: PSToastManager?
+    @Environment(CelebrationManager.self) private var celebrationManager
+    @Environment(PSToastManager.self) private var toastManager
 
     @State private var selectedType: ListingType = .share
     @State private var showCreateListing = false
@@ -95,16 +95,16 @@ struct ShareDonateView: View {
                                 PSLogger.general.info("Listing marked as completed: \(itemName)")
                             } catch {
                                 PSLogger.general.error("Failed to mark listing completed: \(error.localizedDescription)")
-                                toastManager?.show(.error(String(localized: "Failed to save")))
+                                toastManager.show(.error(String(localized: "Failed to save")))
                                 return
                             }
                         }
                         if listing.listingType == .share {
-                            toastManager?.show(.itemShared(itemName))
-                            celebrationManager?.fireShareCompleted(itemName: itemName, modelContext: modelContext)
+                            toastManager.show(.itemShared(itemName))
+                            celebrationManager.fireShareCompleted(itemName: itemName, modelContext: modelContext)
                         } else {
-                            toastManager?.show(.itemDonated(itemName))
-                            celebrationManager?.fireDonationCompleted(itemName: itemName, modelContext: modelContext)
+                            toastManager.show(.itemDonated(itemName))
+                            celebrationManager.fireDonationCompleted(itemName: itemName, modelContext: modelContext)
                         }
                         WidgetDataService.updateWidgetData(modelContext: modelContext)
                     }

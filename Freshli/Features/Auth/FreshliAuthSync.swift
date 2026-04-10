@@ -14,7 +14,7 @@ private let logger = Logger(subsystem: "com.freshli.app", category: "AuthSync")
 
 /// Manages the full Sign-in-with-Apple → Supabase session flow,
 /// enforcing Strict Concurrency (`Sendable` boundaries) during the handoff.
-@Observable
+@Observable @MainActor
 final class FreshliAuthService: @unchecked Sendable {
     var isAuthenticating = false
     var authError: String?
@@ -148,7 +148,7 @@ extension FreshliAuthService {
 
 /// Observes Supabase Realtime changes on the `pantry_items` table so that
 /// marking an item as "Consumed" on iPad instantly updates the iPhone UI.
-@Observable
+@Observable @MainActor
 final class FreshliRealtimeSync {
     var realtimeConnected = false
     var lastRealtimeEvent: String?

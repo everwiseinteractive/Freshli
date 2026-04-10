@@ -23,7 +23,7 @@ struct ParsedFoodItem: Identifiable, Equatable {
 /// Simulated AI service that parses recognized text from receipts/food labels
 /// into structured food items with categories and estimated expiry dates.
 /// In production, this would call a Supabase Edge Function.
-@Observable
+@Observable @MainActor
 final class FreshliParserService {
 
     // MARK: - Public API

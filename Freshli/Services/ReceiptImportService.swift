@@ -50,7 +50,7 @@ enum ReceiptSource: String, Codable {
 
 // MARK: - Service
 
-@Observable
+@Observable @MainActor
 final class ReceiptImportService {
     var recentReceipts: [GroceryReceipt] = []
     var importHistory: [GroceryReceipt] = []

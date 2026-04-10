@@ -27,7 +27,7 @@ enum AppTab: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .home: return "house.fill"
-        case .pantry: return "leaf.fill"       // Figma: Apple icon
+        case .pantry: return "refrigerator.fill" // Figma: pantry/refrigerator icon
         case .recipes: return "fork.knife"      // Figma: Utensils
         case .community: return "person.2.fill" // Figma: Users
         case .profile: return "person.fill"     // Figma: Profile

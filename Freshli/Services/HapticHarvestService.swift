@@ -11,7 +11,7 @@ enum SparkleIntensity {
 
 /// HapticHarvestService provides custom haptic patterns for the Haptic Harvest feature.
 /// Uses CoreHaptics for complex patterns with UIImpactFeedbackGenerator as fallback.
-@Observable
+@Observable @MainActor
 final class HapticHarvestService {
     static let shared = HapticHarvestService()
 

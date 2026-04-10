@@ -14,11 +14,11 @@ import os
 
 struct CommunityView: View {
     @Environment(\.modelContext) private var modelContext
-    @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
-    @Environment(AuthManager.self) private var authManager: AuthManager?
-    @Environment(SyncService.self) private var syncService: SyncService?
-    @Environment(CommunityService.self) private var communityService: CommunityService?
-    @Environment(NetworkMonitor.self) private var networkMonitor: NetworkMonitor?
+    @Environment(CelebrationManager.self) private var celebrationManager
+    @Environment(AuthManager.self) private var authManager
+    @Environment(SyncService.self) private var syncService
+    @Environment(CommunityService.self) private var communityService
+    @Environment(NetworkMonitor.self) private var networkMonitor
 
     @State private var activeTab = 0
     @State private var showCreateListing = false
@@ -48,7 +48,7 @@ struct CommunityView: View {
         ZStack(alignment: .bottomTrailing) {
             VStack(spacing: 0) {
                 // Offline banner
-                if networkMonitor?.isConnected == false {
+                if networkMonitor.isConnected == false {
                     HStack(spacing: PSSpacing.sm) {
                         Image(systemName: "wifi.slash")
                             .font(.system(size: 14))
@@ -259,14 +259,14 @@ struct CommunityView: View {
     private var fabButton: some View {
         Button {
             PSHaptics.shared.mediumTap()
-            if networkMonitor?.isConnected == false {
+            if networkMonitor.isConnected == false {
                 PSHaptics.shared.warning()
-                communityService?.error = String(localized: "You must be online to create a listing")
-            } else if authManager?.authState == .authenticated {
+                communityService.error = String(localized: "You must be online to create a listing")
+            } else if authManager.authState == .authenticated {
                 showCreateListing = true
             } else {
                 PSHaptics.shared.warning()
-                communityService?.error = String(localized: "Sign in to create a listing")
+                communityService.error = String(localized: "Sign in to create a listing")
             }
         } label: {
             HStack(spacing: PSSpacing.sm) {
@@ -306,7 +306,7 @@ struct CommunityView: View {
 
     private var localFeedTab: some View {
         Group {
-            if communityService?.isLoading == true && feedListings.isEmpty {
+            if communityService.isLoading == true && feedListings.isEmpty {
                 // Loading state
                 VStack(spacing: PSSpacing.lg) {
                     ProgressView()
@@ -316,7 +316,7 @@ struct CommunityView: View {
                         .foregroundStyle(PSColors.textSecondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if let error = feedError ?? communityService?.error, feedListings.isEmpty {
+            } else if let error = feedError ?? communityService.error, feedListings.isEmpty {
                 // Error with no data — show retry
                 VStack(spacing: PSSpacing.lg) {
                     Image(systemName: "wifi.exclamationmark")
@@ -331,7 +331,7 @@ struct CommunityView: View {
                         .multilineTextAlignment(.center)
                     Button {
                         feedError = nil
-                        communityService?.error = nil
+                        communityService.error = nil
                         Task { await refreshFeed() }
                     } label: {
                         HStack(spacing: PSSpacing.xs) {
@@ -364,7 +364,7 @@ struct CommunityView: View {
             } else {
                 ScrollView {
                     // Error banner
-                    if let error = communityService?.error {
+                    if let error = communityService.error {
                         errorBanner(error)
                     }
 
@@ -389,7 +389,7 @@ struct CommunityView: View {
 
     private var myListingsTab: some View {
         Group {
-            if authManager?.authState != .authenticated {
+            if authManager.authState != .authenticated {
                 PSEmptyState(
                     icon: "person.crop.circle.badge.plus",
                     title: String(localized: "Sign in to see your listings"),
@@ -397,7 +397,7 @@ struct CommunityView: View {
                 )
                 .padding(PSSpacing.screenHorizontal)
                 .frame(maxHeight: .infinity)
-            } else if let myListings = communityService?.myListings, !myListings.isEmpty {
+            } else if let myListings = communityService.myListings, !myListings.isEmpty {
                 ScrollView {
                     LazyVStack(spacing: PSSpacing.lg) {
                         ForEach(Array(myListings.enumerated()), id: \.element.id) { index, listing in
@@ -412,8 +412,8 @@ struct CommunityView: View {
                     .listChangeAnimation(myListings.map(\.id))
                 }
                 .refreshable {
-                    if let userId = authManager?.currentUserId {
-                        await communityService?.fetchMyListings(userId: userId)
+                    if let userId = authManager.currentUserId {
+                        await communityService.fetchMyListings(userId: userId)
                     }
                 }
             } else {
@@ -537,9 +537,9 @@ struct CommunityView: View {
                 // Claim / view CTA
                 if listing.status == "active" {
                     Button {
-                        if networkMonitor?.isConnected == false {
+                        if networkMonitor.isConnected == false {
                             PSHaptics.shared.warning()
-                            communityService?.error = String(localized: "You must be online to claim an item")
+                            communityService.error = String(localized: "You must be online to claim an item")
                         } else {
                             selectedListing = listing
                         }
@@ -557,7 +557,7 @@ struct CommunityView: View {
                         .clipShape(Capsule())
                     }
                     .buttonStyle(PressableButtonStyle())
-                    .opacity(networkMonitor?.isConnected == false ? 0.5 : 1)
+                    .opacity(networkMonitor.isConnected == false ? 0.5 : 1)
                 } else {
                     PSBadge(
                         text: listing.status.capitalized,
@@ -632,7 +632,7 @@ struct CommunityView: View {
                 HStack(spacing: 12) {
                     Button {
                         Task {
-                            let success = await communityService?.updateListingStatus(
+                            let success = await communityService.updateListingStatus(
                                 listingId: listing.id, newStatus: "completed"
                             ) ?? false
                             if success { await refreshFeed() }
@@ -654,7 +654,7 @@ struct CommunityView: View {
 
                     Button {
                         Task {
-                            let success = await communityService?.deleteListing(listingId: listing.id) ?? false
+                            let success = await communityService.deleteListing(listingId: listing.id) ?? false
                             if success { await refreshFeed() }
                         }
                     } label: {
@@ -766,7 +766,7 @@ struct CommunityView: View {
                 .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
             Spacer()
             Button {
-                communityService?.error = nil
+                communityService.error = nil
             } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
@@ -783,7 +783,7 @@ struct CommunityView: View {
     // MARK: - Helpers
 
     private var feedListings: [CommunityListingDTO] {
-        if let listings = communityService?.listings, !listings.isEmpty {
+        if let listings = communityService.listings, !listings.isEmpty {
             return listings
         }
         // Fallback: show seed data when unauthenticated or no results
@@ -793,25 +793,25 @@ struct CommunityView: View {
     private func refreshFeed() async {
         PSHaptics.shared.refreshSnap()
         feedError = nil
-        await communityService?.fetchFeed(searchQuery: searchText.isEmpty ? nil : searchText)
-        if let error = communityService?.error {
+        await communityService.fetchFeed(searchQuery: searchText.isEmpty ? nil : searchText)
+        if let error = communityService.error {
             feedError = error
         }
-        if let userId = authManager?.currentUserId {
-            await communityService?.fetchMyListings(userId: userId)
+        if let userId = authManager.currentUserId {
+            await communityService.fetchMyListings(userId: userId)
         }
     }
 
     private func searchFeed() async {
-        await communityService?.fetchFeed(searchQuery: searchText.isEmpty ? nil : searchText)
+        await communityService.fetchFeed(searchQuery: searchText.isEmpty ? nil : searchText)
     }
 
     private func submitReport() {
         guard let listing = reportTarget,
-              let userId = authManager?.currentUserId else { return }
+              let userId = authManager.currentUserId else { return }
 
         Task {
-            _ = await communityService?.reportListing(
+            _ = await communityService.reportListing(
                 listingId: listing.id,
                 reporterId: userId,
                 reason: reportReason,

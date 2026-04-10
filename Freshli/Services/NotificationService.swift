@@ -2,7 +2,7 @@ import Foundation
 import UIKit
 import UserNotifications
 
-@Observable
+@Observable @MainActor
 final class NotificationService {
     private(set) var isAuthorized = false
 

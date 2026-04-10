@@ -5,7 +5,7 @@ import PhotosUI
 struct ReceiptScannerView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Environment(PSToastManager.self) private var toastManager: PSToastManager?
+    @Environment(PSToastManager.self) private var toastManager
 
     @State private var receiptScanner = ReceiptScannerService()
     @State private var selectedPhotoItem: PhotosPickerItem?
@@ -447,10 +447,10 @@ struct ReceiptScannerView: View {
             }
             try modelContext.save()
 
-            toastManager?.show(.success("Added \(itemsToAdd.count) items to your pantry!"))
+            toastManager.show(.success("Added \(itemsToAdd.count) items to your pantry!"))
             dismiss()
         } catch {
-            toastManager?.show(.error("Failed to add items: \(error.localizedDescription)"))
+            toastManager.show(.error("Failed to add items: \(error.localizedDescription)"))
         }
     }
 

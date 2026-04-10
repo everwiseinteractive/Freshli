@@ -6,7 +6,7 @@ import os
 // Handles all Freshli Circle operations: CRUD for circles, membership, and circle-scoped listings.
 // Circle listings are private by default — requires explicit "Global Share" action.
 
-@Observable
+@Observable @MainActor
 final class CircleSupabaseService: Sendable {
     private let client = AppSupabase.client
     private let logger = Logger(subsystem: "com.freshli.app", category: "CircleSupabaseService")

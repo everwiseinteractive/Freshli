@@ -10,8 +10,8 @@ struct ProfileView: View {
     @Query private var profiles: [UserProfile]
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Environment(AuthManager.self) private var authManager: AuthManager?
-    @Environment(NetworkMonitor.self) private var networkMonitor: NetworkMonitor?
+    @Environment(AuthManager.self) private var authManager
+    @Environment(NetworkMonitor.self) private var networkMonitor
 
     @State private var showExpiryAlerts = false
     @State private var showAuthSheet = false
@@ -34,14 +34,14 @@ struct ProfileView: View {
     }
 
     private var isAuthenticated: Bool {
-        authManager?.authState == .authenticated
+        authManager.authState == .authenticated
     }
 
     var body: some View {
         ScrollView {
             VStack(spacing: PSSpacing.xxl) {
                 // Sync status indicator
-                if networkMonitor?.isConnected == false {
+                if networkMonitor.isConnected == false {
                     HStack(spacing: PSSpacing.sm) {
                         Image(systemName: "wifi.slash")
                             .font(.system(size: 12, weight: .semibold))
@@ -122,7 +122,7 @@ struct ProfileView: View {
         .alert(String(localized: "Delete Account"), isPresented: $showDeleteConfirm) {
             Button(String(localized: "Cancel"), role: .cancel) {}
             Button(String(localized: "Delete"), role: .destructive) {
-                Task { try? await authManager?.deleteAccount() }
+                Task { try? await authManager.deleteAccount() }
             }
         } message: {
             Text(String(localized: "This will permanently delete your account and all associated data. This action cannot be undone."))
@@ -191,7 +191,7 @@ struct ProfileView: View {
                 .shadow(color: .black.opacity(0.04), radius: 8, y: 4)
 
             VStack(alignment: .leading, spacing: PSSpacing.xxs) {
-                Text(authManager?.currentDisplayName ?? (profile.displayName.isEmpty ? String(localized: "Freshli User") : profile.displayName))
+                Text(authManager.currentDisplayName ?? (profile.displayName.isEmpty ? String(localized: "Freshli User") : profile.displayName))
                     .font(.system(size: PSLayout.scaledFont(24), weight: .bold))
                     .tracking(-0.3)
                     .foregroundStyle(Color(hex: 0x022C22)) // emerald-950
@@ -422,7 +422,7 @@ struct ProfileView: View {
             // Figma: Logout / Sign In (rose text for logout, green for sign in)
             if isAuthenticated {
                 Button {
-                    Task { await authManager?.signOut() }
+                    Task { await authManager.signOut() }
                 } label: {
                     HStack(spacing: PSSpacing.md) {
                         Image(systemName: "rectangle.portrait.and.arrow.right")

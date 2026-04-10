@@ -3,7 +3,7 @@ import LocalAuthentication
 
 /// Handles biometric identity verification (FaceID/TouchID) for claim signing.
 /// Users authenticate with biometrics to prove they are the account owner before claiming.
-@Observable
+@Observable @MainActor
 final class IdentityVerificationService: @unchecked Sendable {
 
     // MARK: - State

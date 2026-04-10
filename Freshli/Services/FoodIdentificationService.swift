@@ -28,7 +28,7 @@ enum FoodIdentificationState {
 
 // MARK: - Food Identification Service
 
-@Observable
+@Observable @MainActor
 final class FoodIdentificationService {
     private(set) var identificationState: FoodIdentificationState = .idle
     private(set) var results: [FoodIdentificationResult] = []

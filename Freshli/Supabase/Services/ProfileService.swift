@@ -5,7 +5,7 @@ import os
 // MARK: - Profile Service
 // Handles all profile-related Supabase operations including CRUD and impact stats.
 
-@Observable
+@Observable @MainActor
 final class ProfileService: Sendable {
     private let client = AppSupabase.client
     private let logger = Logger(subsystem: "com.freshli.app", category: "ProfileService")

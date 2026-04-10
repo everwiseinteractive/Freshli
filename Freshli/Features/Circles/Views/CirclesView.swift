@@ -5,7 +5,7 @@ import SwiftUI
 // with face piles and navigation to circle detail / creation.
 
 struct CirclesView: View {
-    @Environment(AuthManager.self) private var authManager: AuthManager?
+    @Environment(AuthManager.self) private var authManager
     @State private var viewModel = CirclesViewModel()
     @State private var showCreateSheet = false
     @State private var showJoinSheet = false
@@ -32,11 +32,11 @@ struct CirclesView: View {
             .navigationTitle("Circles")
             .navigationBarTitleDisplayMode(.large)
             .task {
-                guard let userId = authManager?.currentUserId else { return }
+                guard let userId = authManager.currentUserId else { return }
                 await viewModel.loadCircles(userId: userId)
             }
             .refreshable {
-                guard let userId = authManager?.currentUserId else { return }
+                guard let userId = authManager.currentUserId else { return }
                 await viewModel.loadCircles(userId: userId)
             }
             .sheet(isPresented: $showCreateSheet) {
@@ -172,7 +172,7 @@ private struct CircleRowView: View {
 
 private struct JoinCircleView: View {
     @Bindable var viewModel: CirclesViewModel
-    @Environment(AuthManager.self) private var authManager: AuthManager?
+    @Environment(AuthManager.self) private var authManager
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -210,7 +210,7 @@ private struct JoinCircleView: View {
                 }
 
                 PSButton(title: "Join Circle", icon: "person.badge.plus", isLoading: viewModel.isLoading) {
-                    guard let userId = authManager?.currentUserId else { return }
+                    guard let userId = authManager.currentUserId else { return }
                     Task {
                         if await viewModel.joinCircle(userId: userId) {
                             dismiss()

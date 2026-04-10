@@ -73,7 +73,7 @@ struct TaxReport {
 
 // MARK: - DonationAnalyticsService
 
-@Observable
+@Observable @MainActor
 final class DonationAnalyticsService {
     private let donationRecordsKey = "freshli_donation_records"
 

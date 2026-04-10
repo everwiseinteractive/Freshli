@@ -32,7 +32,7 @@ private struct ExpiryDateUpdate: Encodable {
 // MARK: - Freshli Supabase Service
 // Handles all item operations with Supabase including CRUD, status updates, and queries.
 
-@Observable
+@Observable @MainActor
 final class FreshliSupabaseService: Sendable {
     private let client = AppSupabase.client
     private let logger = Logger(subsystem: "com.freshli.app", category: "FreshliSupabaseService")

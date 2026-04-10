@@ -15,10 +15,10 @@ struct FreshliView: View {
     private var allItems: [FreshliItem]
 
     @Environment(\.modelContext) private var modelContext
-    @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
-    @Environment(AuthManager.self) private var authManager: AuthManager?
-    @Environment(SyncService.self) private var syncService: SyncService?
-    @Environment(PSToastManager.self) private var toastManager: PSToastManager?
+    @Environment(CelebrationManager.self) private var celebrationManager
+    @Environment(AuthManager.self) private var authManager
+    @Environment(SyncService.self) private var syncService
+    @Environment(PSToastManager.self) private var toastManager
     @State private var searchText = ""
     @State private var selectedCategory: FoodCategory?
     @State private var selectedItem: FreshliItem?
@@ -59,13 +59,13 @@ struct FreshliView: View {
             item.isConsumed = true
             do {
                 try modelContext.save()
-                toastManager?.show(.itemConsumed(itemName))
-                celebrationManager?.fireFoodSaved(modelContext: modelContext)
+                toastManager.show(.itemConsumed(itemName))
+                celebrationManager.fireFoodSaved(modelContext: modelContext)
                 WidgetDataService.updateWidgetData(modelContext: modelContext)
-                if let userId = authManager?.currentUserId {
+                if let userId = authManager.currentUserId {
                     Task {
-                        await syncService?.pushFreshliItem(item, userId: userId)
-                        await syncService?.recordImpactEvent(
+                        await syncService.pushFreshliItem(item, userId: userId)
+                        await syncService.recordImpactEvent(
                             userId: userId,
                             eventType: "consumed",
                             itemName: itemName,
@@ -75,7 +75,7 @@ struct FreshliView: View {
                     }
                 }
             } catch {
-                toastManager?.show(.error("Something went wrong. Please try again."))
+                toastManager.show(.error("Something went wrong. Please try again."))
                 PSHaptics.shared.warning()
             }
         }
@@ -89,12 +89,12 @@ struct FreshliView: View {
             modelContext.delete(item)
             do {
                 try modelContext.save()
-                toastManager?.show(.itemDeleted(itemName))
-                if authManager?.currentUserId != nil {
-                    Task { await syncService?.deleteFreshliItem(id: itemId) }
+                toastManager.show(.itemDeleted(itemName))
+                if authManager.currentUserId != nil {
+                    Task { await syncService.deleteFreshliItem(id: itemId) }
                 }
             } catch {
-                toastManager?.show(.error("Something went wrong. Please try again."))
+                toastManager.show(.error("Something went wrong. Please try again."))
                 PSHaptics.shared.warning()
             }
         }
@@ -106,13 +106,13 @@ struct FreshliView: View {
             item.isShared = true
             do {
                 try modelContext.save()
-                toastManager?.show(.itemShared(itemName))
-                celebrationManager?.fireShareCompleted(itemName: itemName, modelContext: modelContext)
+                toastManager.show(.itemShared(itemName))
+                celebrationManager.fireShareCompleted(itemName: itemName, modelContext: modelContext)
                 WidgetDataService.updateWidgetData(modelContext: modelContext)
-                if let userId = authManager?.currentUserId {
+                if let userId = authManager.currentUserId {
                     Task {
-                        await syncService?.pushFreshliItem(item, userId: userId)
-                        await syncService?.recordImpactEvent(
+                        await syncService.pushFreshliItem(item, userId: userId)
+                        await syncService.recordImpactEvent(
                             userId: userId,
                             eventType: "shared",
                             itemName: itemName,
@@ -121,7 +121,7 @@ struct FreshliView: View {
                     }
                 }
             } catch {
-                toastManager?.show(.error("Something went wrong. Please try again."))
+                toastManager.show(.error("Something went wrong. Please try again."))
                 PSHaptics.shared.warning()
             }
         }

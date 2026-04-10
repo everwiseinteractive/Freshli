@@ -198,7 +198,8 @@ struct FreshliApp: App {
         }
 
         // Reset transitioning state
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(500))
             splashTransitioning = false
         }
     }

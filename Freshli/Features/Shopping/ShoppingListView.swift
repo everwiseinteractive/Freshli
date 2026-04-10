@@ -1,7 +1,7 @@
 import SwiftUI
 import Observation
 
-@Observable
+@Observable @MainActor
 final class ShoppingListViewModel {
     var service = ShoppingListService()
     var showAddItemSheet = false

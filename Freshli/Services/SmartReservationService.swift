@@ -63,7 +63,7 @@ struct ClaimReservation: Identifiable, Codable {
 
 // MARK: - Smart Reservation Service
 
-@Observable
+@Observable @MainActor
 final class SmartReservationService {
     private let userDefaultsKey = "com.everwise.freshli.claims"
     private let expiryInterval: TimeInterval = 2 * 60 * 60 // 2 hours

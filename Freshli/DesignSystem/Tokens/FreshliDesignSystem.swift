@@ -6,36 +6,30 @@ import SwiftUI
 // glass-morphism card styles, SF Symbols 6.0 iconography, and modern button shapes.
 
 // MARK: - 1. Color Palette — FreshliColor
+// NOTE: All values are sourced from Figma (Tailwind green palette) and mirror
+// the canonical PSColors / FLColors token layer to ensure a single source of truth.
 
 /// Semantic brand palette built on `ShapeStyle` so every token works with
 /// `.foregroundStyle()`, `.tint()`, and gradient APIs out of the box.
 enum FreshliColor {
 
-    // MARK: Primary — Vibrant organic green
+    // MARK: Primary — Figma: Tailwind green-500 light / green-400 dark
     /// Hero actions, tab bar highlights, impact streaks.
-    static let freshliGreen = Color(
-        light: Color(hex: 0x34C759),   // Vibrant iOS system green
-        dark:  Color(hex: 0x30D158)    // Slightly warmer for OLED
-    )
+    /// Light: Tailwind green-500 (#22C55E) | Dark: Tailwind green-400 (#4ADE80)
+    static let freshliGreen = FLColors.primaryGreen
 
     /// Pressed / active state for primary surfaces.
-    static let freshliGreenDeep = Color(
-        light: Color(hex: 0x248A3D),
-        dark:  Color(hex: 0x34C759)
-    )
+    /// Light: Tailwind green-700 (#15803D) | Dark: Tailwind green-500 (#22C55E)
+    static let freshliGreenDeep = FLColors.primaryGreenDark
 
     /// Subtle primary tint for backgrounds and badges.
-    static let freshliGreenSurface = Color(
-        light: Color(hex: 0xE8F9ED),
-        dark:  Color(hex: 0x0D3B1A).opacity(0.35)
-    )
+    /// Light: Tailwind green-50 (#F0FDF4) | Dark: green-950/15%
+    static let freshliGreenSurface = FLColors.green50
 
-    // MARK: Expiry Amber — Warm warning
+    // MARK: Expiry Amber — Figma: Tailwind amber-400/amber-500
     /// "Expiring Soon" badges, alert borders, countdown rings.
-    static let expiryAmber = Color(
-        light: Color(hex: 0xF5A623),
-        dark:  Color(hex: 0xFFBF47)
-    )
+    /// Light: Tailwind amber-500 (#F59E0B) | Dark: amber-400 (#FBBF24)
+    static let expiryAmber = FLColors.warningAmber
 
     static let expiryAmberSurface = Color(
         light: Color(hex: 0xFFF4DE),

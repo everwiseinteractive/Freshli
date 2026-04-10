@@ -4,7 +4,7 @@ import SwiftData
 // MARK: - ConsumptionRecord Model
 
 /// Tracks historical consumption data to inform depletion predictions.
-@Model
+@Model 
 final class ConsumptionRecord {
     var id: UUID
     var itemName: String
@@ -60,7 +60,7 @@ struct DepletionPrediction: Identifiable {
 
 // MARK: - DepletionService
 
-@Observable
+@Observable @MainActor
 final class DepletionService {
     private let logger = PSLogger(category: .pantry)
 

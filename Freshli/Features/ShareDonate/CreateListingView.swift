@@ -5,10 +5,10 @@ struct CreateListingView: View {
     let listingType: ListingType
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
-    @Environment(AuthManager.self) private var authManager: AuthManager?
-    @Environment(CommunityService.self) private var communityService: CommunityService?
-    @Environment(SyncService.self) private var syncService: SyncService?
+    @Environment(CelebrationManager.self) private var celebrationManager
+    @Environment(AuthManager.self) private var authManager
+    @Environment(CommunityService.self) private var communityService
+    @Environment(SyncService.self) private var syncService
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var itemName = ""
@@ -236,7 +236,7 @@ struct CreateListingView: View {
         }
 
         // Sync to Supabase if authenticated
-        if let userId = authManager?.currentUserId {
+        if let userId = authManager.currentUserId {
             let input = CreateListingInput(
                 itemName: listing.itemName,
                 description: listing.itemDescription.isEmpty ? nil : listing.itemDescription,
@@ -246,8 +246,8 @@ struct CreateListingView: View {
                 pickupNotes: listing.pickupNotes
             )
             Task {
-                _ = await communityService?.createListing(input, userId: userId)
-                await syncService?.recordImpactEvent(
+                _ = await communityService.createListing(input, userId: userId)
+                await syncService.recordImpactEvent(
                     userId: userId,
                     eventType: listingType == .share ? "shared" : "donated"
                 )
@@ -256,9 +256,9 @@ struct CreateListingView: View {
 
         // Trigger celebration based on listing type
         if listingType == .share {
-            celebrationManager?.fireShareCompleted(itemName: itemName, modelContext: modelContext)
+            celebrationManager.fireShareCompleted(itemName: itemName, modelContext: modelContext)
         } else {
-            celebrationManager?.fireDonationCompleted(itemName: itemName, modelContext: modelContext)
+            celebrationManager.fireDonationCompleted(itemName: itemName, modelContext: modelContext)
         }
 
         withAnimation(FLMotion.adaptive(PSMotion.springBouncy, reduceMotion: reduceMotion)) { showSuccess = true }

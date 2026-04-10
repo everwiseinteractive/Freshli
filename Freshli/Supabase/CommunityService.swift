@@ -6,7 +6,7 @@ import os
 // Dedicated service for all Community tab Supabase operations.
 // Handles listing CRUD, claiming, status management, reporting, and feed queries.
 
-@Observable
+@Observable @MainActor
 final class CommunityService {
     var isLoading = false
     var listings: [CommunityListingDTO] = []

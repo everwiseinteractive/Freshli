@@ -1,7 +1,7 @@
 import SwiftUI
 import Observation
 
-@Observable
+@Observable @MainActor
 final class ReceiptImportViewModel {
     var selectedTab: Int = 0
     var showReviewSheet = false

@@ -17,7 +17,8 @@ enum CircleHaptics {
         generator.prepare()
         generator.impactOccurred(intensity: 0.9)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(100))
             let light = UIImpactFeedbackGenerator(style: .light)
             light.impactOccurred(intensity: 0.6)
         }
@@ -62,7 +63,8 @@ enum CircleHaptics {
         generator.prepare()
         generator.impactOccurred(intensity: 1.0)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(150))
             let soft = UIImpactFeedbackGenerator(style: .soft)
             soft.impactOccurred(intensity: 0.7)
         }

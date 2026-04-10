@@ -6,7 +6,7 @@ struct RescueMissionDetailView: View {
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
+    @Environment(CelebrationManager.self) private var celebrationManager
 
     @State private var completedSteps: Set<Int> = []
     @State private var appeared = false
@@ -344,7 +344,7 @@ struct RescueMissionDetailView: View {
 
         do {
             try modelContext.save()
-            celebrationManager?.fireFoodSaved(modelContext: modelContext)
+            celebrationManager.fireFoodSaved(modelContext: modelContext)
 
             // Dismiss after celebration
             Task { @MainActor in

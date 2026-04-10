@@ -64,7 +64,7 @@ enum UrgencyLevel: String, Codable, Identifiable {
 
 // MARK: - RescueChefService
 
-@Observable
+@Observable @MainActor
 final class RescueChefService {
     private(set) var missions: [UsageMission] = []
     private(set) var rescueScore: Double = 0

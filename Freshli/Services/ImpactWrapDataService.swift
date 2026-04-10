@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 
 /// Calculates weekly impact wrap data for the Spotify Wrapped-style summary
-@Observable
+@Observable @MainActor
 final class ImpactWrapDataService {
     private let modelContext: ModelContext
 

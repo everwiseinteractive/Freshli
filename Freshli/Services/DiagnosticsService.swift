@@ -1,7 +1,7 @@
 import Foundation
 import MetricKit
 
-@Observable
+@Observable @MainActor
 final class DiagnosticsService: NSObject, MXMetricManagerSubscriber {
     static let shared = DiagnosticsService()
 

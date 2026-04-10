@@ -2,7 +2,7 @@ import Foundation
 import os
 
 /// Queues sync operations when offline and processes them when connectivity returns.
-@Observable
+@Observable @MainActor
 final class OfflineSyncQueue {
     static let shared = OfflineSyncQueue()
 

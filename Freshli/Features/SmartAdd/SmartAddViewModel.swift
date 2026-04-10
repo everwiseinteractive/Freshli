@@ -3,7 +3,7 @@ import SwiftData
 
 /// Central state for the Smart Add flow — coordinates live scanning,
 /// AI parsing, manual search, and saving to SwiftData.
-@Observable
+@Observable @MainActor
 final class SmartAddViewModel {
 
     // MARK: - State

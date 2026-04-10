@@ -7,8 +7,8 @@ import SwiftData
 struct SmartAddView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    @Environment(PSToastManager.self) private var toastManager: PSToastManager?
-    @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
+    @Environment(PSToastManager.self) private var toastManager
+    @Environment(CelebrationManager.self) private var celebrationManager
 
     @State private var viewModel = SmartAddViewModel()
     @State private var scannerCoordinator: LiveScannerView.Coordinator?
@@ -248,9 +248,9 @@ struct SmartAddView: View {
         PSHaptics.shared.success()
 
         // Trigger celebration
-        celebrationManager?.fireItemAdded(modelContext: modelContext)
+        celebrationManager.fireItemAdded(modelContext: modelContext)
 
-        toastManager?.show(.itemAdded("\(count) items added to pantry!"))
+        toastManager.show(.itemAdded("\(count) items added to pantry!"))
 
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(1))

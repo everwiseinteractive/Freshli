@@ -6,8 +6,8 @@ import os
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(SyncService.self) private var syncService: SyncService?
-    @Environment(NetworkMonitor.self) private var networkMonitor: NetworkMonitor?
+    @Environment(SyncService.self) private var syncService
+    @Environment(NetworkMonitor.self) private var networkMonitor
     @AppStorage("isDarkMode") private var isDarkMode = false
     @AppStorage("notificationsEnabled") private var notificationsEnabled = true
     @AppStorage("reduceMotion") private var reduceMotion = false
@@ -110,11 +110,11 @@ struct SettingsView: View {
 
     private var syncStatusText: String {
         // Check offline status first
-        if networkMonitor?.isConnected == false {
+        if networkMonitor.isConnected == false {
             return String(localized: "Offline")
         }
         // Check if syncing
-        if syncService?.isSyncing == true {
+        if syncService.isSyncing == true {
             return String(localized: "Syncing...")
         }
         // Check pending items

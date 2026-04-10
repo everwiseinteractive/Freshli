@@ -17,7 +17,7 @@ struct FreshliCommunityMarketplaceView: View {
     @Namespace private var segmentNamespace
 
     @Environment(\.colorScheme) private var colorScheme
-    @Environment(AuthManager.self) private var authManager: AuthManager?
+    @Environment(AuthManager.self) private var authManager
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
@@ -340,7 +340,7 @@ struct FreshliCommunityMarketplaceView: View {
 
         return Button(action: {
             Task {
-                guard let userId = authManager?.currentUserId else { return }
+                guard let userId = authManager.currentUserId else { return }
                 claimingListingId = listing.id
                 do {
                     try await viewModel.claimListing(listing, claimerId: userId)

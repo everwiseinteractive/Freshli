@@ -5,10 +5,10 @@ struct FreshliDetailView: View {
     @Bindable var item: FreshliItem
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
-    @Environment(PSToastManager.self) private var toastManager: PSToastManager?
-    @Environment(AuthManager.self) private var authManager: AuthManager?
-    @Environment(SyncService.self) private var syncService: SyncService?
+    @Environment(CelebrationManager.self) private var celebrationManager
+    @Environment(PSToastManager.self) private var toastManager
+    @Environment(AuthManager.self) private var authManager
+    @Environment(SyncService.self) private var syncService
 
     @State private var showDeleteConfirmation = false
     @State private var isEditing = false
@@ -68,7 +68,7 @@ struct FreshliDetailView: View {
                     dismiss()
                 } catch {
                     PSLogger.general.error("Failed to delete item: \(error.localizedDescription)")
-                    toastManager?.show(.error(String(localized: "Failed to delete item")))
+                    toastManager.show(.error(String(localized: "Failed to delete item")))
                 }
             }
         } message: {
@@ -206,17 +206,17 @@ struct FreshliDetailView: View {
                         showSuccessAnimation = true
                     } catch {
                         PSLogger.general.error("Failed to mark item consumed: \(error.localizedDescription)")
-                        toastManager?.show(.error(String(localized: "Failed to save")))
+                        toastManager.show(.error(String(localized: "Failed to save")))
                         return
                     }
                 }
-                celebrationManager?.fireFoodSaved(modelContext: modelContext)
-                toastManager?.show(.itemConsumed(itemName))
+                celebrationManager.fireFoodSaved(modelContext: modelContext)
+                toastManager.show(.itemConsumed(itemName))
                 WidgetDataService.updateWidgetData(modelContext: modelContext)
-                if let userId = authManager?.currentUserId {
+                if let userId = authManager.currentUserId {
                     Task {
-                        await syncService?.pushFreshliItem(item, userId: userId)
-                        await syncService?.recordImpactEvent(userId: userId, eventType: "consumed", itemName: itemName, moneySaved: 3.50, co2Avoided: 2.5)
+                        await syncService.pushFreshliItem(item, userId: userId)
+                        await syncService.recordImpactEvent(userId: userId, eventType: "consumed", itemName: itemName, moneySaved: 3.50, co2Avoided: 2.5)
                     }
                 }
                 Task { @MainActor in
@@ -235,16 +235,16 @@ struct FreshliDetailView: View {
                         PSLogger.general.info("Item marked as shared")
                     } catch {
                         PSLogger.general.error("Failed to mark item shared: \(error.localizedDescription)")
-                        toastManager?.show(.error(String(localized: "Failed to save")))
+                        toastManager.show(.error(String(localized: "Failed to save")))
                         return
                     }
-                    celebrationManager?.fireShareCompleted(itemName: itemName, modelContext: modelContext)
-                    toastManager?.show(.itemShared(itemName))
+                    celebrationManager.fireShareCompleted(itemName: itemName, modelContext: modelContext)
+                    toastManager.show(.itemShared(itemName))
                     WidgetDataService.updateWidgetData(modelContext: modelContext)
-                    if let userId = authManager?.currentUserId {
+                    if let userId = authManager.currentUserId {
                         Task {
-                            await syncService?.pushFreshliItem(item, userId: userId)
-                            await syncService?.recordImpactEvent(userId: userId, eventType: "shared", itemName: itemName, co2Avoided: 2.5)
+                            await syncService.pushFreshliItem(item, userId: userId)
+                            await syncService.recordImpactEvent(userId: userId, eventType: "shared", itemName: itemName, co2Avoided: 2.5)
                         }
                     }
                     dismiss()
@@ -258,16 +258,16 @@ struct FreshliDetailView: View {
                         PSLogger.general.info("Item marked as donated")
                     } catch {
                         PSLogger.general.error("Failed to mark item donated: \(error.localizedDescription)")
-                        toastManager?.show(.error(String(localized: "Failed to save")))
+                        toastManager.show(.error(String(localized: "Failed to save")))
                         return
                     }
-                    celebrationManager?.fireDonationCompleted(itemName: itemName, modelContext: modelContext)
-                    toastManager?.show(.itemDonated(itemName))
+                    celebrationManager.fireDonationCompleted(itemName: itemName, modelContext: modelContext)
+                    toastManager.show(.itemDonated(itemName))
                     WidgetDataService.updateWidgetData(modelContext: modelContext)
-                    if let userId = authManager?.currentUserId {
+                    if let userId = authManager.currentUserId {
                         Task {
-                            await syncService?.pushFreshliItem(item, userId: userId)
-                            await syncService?.recordImpactEvent(userId: userId, eventType: "donated", itemName: itemName, co2Avoided: 2.5)
+                            await syncService.pushFreshliItem(item, userId: userId)
+                            await syncService.recordImpactEvent(userId: userId, eventType: "donated", itemName: itemName, co2Avoided: 2.5)
                         }
                     }
                     dismiss()
@@ -311,7 +311,7 @@ struct FreshliDetailView: View {
     private func saveEdits() {
         // Validate name is not empty
         guard !editedName.trimmingCharacters(in: .whitespaces).isEmpty else {
-            toastManager?.show(.error(String(localized: "Item name cannot be empty")))
+            toastManager.show(.error(String(localized: "Item name cannot be empty")))
             return
         }
 
@@ -336,10 +336,10 @@ struct FreshliDetailView: View {
 
             successFlashTrigger = true
             withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) { isEditing = false }
-            toastManager?.show(.success(String(localized: "Item saved")))
+            toastManager.show(.success(String(localized: "Item saved")))
         } catch {
             PSLogger.general.error("Failed to save edits: \(error.localizedDescription)")
-            toastManager?.show(.error(String(localized: "Failed to save changes")))
+            toastManager.show(.error(String(localized: "Failed to save changes")))
         }
     }
 }

@@ -6,7 +6,7 @@ import AVFoundation
 struct FoodScannerView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Environment(FLToastManager.self) private var toastManager: FLToastManager?
+    @Environment(FLToastManager.self) private var toastManager
 
     @State private var foodScanner = FoodIdentificationService()
     @State private var selectedPhotoItem: PhotosPickerItem?
@@ -445,13 +445,14 @@ struct FoodScannerView: View {
             }
             try modelContext.save()
 
-            toastManager?.show(.success("Added \(itemsToAdd.count) items to your pantry!"))
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            toastManager.show(.success("Added \(itemsToAdd.count) items to your pantry!"))
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
                 dismiss()
             }
         } catch {
             isAddingItems = false
-            toastManager?.show(.error("Failed to add items: \(error.localizedDescription)"))
+            toastManager.show(.error("Failed to add items: \(error.localizedDescription)"))
         }
     }
 
@@ -463,7 +464,7 @@ struct FoodScannerView: View {
             modelContext.insert(item)
             try modelContext.save()
 
-            toastManager?.show(.success("Added \(result.displayName) to your pantry!"))
+            toastManager.show(.success("Added \(result.displayName) to your pantry!"))
 
             // Remove from view and deselect
             if let index = foodScanner.results.firstIndex(where: { $0.id == result.id }) {
@@ -472,7 +473,7 @@ struct FoodScannerView: View {
             expandedResultId = nil
             resultQuantityEdits.removeValue(forKey: result.id)
         } catch {
-            toastManager?.show(.error("Failed to add item: \(error.localizedDescription)"))
+            toastManager.show(.error("Failed to add item: \(error.localizedDescription)"))
         }
     }
 }

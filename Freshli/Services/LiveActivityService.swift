@@ -8,7 +8,7 @@ import os
 //   2. Community Claim — pickup distance + claim code in Dynamic Island
 //   3. Recipe Timer — current step + countdown in Dynamic Island
 
-@Observable
+@Observable @MainActor
 final class LiveActivityService {
 
     private let logger = PSLogger(category: .lifecycle)

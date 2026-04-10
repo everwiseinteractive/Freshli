@@ -21,7 +21,7 @@ struct ImpactDataPoint: Identifiable {
 }
 
 /// View model for the Impact Intelligence screen.
-@Observable
+@Observable @MainActor
 final class ImpactIntelligenceViewModel {
     var dataPoints: [ImpactDataPoint] = []
     var isLoading = true

@@ -1,7 +1,7 @@
 import Foundation
 import os
 
-@Observable
+@Observable @MainActor
 final class RecipeService {
     private(set) var recipes: [Recipe] = []
     private let logger = PSLogger(category: .recipe)

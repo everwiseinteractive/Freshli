@@ -17,7 +17,7 @@ enum CommunityMarketplaceViewMode {
 }
 
 // MARK: - Community Marketplace ViewModel
-@Observable
+@Observable @MainActor
 final class CommunityMarketplaceViewModel {
     private let listingService = ListingSupabaseService()
     private let logger = Logger(subsystem: "com.freshli.app", category: "CommunityMarketplaceViewModel")

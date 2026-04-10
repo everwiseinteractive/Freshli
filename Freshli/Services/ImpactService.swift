@@ -2,7 +2,7 @@ import Foundation
 import SwiftData
 import os
 
-@Observable
+@Observable @MainActor
 final class ImpactService {
     private let modelContext: ModelContext
     private let logger = PSLogger(category: .impact)

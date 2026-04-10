@@ -66,7 +66,7 @@ enum TemperatureUnit: String, Codable, CaseIterable {
 
 // MARK: - Localization Service
 
-@Observable
+@Observable @MainActor
 final class LocalizationService {
     static let shared = LocalizationService()
 

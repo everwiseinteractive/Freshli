@@ -102,7 +102,7 @@ enum EventKitAuthorizationStatus: String, Sendable {
 
 // MARK: - Service
 
-@Observable
+@Observable @MainActor
 final class ShoppingListService {
     var currentList: ShoppingList
     var allLists: [ShoppingList] = []

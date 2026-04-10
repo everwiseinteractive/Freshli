@@ -5,7 +5,7 @@ import SwiftData
 
 /// Manages the prediction lifecycle: fetches history, runs ConsumptionActor analysis,
 /// caches predictions, and coordinates with NotificationService for smart alerts.
-@Observable
+@Observable @MainActor
 final class FreshliPredictionService {
     private(set) var predictions: [FreshliPrediction] = []
     private(set) var patterns: [String: FreshliUsagePattern] = [:]

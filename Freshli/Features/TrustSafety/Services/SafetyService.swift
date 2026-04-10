@@ -3,7 +3,7 @@ import Supabase
 
 /// Handles all Trust & Safety operations: reporting, reviews, badges, and reputation.
 /// Uses structured payloads for Supabase storage.
-@Observable
+@Observable @MainActor
 final class SafetyService: @unchecked Sendable {
 
     // MARK: - State

@@ -5,7 +5,7 @@ import SwiftUI
 
 struct CreateCircleView: View {
     @Bindable var viewModel: CirclesViewModel
-    @Environment(AuthManager.self) private var authManager: AuthManager?
+    @Environment(AuthManager.self) private var authManager
     @Environment(\.dismiss) private var dismiss
 
     private let emojiOptions = ["🏠", "👨‍👩‍👧‍👦", "🏘️", "🤝", "🌿", "🍎", "🥗", "❤️", "🌻", "🫂"]
@@ -128,7 +128,7 @@ struct CreateCircleView: View {
 
     private var createButton: some View {
         PSButton(title: "Create Circle", icon: "plus.circle.fill", isLoading: viewModel.isLoading) {
-            guard let userId = authManager?.currentUserId else { return }
+            guard let userId = authManager.currentUserId else { return }
             Task {
                 if await viewModel.createCircle(userId: userId) {
                     dismiss()

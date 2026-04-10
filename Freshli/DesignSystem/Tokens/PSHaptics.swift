@@ -4,6 +4,7 @@ import UIKit
 // Semantic haptic patterns for premium, consistent tactile feedback across Freshli.
 // Pre-warms generators for instant response. Respects system haptic settings.
 
+@MainActor
 final class PSHaptics {
     static let shared = PSHaptics()
 
@@ -80,11 +81,12 @@ final class PSHaptics {
     /// Celebration: milestone, streak, achievement unlock
     func celebrate() {
         heavyImpact.impactOccurred(intensity: 0.9)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [self] in
+        heavyImpact.prepare()
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(120))
             mediumImpact.impactOccurred(intensity: 1.0)
             mediumImpact.prepare()
         }
-        heavyImpact.prepare()
     }
 
     /// Swipe action threshold crossed

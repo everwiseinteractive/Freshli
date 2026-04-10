@@ -533,7 +533,8 @@ private struct MilestoneParticleBurst: View {
             )
 
             if trigger {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(50))
                     withAnimation(.easeOut(duration: 0.8)) {
                         if let index = particles.firstIndex(where: { $0.id == particle.id }) {
                             particles[index].offset = CGPoint(

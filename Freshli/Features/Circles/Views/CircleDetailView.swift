@@ -8,7 +8,7 @@ import GroupActivities
 struct CircleDetailView: View {
     let circle: SupabaseCircle
     @Bindable var viewModel: CirclesViewModel
-    @Environment(AuthManager.self) private var authManager: AuthManager?
+    @Environment(AuthManager.self) private var authManager
     @State private var showAddListing = false
     @State private var showInviteCode = false
     @State private var claimTrigger = false
@@ -38,7 +38,7 @@ struct CircleDetailView: View {
                     }
 
                     Button(role: .destructive) {
-                        guard let userId = authManager?.currentUserId else { return }
+                        guard let userId = authManager.currentUserId else { return }
                         Task { await viewModel.leaveCircle(userId: userId, circleId: circle.id) }
                     } label: {
                         Label("Leave Circle", systemImage: "arrow.left.circle")
@@ -178,9 +178,9 @@ struct CircleDetailView: View {
                     ForEach(viewModel.listings) { listing in
                         CircleListingRow(
                             listing: listing,
-                            currentUserId: authManager?.currentUserId,
+                            currentUserId: authManager.currentUserId,
                             onClaim: {
-                                guard let userId = authManager?.currentUserId else { return }
+                                guard let userId = authManager.currentUserId else { return }
                                 Task {
                                     await viewModel.claimItem(listingId: listing.id, userId: userId)
                                     claimTrigger.toggle()
@@ -298,7 +298,7 @@ private struct CircleListingRow: View {
 private struct AddCircleListingView: View {
     let circle: SupabaseCircle
     @Bindable var viewModel: CirclesViewModel
-    @Environment(AuthManager.self) private var authManager: AuthManager?
+    @Environment(AuthManager.self) private var authManager
     @Environment(\.dismiss) private var dismiss
 
     @State private var itemName = ""
@@ -371,7 +371,7 @@ private struct AddCircleListingView: View {
                     .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd))
 
                     PSButton(title: "Share with Circle", icon: "arrow.up.circle.fill", isLoading: viewModel.isLoading) {
-                        guard let userId = authManager?.currentUserId else { return }
+                        guard let userId = authManager.currentUserId else { return }
                         Task {
                             let success = await viewModel.createListing(
                                 circleId: circle.id,

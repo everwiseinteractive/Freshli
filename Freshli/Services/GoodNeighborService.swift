@@ -98,7 +98,7 @@ struct GoodNeighborProfile: Codable {
 
 // MARK: - Good Neighbor Service
 
-@Observable
+@Observable @MainActor
 final class GoodNeighborService {
     private let userDefaultsKey = "com.everwise.freshli.goodneighbor"
     private let logger = PSLogger(category: .community)

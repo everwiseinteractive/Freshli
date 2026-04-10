@@ -52,7 +52,7 @@ enum FLToastType {
 
 // MARK: - Toast Manager
 
-@Observable
+@Observable @MainActor
 final class FLToastManager {
     var currentToast: FLToastType?
     var isShowing = false

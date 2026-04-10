@@ -5,7 +5,7 @@ import os
 // MARK: - Impact Supabase Service
 // Handles impact event tracking and statistics aggregation for Freshli impact metrics.
 
-@Observable
+@Observable @MainActor
 final class ImpactSupabaseService: Sendable {
     private let client = AppSupabase.client
     private let logger = Logger(subsystem: "com.freshli.app", category: "ImpactSupabaseService")

@@ -330,7 +330,7 @@ struct RecipeRescueDetailView: View {
     var namespace: Namespace.ID
 
     @Environment(\.dismiss) private var dismiss
-    @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
+    @Environment(CelebrationManager.self) private var celebrationManager
     @State private var appeared = false
 
     var body: some View {
@@ -353,7 +353,7 @@ struct RecipeRescueDetailView: View {
         }
         .onAppear {
             withAnimation(PSMotion.springGentle.delay(0.1)) { appeared = true }
-            celebrationManager?.onRecipeMatch(recipeName: recipe.title)
+            celebrationManager.onRecipeMatch(recipeName: recipe.title)
         }
     }
 

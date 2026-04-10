@@ -10,9 +10,9 @@ struct FreshliConfirmPredictionView: View {
     let item: FreshliItem
 
     @Environment(\.modelContext) private var modelContext
-    @Environment(AuthManager.self) private var authManager: AuthManager?
-    @Environment(SyncService.self) private var syncService: SyncService?
-    @Environment(PSToastManager.self) private var toastManager: PSToastManager?
+    @Environment(AuthManager.self) private var authManager
+    @Environment(SyncService.self) private var syncService
+    @Environment(PSToastManager.self) private var toastManager
 
     @State private var predictionService: FreshliPredictionService?
     @State private var showRefillSheet = false
@@ -197,18 +197,18 @@ struct FreshliConfirmPredictionView: View {
             do {
                 try modelContext.save()
             } catch {
-                toastManager?.show(.error("Something went wrong. Please try again."))
+                toastManager.show(.error("Something went wrong. Please try again."))
                 PSHaptics.shared.warning()
                 return
             }
         }
 
-        toastManager?.show(.itemConsumed(itemName))
+        toastManager.show(.itemConsumed(itemName))
 
         // Push to Supabase
-        if let userId = authManager?.currentUserId {
-            await syncService?.pushFreshliItem(item, userId: userId)
-            await syncService?.recordImpactEvent(
+        if let userId = authManager.currentUserId {
+            await syncService.pushFreshliItem(item, userId: userId)
+            await syncService.recordImpactEvent(
                 userId: userId,
                 eventType: "consumed",
                 itemName: itemName,
@@ -237,17 +237,17 @@ struct FreshliConfirmPredictionView: View {
             do {
                 try modelContext.save()
             } catch {
-                toastManager?.show(.error("Something went wrong. Please try again."))
+                toastManager.show(.error("Something went wrong. Please try again."))
                 PSHaptics.shared.warning()
                 return
             }
         }
 
-        toastManager?.show(.success("\(itemName) refilled"))
+        toastManager.show(.success("\(itemName) refilled"))
 
         // Push update to Supabase
-        if let userId = authManager?.currentUserId {
-            await syncService?.pushFreshliItem(item, userId: userId)
+        if let userId = authManager.currentUserId {
+            await syncService.pushFreshliItem(item, userId: userId)
         }
     }
 

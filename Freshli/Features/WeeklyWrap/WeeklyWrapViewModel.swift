@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// View model for the Freshli Weekly Wrap story experience
-@Observable
+@Observable @MainActor
 final class WeeklyWrapViewModel {
     let wrapData: ImpactWrapDataService.WeeklyWrapData
 

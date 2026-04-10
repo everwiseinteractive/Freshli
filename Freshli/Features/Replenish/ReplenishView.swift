@@ -6,7 +6,7 @@ import UniformTypeIdentifiers
 // Features: Needed tab, Budget Tracker, Drag-and-Drop from recipes,
 // Link Previews, Purchase with Delivery.
 
-@Observable
+@Observable @MainActor
 final class ReplenishViewModel {
     var service = ReplenishService()
     var showAddItemSheet = false

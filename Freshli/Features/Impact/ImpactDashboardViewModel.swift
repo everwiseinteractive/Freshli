@@ -18,7 +18,7 @@ enum TimePeriod: String, CaseIterable {
 
 /// ViewModel for the premium Impact Dashboard
 /// Loads and manages impact statistics from Supabase
-@Observable
+@Observable @MainActor
 final class ImpactDashboardViewModel {
     // MARK: - State
     var weeklyStats: (moneySaved: Double, co2Avoided: Double, eventsCount: Int)? = nil
@@ -160,7 +160,8 @@ final class ImpactDashboardViewModel {
                 lastMilestoneValue = formatValue(value, type: milestone.type)
                 lastMilestoneIcon = milestone.icon
 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(3))
                     withAnimation {
                         self.showMilestone = false
                     }

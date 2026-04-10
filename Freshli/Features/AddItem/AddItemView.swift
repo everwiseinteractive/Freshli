@@ -12,10 +12,10 @@ import os
 struct AddItemView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
-    @Environment(AuthManager.self) private var authManager: AuthManager?
-    @Environment(SyncService.self) private var syncService: SyncService?
-    @Environment(NetworkMonitor.self) private var networkMonitor: NetworkMonitor?
+    @Environment(CelebrationManager.self) private var celebrationManager
+    @Environment(AuthManager.self) private var authManager
+    @Environment(SyncService.self) private var syncService
+    @Environment(NetworkMonitor.self) private var networkMonitor
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var name = ""
@@ -373,19 +373,19 @@ struct AddItemView: View {
             notificationService.scheduleExpiryReminder(for: item)
 
             // Trigger celebration system
-            celebrationManager?.fireItemAdded(modelContext: modelContext)
+            celebrationManager.fireItemAdded(modelContext: modelContext)
 
             // Update widget data
             WidgetDataService.updateWidgetData(modelContext: modelContext)
 
-            let isOnline = networkMonitor?.isConnected ?? true
+            let isOnline = networkMonitor.isConnected ?? true
 
             // Sync to Supabase if authenticated and online
-            if let userId = authManager?.currentUserId {
+            if let userId = authManager.currentUserId {
                 if isOnline {
                     Task {
-                        await syncService?.pushFreshliItem(item, userId: userId)
-                        await syncService?.recordImpactEvent(
+                        await syncService.pushFreshliItem(item, userId: userId)
+                        await syncService.recordImpactEvent(
                             userId: userId,
                             eventType: "item_saved",
                             itemName: item.name,

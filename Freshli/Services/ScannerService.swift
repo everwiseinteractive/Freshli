@@ -30,7 +30,7 @@ enum ScanError: LocalizedError {
     }
 }
 
-@Observable
+@Observable @MainActor
 final class ScannerService {
     private let logger = PSLogger(category: .pantry)
 

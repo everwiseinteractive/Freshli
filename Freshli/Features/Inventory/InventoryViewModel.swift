@@ -4,7 +4,7 @@ import Combine
 
 // MARK: - Inventory ViewModel
 
-@Observable
+@Observable @MainActor
 final class InventoryViewModel {
 
     // MARK: - Published State
@@ -211,7 +211,8 @@ final class InventoryViewModel {
             showDetail = false
         }
         // Small delay so matchedGeometry animates back
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(400))
             self.selectedItemId = nil
         }
     }

@@ -10,11 +10,11 @@ struct CommunityCreateListingView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
-    @Environment(AuthManager.self) private var authManager: AuthManager?
-    @Environment(CommunityService.self) private var communityService: CommunityService?
-    @Environment(CelebrationManager.self) private var celebrationManager: CelebrationManager?
-    @Environment(SyncService.self) private var syncService: SyncService?
-    @Environment(PSToastManager.self) private var toastManager: PSToastManager?
+    @Environment(AuthManager.self) private var authManager
+    @Environment(CommunityService.self) private var communityService
+    @Environment(CelebrationManager.self) private var celebrationManager
+    @Environment(SyncService.self) private var syncService
+    @Environment(PSToastManager.self) private var toastManager
 
     // Form state
     @State private var itemName = ""
@@ -355,7 +355,7 @@ struct CommunityCreateListingView: View {
     // MARK: - Submit Action
 
     private func submitListing() {
-        guard let userId = authManager?.currentUserId else {
+        guard let userId = authManager.currentUserId else {
             PSHaptics.shared.error()
             errorMessage = String(localized: "Please sign in to create a listing.")
             withAnimation(PSMotion.springQuick) { showError = true }
@@ -378,7 +378,7 @@ struct CommunityCreateListingView: View {
         )
 
         Task {
-            let success = await communityService?.createListing(input, userId: userId) ?? false
+            let success = await communityService.createListing(input, userId: userId) ?? false
             isSubmitting = false
 
             if success {
@@ -398,7 +398,7 @@ struct CommunityCreateListingView: View {
                     PSLogger.general.info("Local listing created successfully")
                 } catch {
                     PSLogger.general.error("Failed to save local listing: \(error.localizedDescription)")
-                    toastManager?.show(.error(String(localized: "Failed to save locally. Please try again.")))
+                    toastManager.show(.error(String(localized: "Failed to save locally. Please try again.")))
                 }
 
                 // Mark pantry item if selected
@@ -418,20 +418,20 @@ struct CommunityCreateListingView: View {
 
                 // Trigger celebration
                 if listingType == "share" {
-                    celebrationManager?.fireShareCompleted(itemName: itemName, modelContext: modelContext)
+                    celebrationManager.fireShareCompleted(itemName: itemName, modelContext: modelContext)
                 } else {
-                    celebrationManager?.fireDonationCompleted(itemName: itemName, modelContext: modelContext)
+                    celebrationManager.fireDonationCompleted(itemName: itemName, modelContext: modelContext)
                 }
 
                 // Record impact
-                await syncService?.recordImpactEvent(
+                await syncService.recordImpactEvent(
                     userId: userId,
                     eventType: listingType == "share" ? "shared" : "donated"
                 )
 
                 onComplete(true)
             } else {
-                errorMessage = communityService?.error ?? String(localized: "Something went wrong. Please try again.")
+                errorMessage = communityService.error ?? String(localized: "Something went wrong. Please try again.")
                 withAnimation(PSMotion.springQuick) { showError = true }
             }
         }
