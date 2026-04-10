@@ -430,21 +430,21 @@ struct ProFeatureGateModifier: ViewModifier {
                     Button {
                         showUpgradeSheet = true
                     } label: {
-                        VStack(spacing: PSSpacing.md) {
+                        VStack(spacing: FLSpacing.md) {
                             Image(systemName: "lock.fill")
                                 .font(.system(size: 28, weight: .semibold))
-                                .foregroundStyle(PSColors.primaryGreen)
+                                .foregroundStyle(FLColors.primaryGreen)
 
                             Text("Freshli+ Feature")
-                                .font(PSTypography.headline)
-                                .foregroundStyle(PSColors.textPrimary)
+                                .font(FLTypography.headline)
+                                .foregroundStyle(FLColors.textPrimary)
 
                             Text("Upgrade to unlock this feature")
-                                .font(PSTypography.caption1)
-                                .foregroundStyle(PSColors.textSecondary)
+                                .font(FLTypography.caption1)
+                                .foregroundStyle(FLColors.textSecondary)
                                 .multilineTextAlignment(.center)
                         }
-                        .padding(PSSpacing.lg)
+                        .padding(FLSpacing.lg)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(Color.black.opacity(0.4))
                     }

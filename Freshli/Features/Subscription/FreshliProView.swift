@@ -10,7 +10,7 @@ struct FreshliProView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: PSSpacing.xxxl) {
+                VStack(spacing: FLSpacing.xxxl) {
                     // MARK: - Hero Section
                     heroSection
 
@@ -26,12 +26,12 @@ struct FreshliProView: View {
                     // MARK: - Restore Purchases Link
                     restorePurchasesButton
                 }
-                .padding(.horizontal, PSSpacing.screenHorizontal)
-                .padding(.vertical, PSSpacing.screenVertical)
+                .padding(.horizontal, FLSpacing.screenHorizontal)
+                .padding(.vertical, FLSpacing.screenVertical)
             }
             .navigationTitle("Freshli+")
             .navigationBarTitleDisplayMode(.inline)
-            .background(PSColors.backgroundPrimary)
+            .background(FLColors.backgroundPrimary)
         }
         .alert("Restore Purchases", isPresented: $showRestoreAlert) {
             Button("Restore") {
@@ -63,68 +63,68 @@ struct FreshliProView: View {
     // MARK: - Hero Section
 
     private var heroSection: some View {
-        VStack(spacing: PSSpacing.lg) {
-            VStack(spacing: PSSpacing.md) {
+        VStack(spacing: FLSpacing.lg) {
+            VStack(spacing: FLSpacing.md) {
                 Image(systemName: "crown.fill")
                     .font(.system(size: 44, weight: .bold))
                     .foregroundStyle(
                         LinearGradient(
                             gradient: Gradient(colors: [
-                                PSColors.primaryGreen,
-                                PSColors.accentTeal
+                                FLColors.primaryGreen,
+                                FLColors.accentTeal
                             ]),
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
 
-                VStack(spacing: PSSpacing.sm) {
+                VStack(spacing: FLSpacing.sm) {
                     Text("Freshli+")
-                        .font(PSTypography.title1)
-                        .foregroundStyle(PSColors.textPrimary)
+                        .font(FLTypography.title1)
+                        .foregroundStyle(FLColors.textPrimary)
 
                     Text("Unlock the full power of food preservation")
-                        .font(PSTypography.subheadline)
-                        .foregroundStyle(PSColors.textSecondary)
+                        .font(FLTypography.subheadline)
+                        .foregroundStyle(FLColors.textSecondary)
                         .multilineTextAlignment(.center)
                 }
             }
 
             // Badge highlighting trial
             if subscriptionService.isInTrial {
-                VStack(spacing: PSSpacing.xs) {
-                    PSBadge(text: "FREE TRIAL", variant: .fresh)
+                VStack(spacing: FLSpacing.xs) {
+                    FLBadge(text: "FREE TRIAL", variant: .fresh)
                     Text("\(subscriptionService.trialDaysRemaining) days remaining")
-                        .font(PSTypography.caption1)
-                        .foregroundStyle(PSColors.textSecondary)
+                        .font(FLTypography.caption1)
+                        .foregroundStyle(FLColors.textSecondary)
                 }
             }
         }
-        .padding(PSSpacing.xl)
+        .padding(FLSpacing.xl)
         .frame(maxWidth: .infinity)
         .background(
             LinearGradient(
                 gradient: Gradient(colors: [
-                    PSColors.primaryGreen.opacity(0.1),
-                    PSColors.accentTeal.opacity(0.05)
+                    FLColors.primaryGreen.opacity(0.1),
+                    FLColors.accentTeal.opacity(0.05)
                 ]),
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
         )
-        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: FLSpacing.radiusXxl, style: .continuous))
     }
 
     // MARK: - Feature Comparison Section
 
     private var featureComparisonSection: some View {
-        VStack(spacing: PSSpacing.lg) {
+        VStack(spacing: FLSpacing.lg) {
             Text("Compare Plans")
-                .font(PSTypography.title2)
-                .foregroundStyle(PSColors.textPrimary)
+                .font(FLTypography.title2)
+                .foregroundStyle(FLColors.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            VStack(spacing: PSSpacing.md) {
+            VStack(spacing: FLSpacing.md) {
                 // Pro features
                 ForEach([
                     SubscriptionFeature.familySharing,
@@ -140,37 +140,37 @@ struct FreshliProView: View {
     }
 
     private func featureCard(_ feature: SubscriptionFeature) -> some View {
-        PSCard {
-            HStack(spacing: PSSpacing.md) {
-                VStack(alignment: .leading, spacing: PSSpacing.xxs) {
+        FLCard {
+            HStack(spacing: FLSpacing.md) {
+                VStack(alignment: .leading, spacing: FLSpacing.xxs) {
                     Text(feature.displayName)
-                        .font(PSTypography.headline)
-                        .foregroundStyle(PSColors.textPrimary)
+                        .font(FLTypography.headline)
+                        .foregroundStyle(FLColors.textPrimary)
 
                     Text(feature.description)
-                        .font(PSTypography.caption1)
-                        .foregroundStyle(PSColors.textSecondary)
+                        .font(FLTypography.caption1)
+                        .foregroundStyle(FLColors.textSecondary)
                         .lineLimit(2)
                 }
 
                 Spacer()
 
-                VStack(spacing: PSSpacing.xs) {
+                VStack(spacing: FLSpacing.xs) {
                     tierBadge("Free", included: false)
                     tierBadge("Pro", included: true)
                     tierBadge("Family", included: true)
                 }
-                .font(PSTypography.caption2)
+                .font(FLTypography.caption2)
             }
         }
     }
 
     private func tierBadge(_ tier: String, included: Bool) -> some View {
-        HStack(spacing: PSSpacing.xxs) {
+        HStack(spacing: FLSpacing.xxs) {
             Image(systemName: included ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .foregroundStyle(included ? PSColors.freshGreen : PSColors.textTertiary)
+                .foregroundStyle(included ? FLColors.freshGreen : FLColors.textTertiary)
             Text(tier)
-                .foregroundStyle(PSColors.textSecondary)
+                .foregroundStyle(FLColors.textSecondary)
         }
         .font(.system(size: 11, weight: .medium))
     }
@@ -178,13 +178,13 @@ struct FreshliProView: View {
     // MARK: - Pricing Section
 
     private var pricingSection: some View {
-        VStack(spacing: PSSpacing.lg) {
+        VStack(spacing: FLSpacing.lg) {
             Text("Simple, Transparent Pricing")
-                .font(PSTypography.title2)
-                .foregroundStyle(PSColors.textPrimary)
+                .font(FLTypography.title2)
+                .foregroundStyle(FLColors.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            VStack(spacing: PSSpacing.md) {
+            VStack(spacing: FLSpacing.md) {
                 // Pro products
                 let proMonthly = subscriptionService.products.first { $0.id == SubscriptionProductID.proMonthly.rawValue }
                 let proYearly = subscriptionService.products.first { $0.id == SubscriptionProductID.proYearly.rawValue }
@@ -210,10 +210,10 @@ struct FreshliProView: View {
 
                 if subscriptionService.products.isEmpty && !subscriptionService.isLoading {
                     Text("Unable to load pricing. Please check your connection and try again.")
-                        .font(PSTypography.caption1)
-                        .foregroundStyle(PSColors.textSecondary)
+                        .font(FLTypography.caption1)
+                        .foregroundStyle(FLColors.textSecondary)
                         .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(PSSpacing.lg)
+                        .padding(FLSpacing.lg)
                 }
             }
         }
@@ -229,22 +229,22 @@ struct FreshliProView: View {
         let yearlyCost = yearlyProduct.price
         let monthlySavings = (monthlyCost * 12 - yearlyCost) / (monthlyCost * 12) * 100
 
-        return VStack(spacing: PSSpacing.md) {
+        return VStack(spacing: FLSpacing.md) {
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: PSSpacing.xs) {
+                VStack(alignment: .leading, spacing: FLSpacing.xs) {
                     Text(tier.displayName)
-                        .font(PSTypography.headline)
-                        .foregroundStyle(PSColors.textPrimary)
+                        .font(FLTypography.headline)
+                        .foregroundStyle(FLColors.textPrimary)
 
                     Text(description)
-                        .font(PSTypography.caption1)
-                        .foregroundStyle(PSColors.textSecondary)
+                        .font(FLTypography.caption1)
+                        .foregroundStyle(FLColors.textSecondary)
                 }
 
                 Spacer()
 
                 if monthlySavings > 0 {
-                    PSBadge(
+                    FLBadge(
                         text: "Save \(NSDecimalNumber(decimal: monthlySavings).intValue)%",
                         variant: .fresh
                     )
@@ -252,7 +252,7 @@ struct FreshliProView: View {
             }
 
             // Price options
-            HStack(spacing: PSSpacing.md) {
+            HStack(spacing: FLSpacing.md) {
                 priceOptionButton(
                     product: monthlyProduct,
                     isSelected: selectedProduct?.id == monthlyProduct.id
@@ -268,18 +268,18 @@ struct FreshliProView: View {
                 }
             }
         }
-        .padding(PSSpacing.lg)
+        .padding(FLSpacing.lg)
         .background(
             selectedProduct?.id == monthlyProduct.id || selectedProduct?.id == yearlyProduct.id ?
-                PSColors.primaryGreen.opacity(0.05) :
-                PSColors.surfaceCard
+                FLColors.primaryGreen.opacity(0.05) :
+                FLColors.surfaceCard
         )
-        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: FLSpacing.radiusLg, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
+            RoundedRectangle(cornerRadius: FLSpacing.radiusLg, style: .continuous)
                 .stroke(
                     selectedProduct?.id == monthlyProduct.id || selectedProduct?.id == yearlyProduct.id ?
-                        PSColors.primaryGreen : PSColors.border,
+                        FLColors.primaryGreen : FLColors.border,
                     lineWidth: selectedProduct?.id == monthlyProduct.id || selectedProduct?.id == yearlyProduct.id ? 2 : 1
                 )
         )
@@ -289,48 +289,48 @@ struct FreshliProView: View {
         product: Product,
         description: String
     ) -> some View {
-        VStack(spacing: PSSpacing.md) {
+        VStack(spacing: FLSpacing.md) {
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: PSSpacing.xs) {
+                VStack(alignment: .leading, spacing: FLSpacing.xs) {
                     Text("Freshli+ Family")
-                        .font(PSTypography.headline)
-                        .foregroundStyle(PSColors.textPrimary)
+                        .font(FLTypography.headline)
+                        .foregroundStyle(FLColors.textPrimary)
 
                     Text(description)
-                        .font(PSTypography.caption1)
-                        .foregroundStyle(PSColors.textSecondary)
+                        .font(FLTypography.caption1)
+                        .foregroundStyle(FLColors.textSecondary)
                 }
 
                 Spacer()
 
-                PSBadge(text: "Best Value", variant: .fresh)
+                FLBadge(text: "Best Value", variant: .fresh)
             }
 
-            VStack(spacing: PSSpacing.xs) {
+            VStack(spacing: FLSpacing.xs) {
                 Text("\(product.displayPrice)")
-                    .font(PSTypography.title2)
-                    .foregroundStyle(PSColors.textPrimary)
+                    .font(FLTypography.title2)
+                    .foregroundStyle(FLColors.textPrimary)
 
                 Text("/month")
-                    .font(PSTypography.caption1)
-                    .foregroundStyle(PSColors.textSecondary)
+                    .font(FLTypography.caption1)
+                    .foregroundStyle(FLColors.textSecondary)
             }
             .frame(maxWidth: .infinity)
-            .padding(PSSpacing.md)
-            .background(selectedProduct?.id == product.id ? PSColors.primaryGreen.opacity(0.1) : PSColors.backgroundSecondary)
-            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
+            .padding(FLSpacing.md)
+            .background(selectedProduct?.id == product.id ? FLColors.primaryGreen.opacity(0.1) : FLColors.backgroundSecondary)
+            .clipShape(RoundedRectangle(cornerRadius: FLSpacing.radiusMd, style: .continuous))
         }
-        .padding(PSSpacing.lg)
+        .padding(FLSpacing.lg)
         .background(
             selectedProduct?.id == product.id ?
-                PSColors.primaryGreen.opacity(0.05) :
-                PSColors.surfaceCard
+                FLColors.primaryGreen.opacity(0.05) :
+                FLColors.surfaceCard
         )
-        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: FLSpacing.radiusLg, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
+            RoundedRectangle(cornerRadius: FLSpacing.radiusLg, style: .continuous)
                 .stroke(
-                    selectedProduct?.id == product.id ? PSColors.primaryGreen : PSColors.border,
+                    selectedProduct?.id == product.id ? FLColors.primaryGreen : FLColors.border,
                     lineWidth: selectedProduct?.id == product.id ? 2 : 1
                 )
         )
@@ -345,21 +345,21 @@ struct FreshliProView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            VStack(spacing: PSSpacing.xxs) {
+            VStack(spacing: FLSpacing.xxs) {
                 Text(product.displayPrice)
-                    .font(PSTypography.title2)
-                    .foregroundStyle(PSColors.textPrimary)
+                    .font(FLTypography.title2)
+                    .foregroundStyle(FLColors.textPrimary)
 
                 if let subscription = product.subscription {
                     Text(product.localizedPeriod)
-                        .font(PSTypography.caption1)
-                        .foregroundStyle(PSColors.textSecondary)
+                        .font(FLTypography.caption1)
+                        .foregroundStyle(FLColors.textSecondary)
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(PSSpacing.md)
-            .background(isSelected ? PSColors.primaryGreen.opacity(0.1) : PSColors.backgroundSecondary)
-            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
+            .padding(FLSpacing.md)
+            .background(isSelected ? FLColors.primaryGreen.opacity(0.1) : FLColors.backgroundSecondary)
+            .clipShape(RoundedRectangle(cornerRadius: FLSpacing.radiusMd, style: .continuous))
         }
         .buttonStyle(PressableButtonStyle())
     }
@@ -369,7 +369,7 @@ struct FreshliProView: View {
     private var ctaButton: some View {
         let isDisabled = subscriptionService.isProUser || selectedProduct == nil || subscriptionService.isLoading
 
-        return PSButton(
+        return FLButton(
             title: subscriptionService.isProUser ? "You're Subscribed" : "Subscribe Now",
             style: subscriptionService.isProUser ? .secondary : .primary,
             size: .large,
@@ -394,11 +394,11 @@ struct FreshliProView: View {
             showRestoreAlert = true
         } label: {
             Text("Restore Purchases")
-                .font(PSTypography.subheadline)
-                .foregroundStyle(PSColors.primaryGreen)
+                .font(FLTypography.subheadline)
+                .foregroundStyle(FLColors.primaryGreen)
         }
         .frame(maxWidth: .infinity)
-        .padding(PSSpacing.md)
+        .padding(FLSpacing.md)
         .accessibilityLabel("Restore previous purchases from the App Store")
     }
 }

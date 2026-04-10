@@ -406,7 +406,7 @@ final class FamilySyncService {
             currentMemberRecordName = adminMember.id.uuidString
 
             endSyncSuccess()
-            PSHaptics.shared.success()
+            FLHaptics.shared.success()
             
             logger.info("Successfully created family: \(trimmedName)")
             
@@ -418,7 +418,7 @@ final class FamilySyncService {
             let syncError = FamilySyncError.from(error)
             logger.error("Failed to create family: \(syncError.userMessage)")
             endSyncFailure(syncError)
-            PSHaptics.shared.error()
+            FLHaptics.shared.error()
             throw syncError
         }
     }
@@ -505,7 +505,7 @@ final class FamilySyncService {
             try await fetchFamily(from: shareZoneID)
 
             endSyncSuccess()
-            PSHaptics.shared.success()
+            FLHaptics.shared.success()
             
             logger.info("Successfully joined family")
             
@@ -516,7 +516,7 @@ final class FamilySyncService {
             let syncError = FamilySyncError.from(error)
             logger.error("Failed to join family: \(syncError.userMessage)")
             endSyncFailure(syncError)
-            PSHaptics.shared.error()
+            FLHaptics.shared.error()
             throw syncError
         }
     }
@@ -573,7 +573,7 @@ final class FamilySyncService {
             inviteURL = nil
             currentMemberRecordName = nil
             endSyncSuccess()
-            PSHaptics.shared.success()
+            FLHaptics.shared.success()
             
             logger.info("Successfully left family")
             
@@ -585,7 +585,7 @@ final class FamilySyncService {
             let syncError = FamilySyncError.from(error)
             logger.error("Failed to leave family: \(syncError.userMessage)")
             endSyncFailure(syncError)
-            PSHaptics.shared.error()
+            FLHaptics.shared.error()
             throw syncError
         }
     }
@@ -632,7 +632,7 @@ final class FamilySyncService {
             currentFamily = updated
 
             endSyncSuccess()
-            PSHaptics.shared.success()
+            FLHaptics.shared.success()
             
             logger.info("Successfully removed member: \(member.name)")
             
@@ -643,7 +643,7 @@ final class FamilySyncService {
             let syncError = FamilySyncError.from(error)
             logger.error("Failed to remove member: \(syncError.userMessage)")
             endSyncFailure(syncError)
-            PSHaptics.shared.error()
+            FLHaptics.shared.error()
             throw syncError
         }
     }
@@ -742,7 +742,7 @@ final class FamilySyncService {
             }
             
             endSyncSuccess()
-            PSHaptics.shared.success()
+            FLHaptics.shared.success()
             
             logger.info("Toggled shared pantry to: \(family.sharedPantryEnabled)")
             
@@ -756,7 +756,7 @@ final class FamilySyncService {
             let syncError = FamilySyncError.from(error)
             logger.error("Failed to toggle shared pantry: \(syncError.userMessage)")
             endSyncFailure(syncError)
-            PSHaptics.shared.error()
+            FLHaptics.shared.error()
             throw syncError
         }
     }
@@ -830,7 +830,7 @@ final class FamilySyncService {
             }
 
             endSyncSuccess()
-            PSHaptics.shared.success()
+            FLHaptics.shared.success()
             
             logger.info("Successfully synced \(items.count) items")
             
@@ -838,7 +838,7 @@ final class FamilySyncService {
             let syncError = FamilySyncError.from(error)
             logger.error("Failed to sync pantry items: \(syncError.userMessage)")
             endSyncFailure(syncError)
-            PSHaptics.shared.error()
+            FLHaptics.shared.error()
             throw syncError
         }
     }

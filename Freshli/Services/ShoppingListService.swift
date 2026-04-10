@@ -205,7 +205,7 @@ final class ShoppingListService {
         // Create new calendar
         let calendar = EKCalendar(for: .reminder, eventStore: eventStore)
         calendar.title = freshliCalendarName
-        calendar.cgColor = UIColor(PSColors.primaryGreen).cgColor
+        calendar.cgColor = UIColor(FLColors.primaryGreen).cgColor
 
         // Set source — prefer iCloud, fall back to local
         if let iCloudSource = eventStore.sources.first(where: { $0.sourceType == .calDAV }) {
