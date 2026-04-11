@@ -58,6 +58,25 @@ struct AIRescueResponse {
     let missions: [AIRescueMission]
 }
 
+// MARK: - Pantry Snapshot
+//
+// A lightweight, Sendable representation of a single pantry item, used
+// to feed the AI service from callers that don't have a SwiftData model
+// context — chiefly App Intents running in the headless extension
+// process. View-layer callers continue to use the `[FreshliItem]`
+// overload which converts to this shape internally.
+
+struct PantrySnapshot: Sendable {
+    let name: String
+    let quantity: Double
+    let unit: String
+    let expiryDate: Date
+
+    var hoursRemaining: Int {
+        Calendar.current.dateComponents([.hour], from: Date(), to: expiryDate).hour ?? 0
+    }
+}
+
 // MARK: - Service
 
 @Observable @MainActor
@@ -92,7 +111,9 @@ final class AIRescueService {
     /// Generate bespoke rescue recipes for the user's at-risk items using
     /// on-device Apple Intelligence. Call this only after confirming
     /// `isAvailable == true`. Results are published via the observable
-    /// `missions` property.
+    /// `missions` property. View-layer entry point — takes SwiftData
+    /// `FreshliItem`s and stores the result in `missions` so SwiftUI
+    /// can bind directly.
     func generateMissions(for atRiskItems: [FreshliItem]) async {
         guard isAvailable else {
             logger.info("AIRescue: Apple Intelligence unavailable — skipping")
@@ -105,19 +126,61 @@ final class AIRescueService {
             return
         }
 
-        AnalyticsService.shared.track(.aiRescueRequested, properties: .props([
-            "at_risk_count": atRiskItems.count
-        ]))
-        let requestStart = Date()
-
         isGenerating = true
         lastError = nil
         defer { isGenerating = false }
 
-        // Build a compact prompt describing the user's at-risk pantry. We
-        // include the name, quantity, and days-until-expiry for each item so
-        // the model can pick recipes that use the most urgent ingredients.
-        let pantryDescription = buildPantryDescription(atRiskItems)
+        let snapshots = atRiskItems.map { item in
+            PantrySnapshot(
+                name: item.name,
+                quantity: item.quantity,
+                unit: item.unit.displayName,
+                expiryDate: item.expiryDate
+            )
+        }
+
+        do {
+            let response = try await performGeneration(snapshots: snapshots)
+            missions = response.missions.map { aiMission in
+                convertToUsageMission(aiMission, atRiskItems: atRiskItems)
+            }
+        } catch {
+            lastError = String(localized: "Rescue Chef couldn't cook up ideas this time. Please try again.")
+            missions = []
+        }
+    }
+
+    /// Snapshot-based entry point for callers that don't have SwiftData
+    /// model objects — chiefly the "Rescue my pantry" App Intent running
+    /// in the headless extension process, where items come from
+    /// Supabase DTOs. Returns the raw Generable response so each caller
+    /// can format it for its own surface (Siri dialog, share sheet, etc).
+    ///
+    /// Throws if Apple Intelligence is unavailable or generation fails.
+    /// Does NOT update `missions` / `lastError` — this path is stateless.
+    func generateMissions(fromSnapshots snapshots: [PantrySnapshot]) async throws -> AIRescueResponse {
+        guard isAvailable else {
+            throw AIRescueError.apiUnavailable
+        }
+        guard !snapshots.isEmpty else {
+            throw AIRescueError.noAtRiskItems
+        }
+        return try await performGeneration(snapshots: snapshots)
+    }
+
+    // MARK: - Core Generation
+
+    /// The single source of truth for invoking the on-device model.
+    /// Both the SwiftData and snapshot entry points funnel through here
+    /// so instrumentation, prompt shape, and session caching live in
+    /// exactly one place.
+    private func performGeneration(snapshots: [PantrySnapshot]) async throws -> AIRescueResponse {
+        AnalyticsService.shared.track(.aiRescueRequested, properties: .props([
+            "at_risk_count": snapshots.count
+        ]))
+        let requestStart = Date()
+
+        let pantryDescription = buildPantryDescription(snapshots)
 
         let prompt = """
         My pantry has these items about to expire:
@@ -142,23 +205,16 @@ final class AIRescueService {
             AnalyticsService.shared.track(.aiRescueSucceeded, properties: .props([
                 "mission_count":  aiMissions.count,
                 "duration_ms":    Int(Date().timeIntervalSince(requestStart) * 1_000),
-                "at_risk_count":  atRiskItems.count
+                "at_risk_count":  snapshots.count
             ]))
-
-            // Map the Generable output to the app's existing UsageMission
-            // type so the view layer can render AI missions through the
-            // same components as rule-based missions.
-            missions = aiMissions.map { aiMission in
-                convertToUsageMission(aiMission, atRiskItems: atRiskItems)
-            }
+            return response.content
         } catch {
             logger.error("AIRescue: generation failed: \(error.localizedDescription, privacy: .public)")
             AnalyticsService.shared.track(.aiRescueFailed, properties: .props([
                 "duration_ms":   Int(Date().timeIntervalSince(requestStart) * 1_000),
-                "at_risk_count": atRiskItems.count
+                "at_risk_count": snapshots.count
             ]))
-            lastError = String(localized: "Rescue Chef couldn't cook up ideas this time. Please try again.")
-            missions = []
+            throw error
         }
     }
 
@@ -190,22 +246,19 @@ final class AIRescueService {
         return newSession
     }
 
-    private func buildPantryDescription(_ items: [FreshliItem]) -> String {
-        let now = Date()
-        return items
+    private func buildPantryDescription(_ snapshots: [PantrySnapshot]) -> String {
+        snapshots
             .sorted { $0.expiryDate < $1.expiryDate }
-            .map { item in
-                let hoursRemaining = Calendar.current.dateComponents(
-                    [.hour], from: now, to: item.expiryDate
-                ).hour ?? 0
+            .map { snapshot in
+                let hoursRemaining = snapshot.hoursRemaining
                 let urgency: String = {
                     if hoursRemaining <= 0 { return "EXPIRED — use immediately" }
                     if hoursRemaining <= 12 { return "expires in \(hoursRemaining)h — critical" }
                     if hoursRemaining <= 48 { return "expires in \(hoursRemaining)h — urgent" }
                     return "expires in \(hoursRemaining / 24) days"
                 }()
-                let quantity = "\(item.quantity) \(item.unit.displayName)"
-                return "- \(item.name) (\(quantity), \(urgency))"
+                let quantity = "\(snapshot.quantity) \(snapshot.unit)"
+                return "- \(snapshot.name) (\(quantity), \(urgency))"
             }
             .joined(separator: "\n")
     }
@@ -262,6 +315,24 @@ final class AIRescueService {
         case "easy": return .easy
         case "hard", "difficult", "advanced": return .hard
         default: return .medium
+        }
+    }
+}
+
+// MARK: - Errors
+
+enum AIRescueError: LocalizedError {
+    /// Apple Intelligence is unavailable on this device or in this region.
+    case apiUnavailable
+    /// Caller supplied no at-risk items to generate from.
+    case noAtRiskItems
+
+    var errorDescription: String? {
+        switch self {
+        case .apiUnavailable:
+            return String(localized: "Apple Intelligence isn't available on this device yet.")
+        case .noAtRiskItems:
+            return String(localized: "No items are expiring soon — nothing to rescue.")
         }
     }
 }

@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import TipKit
 
 struct FreshliDetailView: View {
     @Bindable var item: FreshliItem
@@ -220,6 +221,10 @@ struct FreshliDetailView: View {
                     "category": item.category.rawValue,
                     "days_until_expiry": Calendar.current.dateComponents([.day], from: Date(), to: item.expiryDate).day ?? 0
                 ]))
+                // Donate the TipKit event so the Weekly Wrap tip on
+                // HomeView can unlock and surface itself — the user
+                // has just completed their first rescue verb.
+                Task { await WeeklyWrapTip.firstItemRescued.donate() }
                 successFlashTrigger = true
                 withAnimation(FLMotion.adaptive(PSMotion.springBouncy, reduceMotion: reduceMotion)) {
                     item.isConsumed = true

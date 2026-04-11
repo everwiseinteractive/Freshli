@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import TipKit
 import os
 
 struct HomeView: View {
@@ -23,6 +24,8 @@ struct HomeView: View {
     @State private var gapFillSuggestions: [GapFillSuggestion] = []
     @State private var collectiveImpact = CollectiveImpactService.shared
     @State private var showCommunityFridges = false
+
+    private let weeklyWrapTip = WeeklyWrapTip()
 
     private let logger = Logger(subsystem: "com.freshli.app", category: "HomeView")
 
@@ -170,6 +173,7 @@ struct HomeView: View {
                         }
                         .accessibilityLabel(String(localized: "Weekly Wrap"))
                         .accessibilityHint(String(localized: "Shows your impact story for this week"))
+                        .popoverTip(weeklyWrapTip)
 
                         NavigationLink(destination: ExpiryAlertsView()) {
                             ZStack(alignment: .topTrailing) {

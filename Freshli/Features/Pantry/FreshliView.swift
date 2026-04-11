@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import TipKit
 import os
 
 struct FreshliView: View {
@@ -24,6 +25,9 @@ struct FreshliView: View {
     @State private var autoListTarget: FreshliItem?
     @State private var binLogTarget: FreshliItem?
     @AppStorage("autoListDismissedIds") private var autoListDismissedIdsRaw: String = ""
+
+    private let addItemTip = AddItemTip()
+    private let rescueChefTip = RescueChefTip()
 
     private var autoListDismissedIds: Set<String> {
         Set(autoListDismissedIdsRaw.split(separator: ",").map(String.init))
@@ -193,14 +197,27 @@ struct FreshliView: View {
             .accessibilityHint(String(localized: "Double tap to add a new item to your pantry"))
             .padding(.trailing, PSLayout.adaptiveHorizontalPadding)
             .padding(.bottom, PSSpacing.xl)   // gap above tab bar edge (safeAreaInset handles boundary)
+            // First-run coach mark: appears above the FAB on an empty
+            // pantry, auto-dismisses as soon as the user adds an item.
+            .popoverTip(addItemTip)
         }
         .navigationBarHidden(true)
         .onAppear {
             logger.info("FreshliView appeared — \(allItems.count) items")
+            let atRisk = allItems.filter { ExpiryStatus.from(expiryDate: $0.expiryDate) != .fresh }.count
             AnalyticsService.shared.track(.pantryViewed, properties: .props([
                 "item_count":     allItems.count,
-                "at_risk_count":  allItems.filter { ExpiryStatus.from(expiryDate: $0.expiryDate) != .fresh }.count
+                "at_risk_count":  atRisk
             ]))
+            // Update TipKit parameters so rules-based tips can evaluate
+            // on the current pantry state. Fire the `pantryViewed`
+            // event so the add-item tip's rule becomes satisfied.
+            AddItemTip.pantryItemCount = allItems.count
+            RescueChefTip.atRiskCount = atRisk
+            Task { await AddItemTip.pantryViewed.donate() }
+            if atRisk > 0 {
+                Task { await RescueChefTip.hasAtRiskItems.donate() }
+            }
         }
         .sheet(item: $selectedItem) { item in
             NavigationStack {

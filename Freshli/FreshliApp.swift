@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import WidgetKit
+import TipKit
 import os
 
 @main
@@ -127,6 +128,21 @@ struct FreshliApp: App {
             .environment(shoppingListService)
             .preferredColorScheme(isDarkMode ? .dark : .light)
             .task {
+                // Configure TipKit once per cold launch so the
+                // contextual tips on the pantry + home tabs can evaluate
+                // their rules. Uses the default datastore in the app's
+                // Documents/.tips folder; survives app updates but
+                // resets on reinstall (which is what we want — new
+                // installs should see the tips again).
+                do {
+                    try Tips.configure([
+                        .displayFrequency(.immediate),
+                        .datastoreLocation(.applicationDefault)
+                    ])
+                } catch {
+                    logger.error("TipKit configure failed: \(error.localizedDescription, privacy: .public)")
+                }
+
                 // Start diagnostics and network monitoring
                 diagnosticsService.start()
                 networkMonitor.start()
