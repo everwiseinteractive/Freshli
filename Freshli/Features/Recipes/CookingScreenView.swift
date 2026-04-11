@@ -959,95 +959,120 @@ struct CookingScreenView: View {
             .ignoresSafeArea()
             .allowsHitTesting(false)
 
-            // Content
-            ScrollView {
-                VStack(spacing: PSSpacing.xxl) {
-                    Spacer(minLength: PSSpacing.jumbo)
+            // Content — GeometryReader ensures Spacers actually work inside ScrollView
+            GeometryReader { proxy in
+                ScrollView {
+                    VStack(spacing: PSSpacing.xxl) {
+                        Spacer(minLength: 0)
 
-                    // Emoji
-                    Text("🎉")
-                        .font(.system(size: PSLayout.scaledFont(80)))
-                        .shadow(color: PSColors.primaryGreen.opacity(0.5), radius: 30, x: 0, y: 0)
+                        // Trophy glow
+                        ZStack {
+                            Circle()
+                                .fill(PSColors.primaryGreen.opacity(0.18))
+                                .frame(width: PSLayout.scaled(130), height: PSLayout.scaled(130))
+                                .blur(radius: 24)
+                            Circle()
+                                .fill(PSColors.primaryGreen.opacity(0.10))
+                                .frame(width: PSLayout.scaled(180), height: PSLayout.scaled(180))
+                                .blur(radius: 36)
+                            Text("🎉")
+                                .font(.system(size: PSLayout.scaledFont(80)))
+                        }
 
-                    // Title
-                    VStack(spacing: PSSpacing.sm) {
-                        Text("Recipe Complete!")
-                            .font(.system(size: PSLayout.scaledFont(32), weight: .bold, design: .rounded))
-                            .foregroundStyle(.white)
+                        // Title
+                        VStack(spacing: PSSpacing.sm) {
+                            Text("Recipe Complete!")
+                                .font(.system(size: PSLayout.scaledFont(34), weight: .black, design: .rounded))
+                                .foregroundStyle(.white)
 
-                        Text("You've made \(recipe.title)")
-                            .font(.system(size: PSLayout.scaledFont(17), weight: .medium, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.65))
-                            .multilineTextAlignment(.center)
-                    }
+                            Text("You nailed \(recipe.title)")
+                                .font(.system(size: PSLayout.scaledFont(16), weight: .medium, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.65))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, PSSpacing.xl)
+                        }
 
-                    // Impact stats
-                    HStack(spacing: PSSpacing.md) {
-                        completionStatCard(
-                            icon: "leaf.fill",
-                            value: String(format: "%.1f kg", Double(matchingPantryItems.count) * 0.8),
-                            label: "CO₂ Saved",
-                            color: PSColors.primaryGreen
-                        )
-                        completionStatCard(
-                            icon: "dollarsign.circle.fill",
-                            value: String(format: "$%.2f", Double(matchingPantryItems.count) * 3.50),
-                            label: "Money Saved",
-                            color: PSColors.warningAmber
-                        )
-                    }
-                    .padding(.horizontal, PSSpacing.cardPadding)
-
-                    // Star rating
-                    VStack(spacing: PSSpacing.md) {
-                        Text("Rate Your Cook")
-                            .font(.system(size: PSLayout.scaledFont(16), weight: .semibold, design: .rounded))
-                            .foregroundStyle(.white.opacity(0.75))
-
+                        // Impact stats
                         HStack(spacing: PSSpacing.md) {
-                            ForEach(1...5, id: \.self) { star in
-                                Button {
-                                    PSHaptics.shared.lightTap()
-                                    withAnimation(PSMotion.springBouncy) {
-                                        userRating = star
+                            completionStatCard(
+                                icon: "leaf.fill",
+                                value: String(format: "%.1f kg", Double(max(matchingPantryItems.count, 1)) * 0.8),
+                                label: "CO₂ Saved",
+                                color: PSColors.primaryGreen
+                            )
+                            completionStatCard(
+                                icon: "dollarsign.circle.fill",
+                                value: String(format: "$%.2f", Double(max(matchingPantryItems.count, 1)) * 3.50),
+                                label: "Money Saved",
+                                color: PSColors.warningAmber
+                            )
+                            completionStatCard(
+                                icon: "flame.fill",
+                                value: "\(recipe.steps.count)",
+                                label: "Steps Done",
+                                color: Color.orange
+                            )
+                        }
+                        .padding(.horizontal, PSSpacing.cardPadding)
+
+                        // Star rating
+                        VStack(spacing: PSSpacing.md) {
+                            Text("How did it taste?")
+                                .font(.system(size: PSLayout.scaledFont(15), weight: .semibold, design: .rounded))
+                                .foregroundStyle(.white.opacity(0.65))
+
+                            HStack(spacing: PSSpacing.lg) {
+                                ForEach(1...5, id: \.self) { star in
+                                    Button {
+                                        PSHaptics.shared.lightTap()
+                                        withAnimation(PSMotion.springBouncy) {
+                                            userRating = star
+                                        }
+                                    } label: {
+                                        Image(systemName: star <= userRating ? "star.fill" : "star")
+                                            .font(.system(size: PSLayout.scaledFont(30), weight: .medium))
+                                            .foregroundStyle(star <= userRating ? Color(hex: 0xFFD700) : .white.opacity(0.22))
+                                            .scaleEffect(star == userRating ? 1.25 : 1.0)
+                                            .animation(PSMotion.springBouncy, value: userRating)
                                     }
-                                } label: {
-                                    Image(systemName: star <= userRating ? "star.fill" : "star")
-                                        .font(.system(size: PSLayout.scaledFont(32), weight: .medium))
-                                        .foregroundStyle(star <= userRating ? Color(hex: 0xFFD700) : .white.opacity(0.25))
-                                        .scaleEffect(star == userRating ? 1.20 : 1.0)
-                                        .animation(PSMotion.springBouncy, value: userRating)
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
-                    }
+                        .padding(.vertical, PSSpacing.md)
+                        .frame(maxWidth: .infinity)
+                        .background(.white.opacity(0.05))
+                        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
+                        .padding(.horizontal, PSSpacing.cardPadding)
 
-                    // Done button
-                    Button {
-                        PSHaptics.shared.celebrate()
-                        speechSynthesizer.stopSpeaking(at: .immediate)
-                        dismiss()
-                    } label: {
-                        Text("Done")
-                            .font(.system(size: PSLayout.scaledFont(17), weight: .bold, design: .rounded))
-                            .foregroundStyle(.black)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: PSLayout.scaled(56))
-                            .background(
-                                LinearGradient(
-                                    colors: [PSColors.primaryGreen, Color(hex: 0x16A34A)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
+                        // Done button
+                        Button {
+                            PSHaptics.shared.celebrate()
+                            speechSynthesizer.stopSpeaking(at: .immediate)
+                            dismiss()
+                        } label: {
+                            Text("Done Cooking 🙌")
+                                .font(.system(size: PSLayout.scaledFont(17), weight: .black, design: .rounded))
+                                .foregroundStyle(.black)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: PSLayout.scaled(58))
+                                .background(
+                                    LinearGradient(
+                                        colors: [PSColors.primaryGreen, Color(hex: 0x16A34A)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
                                 )
-                            )
-                            .clipShape(Capsule())
-                            .shadow(color: PSColors.primaryGreen.opacity(0.50), radius: 16, x: 0, y: 6)
-                    }
-                    .buttonStyle(PressableButtonStyle())
-                    .padding(.horizontal, PSSpacing.cardPadding)
+                                .clipShape(Capsule())
+                                .shadow(color: PSColors.primaryGreen.opacity(0.55), radius: 18, x: 0, y: 6)
+                        }
+                        .buttonStyle(PressableButtonStyle())
+                        .padding(.horizontal, PSSpacing.cardPadding)
 
-                    Spacer(minLength: PSSpacing.jumbo)
+                        Spacer(minLength: 0)
+                    }
+                    .frame(minHeight: proxy.size.height)  // makes Spacers expand to device height
+                    .padding(.vertical, PSSpacing.xl)
                 }
             }
         }

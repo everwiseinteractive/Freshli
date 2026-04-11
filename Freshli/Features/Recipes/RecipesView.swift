@@ -13,7 +13,17 @@ struct RecipesView: View {
 
     private let filters = ["For You", "Quick & Easy", "Breakfast", "Vegan", "Desserts"]
 
-    private var recipes: [Recipe] { filterRecipes(matchedRecipes) }
+    /// All recipes to display: pantry-matched when available, otherwise the full built-in library.
+    /// This ensures the screen is always filled with great content.
+    private var displayRecipes: [Recipe] {
+        if matchedRecipes.isEmpty {
+            return RecipeService.shared.recipes
+        }
+        return matchedRecipes
+    }
+
+    private var recipes: [Recipe] { filterRecipes(displayRecipes) }
+    private var isPantryMatched: Bool { !matchedRecipes.isEmpty }
 
     // Items expiring soon — used to show Rescue Chef banner
     private var urgentCount: Int {
@@ -38,7 +48,7 @@ struct RecipesView: View {
                         PSEmptyState(
                             icon: activeFilter == "Vegan" ? "leaf" : activeFilter == "Breakfast" ? "sunrise.fill" : activeFilter == "Desserts" ? "birthday.cake" : "timer",
                             title: String(localized: "\(activeFilter) Recipes"),
-                            message: String(localized: "No \(activeFilter.lowercased()) recipes match your current pantry. Try different items!"),
+                            message: String(localized: "No \(activeFilter.lowercased()) recipes found. Try a different filter!"),
                             actionTitle: nil, action: nil
                         )
                         .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
@@ -48,15 +58,6 @@ struct RecipesView: View {
                             featuredRecipe.staggeredAppearance(index: urgentCount > 0 ? 1 : 0)
                         }
                         recipeList
-                    } else {
-                        PSEmptyState(
-                            icon: "book",
-                            title: String(localized: "No Recipes Yet"),
-                            message: String(localized: "Add items to your pantry to discover recipes you can make!"),
-                            actionTitle: nil, action: nil
-                        )
-                        .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
-                        .padding(.top, 40)
                     }
                 }
                 .padding(.vertical, PSSpacing.lg)
@@ -84,7 +85,9 @@ struct RecipesView: View {
                         .font(.system(size: PSLayout.scaledFont(30), weight: .bold))
                         .tracking(-0.3)
                         .foregroundStyle(PSColors.textPrimary)
-                    Text(String(localized: "\(matchedRecipes.count) recipes for your pantry"))
+                    Text(isPantryMatched
+                        ? String(localized: "\(matchedRecipes.count) recipes matched to your pantry")
+                        : String(localized: "\(RecipeService.shared.recipes.count) recipes to explore"))
                         .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
                         .foregroundStyle(PSColors.textTertiary)
                 }

@@ -12,6 +12,8 @@ struct ExpiryAlertsView: View {
     @Environment(PSToastManager.self) private var toastManager
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    @State private var appeared = false
+
     private var expiredItems: [FreshliItem] {
         allItems.filter { $0.expiryStatus == .expired }
     }
@@ -35,27 +37,9 @@ struct ExpiryAlertsView: View {
     var body: some View {
         ScrollView {
             if !hasAlerts {
-                VStack(spacing: PSSpacing.xxl) {
-                    Image(systemName: "checkmark.seal.fill")
-                        .font(.system(size: PSLayout.scaledFont(56)))
-                        .foregroundStyle(PSColors.primaryGreen)
-                        .symbolEffect(.bounce)
-                        .padding(.top, PSSpacing.xxxxl)
-
-                    VStack(spacing: PSSpacing.sm) {
-                        Text(String(localized: "All Clear!"))
-                            .font(PSTypography.title2)
-                            .foregroundStyle(PSColors.textPrimary)
-                        Text(String(localized: "No items are expiring soon. Great job managing your pantry!"))
-                            .font(PSTypography.callout)
-                            .foregroundStyle(PSColors.textSecondary)
-                            .multilineTextAlignment(.center)
-                    }
-                    .padding(.horizontal, PSLayout.formHorizontalPadding)
-                }
+                allClearView
             } else {
-                VStack(spacing: PSSpacing.xxl) {
-                    // Urgency Summary Banner
+                LazyVStack(spacing: PSSpacing.xxl, pinnedViews: []) {
                     urgencySummary
 
                     if !expiredItems.isEmpty {
@@ -71,7 +55,7 @@ struct ExpiryAlertsView: View {
                     if !expiringTodayItems.isEmpty {
                         alertSection(
                             title: String(localized: "Expires Today"),
-                            icon: "clock.fill",
+                            icon: "clock.badge.exclamationmark.fill",
                             color: PSColors.expiredRed.opacity(0.85),
                             items: expiringTodayItems,
                             sectionIndex: 1
@@ -89,107 +73,230 @@ struct ExpiryAlertsView: View {
                     }
                 }
                 .padding(.vertical, PSSpacing.lg)
+                .padding(.bottom, PSSpacing.xxxl)
             }
         }
         .background(PSColors.backgroundPrimary)
         .navigationTitle(String(localized: "Expiry Alerts"))
         .navigationBarTitleDisplayMode(.large)
         .onAppear {
+            let anim: Animation = reduceMotion ? .easeOut(duration: 0.15) : PSMotion.springDefault.delay(0.05)
+            withAnimation(anim) { appeared = true }
             if hasAlerts { PSHaptics.shared.warning() }
         }
     }
 
-    // MARK: - Urgency Summary
+    // MARK: - All Clear State
+
+    private var allClearView: some View {
+        VStack(spacing: PSSpacing.xxl) {
+            Spacer(minLength: PSSpacing.xxxxl)
+
+            ZStack {
+                Circle()
+                    .fill(PSColors.primaryGreen.opacity(0.10))
+                    .frame(width: PSLayout.scaled(120), height: PSLayout.scaled(120))
+                Circle()
+                    .fill(PSColors.primaryGreen.opacity(0.06))
+                    .frame(width: PSLayout.scaled(160), height: PSLayout.scaled(160))
+
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: PSLayout.scaledFont(56)))
+                    .foregroundStyle(PSColors.primaryGreen)
+                    .symbolEffect(.bounce)
+            }
+            .scaleEffect(appeared ? 1.0 : 0.7)
+            .opacity(appeared ? 1 : 0)
+
+            VStack(spacing: PSSpacing.sm) {
+                Text(String(localized: "All Clear!"))
+                    .font(.system(size: PSLayout.scaledFont(28), weight: .black))
+                    .foregroundStyle(PSColors.textPrimary)
+                Text(String(localized: "Every item in your pantry is fresh.\nKeep up the great work! 🌱"))
+                    .font(PSTypography.callout)
+                    .foregroundStyle(PSColors.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            .opacity(appeared ? 1 : 0)
+            .offset(y: appeared ? 0 : 12)
+            .padding(.horizontal, PSLayout.formHorizontalPadding)
+
+            Spacer(minLength: PSSpacing.xxxxl)
+        }
+    }
+
+    // MARK: - Urgency Summary Banner
 
     private var urgencySummary: some View {
-        HStack(spacing: PSSpacing.lg) {
-            VStack(alignment: .leading, spacing: PSSpacing.xxs) {
-                Text(String(localized: "\(totalUrgentCount) items need attention"))
-                    .font(PSTypography.bodyMedium)
-                    .foregroundStyle(.white)
-                Text(String(localized: "Rescue them before they go to waste"))
-                    .font(PSTypography.caption1)
-                    .foregroundStyle(.white.opacity(0.8))
+        ZStack(alignment: .leading) {
+            // Glowing background
+            RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            PSColors.expiredRed,
+                            Color(hex: 0xC0392B)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .shadow(color: PSColors.expiredRed.opacity(0.45), radius: 20, x: 0, y: 8)
+
+            // Decorative circles
+            HStack {
+                Spacer()
+                ZStack {
+                    Circle()
+                        .fill(.white.opacity(0.06))
+                        .frame(width: PSLayout.scaled(100), height: PSLayout.scaled(100))
+                        .offset(x: 20, y: -15)
+                    Circle()
+                        .fill(.white.opacity(0.04))
+                        .frame(width: PSLayout.scaled(60), height: PSLayout.scaled(60))
+                        .offset(x: -10, y: 20)
+                }
             }
-            Spacer()
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: PSLayout.scaledFont(28)))
-                .foregroundStyle(.white.opacity(0.6))
+            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
+
+            HStack(spacing: PSSpacing.lg) {
+                ZStack {
+                    Circle()
+                        .fill(.white.opacity(0.15))
+                        .frame(width: PSLayout.scaled(50), height: PSLayout.scaled(50))
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: PSLayout.scaledFont(22), weight: .bold))
+                        .foregroundStyle(.white)
+                        .symbolEffect(.pulse)
+                }
+
+                VStack(alignment: .leading, spacing: PSSpacing.xxs) {
+                    Text(String(localized: "\(totalUrgentCount) item\(totalUrgentCount == 1 ? "" : "s") need attention"))
+                        .font(.system(size: PSLayout.scaledFont(17), weight: .black))
+                        .foregroundStyle(.white)
+                    Text(String(localized: "Rescue them before they go to waste"))
+                        .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
+                        .foregroundStyle(.white.opacity(0.80))
+                }
+
+                Spacer()
+            }
+            .padding(.horizontal, PSSpacing.xl)
+            .padding(.vertical, PSSpacing.lg)
         }
-        .padding(PSSpacing.xl)
-        .background(
-            LinearGradient(
-                colors: [PSColors.expiredRed, PSColors.expiredRed.opacity(0.8)],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-        )
-        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
         .screenPadding()
-        .staggeredAppearance(index: 0)
+        .opacity(appeared ? 1 : 0)
+        .offset(y: appeared ? 0 : 16)
     }
+
+    // MARK: - Alert Section
 
     private func alertSection(title: String, icon: String, color: Color, items: [FreshliItem], sectionIndex: Int) -> some View {
         VStack(alignment: .leading, spacing: PSSpacing.md) {
+            // Section header pill
             HStack(spacing: PSSpacing.sm) {
-                Image(systemName: icon)
-                    .foregroundStyle(color)
+                ZStack {
+                    RoundedRectangle(cornerRadius: PSSpacing.radiusSm, style: .continuous)
+                        .fill(color.opacity(0.12))
+                        .frame(width: PSLayout.scaled(30), height: PSLayout.scaled(30))
+                    Image(systemName: icon)
+                        .font(.system(size: PSLayout.scaledFont(14), weight: .bold))
+                        .foregroundStyle(color)
+                }
                 Text(title)
-                    .font(PSTypography.headline)
+                    .font(.system(size: PSLayout.scaledFont(17), weight: .black))
                     .foregroundStyle(PSColors.textPrimary)
-                PSBadge(text: "\(items.count)", color: color, style: .filled)
+                Text("\(items.count)")
+                    .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, PSSpacing.sm)
+                    .padding(.vertical, PSSpacing.xxs)
+                    .background(color)
+                    .clipShape(Capsule())
                 Spacer()
             }
             .screenPadding()
 
-            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                ExpiryAlertCard(item: item) { action in
-                    handleAction(action, for: item)
+            VStack(spacing: PSSpacing.md) {
+                ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                    ExpiryAlertCard(item: item) { action in
+                        handleAction(action, for: item)
+                    }
+                    .staggeredAppearance(index: sectionIndex * 4 + index + 1)
                 }
-                .screenPadding()
-                .staggeredAppearance(index: sectionIndex * 3 + index + 1)
             }
+            .screenPadding()
         }
     }
 
+    // MARK: - Handle Action (freeze-safe)
+    // Heavy I/O (modelContext.save, WidgetDataService) runs OUTSIDE withAnimation
+    // so it never blocks the main thread during the animation pass.
+
+    @MainActor
     private func handleAction(_ action: ExpiryAction, for item: FreshliItem) {
         let itemName = item.name
+
+        // 1. Apply state mutations (these are lightweight — just property sets)
+        switch action {
+        case .cook:
+            item.isConsumed = true
+        case .share:
+            item.isShared = true
+        case .donate:
+            item.isDonated = true
+        case .delete:
+            modelContext.delete(item)
+        }
+
+        // 2. Trigger animations for state changes
         withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) {
-            switch action {
-            case .cook:
-                PSHaptics.shared.success()
-                item.isConsumed = true
-                toastManager.show(.itemConsumed(itemName))
-                celebrationManager.fireFoodSaved(modelContext: modelContext)
-                PSLogger.general.info("Item marked as consumed: \(itemName)")
-            case .share:
-                PSHaptics.shared.success()
-                item.isShared = true
-                toastManager.show(.itemShared(itemName))
-                celebrationManager.fireShareCompleted(itemName: itemName, modelContext: modelContext)
-                PSLogger.general.info("Item marked as shared: \(itemName)")
-            case .donate:
-                PSHaptics.shared.success()
-                item.isDonated = true
-                toastManager.show(.itemDonated(itemName))
-                celebrationManager.fireDonationCompleted(itemName: itemName, modelContext: modelContext)
-                PSLogger.general.info("Item marked as donated: \(itemName)")
-            case .delete:
-                PSHaptics.shared.heavyTap()
-                modelContext.delete(item)
-                toastManager.show(.itemDeleted(itemName))
-                PSLogger.general.info("Item deleted: \(itemName)")
-            }
+            // SwiftData @Query will automatically update once save completes
+        }
+
+        // 3. Haptics & toasts (synchronous but fast)
+        switch action {
+        case .cook:
+            PSHaptics.shared.success()
+            toastManager.show(.itemConsumed(itemName))
+        case .share:
+            PSHaptics.shared.success()
+            toastManager.show(.itemShared(itemName))
+        case .donate:
+            PSHaptics.shared.success()
+            toastManager.show(.itemDonated(itemName))
+        case .delete:
+            PSHaptics.shared.heavyTap()
+            toastManager.show(.itemDeleted(itemName))
+        }
+
+        // 4. Heavy I/O deferred off the animation pass — no more freeze
+        Task { @MainActor in
             do {
                 try modelContext.save()
-                WidgetDataService.updateWidgetData(modelContext: modelContext)
             } catch {
                 PSLogger.general.error("Failed to save after expiry action: \(error.localizedDescription)")
                 toastManager.show(.error(String(localized: "Failed to save changes")))
+                return
             }
+
+            // Celebrations require modelContext, run after successful save
+            switch action {
+            case .cook:   celebrationManager.fireFoodSaved(modelContext: modelContext)
+            case .share:  celebrationManager.fireShareCompleted(itemName: itemName, modelContext: modelContext)
+            case .donate: celebrationManager.fireDonationCompleted(itemName: itemName, modelContext: modelContext)
+            case .delete: break
+            }
+
+            // Widget update is the most expensive call — run last on next runloop turn
+            WidgetDataService.updateWidgetData(modelContext: modelContext)
         }
+
+        PSLogger.general.info("Expiry action '\(String(describing: action))' applied to: \(itemName)")
     }
 }
+
+// MARK: - Expiry Action
 
 enum ExpiryAction {
     case cook
@@ -198,55 +305,109 @@ enum ExpiryAction {
     case delete
 }
 
+// MARK: - Expiry Alert Card
+
 struct ExpiryAlertCard: View {
     let item: FreshliItem
     let onAction: (ExpiryAction) -> Void
 
+    @State private var pressed = false
+
+    private var urgencyColor: Color {
+        switch item.expiryStatus {
+        case .expired:       return PSColors.expiredRed
+        case .expiringToday: return PSColors.expiredRed.opacity(0.85)
+        case .expiringSoon:  return PSColors.warningAmber
+        case .fresh:         return PSColors.freshGreen
+        }
+    }
+
     var body: some View {
-        VStack(spacing: PSSpacing.md) {
-            HStack(spacing: PSSpacing.md) {
-                Image(systemName: item.category.icon)
-                    .font(.system(size: PSLayout.scaledFont(18), weight: .semibold))
-                    .foregroundStyle(PSColors.categoryColor(for: item.category))
-                    .frame(width: PSLayout.scaled(40), height: PSLayout.scaled(40))
-                    .background(PSColors.categoryColor(for: item.category).opacity(0.12))
-                    .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusSm, style: .continuous))
+        VStack(spacing: 0) {
+            // Coloured urgency stripe at top
+            Rectangle()
+                .fill(urgencyColor)
+                .frame(height: 3)
+                .clipShape(.rect(topLeadingRadius: PSSpacing.radiusXl, topTrailingRadius: PSSpacing.radiusXl))
 
-                VStack(alignment: .leading, spacing: PSSpacing.xxxs) {
-                    Text(item.name)
-                        .font(PSTypography.bodyMedium)
-                        .foregroundStyle(PSColors.textPrimary)
-                    Text("\(item.quantityDisplay) · \(item.expiryDate.expiryDisplayText)")
-                        .font(PSTypography.caption1)
-                        .foregroundStyle(PSColors.expiryColor(for: item.expiryStatus))
+            VStack(spacing: PSSpacing.lg) {
+                // Item info row
+                HStack(spacing: PSSpacing.md) {
+                    // Category icon
+                    ZStack {
+                        RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
+                            .fill(PSColors.categoryColor(for: item.category).opacity(0.12))
+                            .frame(width: PSLayout.scaled(48), height: PSLayout.scaled(48))
+                        Image(systemName: item.category.icon)
+                            .font(.system(size: PSLayout.scaledFont(20), weight: .semibold))
+                            .foregroundStyle(PSColors.categoryColor(for: item.category))
+                    }
+
+                    VStack(alignment: .leading, spacing: PSSpacing.xxxs) {
+                        Text(item.name)
+                            .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
+                            .foregroundStyle(PSColors.textPrimary)
+                            .lineLimit(1)
+                        Text("\(item.quantityDisplay)")
+                            .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
+                            .foregroundStyle(PSColors.textSecondary)
+                    }
+
+                    Spacer()
+
+                    // Expiry badge
+                    VStack(alignment: .trailing, spacing: PSSpacing.xxs) {
+                        Text(item.expiryDate.expiryDisplayText)
+                            .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
+                            .foregroundStyle(urgencyColor)
+                        Text(item.expiryStatus.displayName)
+                            .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
+                            .foregroundStyle(urgencyColor.opacity(0.75))
+                    }
                 }
 
-                Spacer()
+                // Action row
+                HStack(spacing: PSSpacing.sm) {
+                    ExpiryActionChip(icon: "fork.knife", title: String(localized: "Cook"), color: PSColors.primaryGreen) {
+                        onAction(.cook)
+                    }
+                    ExpiryActionChip(icon: "hand.raised.fill", title: String(localized: "Share"), color: PSColors.infoBlue) {
+                        onAction(.share)
+                    }
+                    ExpiryActionChip(icon: "heart.fill", title: String(localized: "Donate"), color: PSColors.accentTeal) {
+                        onAction(.donate)
+                    }
+                    Spacer()
+                    // Trash — smaller, destructive
+                    Button {
+                        onAction(.delete)
+                    } label: {
+                        Image(systemName: "trash")
+                            .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
+                            .foregroundStyle(PSColors.textTertiary)
+                            .frame(width: PSLayout.scaled(34), height: PSLayout.scaled(34))
+                            .background(PSColors.backgroundSecondary)
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                }
             }
-
-            HStack(spacing: PSSpacing.sm) {
-                ActionChip(icon: "fork.knife", title: String(localized: "Cook"), color: PSColors.primaryGreen) {
-                    onAction(.cook)
-                }
-                ActionChip(icon: "hand.raised", title: String(localized: "Share"), color: PSColors.infoBlue) {
-                    onAction(.share)
-                }
-                ActionChip(icon: "heart", title: String(localized: "Donate"), color: PSColors.accentTeal) {
-                    onAction(.donate)
-                }
-            }
+            .padding(PSSpacing.cardPadding)
         }
-        .padding(PSSpacing.cardPadding)
-        .background(PSColors.expiryBackground(for: item.expiryStatus))
-        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
-                .strokeBorder(PSColors.expiryColor(for: item.expiryStatus).opacity(0.2), lineWidth: 1)
-        }
+        .background(PSColors.surfaceCard)
+        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous)
+                .strokeBorder(urgencyColor.opacity(0.15), lineWidth: 1)
+        )
+        .shadow(color: urgencyColor.opacity(0.08), radius: 12, x: 0, y: 4)
+        .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
     }
 }
 
-struct ActionChip: View {
+// MARK: - Expiry Action Chip
+
+struct ExpiryActionChip: View {
     let icon: String
     let title: String
     let color: Color
@@ -256,16 +417,20 @@ struct ActionChip: View {
         Button(action: action) {
             HStack(spacing: PSSpacing.xxs) {
                 Image(systemName: icon)
-                    .font(.system(size: PSLayout.scaledFont(11), weight: .semibold))
+                    .font(.system(size: PSLayout.scaledFont(11), weight: .bold))
                 Text(title)
-                    .font(PSTypography.caption2Medium)
+                    .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
             }
             .padding(.horizontal, PSSpacing.md)
             .padding(.vertical, PSSpacing.sm)
             .foregroundStyle(color)
-            .background(color.opacity(0.12))
+            .background(color.opacity(0.10))
             .clipShape(Capsule())
+            .overlay(Capsule().strokeBorder(color.opacity(0.2), lineWidth: 1))
         }
         .buttonStyle(PressableButtonStyle())
     }
 }
+
+// MARK: - Backward Compat (ActionChip was used elsewhere)
+typealias ActionChip = ExpiryActionChip

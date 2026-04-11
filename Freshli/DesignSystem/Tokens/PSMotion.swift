@@ -17,15 +17,14 @@ enum FLMotion {
     static let tabTransition = Animation.spring(duration: 0.45, bounce: 0.2)
 
     // MARK: - Tab Slide & Scale Transition
-    /// Custom asymmetric transition for tab switching that feels organic
+    /// Jitter-free tab transition — subtle horizontal fade only.
+    /// Scale was removed: combining .scale with complex child layouts
+    /// triggers expensive re-layout passes that cause visible jitter,
+    /// especially when celebration overlays are in the hierarchy.
     static func tabSlideTransition(direction: TabSlideDirection) -> AnyTransition {
         .asymmetric(
-            insertion: .offset(x: direction == .forward ? 40 : -40)
-                .combined(with: .scale(scale: 0.94))
-                .combined(with: .opacity),
-            removal: .offset(x: direction == .forward ? -40 : 40)
-                .combined(with: .scale(scale: 0.94))
-                .combined(with: .opacity)
+            insertion: .offset(x: direction == .forward ? 20 : -20).combined(with: .opacity),
+            removal: .offset(x: direction == .forward ? -20 : 20).combined(with: .opacity)
         )
     }
 
