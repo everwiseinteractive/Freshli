@@ -87,12 +87,17 @@ struct FreshliDetailView: View {
 
     private var headerSection: some View {
         HStack(spacing: PSSpacing.lg) {
-            Image(systemName: item.category.icon)
-                .font(.system(size: PSLayout.scaledFont(28), weight: .semibold))
-                .foregroundStyle(PSColors.categoryColor(for: item.category))
-                .frame(width: PSLayout.scaled(60), height: PSLayout.scaled(60))
-                .background(PSColors.categoryColor(for: item.category).opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
+            FoodItemImage(
+                name: item.name,
+                category: item.category,
+                size: PSLayout.scaled(72),
+                cornerRadius: PSSpacing.radiusMd
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
+                    .strokeBorder(PSColors.categoryColor(for: item.category).opacity(0.22), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.08), radius: 6, y: 3)
 
             VStack(alignment: .leading, spacing: PSSpacing.xxs) {
                 Text(item.name)

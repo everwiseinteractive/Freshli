@@ -142,16 +142,18 @@ struct FreshliItemCell: View {
         .buttonStyle(GlassCellButtonStyle())
     }
 
-    // MARK: - Category Icon
+    // MARK: - Food Item Image
 
     private var categoryIcon: some View {
-        Text(category.emoji)
-            .font(.system(size: PSLayout.scaledFont(26)))
-            .frame(width: PSLayout.scaled(48), height: PSLayout.scaled(48))
-            .background(
-                Circle()
-                    .fill(PSColors.categoryColor(for: category).opacity(0.15))
-            )
+        FoodItemImage(
+            name: item.name,
+            category: category,
+            size: PSLayout.scaled(48)
+        )
+        .overlay(
+            Circle()
+                .strokeBorder(PSColors.categoryColor(for: category).opacity(0.25), lineWidth: 1)
+        )
     }
 
     // MARK: - Freshness Gauge

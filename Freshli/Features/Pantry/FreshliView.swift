@@ -578,13 +578,20 @@ struct FreshliView: View {
                 .padding(.leading, 12)
 
             HStack(spacing: PSSpacing.lg) {
-                // Category icon container
+                // Real food photograph — matched by item name
                 ZStack {
-                    RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
-                        .fill(PSColors.categoryColor(for: item.category).opacity(0.12))
-                        .frame(width: PSLayout.categoryIconSize, height: PSLayout.categoryIconSize)
-                    Text(item.category.emoji)
-                        .font(.system(size: PSLayout.scaledFont(28)))
+                    FoodItemImage(
+                        name: item.name,
+                        category: item.category,
+                        size: PSLayout.categoryIconSize,
+                        cornerRadius: PSSpacing.radiusLg
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
+                            .strokeBorder(PSColors.categoryColor(for: item.category).opacity(0.2), lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+
                     // Urgency dot
                     if item.expiryStatus != .fresh {
                         Circle()

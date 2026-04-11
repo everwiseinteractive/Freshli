@@ -128,16 +128,17 @@ enum PSLayout {
     }
 
     /// Featured/hero content height that adapts to screen height.
+    /// Capped at 280 pt to prevent the card from ever dominating the viewport.
     static var featuredHeight: CGFloat {
         let fraction: CGFloat
         if isUltraExpanded {
-            fraction = 0.36
-        } else if isCompact {
             fraction = 0.30
+        } else if isCompact {
+            fraction = 0.26
         } else {
-            fraction = 0.35
+            fraction = 0.28
         }
-        return (screenHeight * fraction).rounded()
+        return min((screenHeight * fraction).rounded(), 280)
     }
 
     // MARK: - Component Sizes
@@ -196,7 +197,9 @@ enum PSLayout {
         screenWidth < 390
     }
 
-    /// Bottom padding to clear the custom tab bar.
+    /// Extra bottom breathing room added inside scroll views so the last item
+    /// doesn't sit flush against the tab bar. The tab bar boundary itself is
+    /// handled by AppTabView's safeAreaInset modifier — this is aesthetic only.
     static var tabBarContentPadding: CGFloat {
         scaled(80)
     }

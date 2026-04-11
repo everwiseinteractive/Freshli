@@ -51,12 +51,16 @@ struct FoodItemCard: View {
     }
 
     private var categoryIcon: some View {
-        Image(systemName: item.category.icon)
-            .font(.system(size: compact ? 16 : 18, weight: .semibold))
-            .foregroundStyle(PSColors.categoryColor(for: item.category))
-            .frame(width: compact ? 36 : 42, height: compact ? 36 : 42)
-            .background(PSColors.categoryColor(for: item.category).opacity(0.12))
-            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusSm, style: .continuous))
+        FoodItemImage(
+            name: item.name,
+            category: item.category,
+            size: compact ? 36 : 42,
+            cornerRadius: PSSpacing.radiusSm
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: PSSpacing.radiusSm, style: .continuous)
+                .strokeBorder(PSColors.categoryColor(for: item.category).opacity(0.22), lineWidth: 1)
+        )
     }
 }
 
@@ -68,12 +72,16 @@ struct FoodItemCardCompact: View {
         Button { onTap?() } label: {
             VStack(alignment: .leading, spacing: PSSpacing.sm) {
                 HStack {
-                    Image(systemName: item.category.icon)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(PSColors.categoryColor(for: item.category))
-                        .frame(width: 28, height: 28)
-                        .background(PSColors.categoryColor(for: item.category).opacity(0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    FoodItemImage(
+                        name: item.name,
+                        category: item.category,
+                        size: 28,
+                        cornerRadius: 6
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .strokeBorder(PSColors.categoryColor(for: item.category).opacity(0.22), lineWidth: 1)
+                    )
 
                     Spacer()
 

@@ -119,7 +119,9 @@ struct OnboardingView: View {
                         .lineSpacing(4)
                         .minimumScaleFactor(0.85)
                         .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
+                .frame(maxWidth: .infinity)
                 .padding(.horizontal, PSLayout.formHorizontalPadding)
                 .id(currentStep) // triggers animation on step change
                 .transition(.asymmetric(

@@ -54,8 +54,9 @@ struct RecipeDetailView: View {
 
     private var heroImageSection: some View {
         ZStack(alignment: .bottomLeading) {
-            // Rich category-coloured food image
+            // Real food photography matched to the recipe title
             FoodCardImage(
+                title: recipe.title,
                 imageSystemName: recipe.imageSystemName,
                 height: PSLayout.scaled(220),
                 cornerRadius: 0

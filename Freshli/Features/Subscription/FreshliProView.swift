@@ -123,17 +123,20 @@ struct FreshliProView: View {
     // MARK: - Social Proof Strip
 
     private var socialProofStrip: some View {
-        HStack(spacing: PSSpacing.sm) {
-            // Stacked user avatars
-            HStack(spacing: -8) {
-                ForEach(
-                    [Color(hex: 0x22C55E), Color(hex: 0x3B82F6), Color(hex: 0xF59E0B), Color(hex: 0x8B5CF6)],
-                    id: \.self
-                ) { color in
-                    Circle()
-                        .fill(color)
-                        .frame(width: 26, height: 26)
-                        .overlay(Circle().strokeBorder(PSColors.backgroundPrimary, lineWidth: 2))
+        HStack(spacing: PSSpacing.md) {
+            // Stacked real user avatars — photography from Unsplash
+            HStack(spacing: -10) {
+                ForEach(["avatar_1", "avatar_2", "avatar_3", "avatar_4"], id: \.self) { name in
+                    Image(name)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 30, height: 30)
+                        .clipShape(Circle())
+                        .overlay(
+                            Circle()
+                                .strokeBorder(PSColors.backgroundPrimary, lineWidth: 2.5)
+                        )
+                        .shadow(color: .black.opacity(0.08), radius: 2, y: 1)
                 }
             }
 

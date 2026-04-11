@@ -489,6 +489,7 @@ struct HomeView: View {
                 } label: {
                     ZStack(alignment: .bottomLeading) {
                         FoodCardImage(
+                            title: recipe.title,
                             imageSystemName: recipe.imageSystemName,
                             height: PSLayout.cardImageHeight,
                             cornerRadius: PSSpacing.radiusXl
@@ -819,11 +820,16 @@ private struct ExpiringItemPill: View {
         NavigationLink(destination: FreshliDetailView(item: item)) {
             VStack(spacing: PSSpacing.sm) {
                 ZStack(alignment: .topTrailing) {
-                    Text(item.category.emoji)
-                        .font(.system(size: PSLayout.scaledFont(30)))
-                        .frame(width: PSLayout.emojiCircleSize, height: PSLayout.emojiCircleSize)
-                        .background(urgencyColor.opacity(0.12))
-                        .clipShape(Circle())
+                    FoodItemImage(
+                        name: item.name,
+                        category: item.category,
+                        size: PSLayout.emojiCircleSize
+                    )
+                    .overlay(
+                        Circle()
+                            .strokeBorder(urgencyColor.opacity(0.25), lineWidth: 1.5)
+                    )
+                    .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
 
                     Circle()
                         .fill(urgencyColor)
