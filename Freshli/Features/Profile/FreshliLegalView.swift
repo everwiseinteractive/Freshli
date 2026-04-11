@@ -145,7 +145,7 @@ struct FreshliAboutView: View {
                 .foregroundStyle(PSColors.textSecondary)
                 .multilineTextAlignment(.center)
 
-            Text("© \(Calendar.current.component(.year, from: Date())) Freshli. All rights reserved.")
+            Text(verbatim: "© \(String(Calendar.current.component(.year, from: Date()))) Freshli. All rights reserved.")
                 .font(.system(size: PSLayout.scaledFont(11)))
                 .foregroundStyle(PSColors.textTertiary)
                 .multilineTextAlignment(.center)
@@ -160,7 +160,7 @@ struct FreshliPrivacyPolicyView: View {
     var body: some View {
         FreshliLegalDocumentView(
             title: "Privacy Policy",
-            lastUpdated: "January 2025",
+            lastUpdated: "April 2026",
             icon: "hand.raised.fill",
             iconColor: Color(hex: 0x6366F1),
             sections: [
@@ -170,19 +170,31 @@ struct FreshliPrivacyPolicyView: View {
                 ),
                 LegalSection(
                     heading: "Information We Collect",
-                    body: "• Pantry data you enter (food items, quantities, expiry dates)\n• Account information if you create an account (name, email)\n• Usage analytics to improve the app experience\n• Device identifiers for crash reporting\n\nWe do NOT collect your location beyond what you explicitly provide for community features."
+                    body: "• Pantry data you enter (food items, quantities, expiry dates, photos)\n• Account information if you create an account (name, email)\n• Usage analytics to improve the app experience\n• Device identifiers for crash reporting\n• Bin Log entries (why food was discarded) for personalised Trash Analytics\n• Rescue streak and Hero Tier progress stored on-device\n\nWe do NOT collect your precise location. Community features use only the approximate area you explicitly share."
                 ),
                 LegalSection(
                     heading: "How We Use Your Data",
-                    body: "Your pantry data powers your personalized expiry alerts, recipe suggestions, and impact statistics. We use anonymised usage analytics to understand which features are helpful. We never use your personal food data for advertising."
+                    body: "Your pantry data powers your personalised expiry alerts, Smart Shopping predictions, recipe suggestions, and impact statistics. We use anonymised usage analytics to understand which features are helpful. We never use your personal food data for advertising, profiling, or sale."
                 ),
                 LegalSection(
                     heading: "Data Storage & Security",
-                    body: "Your data is stored locally on your device using SwiftData, and optionally synced to our secure Supabase cloud backend. All data in transit is encrypted with TLS 1.3. Cloud data is encrypted at rest."
+                    body: "Your data is stored locally on your device using SwiftData, and optionally synced to our secure Supabase cloud backend. All data in transit is encrypted with TLS 1.3. Cloud data is encrypted at rest. Your Karma Credit balance, Rescue Streak, Bin Log, and Zero Waste Points are stored on-device and never leave your phone unless you explicitly enable iCloud sync."
+                ),
+                LegalSection(
+                    heading: "Community Features & Local Pods",
+                    body: "When you join a Verified Pod (apartment building, office, street) or post a listing to the Community Marketplace, your display name and listing details become visible to other members of that pod. You choose exactly what to share and can remove listings at any time. Ingredient Ping requests are broadcast only to pods you have explicitly joined."
+                ),
+                LegalSection(
+                    heading: "Retailer & Loyalty Integrations",
+                    body: "If you connect a supermarket loyalty account (Tesco, Sainsbury's, Whole Foods, etc.), Freshli receives read-only access to your recent purchase history solely to auto-populate your pantry. We never see your payment details, and you can disconnect any retailer at any time from Profile → Connect Supermarket. Retailer data is processed on-device and is not sold."
+                ),
+                LegalSection(
+                    heading: "Anonymised Council Impact Reports",
+                    body: "Council Impact Reports aggregate waste data at the postcode level. Sharing this data with local councils is strictly opt-in and is fully anonymised — no individual households, names, or device identifiers are ever included. You can disable data sharing from Profile → Discover → Council Report at any time."
                 ),
                 LegalSection(
                     heading: "Sharing With Third Parties",
-                    body: "We do not sell, trade, or transfer your personal information to outside parties. We may share anonymised, aggregated data (e.g. \"Freshli users collectively saved X tonnes of food\") with environmental partners."
+                    body: "We do not sell, trade, or transfer your personal information to outside parties. We may share anonymised, aggregated data (e.g. \"Freshli users collectively saved X tonnes of food\") with environmental partners, councils, and researchers."
                 ),
                 LegalSection(
                     heading: "Your Rights",
@@ -211,7 +223,7 @@ struct FreshliTermsView: View {
     var body: some View {
         FreshliLegalDocumentView(
             title: "Terms of Service",
-            lastUpdated: "January 2025",
+            lastUpdated: "April 2026",
             icon: "doc.text.fill",
             iconColor: PSColors.accentTeal,
             sections: [
@@ -224,12 +236,24 @@ struct FreshliTermsView: View {
                     body: "You are responsible for maintaining the security of your account credentials. You may not use Freshli for any illegal or unauthorized purpose. One account per person — multiple accounts are prohibited."
                 ),
                 LegalSection(
-                    heading: "Community Sharing Rules",
-                    body: "When sharing food with the community:\n• Only share food that is safe, properly stored, and accurately described\n• Do not share food you know to be expired, contaminated, or misrepresented\n• Be honest about allergen information\n• You are responsible for the safety of food you share\n\nFreshli is not liable for food shared between community members."
+                    heading: "Community Sharing & Verified Pods",
+                    body: "When sharing food with the community or a Verified Pod (building, office, street):\n• Only share food that is safe, properly stored, and accurately described\n• Do not share food you know to be expired, contaminated, or misrepresented\n• Be honest about allergen information and ingredient sources\n• You are responsible for the safety of food you share\n• Verified Pods are community-created; Freshli verifies buildings but does not supervise interactions between members\n\nFreshli is not liable for food shared between community members or exchanged between pod members."
+                ),
+                LegalSection(
+                    heading: "Karma Credits & Zero Waste Points",
+                    body: "Karma Credits and Zero Waste Points are in-app tokens with no monetary value. They cannot be exchanged for cash, transferred between accounts, or redeemed outside the Freshli app. We reserve the right to adjust point balances to correct errors or address abuse. Rewards redeemed at partner retailers (Tesco, Sainsbury's, Whole Foods, etc.) are subject to those retailers' own terms."
+                ),
+                LegalSection(
+                    heading: "Retailer Loyalty Integrations",
+                    body: "When you connect a supermarket loyalty program, you authorise Freshli to receive read-only access to your purchase history for the purpose of auto-populating your pantry. Freshli is not affiliated with, endorsed by, or responsible for the products, pricing, availability, or actions of any connected retailer. You can disconnect any retailer at any time."
                 ),
                 LegalSection(
                     heading: "Prohibited Conduct",
-                    body: "You agree not to:\n• Impersonate other users or create fake accounts\n• Post false or misleading food information\n• Attempt to reverse-engineer or hack the app\n• Use Freshli for commercial food selling (community sharing only)\n• Violate any applicable local food safety laws"
+                    body: "You agree not to:\n• Impersonate other users or create fake accounts\n• Post false or misleading food information\n• Attempt to reverse-engineer or hack the app\n• Use Freshli for commercial food selling (community sharing only)\n• Abuse the Karma Credit or Ingredient Ping system with fraudulent requests\n• Violate any applicable local food safety laws"
+                ),
+                LegalSection(
+                    heading: "Experimental Features",
+                    body: "Some features (marked BETA, including AR Pantry Scanner and Voice Cooking Mode) are early previews. They may change, break, or be removed without notice. Do not rely on experimental features for critical decisions around food safety."
                 ),
                 LegalSection(
                     heading: "Intellectual Property",
@@ -237,15 +261,15 @@ struct FreshliTermsView: View {
                 ),
                 LegalSection(
                     heading: "Disclaimer of Warranties",
-                    body: "Freshli is provided \"as is\" without warranty of any kind. We do not warrant that the app will be uninterrupted or error-free. Recipe and nutritional information is provided for general guidance only."
+                    body: "Freshli is provided \"as is\" without warranty of any kind. We do not warrant that the app will be uninterrupted or error-free. Recipe, preservation, and nutritional information is provided for general guidance only and is not a substitute for professional food safety advice."
                 ),
                 LegalSection(
                     heading: "Limitation of Liability",
-                    body: "To the maximum extent permitted by law, Freshli shall not be liable for any indirect, incidental, or consequential damages arising from your use of the app or community features."
+                    body: "To the maximum extent permitted by law, Freshli shall not be liable for any indirect, incidental, or consequential damages arising from your use of the app, community features, pod interactions, or retailer integrations."
                 ),
                 LegalSection(
                     heading: "Termination",
-                    body: "We may suspend or terminate your account if you violate these terms. You may delete your account at any time from the Profile screen. Upon termination, your community listings will be removed."
+                    body: "We may suspend or terminate your account if you violate these terms. You may delete your account at any time from the Profile screen. Upon termination, your community listings will be removed and any remaining Karma Credits or Zero Waste Points will be forfeited."
                 ),
                 LegalSection(
                     heading: "Contact",

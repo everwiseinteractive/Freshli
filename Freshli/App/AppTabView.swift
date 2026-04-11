@@ -39,6 +39,7 @@ struct AppTabView: View {
     @State private var selectedTab: AppTab = .home
     @State private var previousTab: AppTab = .home
     @State private var showAddItem = false
+    @State private var tabBarVisibility = TabBarVisibilityService.shared
     @Environment(\.modelContext) private var modelContext
     @Environment(CelebrationManager.self) private var celebrationManager
     @Environment(AuthManager.self) private var authManager
@@ -60,30 +61,27 @@ struct AppTabView: View {
         Group {
             switch selectedTab {
             case .home:
-                NavigationStack {
-                    HomeView(showAddItem: $showAddItem, switchToTab: { switchTab(to: $0) })
+                chromedTab {
+                    NavigationStack {
+                        HomeView(showAddItem: $showAddItem, switchToTab: { switchTab(to: $0) })
+                    }
                 }
-                // safeAreaInset is applied to EACH NavigationStack individually.
-                // Applying it to the outer Group is insufficient — NavigationStack
-                // intercepts safe area propagation on real devices, so child views
-                // (ScrollViews, ZStack FABs) would not see the correct inset.
-                .safeAreaInset(edge: .bottom, spacing: 0) { floatingTabBar }
-
             case .pantry:
-                NavigationStack { FreshliView(showAddItem: $showAddItem) }
-                    .safeAreaInset(edge: .bottom, spacing: 0) { floatingTabBar }
-
+                chromedTab {
+                    NavigationStack { FreshliView(showAddItem: $showAddItem) }
+                }
             case .recipes:
-                NavigationStack { RecipesView() }
-                    .safeAreaInset(edge: .bottom, spacing: 0) { floatingTabBar }
-
+                chromedTab {
+                    NavigationStack { RecipesView() }
+                }
             case .community:
-                NavigationStack { CommunityView() }
-                    .safeAreaInset(edge: .bottom, spacing: 0) { floatingTabBar }
-
+                chromedTab {
+                    NavigationStack { CommunityView() }
+                }
             case .profile:
-                NavigationStack { ProfileView() }
-                    .safeAreaInset(edge: .bottom, spacing: 0) { floatingTabBar }
+                chromedTab {
+                    NavigationStack { ProfileView() }
+                }
             }
         }
         .transition(FLMotion.tabSlideTransition(direction: slideDirection))
@@ -111,7 +109,112 @@ struct AppTabView: View {
     private func switchTab(to tab: AppTab) {
         guard tab != selectedTab else { return }
         previousTab = selectedTab
+        // Every tab switch resets the bar to visible — users always land in
+        // a fully-chromed state on the new tab.
+        tabBarVisibility.resetImmediate()
         withAnimation(FLMotion.tabTransition) { selectedTab = tab }
+    }
+
+    // MARK: - Chromed Tab Wrapper
+    // Wraps a destination (usually a NavigationStack) with:
+    //   1. Scroll-direction tracking that drives TabBarVisibilityService
+    //   2. A bottom safeAreaInset hosting the animated tab bar area
+    //
+    // safeAreaInset is applied to EACH destination individually because
+    // NavigationStack intercepts safe area propagation on device, so child
+    // views wouldn't see the correct inset if applied higher up.
+
+    @ViewBuilder
+    private func chromedTab<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        content()
+            .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                geometry.contentOffset.y
+            } action: { oldValue, newValue in
+                tabBarVisibility.trackScroll(oldOffset: oldValue, newOffset: newValue)
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) { tabBarArea }
+    }
+
+    // MARK: - Tab Bar Area (Animated Container)
+    // A fixed-height container that cross-fades between the full floating
+    // tab bar and a compact "scroll up for menu" prompt. Keeping the height
+    // constant means content below never reflows — only the visual chrome
+    // morphs — which is what gives the transition its Apple-award smoothness.
+
+    private var tabBarArea: some View {
+        let visible = tabBarVisibility.isVisible
+        return ZStack {
+            // Full floating tab bar — slides down & fades out when hiding.
+            floatingTabBar
+                .opacity(visible ? 1 : 0)
+                .offset(y: visible ? 0 : 110)
+                .scaleEffect(visible ? 1 : 0.96, anchor: .bottom)
+                .blur(radius: visible ? 0 : 4)
+                .animation(.spring(response: 0.48, dampingFraction: 0.86), value: visible)
+                .allowsHitTesting(visible)
+
+            // Compact scroll-up prompt — drops in from above as the bar exits.
+            scrollUpPrompt
+                .opacity(visible ? 0 : 1)
+                .offset(y: visible ? 32 : 0)
+                .scaleEffect(visible ? 0.92 : 1, anchor: .bottom)
+                .animation(
+                    .spring(response: 0.55, dampingFraction: 0.82)
+                        .delay(visible ? 0 : 0.06),
+                    value: visible
+                )
+                .allowsHitTesting(!visible)
+        }
+        .frame(height: PSLayout.scaled(88))
+    }
+
+    // MARK: - Scroll Up Prompt
+    // A low-profile pill positioned where the iPhone home indicator lives.
+    // Subtle enough to stay out of the user's way, but always one tap or
+    // one upward flick away from bringing the full menu back.
+
+    private var scrollUpPrompt: some View {
+        Button {
+            PSHaptics.shared.lightTap()
+            tabBarVisibility.show()
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "chevron.up")
+                    .font(.system(size: PSLayout.scaledFont(11), weight: .bold))
+                    .symbolEffect(.bounce, options: .repeat(.periodic(delay: 2.4)))
+                Text(String(localized: "Scroll up for menu"))
+                    .font(.system(size: PSLayout.scaledFont(12), weight: .semibold, design: .rounded))
+                    .fixedSize()
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background {
+                Capsule()
+                    .fill(.ultraThinMaterial)
+                    .environment(\.colorScheme, .dark)
+                    .overlay(
+                        Capsule()
+                            .fill(Color(hex: 0x0C1A10).opacity(0.85))
+                    )
+                    .overlay(
+                        Capsule()
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [.white.opacity(0.14), .white.opacity(0.03)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    )
+            }
+            .shadow(color: .black.opacity(0.28), radius: 16, x: 0, y: 6)
+            .shadow(color: PSColors.primaryGreen.opacity(0.08), radius: 4, x: 0, y: 2)
+        }
+        .buttonStyle(PressableButtonStyle())
+        .frame(maxWidth: .infinity, alignment: .center)
+        .padding(.bottom, 16)
     }
 
     // MARK: - Floating Tab Bar
