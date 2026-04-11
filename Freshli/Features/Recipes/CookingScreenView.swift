@@ -73,6 +73,44 @@ enum VoiceType: String, CaseIterable, Identifiable {
         case .energetic: return 0.95
         }
     }
+
+    /// Resolves the richest available system voice for this type.
+    /// Tries premium → enhanced → standard so users with downloaded
+    /// high-quality voices automatically get the best experience.
+    func makeVoice() -> AVSpeechSynthesisVoice? {
+        let candidates: [String]
+        switch self {
+        case .warm:
+            candidates = [
+                "com.apple.voice.premium.en-US.Zoe",
+                "com.apple.voice.premium.en-US.Aria",
+                "com.apple.ttsbundle.Samantha-premium",
+                "com.apple.voice.enhanced.en-US.samantha",
+            ]
+        case .classic:
+            candidates = [
+                "com.apple.ttsbundle.Samantha-premium",
+                "com.apple.voice.enhanced.en-US.samantha",
+                "com.apple.voice.premium.en-US.Nicky",
+            ]
+        case .british:
+            candidates = [
+                "com.apple.voice.premium.en-GB.Daniel",
+                "com.apple.ttsbundle.Daniel-premium",
+                "com.apple.voice.enhanced.en-GB.daniel",
+            ]
+        case .energetic:
+            candidates = [
+                "com.apple.voice.premium.en-AU.Karen",
+                "com.apple.ttsbundle.Karen-premium",
+                "com.apple.voice.enhanced.en-AU.karen",
+            ]
+        }
+        for id in candidates {
+            if let v = AVSpeechSynthesisVoice(identifier: id) { return v }
+        }
+        return AVSpeechSynthesisVoice(language: languageCode)
+    }
 }
 
 // MARK: - CookingScreenView
@@ -819,12 +857,13 @@ struct CookingScreenView: View {
                                     withAnimation(PSMotion.springDefault) {
                                         selectedVoiceType = voiceType
                                     }
-                                    // Preview selected voice
-                                    let preview = AVSpeechUtterance(string: "Hello! I'm ready to help you cook.")
-                                    preview.voice = AVSpeechSynthesisVoice(language: voiceType.languageCode)
-                                    preview.rate = voiceType.rate
+                                    // Live preview — uses the best available voice for this type
+                                    let preview = AVSpeechUtterance(string: "Hello! Ready to cook something amazing?")
+                                    preview.voice           = voiceType.makeVoice()
+                                    preview.rate            = voiceType.rate
                                     preview.pitchMultiplier = voiceType.pitch
-                                    preview.volume = voiceType.volume
+                                    preview.volume          = voiceType.volume
+                                    preview.preUtteranceDelay = 0.15
                                     speechSynthesizer.stopSpeaking(at: .immediate)
                                     speechSynthesizer.speak(preview)
                                 } label: {
@@ -1146,26 +1185,81 @@ struct CookingScreenView: View {
 
     // MARK: - Voice Chef
 
+    /// Speaks a step using the selected voice type.
+    ///
+    /// Text is broken at natural clause boundaries (commas, colons, dashes) and
+    /// each piece is queued as a **separate** `AVSpeechUtterance` with its own
+    /// micro-pause. The synthesis engine then plays them back-to-back, producing
+    /// authentic human-like phrasing instead of a flat robotic stream.
+    ///
+    /// A cyclic ±2 % rate nudge per chunk further breaks the monotone pattern.
     private func speakStep(_ text: String) {
         guard voiceEnabled else { return }
         speechSynthesizer.stopSpeaking(at: .immediate)
-        let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = AVSpeechSynthesisVoice(language: selectedVoiceType.languageCode)
-        utterance.rate = selectedVoiceType.rate
-        utterance.pitchMultiplier = selectedVoiceType.pitch
-        utterance.volume = selectedVoiceType.volume
-        // Natural pause before speaking for more human feel
-        utterance.preUtteranceDelay = 0.25
-        utterance.postUtteranceDelay = 0.15
-        speechSynthesizer.speak(utterance)
+
+        let chunks = humanChunks(from: text)
+        let resolvedVoice = selectedVoiceType.makeVoice()
+        // Rate nudge cycle: slight variation makes each clause feel more natural
+        let nudgeCycle: [Float] = [0.00, 0.020, -0.015, 0.010, -0.020]
+        var estimatedDuration: TimeInterval = 0
+
+        for (i, chunk) in chunks.enumerated() {
+            let u = AVSpeechUtterance(string: chunk)
+            u.voice           = resolvedVoice
+            u.rate            = max(AVSpeechUtteranceMinimumSpeechRate,
+                                    min(AVSpeechUtteranceMaximumSpeechRate,
+                                        selectedVoiceType.rate + nudgeCycle[i % nudgeCycle.count]))
+            u.pitchMultiplier = selectedVoiceType.pitch
+            u.volume          = selectedVoiceType.volume
+            // First chunk: longer breath-in pause; subsequent: short clause gap
+            u.preUtteranceDelay  = i == 0 ? 0.22 : 0.07
+            u.postUtteranceDelay = i == chunks.count - 1 ? 0.30 : 0.09
+            speechSynthesizer.speak(u)
+
+            let words = Double(chunk.split(separator: " ").count)
+            let wps   = 2.8 * Double(u.rate / AVSpeechUtteranceDefaultSpeechRate)
+            estimatedDuration += (words / wps)
+                + Double(u.preUtteranceDelay)
+                + Double(u.postUtteranceDelay)
+        }
+
         withAnimation { isSpeaking = true }
-        let wordsPerSecond = 2.5 * Double(selectedVoiceType.rate / AVSpeechUtteranceDefaultSpeechRate)
-        let wordCount = text.split(separator: " ").count
-        let duration = Double(wordCount) / wordsPerSecond
         Task {
-            try? await Task.sleep(for: .seconds(duration + 0.8))
+            try? await Task.sleep(for: .seconds(estimatedDuration + 0.7))
             await MainActor.run { withAnimation { isSpeaking = false } }
         }
+    }
+
+    /// Splits text at punctuation-based clause boundaries so each piece
+    /// becomes its own utterance, giving the Voice Chef natural human rhythm.
+    ///
+    /// Very short trailing fragments (≤2 words) are merged back into their
+    /// predecessor to avoid awkward micro-clips.
+    private func humanChunks(from text: String) -> [String] {
+        var raw: [String] = []
+        var current = ""
+
+        for ch in text {
+            current.append(ch)
+            if ",.;:—–".contains(ch) {
+                let t = current.trimmingCharacters(in: .whitespaces)
+                if !t.isEmpty { raw.append(t) }
+                current = ""
+            }
+        }
+        let tail = current.trimmingCharacters(in: .whitespaces)
+        if !tail.isEmpty { raw.append(tail) }
+
+        // Merge orphaned short fragments into the previous chunk
+        var merged: [String] = []
+        for chunk in raw {
+            if chunk.split(separator: " ").count <= 2, !merged.isEmpty {
+                merged[merged.count - 1] += " " + chunk
+            } else {
+                merged.append(chunk)
+            }
+        }
+        return merged.isEmpty ? [text] : merged
     }
 
     /// Wraps a raw step string with natural, contextual phrasing so the Voice Chef

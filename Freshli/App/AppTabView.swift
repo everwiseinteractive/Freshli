@@ -1,9 +1,7 @@
 import SwiftUI
 import SwiftData
 
-// Figma: 4 tabs — Home, Pantry (Apple icon), Recipes (Utensils), Community (Users)
-// backdrop-blur-xl, active tab has bg-green-100 rounded-2xl with layoutId
-// icon size 24, text-[10px], active text-green-600, inactive text-neutral-400
+// MARK: - App Tab
 
 enum AppTab: String, CaseIterable, Identifiable {
     case home
@@ -16,24 +14,26 @@ enum AppTab: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .home: return String(localized: "Home")
-        case .pantry: return String(localized: "Pantry")
-        case .recipes: return String(localized: "Recipes")
+        case .home:      return String(localized: "Home")
+        case .pantry:    return String(localized: "Pantry")
+        case .recipes:   return String(localized: "Recipes")
         case .community: return String(localized: "Community")
-        case .profile: return String(localized: "Profile")
+        case .profile:   return String(localized: "Profile")
         }
     }
 
     var icon: String {
         switch self {
-        case .home: return "house.fill"
-        case .pantry: return "refrigerator.fill" // Figma: pantry/refrigerator icon
-        case .recipes: return "fork.knife"        // Figma: Utensils
-        case .community: return "person.2.fill"  // Figma: Users
-        case .profile: return "person.fill"      // Figma: Profile
+        case .home:      return "house.fill"
+        case .pantry:    return "refrigerator.fill"
+        case .recipes:   return "fork.knife"
+        case .community: return "person.2.fill"
+        case .profile:   return "person.fill"
         }
     }
 }
+
+// MARK: - App Tab View
 
 struct AppTabView: View {
     @State private var selectedTab: AppTab = .home
@@ -46,20 +46,17 @@ struct AppTabView: View {
 
     @Namespace private var tabNamespace
 
-    /// Determines the slide direction based on tab order for organic transition
+    // Main tabs live inside the floating pill; Profile gets its own circle.
+    private var mainTabs: [AppTab] { [.home, .pantry, .recipes, .community] }
+
     private var slideDirection: FLMotion.TabSlideDirection {
-        let allTabs = AppTab.allCases
-        let currentIndex = allTabs.firstIndex(of: selectedTab) ?? 0
-        let previousIndex = allTabs.firstIndex(of: previousTab) ?? 0
-        return currentIndex >= previousIndex ? .forward : .backward
+        let all = AppTab.allCases
+        let cur = all.firstIndex(of: selectedTab) ?? 0
+        let prv = all.firstIndex(of: previousTab) ?? 0
+        return cur >= prv ? .forward : .backward
     }
 
     var body: some View {
-        // Using safeAreaInset instead of ZStack + explicit padding so the tab bar
-        // properly adjusts the safe area for ALL child views (NavigationStack, ScrollView,
-        // List) on every device — including the 34 pt home indicator on modern iPhones.
-        // The old ZStack + PSLayout.tabBarContentPadding approach undershot by ~30 pt on
-        // Face ID devices because tabBarContentPadding was width-scaled (not height-aware).
         Group {
             switch selectedTab {
             case .home:
@@ -67,112 +64,216 @@ struct AppTabView: View {
                     HomeView(showAddItem: $showAddItem, switchToTab: { switchTab(to: $0) })
                 }
             case .pantry:
-                NavigationStack {
-                    FreshliView(showAddItem: $showAddItem)
-                }
+                NavigationStack { FreshliView(showAddItem: $showAddItem) }
             case .recipes:
-                NavigationStack {
-                    RecipesView()
-                }
+                NavigationStack { RecipesView() }
             case .community:
-                NavigationStack {
-                    CommunityView()
-                }
+                NavigationStack { CommunityView() }
             case .profile:
-                NavigationStack {
-                    ProfileView()
-                }
+                NavigationStack { ProfileView() }
             }
         }
         .transition(FLMotion.tabSlideTransition(direction: slideDirection))
         .id(selectedTab)
+        // safeAreaInset correctly adjusts the scroll/navigation safe area for ALL
+        // child views — the floating bar is the inset view so content never hides beneath it.
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            customTabBar
+            floatingTabBar
         }
         .ignoresSafeArea(.keyboard)
-        // SensoryFeedback (.selection) on tab change — tactile click between tabs
         .sensoryFeedback(.selection, trigger: selectedTab)
         .sheet(isPresented: $showAddItem) {
-            NavigationStack {
-                AddItemView()
-            }
-            .presentationDragIndicator(.visible)
+            NavigationStack { AddItemView() }
+                .presentationDragIndicator(.visible)
         }
         .task {
             seedDataIfNeeded()
-            // Check for weekly recap celebration
             await celebrationManager.checkWeeklyRecap(modelContext: modelContext)
-
-            // Perform initial sync if authenticated
             if let userId = authManager.currentUserId {
                 await syncService.performFullSync(userId: userId, modelContext: modelContext)
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
-            // Update widget data when app goes to background — uses the scene's ModelContext,
-            // not a second container (which would cause a SwiftData schema conflict crash).
             WidgetDataService.updateWidgetData(modelContext: modelContext)
         }
     }
 
-    /// Switches tab with direction tracking for organic slide + scale transition
+    // MARK: - Tab Switching
+
     private func switchTab(to tab: AppTab) {
         guard tab != selectedTab else { return }
         previousTab = selectedTab
-        withAnimation(FLMotion.tabTransition) {
-            selectedTab = tab
-        }
+        withAnimation(FLMotion.tabTransition) { selectedTab = tab }
     }
 
-    // Figma: iOS-style bottom navigation
-    // The background Rectangle uses .ignoresSafeArea(edges: .bottom) so the
-    // ultraThinMaterial fills all the way to the physical screen edge (under
-    // the home indicator), while the tab buttons themselves sit above it.
-    private var customTabBar: some View {
-        HStack {
-            ForEach(AppTab.allCases) { tab in
-                Button {
-                    switchTab(to: tab)
-                } label: {
-                    VStack(spacing: PSSpacing.xxs) {
-                        Image(systemName: tab.icon)
-                            .font(.system(size: PSLayout.scaledFont(24), weight: selectedTab == tab ? .semibold : .regular))
-                            .foregroundStyle(selectedTab == tab ? PSColors.primaryGreen : PSColors.textTertiary)
-                            // Subtle scale pulse on active icon
-                            .scaleEffect(selectedTab == tab ? 1.08 : 1.0)
-                            .animation(FLMotion.freshliCurve, value: selectedTab)
+    // MARK: - Floating Tab Bar
+    //
+    // Design:  [  pill: home | pantry | recipes | community  ]  [● profile]
+    //
+    // The pill uses a dark frosted-glass capsule so content bleeds through at
+    // its edges, giving the bar its "floating" feel.  The active tab expands
+    // to show an icon + label inside a green gradient capsule; inactive tabs
+    // display only their icon at reduced opacity.  The profile button is a
+    // separate circle that pulses green when active.
 
-                        Text(tab.title)
-                            .font(.system(size: PSLayout.scaledFont(10), weight: .medium))
-                            .foregroundStyle(selectedTab == tab ? PSColors.primaryGreen : PSColors.textTertiary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, PSSpacing.sm)
-                    // Figma: bg-green-100 dark:bg-green-900/30 rounded-2xl layoutId="activeTab"
-                    .background {
-                        if selectedTab == tab {
-                            RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
-                                .fill(PSColors.green100)
-                                .matchedGeometryEffect(id: "activeTab", in: tabNamespace)
-                        }
-                    }
+    private var floatingTabBar: some View {
+        HStack(alignment: .center, spacing: 10) {
+
+            // ── Main pill ──────────────────────────────────────────────────
+            HStack(spacing: 0) {
+                ForEach(mainTabs, id: \.self) { tab in
+                    pillTabItem(for: tab)
+                }
+            }
+            .padding(5)
+            .background { pillBackground }
+            .shadow(color: .black.opacity(0.32), radius: 22, x: 0, y: 10)
+            .shadow(color: PSColors.primaryGreen.opacity(0.10), radius: 6, x: 0, y: 2)
+
+            // ── Profile circle ─────────────────────────────────────────────
+            profileCircle
+        }
+        .padding(.horizontal, 18)
+        .padding(.bottom, 14)     // floats above the home indicator
+        .frame(maxWidth: .infinity)
+        // Transparent: content is visible through the bar edges
+        .background(.clear)
+    }
+
+    // MARK: - Pill Tab Item
+
+    @ViewBuilder
+    private func pillTabItem(for tab: AppTab) -> some View {
+        let active = selectedTab == tab
+
+        Button { switchTab(to: tab) } label: {
+            HStack(spacing: active ? 6 : 0) {
+                Image(systemName: tab.icon)
+                    .font(.system(
+                        size: PSLayout.scaledFont(active ? 16 : 20),
+                        weight: .semibold
+                    ))
+                    .foregroundStyle(active ? .white : .white.opacity(0.38))
+                    // Fixed-width frame keeps inactive icons centred without layout jumping
+                    .frame(width: active ? nil : PSLayout.scaled(44))
+
+                if active {
+                    Text(tab.title)
+                        .font(.system(
+                            size: PSLayout.scaledFont(14),
+                            weight: .bold,
+                            design: .rounded
+                        ))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .fixedSize()
+                        // Slide + fade the label in/out as tabs switch
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .scale(scale: 0.82, anchor: .leading)),
+                            removal:   .opacity.combined(with: .scale(scale: 0.82, anchor: .trailing))
+                        ))
+                }
+            }
+            .frame(height: PSLayout.scaled(46))
+            .padding(.horizontal, active ? PSSpacing.md : 0)
+            .background {
+                if active {
+                    // Green gradient capsule slides between tabs via matchedGeometryEffect
+                    Capsule()
+                        .fill(
+                            LinearGradient(
+                                colors: [PSColors.primaryGreen, Color(hex: 0x16A34A)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .shadow(color: PSColors.primaryGreen.opacity(0.55), radius: 10, y: 4)
+                        .matchedGeometryEffect(id: "activeTabCapsule", in: tabNamespace)
                 }
             }
         }
-        .padding(.horizontal, PSSpacing.lg)
-        .padding(.top, PSSpacing.sm)
-        .padding(.bottom, PSSpacing.md)
-        .background {
-            // Fill the material all the way to the screen edge (under home indicator)
-            // without affecting the layout of the tab buttons above.
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .ignoresSafeArea(edges: .bottom)
-                .overlay(alignment: .top) {
-                    Divider().opacity(0.5)
-                }
-        }
+        .buttonStyle(PressableButtonStyle())
+        .animation(FLMotion.freshliCurve, value: selectedTab)
     }
+
+    // MARK: - Pill Background
+
+    private var pillBackground: some View {
+        Capsule()
+            // Dark frosted glass: ultraThinMaterial tinted dark-forest green
+            .fill(.ultraThinMaterial)
+            .environment(\.colorScheme, .dark)
+            .overlay(
+                Capsule()
+                    .fill(Color(hex: 0x0C1A10).opacity(0.90))
+            )
+            .overlay(
+                Capsule()
+                    .strokeBorder(
+                        // Subtle top-to-bottom gradient border gives depth
+                        LinearGradient(
+                            colors: [.white.opacity(0.16), .white.opacity(0.04)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
+    }
+
+    // MARK: - Profile Circle
+
+    private var profileCircle: some View {
+        let active = selectedTab == .profile
+
+        return Button { switchTab(to: .profile) } label: {
+            ZStack {
+                // Background: green gradient when active, dark when inactive
+                Circle()
+                    .fill(
+                        active
+                        ? LinearGradient(
+                            colors: [PSColors.primaryGreen, Color(hex: 0x059652)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                          )
+                        : LinearGradient(
+                            colors: [Color(hex: 0x1A2D1E), Color(hex: 0x111C14)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                          )
+                    )
+                    // Border: green glow when active, whisper-white when inactive
+                    .overlay(
+                        Circle()
+                            .strokeBorder(
+                                active
+                                    ? PSColors.primaryGreen.opacity(0.45)
+                                    : .white.opacity(0.09),
+                                lineWidth: 1.5
+                            )
+                    )
+                    .shadow(
+                        color: active
+                            ? PSColors.primaryGreen.opacity(0.55)
+                            : .black.opacity(0.28),
+                        radius: active ? 14 : 8,
+                        y: 4
+                    )
+
+                Image(systemName: "person.fill")
+                    .font(.system(size: PSLayout.scaledFont(20), weight: .semibold))
+                    .foregroundStyle(.white.opacity(active ? 1.0 : 0.58))
+            }
+            .frame(width: PSLayout.scaled(56), height: PSLayout.scaled(56))
+            // Subtle scale-up gives a satisfying "press" feel when active
+            .scaleEffect(active ? 1.07 : 1.0)
+        }
+        .buttonStyle(PressableButtonStyle())
+        .animation(FLMotion.freshliCurve, value: selectedTab)
+    }
+
+    // MARK: - Seed Data
 
     private func seedDataIfNeeded() {
         let pantryService = FreshliService(modelContext: modelContext)
