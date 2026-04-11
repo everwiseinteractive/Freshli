@@ -128,7 +128,7 @@ struct RecipeDetailView: View {
                 .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
                 .padding(.top, PSSpacing.xl)
 
-            // Start Cooking button (hero CTA)
+            // Primary CTA: Start Cooking
             Button {
                 PSHaptics.shared.mediumTap()
                 startedCooking = true
@@ -165,11 +165,81 @@ struct RecipeDetailView: View {
             .buttonStyle(PressableButtonStyle())
             .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
 
+            // Secondary CTA: Hands-Free Voice Mode.
+            // This is Freshli's category differentiator — surface it prominently
+            // on every recipe so first-time users discover it immediately.
+            voiceCookingPill
+                .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
+
             ingredientsSection
             smartSwapsSection
             stepsSection
         }
         .padding(.bottom, PSSpacing.xxxl)
+    }
+
+    // MARK: - Voice Cooking Pill
+    //
+    // Freshli's single biggest category differentiator. No competitor
+    // offers hands-free voice cooking with zero-waste tips. Every recipe
+    // detail view should make this feature impossible to miss.
+
+    private var voiceCookingPill: some View {
+        Button {
+            PSHaptics.shared.lightTap()
+            // Start the voice session AND navigate to the cooking screen,
+            // which will pick up the active VoiceCookingService state.
+            VoiceCookingService.shared.start(recipeName: recipe.title, steps: recipe.steps)
+            startedCooking = true
+        } label: {
+            HStack(spacing: PSSpacing.md) {
+                ZStack {
+                    Circle()
+                        .fill(Color(hex: 0x8B5CF6).opacity(0.15))
+                        .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
+                    Image(systemName: "waveform.circle.fill")
+                        .font(.system(size: PSLayout.scaledFont(20)))
+                        .foregroundStyle(Color(hex: 0x8B5CF6))
+                        .symbolEffect(.pulse, options: .repeat(.periodic(delay: 2.8)))
+                }
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: PSSpacing.xxs) {
+                        Text(String(localized: "Cook Hands-Free"))
+                            .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
+                            .foregroundStyle(PSColors.textPrimary)
+                        Text(String(localized: "NEW"))
+                            .font(.system(size: PSLayout.scaledFont(9), weight: .black))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(Color(hex: 0x8B5CF6))
+                            .clipShape(Capsule())
+                    }
+                    Text(String(localized: "I'll read every step aloud — eyes on the pan, not the phone"))
+                        .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
+                        .foregroundStyle(PSColors.textSecondary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+                Image(systemName: "play.fill")
+                    .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
+                    .foregroundStyle(Color(hex: 0x8B5CF6))
+                    .padding(PSSpacing.sm)
+                    .background(Color(hex: 0x8B5CF6).opacity(0.12))
+                    .clipShape(Circle())
+            }
+            .padding(.horizontal, PSSpacing.lg)
+            .padding(.vertical, PSSpacing.md)
+            .background(PSColors.surfaceCard)
+            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous)
+                    .strokeBorder(Color(hex: 0x8B5CF6).opacity(0.25), lineWidth: 1)
+            )
+            .shadow(color: Color(hex: 0x8B5CF6).opacity(0.08), radius: 10, y: 3)
+        }
+        .buttonStyle(PressableButtonStyle())
     }
 
     // MARK: - Ingredients

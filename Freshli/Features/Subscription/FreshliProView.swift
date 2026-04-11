@@ -234,10 +234,11 @@ struct FreshliProView: View {
                     .tracking(-1.0)
                     .foregroundStyle(PSColors.textPrimary)
 
-                Text("Rescue more food.\nSave real money.")
-                    .font(.system(size: PSLayout.scaledFont(17), weight: .medium))
+                Text(FreshliBrand.tagline)
+                    .font(.system(size: PSLayout.scaledFont(16), weight: .semibold))
                     .foregroundStyle(PSColors.textSecondary)
                     .multilineTextAlignment(.center)
+                    .italic()
                     .lineSpacing(3)
 
                 // Star rating line

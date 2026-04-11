@@ -24,22 +24,22 @@ struct OnboardingView: View {
 
     private let steps: [OnboardingStep] = [
         OnboardingStep(
-            title: String(localized: "Welcome to Freshli"),
-            description: String(localized: "Your digital kitchen assistant to organize, cook, and share."),
+            title: String(localized: "For people. For planet."),
+            description: String(localized: "The food you save saves someone, somewhere. Freshli turns every wilting vegetable into a meal, a memory, and a gift to the planet."),
             icon: "leaf.fill",
             color: PSColors.primaryGreen,
             lightColor: PSColors.emeraldLight
         ),
         OnboardingStep(
-            title: String(localized: "Track Your Ingredients"),
-            description: String(localized: "Never buy duplicates. Know exactly what's in your pantry anytime."),
+            title: String(localized: "Rescue, one item at a time"),
+            description: String(localized: "Scan your fridge in seconds. Every rescue keeps food on a plate and 2.5kg of CO₂ out of the sky."),
             icon: "birthday.cake.fill",
             color: PSColors.secondaryAmber,
             lightColor: Color(hex: 0xFEF3C7)
         ),
         OnboardingStep(
-            title: String(localized: "Cook & Connect"),
-            description: String(localized: "Discover recipes based on what you have and share with the community."),
+            title: String(localized: "You're part of a wave"),
+            description: String(localized: "Hundreds of people are rescuing food alongside you right now. Share surplus, cook together, leave the planet better than you found it."),
             icon: "person.2.fill",
             color: PSColors.infoBlue,
             lightColor: Color(hex: 0xDBEAFE)

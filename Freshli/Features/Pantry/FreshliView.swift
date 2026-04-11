@@ -82,12 +82,15 @@ struct FreshliView: View {
         Task { @MainActor in
             do {
                 try modelContext.save()
+                // Record into the collective wave BEFORE showing the toast so
+                // the rotating impact phrase picks up the fresh total count.
+                CollectiveImpactService.shared.recordRescue(itemName: itemName)
                 toastManager.show(.itemConsumed(itemName))
                 let streakResult = RescueStreakService.shared.recordActivity()
                 if let milestone = streakResult.hitMilestone {
                     Task { @MainActor in
                         try? await Task.sleep(for: .milliseconds(1800))
-                        toastManager.show(.success(RescueStreakService.shared.milestoneMessage(for: milestone)))
+                        toastManager.show(.success(FreshliBrand.streakMilestone(days: milestone)))
                     }
                 }
                 celebrationManager.fireFoodSaved(modelContext: modelContext)

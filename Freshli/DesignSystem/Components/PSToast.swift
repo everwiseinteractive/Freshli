@@ -17,11 +17,16 @@ enum FLToastType {
         switch self {
         case .success(let msg), .info(let msg), .warning(let msg), .error(let msg):
             return msg
-        case .itemConsumed(let name): return String(localized: "Freshli'd! \(name) rescued 🌿")
-        case .itemShared(let name): return String(localized: "\(name) shared with community")
-        case .itemDonated(let name): return String(localized: "\(name) marked for donation")
+        case .itemConsumed(let name):
+            // Mission-aligned rotating impact phrase — every rescue feels
+            // meaningful because the number is real and the framing alternates
+            // between planet wins, people wins, and collective milestones.
+            let total = CollectiveImpactService.shared.totalItemsRescued
+            return FreshliBrand.impactPhrase(itemName: name, totalRescued: total)
+        case .itemShared(let name): return String(localized: "\(name) shared — a neighbour just got lucky 🤝")
+        case .itemDonated(let name): return String(localized: "\(name) donated — someone will eat well tonight 💚")
         case .itemDeleted(let name): return String(localized: "\(name) removed from pantry")
-        case .itemAdded(let name): return String(localized: "\(name) added to pantry")
+        case .itemAdded(let name): return String(localized: "\(name) added — one item closer to a zero-waste week 🌱")
         }
     }
 

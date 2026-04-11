@@ -21,6 +21,8 @@ struct HomeView: View {
     @State private var bulkPlans: [IngredientMealPlan] = []
     @State private var ethyleneConflicts: [EthyleneConflict] = []
     @State private var gapFillSuggestions: [GapFillSuggestion] = []
+    @State private var collectiveImpact = CollectiveImpactService.shared
+    @State private var showCommunityFridges = false
 
     private let logger = Logger(subsystem: "com.freshli.app", category: "HomeView")
 
@@ -255,29 +257,214 @@ struct HomeView: View {
                 .padding(.top, max(PSLayout.headerOverlap, PSLayout.scaled(-20)))
                 .dashboardEntrance(index: 0)
 
-            smartAlertCard
+            // The mission, made visible. Shows the live global rescue wave
+            // and transforms a lonely chore into a collective moment.
+            collectiveWaveCard
                 .dashboardEntrance(index: 1)
 
-            cashNotTrashedCard
+            smartAlertCard
                 .dashboardEntrance(index: 2)
+
+            cashNotTrashedCard
+                .dashboardEntrance(index: 3)
+
+            // Real community fridges nearby — the physical end-point of surplus.
+            communityFridgesCard
+                .dashboardEntrance(index: 4)
 
             // Self-hides for Pro subscribers and after dismissal.
             ProUpgradeNudge()
-                .dashboardEntrance(index: 3)
+                .dashboardEntrance(index: 5)
 
             recipeSuggestionCard
-                .dashboardEntrance(index: 4)
+                .dashboardEntrance(index: 6)
 
             if !bulkPlans.isEmpty {
                 bulkPlanCard
-                    .dashboardEntrance(index: 5)
+                    .dashboardEntrance(index: 7)
             }
 
             communitySwapCard
-                .dashboardEntrance(index: 6)
+                .dashboardEntrance(index: 8)
         }
         .adaptiveHPadding()
         .padding(.bottom, PSSpacing.xxxl)
+    }
+
+    // MARK: - Collective Wave Card
+    //
+    // The emotional heart of the app. Shows that every private rescue is
+    // a drop in a global river. Updates live via CollectiveImpactService.
+
+    private var collectiveWaveCard: some View {
+        NavigationLink(destination: CollectiveWaveView()) {
+            VStack(alignment: .leading, spacing: PSSpacing.lg) {
+                // Header
+                HStack(spacing: PSSpacing.sm) {
+                    ZStack {
+                        Circle()
+                            .fill(.white.opacity(0.18))
+                            .frame(width: PSLayout.scaled(34), height: PSLayout.scaled(34))
+                        Image(systemName: "globe.europe.africa.fill")
+                            .font(.system(size: PSLayout.scaledFont(16)))
+                            .foregroundStyle(.white)
+                            .symbolEffect(.pulse, options: .repeat(.periodic(delay: 3.5)))
+                    }
+                    VStack(alignment: .leading, spacing: 1) {
+                        HStack(spacing: PSSpacing.xs) {
+                            Circle()
+                                .fill(.white)
+                                .frame(width: 6, height: 6)
+                                .opacity(0.9)
+                            Text(String(localized: "LIVE WAVE"))
+                                .font(.system(size: PSLayout.scaledFont(10), weight: .black))
+                                .foregroundStyle(.white.opacity(0.85))
+                                .tracking(1.2)
+                        }
+                        Text(String(localized: "Right now, worldwide"))
+                            .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
+                        .foregroundStyle(.white.opacity(0.5))
+                }
+
+                // Big number
+                HStack(alignment: .firstTextBaseline, spacing: PSSpacing.sm) {
+                    Text(collectiveImpact.rescueCountDisplay)
+                        .font(.system(size: PSLayout.scaledFont(48), weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                        .contentTransition(.numericText())
+                    Text(String(localized: "people rescued food in the last hour"))
+                        .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.85))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                // Mini stats row
+                HStack(spacing: PSSpacing.lg) {
+                    waveStatTile(
+                        icon: "cloud.fill",
+                        value: collectiveImpact.hourlyCO2Display,
+                        label: String(localized: "CO₂ avoided")
+                    )
+                    Rectangle()
+                        .fill(.white.opacity(0.18))
+                        .frame(width: 1, height: PSLayout.scaled(36))
+                    waveStatTile(
+                        icon: "fork.knife",
+                        value: "\(collectiveImpact.hourlyMealsFed)",
+                        label: String(localized: "meals fed")
+                    )
+                }
+
+                // Latest rescue pulse
+                if let latest = collectiveImpact.recentFeed.first {
+                    HStack(spacing: PSSpacing.xs) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: PSLayout.scaledFont(10)))
+                            .foregroundStyle(.white.opacity(0.85))
+                        Text(String(localized: "\(latest.displayName) in \(latest.cityName) just rescued \(latest.itemName) · \(latest.timeLabel)"))
+                            .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
+                            .foregroundStyle(.white.opacity(0.85))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, PSSpacing.md)
+                    .padding(.vertical, PSSpacing.sm)
+                    .background(.white.opacity(0.1))
+                    .clipShape(Capsule())
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .offset(y: 4)),
+                        removal: .opacity
+                    ))
+                    .id(latest.id)
+                }
+            }
+            .adaptiveCardPadding()
+            .background(
+                LinearGradient(
+                    colors: [FreshliBrand.missionAccentLight, FreshliBrand.missionAccent, FreshliBrand.planetBlue.opacity(0.9)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
+            .shadow(color: FreshliBrand.missionAccent.opacity(0.32), radius: 22, y: 10)
+            .shadow(color: FreshliBrand.planetBlue.opacity(0.15), radius: 8, y: 3)
+        }
+        .buttonStyle(PressableButtonStyle())
+    }
+
+    private func waveStatTile(icon: String, value: String, label: String) -> some View {
+        HStack(spacing: PSSpacing.xs) {
+            Image(systemName: icon)
+                .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
+                .foregroundStyle(.white.opacity(0.85))
+            VStack(alignment: .leading, spacing: 0) {
+                Text(value)
+                    .font(.system(size: PSLayout.scaledFont(15), weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                    .contentTransition(.numericText())
+                Text(label)
+                    .font(.system(size: PSLayout.scaledFont(10), weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+        }
+    }
+
+    // MARK: - Community Fridges Card
+    //
+    // The physical end-point of the mission. Real fridges in real
+    // neighbourhoods that anyone can drop surplus into, 24/7.
+
+    private var communityFridgesCard: some View {
+        NavigationLink(destination: LocalPodsView()) {
+            HStack(spacing: PSSpacing.lg) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
+                        .fill(FreshliBrand.planetBlue.opacity(0.12))
+                        .frame(width: PSLayout.scaled(56), height: PSLayout.scaled(56))
+                    Image(systemName: "refrigerator.fill")
+                        .font(.system(size: PSLayout.scaledFont(24)))
+                        .foregroundStyle(FreshliBrand.planetBlue)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: PSSpacing.xs) {
+                        Text(String(localized: "COMMUNITY FRIDGES"))
+                            .font(.system(size: PSLayout.scaledFont(10), weight: .black))
+                            .foregroundStyle(FreshliBrand.planetBlue)
+                            .tracking(0.8)
+                        Circle()
+                            .fill(PSColors.primaryGreen)
+                            .frame(width: 6, height: 6)
+                    }
+                    Text(String(localized: "Drop surplus, no questions asked"))
+                        .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
+                        .foregroundStyle(PSColors.textPrimary)
+                    Text(String(localized: "\(CommunityPodsService.shared.communityFridges.count) real fridges nearby · Open 24/7"))
+                        .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
+                        .foregroundStyle(PSColors.textSecondary)
+                        .lineLimit(2)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
+                    .foregroundStyle(PSColors.textTertiary)
+            }
+            .adaptiveCardPadding()
+            .background(PSColors.surfaceCard)
+            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
+                    .strokeBorder(FreshliBrand.planetBlue.opacity(0.2), lineWidth: 1)
+            )
+            .shadow(color: FreshliBrand.planetBlue.opacity(0.08), radius: 12, y: 4)
+        }
+        .buttonStyle(PressableButtonStyle())
     }
 
     // MARK: - Smart Alert Card (Unified)
