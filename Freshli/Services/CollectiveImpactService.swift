@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import Observation
+import Supabase
 
 // MARK: - Collective Impact Service
 // Turns Freshli's mission into something felt.
@@ -49,10 +50,62 @@ final class CollectiveImpactService {
     private(set) var totalItemsRescued: Int = 0
 
     private var timer: Timer?
+    private var tickCount: Int = 0
 
     private init() {
         seedSimulatedFeed()
         startRollingUpdates()
+        // Kick off an initial refresh from Supabase; if it fails (offline,
+        // no session, etc.) we silently keep the simulated data so the card
+        // always has something to show.
+        Task { @MainActor in
+            await refreshFromBackend()
+        }
+    }
+
+    // MARK: - Backend Sync
+
+    /// Pulls the latest hourly stats + feed from Supabase. Called on init
+    /// and every 60s by the rolling update timer. Silently falls back to
+    /// simulation if any step fails.
+    func refreshFromBackend() async {
+        do {
+            // Stats RPC → rescues this hour + CO₂ + meals + distinct rescuers
+            let statsRows: [CollectiveHourlyStatsDTO] = try await AppSupabase.client
+                .rpc("get_collective_hourly_stats")
+                .execute()
+                .value
+            if let stats = statsRows.first, stats.rescuesThisHour > 0 {
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+                    rescuesThisHour = stats.rescuesThisHour
+                    activeRescuersThisHour = stats.distinctRescuers
+                }
+            }
+
+            // Live feed view → anonymised recent events
+            let feedRows: [CollectiveRescueFeedDTO] = try await AppSupabase.client
+                .from("collective_rescue_feed")
+                .select()
+                .limit(20)
+                .execute()
+                .value
+            if !feedRows.isEmpty {
+                let mapped = feedRows.map { row in
+                    CollectiveRescueEvent(
+                        displayName: row.displayName,
+                        cityName: row.displayCity,
+                        itemName: row.itemName,
+                        minutesAgo: row.minutesAgo
+                    )
+                }
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) {
+                    recentFeed = mapped
+                }
+            }
+        } catch {
+            // Silent fallback — the simulated data already seeded at init
+            // keeps the card populated so the user never sees a blank state.
+        }
     }
 
     // MARK: - Public Recording
@@ -131,12 +184,20 @@ final class CollectiveImpactService {
         recentFeed = feed
     }
 
-    /// Every 20 seconds, simulate a new rescue happening somewhere in the
-    /// network to keep the ticker feeling alive.
+    /// Every 20 seconds, tick the ticker. Every 3rd tick (≈60s) we also
+    /// refresh from the Supabase backend so real rescues from other users
+    /// roll in. Between backend refreshes we keep the simulation running
+    /// so the card never looks static when other users are quiet.
     private func startRollingUpdates() {
         timer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
-                self?.tick()
+                guard let self else { return }
+                self.tickCount += 1
+                self.tick()
+                // Every 3rd tick (60s) pull fresh data from Supabase
+                if self.tickCount % 3 == 0 {
+                    await self.refreshFromBackend()
+                }
             }
         }
     }
@@ -155,7 +216,8 @@ final class CollectiveImpactService {
         // Drop events older than 60 minutes
         recentFeed.removeAll { $0.minutesAgo > 60 }
 
-        // Inject a new simulated rescue roughly every tick
+        // Inject a new simulated rescue roughly every tick so the card
+        // stays alive between backend refreshes.
         let items = ["spinach", "milk", "bananas", "cheddar", "bread", "eggs",
                      "tomatoes", "chicken", "pasta", "yogurt", "lentils"]
         let names = ["Oscar L", "Amara N", "Wren K", "Tariq S", "Isla B",
