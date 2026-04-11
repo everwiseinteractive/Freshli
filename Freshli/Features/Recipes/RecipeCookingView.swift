@@ -288,6 +288,7 @@ struct RecipeCookingView: View {
 
         if marked.count > 0 {
             showHarvestCelebration = true
+            RescueStreakService.shared.recordActivity()
             celebrationManager.fireFoodSaved(modelContext: modelContext)
 
             Task { @MainActor in

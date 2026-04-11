@@ -14,6 +14,7 @@ struct ProfileView: View {
     @State private var showSettings = false
     @State private var showHouseholdSettings = false
     @State private var showLanguageSettings = false
+    @State private var showRetailerLink = false
     @State private var householdSize: Int = 1
     @Environment(SubscriptionService.self) private var subscriptionService
     @AppStorage("isDarkMode") private var isDarkMode = false
@@ -41,9 +42,10 @@ struct ProfileView: View {
                 VStack(spacing: PSSpacing.xl) {
                     profileCard.staggeredAppearance(index: 0)
                     statsGrid.staggeredAppearance(index: 1)
-                    milestonesCard.staggeredAppearance(index: 2)
-                    settingsCard.staggeredAppearance(index: 3)
-                    proCard.staggeredAppearance(index: 4)
+                    heroTierCard.staggeredAppearance(index: 2)
+                    milestonesCard.staggeredAppearance(index: 3)
+                    settingsCard.staggeredAppearance(index: 4)
+                    proCard.staggeredAppearance(index: 5)
                 }
                 .adaptiveHPadding()
                 .padding(.bottom, PSSpacing.xxxl)
@@ -66,6 +68,7 @@ struct ProfileView: View {
             }
         }
         .navigationDestination(isPresented: $showExpiryAlerts) { ExpiryAlertsView() }
+        .navigationDestination(isPresented: $showRetailerLink) { RetailerLinkView() }
         .sheet(isPresented: $showAuthSheet) {
             AuthView().presentationDragIndicator(.visible)
         }
@@ -171,17 +174,30 @@ struct ProfileView: View {
                     .tracking(-0.3)
                     .foregroundStyle(PSColors.textPrimary)
 
+                let tier = HeroTier.tier(for: ImpactService(modelContext: modelContext).calculateStats().itemsSaved)
                 HStack(spacing: PSSpacing.xs) {
-                    Image(systemName: "leaf.fill")
-                        .font(.system(size: PSLayout.scaledFont(12)))
-                    Text(String(localized: "Waste Warrior"))
+                    Text(tier.emoji)
+                        .font(.system(size: PSLayout.scaledFont(11)))
+                    Text(tier.title)
                         .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
                 }
-                .foregroundStyle(PSColors.primaryGreen)
+                .foregroundStyle(tier.color)
                 .padding(.horizontal, PSSpacing.sm)
                 .padding(.vertical, PSSpacing.xxs)
-                .background(PSColors.primaryGreen.opacity(0.1))
+                .background(tier.color.opacity(0.12))
                 .clipShape(Capsule())
+
+                let streak = RescueStreakService.shared.currentStreak
+                if streak > 0 {
+                    HStack(spacing: PSSpacing.xs) {
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: PSLayout.scaledFont(11)))
+                            .foregroundStyle(Color(hex: 0xF97316))
+                        Text(String(localized: "\(streak)-day rescue streak"))
+                            .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
+                            .foregroundStyle(PSColors.textSecondary)
+                    }
+                }
 
                 if isAuthenticated {
                     Text(authManager.currentUserEmail ?? "")
@@ -285,6 +301,102 @@ struct ProfileView: View {
             radius: isAccent ? 16 : 8,
             y: isAccent ? 8 : 4
         )
+    }
+
+    // MARK: - Hero Tier Card
+
+    private var heroTierCard: some View {
+        let stats = ImpactService(modelContext: modelContext).calculateStats()
+        let tier = HeroTier.tier(for: stats.itemsSaved)
+        let progress = HeroTier.progressToNextTier(for: stats.itemsSaved)
+        let streak = RescueStreakService.shared.currentStreak
+
+        return VStack(alignment: .leading, spacing: PSSpacing.lg) {
+            // Header row
+            HStack(spacing: PSSpacing.sm) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(tier.color.opacity(0.15))
+                        .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
+                    Text(tier.emoji)
+                        .font(.system(size: PSLayout.scaledFont(18)))
+                }
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(String(localized: "Hero Tier"))
+                        .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
+                        .foregroundStyle(PSColors.textSecondary)
+                        .textCase(.uppercase)
+                        .tracking(0.5)
+                    Text(tier.title)
+                        .font(.system(size: PSLayout.scaledFont(18), weight: .black))
+                        .foregroundStyle(tier.color)
+                }
+                Spacer()
+                // Streak badge
+                if streak > 0 {
+                    HStack(spacing: PSSpacing.xxs) {
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: PSLayout.scaledFont(11)))
+                        Text("\(streak)d")
+                            .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
+                    }
+                    .foregroundStyle(Color(hex: 0xF97316))
+                    .padding(.horizontal, PSSpacing.sm)
+                    .padding(.vertical, PSSpacing.xxs)
+                    .background(Color(hex: 0xF97316).opacity(0.1))
+                    .clipShape(Capsule())
+                }
+            }
+
+            // Description
+            Text(tier.description)
+                .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
+                .foregroundStyle(PSColors.textSecondary)
+                .lineSpacing(2)
+
+            // Progress to next tier
+            if let next = tier.nextTier {
+                VStack(alignment: .leading, spacing: PSSpacing.xs) {
+                    HStack {
+                        Text(String(localized: "Progress to \(next.emoji) \(next.title)"))
+                            .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                            .foregroundStyle(PSColors.textSecondary)
+                        Spacer()
+                        Text(String(localized: "\(stats.itemsSaved)/\(next.minItems) items"))
+                            .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
+                            .foregroundStyle(tier.color)
+                    }
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(PSColors.borderLight)
+                                .frame(height: PSLayout.scaled(8))
+                            Capsule()
+                                .fill(LinearGradient(colors: tier.gradientColors, startPoint: .leading, endPoint: .trailing))
+                                .frame(width: geo.size.width * progress, height: PSLayout.scaled(8))
+                        }
+                    }
+                    .frame(height: PSLayout.scaled(8))
+                }
+            } else {
+                HStack(spacing: PSSpacing.sm) {
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: PSLayout.scaledFont(14)))
+                        .foregroundStyle(tier.color)
+                    Text(String(localized: "You've reached the highest tier — Legend! 👑"))
+                        .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
+                        .foregroundStyle(tier.color)
+                }
+            }
+        }
+        .adaptiveCardPadding()
+        .background(PSColors.surfaceCard)
+        .clipShape(RoundedRectangle(cornerRadius: PSLayout.profileCardRadius, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: PSLayout.profileCardRadius, style: .continuous)
+                .strokeBorder(tier.color.opacity(0.2), lineWidth: 1)
+        )
+        .shadow(color: tier.color.opacity(0.08), radius: 16, y: 6)
     }
 
     // MARK: - Milestones Card
@@ -402,6 +514,8 @@ struct ProfileView: View {
             settingsNavRow(icon: "house.fill", iconBg: PSColors.accentTeal, title: String(localized: "Household Settings")) { showHouseholdSettings = true }
             settingsDivider()
             settingsNavRow(icon: "clock.badge.exclamationmark", iconBg: PSColors.secondaryAmber, title: String(localized: "Expiry Alerts")) { showExpiryAlerts = true }
+            settingsDivider()
+            settingsNavRow(icon: "cart.badge.plus", iconBg: PSColors.primaryGreen, title: String(localized: "Connect Supermarket")) { showRetailerLink = true }
             settingsDivider()
             settingsNavRow(icon: "globe", iconBg: PSColors.infoBlue, title: String(localized: "Language")) { showLanguageSettings = true }
             settingsDivider()

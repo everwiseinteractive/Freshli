@@ -17,7 +17,7 @@ enum FLToastType {
         switch self {
         case .success(let msg), .info(let msg), .warning(let msg), .error(let msg):
             return msg
-        case .itemConsumed(let name): return String(localized: "\(name) consumed — food saved!")
+        case .itemConsumed(let name): return String(localized: "Freshli'd! \(name) rescued 🌿")
         case .itemShared(let name): return String(localized: "\(name) shared with community")
         case .itemDonated(let name): return String(localized: "\(name) marked for donation")
         case .itemDeleted(let name): return String(localized: "\(name) removed from pantry")

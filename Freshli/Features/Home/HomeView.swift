@@ -15,6 +15,7 @@ struct HomeView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var impactStats: ImpactService.ImpactStats?
+    @State private var monthlyStats: ImpactService.ImpactStats?
     @State private var showWeeklyWrap = false
     @State private var selectedImpactStat: String?
     @State private var bulkPlans: [IngredientMealPlan] = []
@@ -45,11 +46,15 @@ struct HomeView: View {
             WeeklyWrapView()
         }
         .task {
-            impactStats = ImpactService(modelContext: modelContext).calculateStats()
+            let service = ImpactService(modelContext: modelContext)
+            impactStats = service.calculateStats()
+            monthlyStats = service.calculateMonthlyStats()
             bulkPlans = MealPlanService.shared.generateBulkPlan(for: activeItems)
         }
         .onChange(of: activeItems.count) { _, _ in
-            impactStats = ImpactService(modelContext: modelContext).calculateStats()
+            let service = ImpactService(modelContext: modelContext)
+            impactStats = service.calculateStats()
+            monthlyStats = service.calculateMonthlyStats()
             bulkPlans = MealPlanService.shared.generateBulkPlan(for: activeItems)
         }
     }
@@ -248,8 +253,11 @@ struct HomeView: View {
                     .dashboardEntrance(index: 4)
             }
 
-            communitySwapCard
+            cashNotTrashedCard
                 .dashboardEntrance(index: 5)
+
+            communitySwapCard
+                .dashboardEntrance(index: 6)
         }
         .adaptiveHPadding()
         .padding(.bottom, PSSpacing.xxxl)
@@ -631,6 +639,93 @@ struct HomeView: View {
                 .strokeBorder(PSColors.accentTeal.opacity(0.12), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.04), radius: 12, y: 4)
+    }
+
+    // MARK: - Cash Not Trashed Card
+
+    private var cashNotTrashedCard: some View {
+        let stats = monthlyStats ?? ImpactService.ImpactStats()
+        let monthName = Calendar.current.monthSymbols[Calendar.current.component(.month, from: Date()) - 1]
+        let streak = RescueStreakService.shared.currentStreak
+
+        return NavigationLink(destination: ImpactDashboardView()) {
+            VStack(alignment: .leading, spacing: PSSpacing.lg) {
+                // Header
+                HStack(spacing: PSSpacing.sm) {
+                    ZStack {
+                        Circle()
+                            .fill(PSColors.secondaryAmber.opacity(0.15))
+                            .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
+                        Image(systemName: "banknote.fill")
+                            .font(.system(size: PSLayout.scaledFont(17)))
+                            .foregroundStyle(PSColors.secondaryAmber)
+                    }
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(String(localized: "Cash Not Trashed"))
+                            .font(.system(size: PSLayout.scaledFont(17), weight: .bold))
+                            .foregroundStyle(PSColors.textPrimary)
+                        Text(String(localized: "\(monthName) savings"))
+                            .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
+                            .foregroundStyle(PSColors.textSecondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                        .foregroundStyle(PSColors.textTertiary)
+                }
+
+                // Big savings figure
+                HStack(alignment: .firstTextBaseline, spacing: PSSpacing.xs) {
+                    Text(stats.moneySavedDisplay)
+                        .font(.system(size: PSLayout.scaledFont(42), weight: .black, design: .rounded))
+                        .foregroundStyle(PSColors.secondaryAmber)
+                    Text(String(localized: "saved this month"))
+                        .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
+                        .foregroundStyle(PSColors.textSecondary)
+                        .padding(.bottom, PSSpacing.xs)
+                }
+
+                // Stats row
+                HStack(spacing: 0) {
+                    cashStatTile(icon: "leaf.fill", value: "\(stats.itemsSaved)", label: String(localized: "Items Rescued"), color: PSColors.primaryGreen)
+                    Rectangle().fill(PSColors.borderLight).frame(width: 1, height: PSLayout.scaled(36))
+                    cashStatTile(icon: "wind", value: stats.co2Display, label: String(localized: "CO₂ Avoided"), color: PSColors.accentTeal)
+                    if streak > 0 {
+                        Rectangle().fill(PSColors.borderLight).frame(width: 1, height: PSLayout.scaled(36))
+                        cashStatTile(icon: "flame.fill", value: "\(streak)d", label: String(localized: "Streak"), color: Color(hex: 0xF97316))
+                    }
+                }
+                .padding(.top, PSSpacing.xs)
+            }
+            .adaptiveCardPadding()
+            .background(PSColors.surfaceCard)
+            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
+                    .strokeBorder(PSColors.secondaryAmber.opacity(0.2), lineWidth: 1)
+            )
+            .shadow(color: PSColors.secondaryAmber.opacity(0.1), radius: 16, y: 6)
+        }
+        .buttonStyle(PressableButtonStyle())
+    }
+
+    private func cashStatTile(icon: String, value: String, label: String, color: Color) -> some View {
+        VStack(spacing: PSSpacing.xxs) {
+            Image(systemName: icon)
+                .font(.system(size: PSLayout.scaledFont(14)))
+                .foregroundStyle(color)
+            Text(value)
+                .font(.system(size: PSLayout.scaledFont(18), weight: .black, design: .rounded))
+                .foregroundStyle(PSColors.textPrimary)
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
+            Text(label)
+                .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
+                .foregroundStyle(PSColors.textSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Community Swap Card

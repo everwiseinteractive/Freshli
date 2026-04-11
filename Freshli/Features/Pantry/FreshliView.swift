@@ -82,6 +82,13 @@ struct FreshliView: View {
             do {
                 try modelContext.save()
                 toastManager.show(.itemConsumed(itemName))
+                let streakResult = RescueStreakService.shared.recordActivity()
+                if let milestone = streakResult.hitMilestone {
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(1800))
+                        toastManager.show(.success(RescueStreakService.shared.milestoneMessage(for: milestone)))
+                    }
+                }
                 celebrationManager.fireFoodSaved(modelContext: modelContext)
                 RatingService.shared.recordJoyMoment()
                 if let userId = authManager.currentUserId {

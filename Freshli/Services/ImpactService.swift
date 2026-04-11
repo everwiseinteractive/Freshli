@@ -77,6 +77,24 @@ final class ImpactService {
         return stats
     }
 
+    /// Stats filtered to the current calendar month — powers the "Cash Not Trashed" card.
+    func calculateMonthlyStats() -> ImpactStats {
+        let cal = Calendar.current
+        guard let monthStart = cal.dateInterval(of: .month, for: Date())?.start else { return ImpactStats() }
+        let descriptor = FetchDescriptor<FreshliItem>()
+        let allItems = (try? modelContext.fetch(descriptor)) ?? []
+        let monthItems = allItems.filter { $0.dateAdded >= monthStart }
+        let consumed = monthItems.filter(\.isConsumed).count
+        let shared   = monthItems.filter(\.isShared).count
+        let donated  = monthItems.filter(\.isDonated).count
+        return ImpactStats(
+            itemsSaved: consumed + shared + donated,
+            itemsShared: shared,
+            itemsDonated: donated,
+            mealsCreated: consumed
+        )
+    }
+
     private func fetchCount(isConsumed: Bool = false, isShared: Bool = false, isDonated: Bool = false) -> Int {
         let descriptor = FetchDescriptor<FreshliItem>(
             predicate: #Predicate<FreshliItem> { item in
