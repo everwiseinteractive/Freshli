@@ -17,8 +17,10 @@ struct SignInView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
+        GeometryReader { proxy in
         ScrollView {
             VStack(spacing: 0) {
+                Spacer(minLength: 0)
                 // Logo + Welcome
                 VStack(spacing: PSSpacing.lg) {
                     // Icon matching onboarding style
@@ -60,7 +62,7 @@ struct SignInView: View {
                             .multilineTextAlignment(.center)
                     }
                 }
-                .padding(.top, PSLayout.headerTopPadding)
+                .padding(.top, PSSpacing.xxl)
                 .padding(.bottom, PSLayout.formHorizontalPadding)
                 .cardEntrance(index: 0)
 
@@ -191,8 +193,12 @@ struct SignInView: View {
                 .padding(.horizontal, PSLayout.formHorizontalPadding)
                 .padding(.bottom, PSLayout.scaled(48))
                 .cardEntrance(index: 2)
+
+                Spacer(minLength: 0)
             }
+            .frame(minHeight: proxy.size.height)
         }
+        }  // GeometryReader
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 20)
         .onAppear {

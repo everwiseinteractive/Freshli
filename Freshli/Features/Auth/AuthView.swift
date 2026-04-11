@@ -106,10 +106,10 @@ struct AuthLandingView: View {
     @State private var isSigningIn = false
 
     var body: some View {
-        VStack(spacing: 0) {
+        GeometryReader { proxy in
             ScrollView {
                 VStack(spacing: 0) {
-                    Spacer()
+                    Spacer(minLength: 0)
 
                     // Hero section - adaptive sizing for SE
                     VStack(spacing: PSSpacing.xl) {
@@ -158,7 +158,7 @@ struct AuthLandingView: View {
                     .scaleEffect(appeared ? 1 : 0.9)
                     .opacity(appeared ? 1 : 0)
 
-                    Spacer()
+                    Spacer(minLength: PSSpacing.xxxl)
 
                     // Auth buttons section
                     VStack(spacing: PSSpacing.lg) {
@@ -246,9 +246,12 @@ struct AuthLandingView: View {
                             .foregroundStyle(PSColors.textTertiary)
                     }
                     .padding(.top, PSSpacing.xl)
-                    .padding(.bottom, 48)
+                    .padding(.bottom, PSLayout.scaled(48))
                     .opacity(appeared ? 1 : 0)
+
+                    Spacer(minLength: 0)
                 }
+                .frame(minHeight: proxy.size.height)
             }
             .ignoresSafeArea(.keyboard)
         }

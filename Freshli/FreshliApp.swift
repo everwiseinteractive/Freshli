@@ -192,9 +192,10 @@ struct FreshliApp: App {
     // MARK: - Splash → Dashboard Transition
 
     private func checkAndTransition() {
-        // Only transition when BOTH auth has resolved AND the minimum display time has elapsed
+        // Transition only when auth resolved, minimum time elapsed, AND all data/notifications ready
         guard authManager.authState != .loading else { return }
         guard splashMinimumTimeMet else { return }
+        guard dataPrefetched else { return }
         guard showSplash else { return }
 
         logger.info("FreshliApp: Transitioning from splash → main content")

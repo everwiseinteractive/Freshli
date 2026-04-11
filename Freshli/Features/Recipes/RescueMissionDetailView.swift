@@ -13,6 +13,7 @@ struct RescueMissionDetailView: View {
     @State private var showCompletionCelebration = false
     @State private var showHarvestCelebration = false
     @State private var completePopTrigger = false
+    @State private var showCookingScreen = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var allStepsCompleted: Bool {
@@ -40,6 +41,42 @@ struct RescueMissionDetailView: View {
         }
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: PSSpacing.md) {
+                // Start Cooking Mode CTA (always visible)
+                Button {
+                    PSHaptics.shared.mediumTap()
+                    showCookingScreen = true
+                } label: {
+                    HStack(spacing: PSSpacing.md) {
+                        ZStack {
+                            Circle()
+                                .fill(.white.opacity(0.2))
+                                .frame(width: PSLayout.scaled(32), height: PSLayout.scaled(32))
+                            Image(systemName: "flame.fill")
+                                .font(.system(size: PSLayout.scaledFont(16)))
+                                .foregroundStyle(.white)
+                        }
+                        Text(String(localized: "Start Cooking Mode"))
+                            .font(.system(size: PSLayout.scaledFont(16), weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
+                    .padding(.horizontal, PSSpacing.xl)
+                    .padding(.vertical, PSSpacing.lg)
+                    .background(
+                        LinearGradient(
+                            colors: [PSColors.primaryGreen, PSColors.accentTeal.opacity(0.9)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
+                    .shadow(color: PSColors.primaryGreen.opacity(0.4), radius: 12, y: 6)
+                }
+                .buttonStyle(PressableButtonStyle())
+
                 if allStepsCompleted {
                     markAsDoneButton
                         .transition(.flSheetRise)
@@ -51,6 +88,12 @@ struct RescueMissionDetailView: View {
             .border(Color.black.opacity(0.05), width: 1)
         }
         .harvestCelebration(isActive: $showHarvestCelebration, intensity: .celebration)
+        .fullScreenCover(isPresented: $showCookingScreen) {
+            CookingScreenView(
+                recipe: missionAsRecipe(),
+                matchingPantryItems: mission.freshliItems.map { $0.name }
+            )
+        }
         .onAppear {
             let anim: Animation = reduceMotion ? .easeOut(duration: 0.2) : PSMotion.springGentle.delay(0.1)
             withAnimation(anim) { appeared = true }
@@ -357,6 +400,22 @@ struct RescueMissionDetailView: View {
     }
 
     // MARK: - Helpers
+
+    /// Converts a UsageMission to a Recipe so CookingScreenView can be reused.
+    private func missionAsRecipe() -> Recipe {
+        let allIngredients = mission.freshliItems.map { $0.name } + mission.additionalItems
+        return Recipe(
+            title: mission.title,
+            summary: mission.description,
+            ingredients: allIngredients,
+            steps: mission.steps,
+            prepTimeMinutes: mission.estimatedMinutes,
+            difficulty: mission.difficulty,
+            matchingIngredientCount: mission.freshliItems.count,
+            totalIngredientCount: allIngredients.count,
+            imageSystemName: "fork.knife"
+        )
+    }
 
     private func urgencyBadgeColor(_ urgency: UrgencyLevel) -> Color {
         switch urgency {

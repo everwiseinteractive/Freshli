@@ -2,6 +2,79 @@ import SwiftUI
 import AVFoundation
 import Combine
 
+// MARK: - Voice Type
+
+enum VoiceType: String, CaseIterable, Identifiable {
+    case warm
+    case classic
+    case british
+    case energetic
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .warm:      return "Aria — Warm"
+        case .classic:   return "Classic"
+        case .british:   return "Harper — British"
+        case .energetic: return "Kai — Energetic"
+        }
+    }
+
+    var voiceDescription: String {
+        switch self {
+        case .warm:      return "Friendly, nurturing & patient"
+        case .classic:   return "Clear & neutral American"
+        case .british:   return "Refined & articulate"
+        case .energetic: return "Upbeat Australian accent"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .warm:      return "heart.fill"
+        case .classic:   return "waveform"
+        case .british:   return "crown.fill"
+        case .energetic: return "bolt.fill"
+        }
+    }
+
+    var languageCode: String {
+        switch self {
+        case .warm, .classic: return "en-US"
+        case .british:        return "en-GB"
+        case .energetic:      return "en-AU"
+        }
+    }
+
+    var rate: Float {
+        switch self {
+        case .warm:      return AVSpeechUtteranceDefaultSpeechRate * 0.78
+        case .classic:   return AVSpeechUtteranceDefaultSpeechRate * 0.85
+        case .british:   return AVSpeechUtteranceDefaultSpeechRate * 0.80
+        case .energetic: return AVSpeechUtteranceDefaultSpeechRate * 0.95
+        }
+    }
+
+    var pitch: Float {
+        switch self {
+        case .warm:      return 1.18
+        case .classic:   return 1.05
+        case .british:   return 1.00
+        case .energetic: return 1.22
+        }
+    }
+
+    var volume: Float {
+        switch self {
+        case .warm:      return 0.90
+        case .classic:   return 0.90
+        case .british:   return 0.85
+        case .energetic: return 0.95
+        }
+    }
+}
+
 // MARK: - CookingScreenView
 // Flagship Apple Design Award-level immersive cooking experience for Freshli.
 // Forced dark "chef mode" with voice guidance, gesture-driven step navigation,
@@ -33,6 +106,8 @@ struct CookingScreenView: View {
     @State private var wavePhase: CGFloat = 0
     @State private var appeared = false
     @State private var userRating: Int = 0
+    @State private var selectedVoiceType: VoiceType = .warm
+    @State private var showVoiceSettings = false
 
     // MARK: - Timer publisher
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -55,6 +130,23 @@ struct CookingScreenView: View {
             : timerProgress < 0.75
                 ? PSColors.warningAmber
                 : PSColors.expiredRed
+    }
+
+    /// Ambient glow color derived from step keywords for immersive context.
+    private var stepAmbientColor: Color {
+        let lower = currentStep.lowercased()
+        if lower.contains("heat") || lower.contains("fire") || lower.contains("sear") || lower.contains("fry") || lower.contains("roast") {
+            return Color.orange
+        } else if lower.contains("boil") || lower.contains("simmer") || lower.contains("water") || lower.contains("steam") {
+            return Color.blue.opacity(0.9)
+        } else if lower.contains("season") || lower.contains("salt") || lower.contains("spice") {
+            return Color.orange.opacity(0.7)
+        } else if lower.contains("mix") || lower.contains("stir") || lower.contains("whisk") || lower.contains("blend") {
+            return PSColors.accentTeal
+        } else if lower.contains("serve") || lower.contains("plate") || lower.contains("garnish") {
+            return Color.yellow.opacity(0.9)
+        }
+        return PSColors.primaryGreen
     }
     private var timerDisplay: String {
         let m = timerRemaining / 60
@@ -137,6 +229,7 @@ struct CookingScreenView: View {
         .onChange(of: currentStepIndex) { _, _ in handleStepChange() }
         .sheet(isPresented: $showIngredients) { ingredientsSheet }
         .sheet(isPresented: $showMusicPicker) { musicPickerSheet }
+        .sheet(isPresented: $showVoiceSettings) { voiceSettingsSheet }
     }
 
     // MARK: - Background
@@ -181,21 +274,22 @@ struct CookingScreenView: View {
             }
             .frame(maxWidth: .infinity)
 
-            // Voice toggle
+            // Voice button — tap opens settings, long-press toggles
             Button {
                 PSHaptics.shared.lightTap()
-                withAnimation(FLMotion.springDefault) {
-                    voiceEnabled.toggle()
-                }
-                if voiceEnabled {
-                    speakStep(currentStep)
-                } else {
-                    speechSynthesizer.stopSpeaking(at: .immediate)
-                }
+                showVoiceSettings = true
             } label: {
-                Image(systemName: voiceEnabled ? "waveform" : "waveform.slash")
-                    .font(.system(size: PSLayout.scaledFont(22), weight: .medium))
-                    .foregroundStyle(voiceEnabled ? .white : .white.opacity(0.35))
+                ZStack(alignment: .bottomTrailing) {
+                    Image(systemName: voiceEnabled ? "waveform" : "waveform.slash")
+                        .font(.system(size: PSLayout.scaledFont(22), weight: .medium))
+                        .foregroundStyle(voiceEnabled ? .white : .white.opacity(0.35))
+                    if voiceEnabled {
+                        Circle()
+                            .fill(PSColors.primaryGreen)
+                            .frame(width: PSLayout.scaled(7), height: PSLayout.scaled(7))
+                            .offset(x: PSLayout.scaled(3), y: PSLayout.scaled(3))
+                    }
+                }
             }
             .buttonStyle(PressableButtonStyle())
         }
@@ -233,16 +327,24 @@ struct CookingScreenView: View {
 
     private var heroStepCard: some View {
         ZStack(alignment: .bottom) {
+            // Ambient glow — colour-coded to step context
+            Circle()
+                .fill(stepAmbientColor.opacity(0.18))
+                .frame(width: PSLayout.scaled(220), height: PSLayout.scaled(220))
+                .blur(radius: PSLayout.scaled(55))
+                .offset(y: PSLayout.scaled(-20))
+                .animation(.easeInOut(duration: 0.6), value: currentStepIndex)
+
             // Glass card
             RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
                 .fill(.ultraThinMaterial)
                 .overlay(
                     RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
-                        .fill(PSColors.primaryGreen.opacity(0.07))
+                        .fill(stepAmbientColor.opacity(0.06))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
-                        .stroke(.white.opacity(0.10), lineWidth: 1)
+                        .stroke(stepAmbientColor.opacity(0.18), lineWidth: 1)
                 )
 
             VStack(spacing: PSSpacing.lg) {
@@ -348,6 +450,15 @@ struct CookingScreenView: View {
 
             // Circular progress ring
             ZStack {
+                // Urgent glow pulse when nearly expired
+                if timerProgress > 0.75 && timerRunning {
+                    Circle()
+                        .fill(PSColors.expiredRed.opacity(0.18))
+                        .frame(width: PSLayout.scaled(112), height: PSLayout.scaled(112))
+                        .scaleEffect(wavePhase > 0 ? 1.08 : 1.0)
+                        .animation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: wavePhase)
+                }
+
                 // Track ring
                 Circle()
                     .stroke(.white.opacity(0.10), style: StrokeStyle(lineWidth: 6, lineCap: .round))
@@ -365,7 +476,7 @@ struct CookingScreenView: View {
                 VStack(spacing: 2) {
                     Text(timerDisplay)
                         .font(.system(size: PSLayout.scaledFont(22), weight: .bold, design: .monospaced))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(timerProgress > 0.75 ? PSColors.expiredRed : .white)
                         .monospacedDigit()
                     Text(timerRunning ? "remaining" : "paused")
                         .font(.system(size: PSLayout.scaledFont(9), weight: .medium, design: .rounded))
@@ -650,6 +761,134 @@ struct CookingScreenView: View {
         .presentationDragIndicator(.visible)
     }
 
+    // MARK: - Voice Settings Sheet
+
+    private var voiceSettingsSheet: some View {
+        ZStack {
+            LinearGradient(
+                stops: [
+                    .init(color: Color(hex: 0x060F0A), location: 0),
+                    .init(color: Color(hex: 0x0C1E14), location: 1)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            ).ignoresSafeArea()
+
+            VStack(spacing: PSSpacing.xl) {
+                // Handle
+                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                    .fill(.white.opacity(0.25))
+                    .frame(width: 38, height: 5)
+                    .padding(.top, PSSpacing.lg)
+
+                // Header row
+                HStack {
+                    VStack(alignment: .leading, spacing: PSSpacing.xs) {
+                        Text("Voice Chef")
+                            .font(.system(size: PSLayout.scaledFont(22), weight: .bold, design: .rounded))
+                            .foregroundStyle(.white)
+                        Text("Your personal sous chef")
+                            .font(.system(size: PSLayout.scaledFont(13), weight: .medium, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.45))
+                    }
+                    Spacer()
+                    Toggle("", isOn: $voiceEnabled)
+                        .tint(PSColors.primaryGreen)
+                        .onChange(of: voiceEnabled) { _, enabled in
+                            if enabled {
+                                speakStep(humanPhrase(for: currentStep, index: currentStepIndex))
+                            } else {
+                                speechSynthesizer.stopSpeaking(at: .immediate)
+                                isSpeaking = false
+                            }
+                        }
+                }
+                .padding(.horizontal, PSSpacing.cardPadding)
+
+                if voiceEnabled {
+                    VStack(alignment: .leading, spacing: PSSpacing.md) {
+                        Text("Voice Style")
+                            .font(.system(size: PSLayout.scaledFont(14), weight: .semibold, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.60))
+                            .padding(.horizontal, PSSpacing.cardPadding)
+
+                        VStack(spacing: PSSpacing.sm) {
+                            ForEach(VoiceType.allCases) { voiceType in
+                                Button {
+                                    PSHaptics.shared.lightTap()
+                                    withAnimation(PSMotion.springDefault) {
+                                        selectedVoiceType = voiceType
+                                    }
+                                    // Preview selected voice
+                                    let preview = AVSpeechUtterance(string: "Hello! I'm ready to help you cook.")
+                                    preview.voice = AVSpeechSynthesisVoice(language: voiceType.languageCode)
+                                    preview.rate = voiceType.rate
+                                    preview.pitchMultiplier = voiceType.pitch
+                                    preview.volume = voiceType.volume
+                                    speechSynthesizer.stopSpeaking(at: .immediate)
+                                    speechSynthesizer.speak(preview)
+                                } label: {
+                                    HStack(spacing: PSSpacing.md) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(selectedVoiceType == voiceType
+                                                      ? PSColors.primaryGreen
+                                                      : .white.opacity(0.08))
+                                                .frame(width: PSLayout.scaled(42), height: PSLayout.scaled(42))
+                                            Image(systemName: voiceType.icon)
+                                                .font(.system(size: PSLayout.scaledFont(16), weight: .semibold))
+                                                .foregroundStyle(selectedVoiceType == voiceType
+                                                                 ? .black
+                                                                 : .white.opacity(0.75))
+                                        }
+
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(voiceType.displayName)
+                                                .font(.system(size: PSLayout.scaledFont(15), weight: .semibold, design: .rounded))
+                                                .foregroundStyle(.white)
+                                            Text(voiceType.voiceDescription)
+                                                .font(.system(size: PSLayout.scaledFont(12), weight: .regular, design: .rounded))
+                                                .foregroundStyle(.white.opacity(0.45))
+                                        }
+
+                                        Spacer()
+
+                                        if selectedVoiceType == voiceType {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .font(.system(size: PSLayout.scaledFont(20)))
+                                                .foregroundStyle(PSColors.primaryGreen)
+                                        }
+                                    }
+                                    .padding(.horizontal, PSSpacing.lg)
+                                    .padding(.vertical, PSSpacing.md)
+                                    .background(selectedVoiceType == voiceType
+                                                ? PSColors.primaryGreen.opacity(0.12)
+                                                : .white.opacity(0.05))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
+                                            .stroke(selectedVoiceType == voiceType
+                                                    ? PSColors.primaryGreen.opacity(0.40)
+                                                    : .clear,
+                                                    lineWidth: 1)
+                                    )
+                                    .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal, PSSpacing.lg)
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+
+                Spacer()
+            }
+        }
+        .environment(\.colorScheme, .dark)
+        .presentationDetents(voiceEnabled ? [.fraction(0.72), .large] : [.fraction(0.28)])
+        .presentationDragIndicator(.visible)
+    }
+
     // MARK: - Completion Overlay
 
     private var completionOverlay: some View {
@@ -812,7 +1051,9 @@ struct CookingScreenView: View {
         if voiceEnabled {
             Task {
                 try? await Task.sleep(for: .milliseconds(600))
-                await MainActor.run { speakStep(currentStep) }
+                await MainActor.run {
+                    speakStep(humanPhrase(for: currentStep, index: currentStepIndex))
+                }
             }
         }
     }
@@ -836,7 +1077,7 @@ struct CookingScreenView: View {
         timerSeconds = duration
 
         if voiceEnabled {
-            speakStep(currentStep)
+            speakStep(humanPhrase(for: currentStep, index: currentStepIndex))
         }
         maybeShowFunFact()
     }
@@ -909,17 +1150,77 @@ struct CookingScreenView: View {
         guard voiceEnabled else { return }
         speechSynthesizer.stopSpeaking(at: .immediate)
         let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.85
-        utterance.pitchMultiplier = 1.1
-        utterance.volume = 0.9
+        utterance.voice = AVSpeechSynthesisVoice(language: selectedVoiceType.languageCode)
+        utterance.rate = selectedVoiceType.rate
+        utterance.pitchMultiplier = selectedVoiceType.pitch
+        utterance.volume = selectedVoiceType.volume
+        // Natural pause before speaking for more human feel
+        utterance.preUtteranceDelay = 0.25
+        utterance.postUtteranceDelay = 0.15
         speechSynthesizer.speak(utterance)
         withAnimation { isSpeaking = true }
-        let duration = Double(text.count) / 15.0
+        let wordsPerSecond = 2.5 * Double(selectedVoiceType.rate / AVSpeechUtteranceDefaultSpeechRate)
+        let wordCount = text.split(separator: " ").count
+        let duration = Double(wordCount) / wordsPerSecond
         Task {
-            try? await Task.sleep(for: .seconds(duration + 0.5))
+            try? await Task.sleep(for: .seconds(duration + 0.8))
             await MainActor.run { withAnimation { isSpeaking = false } }
         }
+    }
+
+    /// Wraps a raw step string with natural, contextual phrasing so the Voice Chef
+    /// sounds conversational rather than mechanical.
+    private func humanPhrase(for step: String, index: Int) -> String {
+        let lower = step.lowercased()
+
+        if index == 0 {
+            let openers = [
+                "Alright, let's get cooking! First up: \(step)",
+                "Let's begin! Here's what to do first: \(step)",
+                "Great, let's start! \(step)"
+            ]
+            return openers[abs(recipe.title.hashValue) % openers.count]
+        }
+
+        if index == totalSteps - 1 {
+            let closers = [
+                "Almost done! For the final step: \(step)",
+                "You're so close! Last one — \(step)",
+                "Home stretch! \(step)"
+            ]
+            return closers[index % closers.count]
+        }
+
+        if lower.contains("heat") || lower.contains("preheat") {
+            return "Now go ahead and \(step.prefix(1).lowercased())\(step.dropFirst())"
+        }
+        if lower.contains("add") || lower.contains("pour") || lower.contains("place") {
+            return "Next, \(step)"
+        }
+        if lower.contains("stir") || lower.contains("mix") || lower.contains("whisk") {
+            return "Time to \(step.prefix(1).lowercased())\(step.dropFirst())"
+        }
+        if lower.contains("season") || lower.contains("taste") {
+            return "Here's where the magic happens — \(step)"
+        }
+        if lower.contains("rest") || lower.contains("wait") || lower.contains("cool") {
+            return "Take a moment — \(step)"
+        }
+        if lower.contains("serve") || lower.contains("plate") || lower.contains("garnish") {
+            return "Almost there! \(step)"
+        }
+        if lower.contains("chop") || lower.contains("slice") || lower.contains("dice") {
+            return "Prep time — \(step)"
+        }
+
+        let generics = [
+            "Moving on — \(step)",
+            "For step \(index + 1): \(step)",
+            "Now, \(step)",
+            "Keep it up! \(step)",
+            "Great work so far. \(step)"
+        ]
+        return generics[index % generics.count]
     }
 
     // MARK: - Step Duration Estimation
