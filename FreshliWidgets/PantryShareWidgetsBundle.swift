@@ -7,6 +7,7 @@ struct FreshliWidgetsBundle: WidgetBundle {
         FreshliWidgets()
         ImpactSummaryWidget()
         FreshnessRingWidget()
+        EatMeFirstWidget()
         FreshliWidgetsControl()
         FreshliWidgetsLiveActivity()
         FreshliExpiryLiveActivity()

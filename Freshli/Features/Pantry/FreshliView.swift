@@ -21,7 +21,9 @@ struct FreshliView: View {
     @State private var showHarvestCelebration = false
     @State private var harvestIntensity: SparkleIntensity = .standard
     @State private var showFridgeScanner = false
+    @State private var showARScanner = false
     @State private var autoListTarget: FreshliItem?
+    @State private var binLogTarget: FreshliItem?
     @AppStorage("autoListDismissedIds") private var autoListDismissedIdsRaw: String = ""
 
     private var autoListDismissedIds: Set<String> {
@@ -104,6 +106,16 @@ struct FreshliView: View {
 
     private func deleteItem(_ item: FreshliItem) {
         PSHaptics.shared.heavyTap()
+        // If the item is actively being wasted (still has expiry data) surface the bin log
+        // reason picker before destroying it.
+        if item.expiryStatus != .fresh && !item.isConsumed && !item.isShared && !item.isDonated {
+            binLogTarget = item
+            return
+        }
+        performDelete(item)
+    }
+
+    private func performDelete(_ item: FreshliItem) {
         let itemName = item.name
         let itemId = item.id
         // Delete the item object (lightweight — just marks it deleted in the context)
@@ -219,6 +231,18 @@ struct FreshliView: View {
                 )
             }
             .presentationDragIndicator(.visible)
+        }
+        .sheet(item: $binLogTarget) { item in
+            BinLogReasonSheet(item: item) { reason in
+                if reason != nil {
+                    toastManager.show(.success(String(localized: "Logged to Bin Log — we'll use this to stop the waste pattern.")))
+                }
+                performDelete(item)
+                binLogTarget = nil
+            }
+        }
+        .fullScreenCover(isPresented: $showARScanner) {
+            ARPantryScannerView()
         }
     }
 

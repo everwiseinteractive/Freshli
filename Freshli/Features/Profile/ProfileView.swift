@@ -18,6 +18,11 @@ struct ProfileView: View {
     @State private var showPerks = false
     @State private var showLocalPods = false
     @State private var showSmartShopping = false
+    @State private var showBarcodeAnalytics = false
+    @State private var showBinLog = false
+    @State private var showKarmaCredits = false
+    @State private var showCouncilReport = false
+    @State private var showIngredientPing = false
     @State private var householdSize: Int = 1
     @Environment(SubscriptionService.self) private var subscriptionService
     @AppStorage("isDarkMode") private var isDarkMode = false
@@ -75,6 +80,11 @@ struct ProfileView: View {
         .navigationDestination(isPresented: $showPerks) { PerksView() }
         .navigationDestination(isPresented: $showLocalPods) { LocalPodsView() }
         .navigationDestination(isPresented: $showSmartShopping) { SmartShoppingListView() }
+        .navigationDestination(isPresented: $showBarcodeAnalytics) { BarcodeAnalyticsView() }
+        .navigationDestination(isPresented: $showBinLog) { BinLogDashboardView() }
+        .navigationDestination(isPresented: $showKarmaCredits) { KarmaCreditsView() }
+        .navigationDestination(isPresented: $showCouncilReport) { CouncilImpactReportView() }
+        .sheet(isPresented: $showIngredientPing) { IngredientPingView() }
         .sheet(isPresented: $showAuthSheet) {
             AuthView().presentationDragIndicator(.visible)
         }
@@ -528,6 +538,16 @@ struct ProfileView: View {
             settingsNavRow(icon: "person.3.fill", iconBg: Color(hex: 0x3B82F6), title: String(localized: "Local Network & Pods")) { showLocalPods = true }
             settingsDivider()
             settingsNavRow(icon: "cart.badge.questionmark", iconBg: Color(hex: 0x8B5CF6), title: String(localized: "Smart Shopping List")) { showSmartShopping = true }
+            settingsDivider()
+            settingsNavRow(icon: "barcode.viewfinder", iconBg: Color(hex: 0xEF4444), title: String(localized: "Packaging Analytics")) { showBarcodeAnalytics = true }
+            settingsDivider()
+            settingsNavRow(icon: "trash.circle.fill", iconBg: Color(hex: 0xF97316), title: String(localized: "Bin Log & Trash Analytics")) { showBinLog = true }
+            settingsDivider()
+            settingsNavRow(icon: "leaf.circle.fill", iconBg: Color(hex: 0x8B5CF6), title: String(localized: "Karma Credits")) { showKarmaCredits = true }
+            settingsDivider()
+            settingsNavRow(icon: "dot.radiowaves.left.and.right", iconBg: Color(hex: 0xEC4899), title: String(localized: "Ping Your Pod")) { showIngredientPing = true }
+            settingsDivider()
+            settingsNavRow(icon: "building.columns.fill", iconBg: Color(hex: 0x06B6D4), title: String(localized: "Council Impact Report")) { showCouncilReport = true }
             settingsDivider()
             settingsNavRow(icon: "globe", iconBg: PSColors.infoBlue, title: String(localized: "Language")) { showLanguageSettings = true }
             settingsDivider()
