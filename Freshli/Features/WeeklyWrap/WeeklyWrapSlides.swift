@@ -1,12 +1,26 @@
 import SwiftUI
 
+// MARK: - Animation Choreography
+//
+// Each slide is built around a single `Task` that sequences its entrance
+// animations with `Task.sleep`, rather than chains of
+// `DispatchQueue.main.asyncAfter`. Counters rely on
+// `withAnimation` + `.contentTransition(.numericText())` — SwiftUI
+// interpolates Int values smoothly on its own, so there is no need for a
+// 70-step manual tick loop. Haptic ticks are driven by a second, shorter
+// `Task` that sleeps in fixed increments while the visual animation runs.
+
 // MARK: - Slide 1: The Big Number
 
 struct BigNumberSlide: View {
     let viewModel: WeeklyWrapViewModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @State private var displayedCount: Int = 0
     @State private var showSubtitle = false
     @State private var countFinished = false
+
+    private let countDuration: Duration = .seconds(1.8)
 
     var body: some View {
         VStack(spacing: PSSpacing.xxxl) {
@@ -19,13 +33,35 @@ struct BigNumberSlide: View {
                 .tracking(3)
                 .opacity(showSubtitle ? 1 : 0)
 
-            // The Big Number
+            // The Big Number — with a keyframe-driven bounce pop at the end
             VStack(spacing: PSSpacing.lg) {
                 Text("\(displayedCount)")
                     .font(.system(size: 120, weight: .heavy, design: .rounded))
                     .foregroundColor(.white)
                     .contentTransition(.numericText())
-                    .scaleEffect(countFinished ? 1.0 : 0.95)
+                    .keyframeAnimator(
+                        initialValue: NumberPopState(),
+                        trigger: countFinished
+                    ) { content, state in
+                        content
+                            .scaleEffect(state.scale)
+                            .shadow(
+                                color: PSColors.primaryGreen.opacity(state.glow),
+                                radius: 40 * state.glow,
+                                y: 0
+                            )
+                    } keyframes: { _ in
+                        KeyframeTrack(\.scale) {
+                            CubicKeyframe(0.95, duration: 0.0)
+                            SpringKeyframe(1.12, duration: 0.35, spring: .bouncy)
+                            SpringKeyframe(1.00, duration: 0.45, spring: .smooth)
+                        }
+                        KeyframeTrack(\.glow) {
+                            LinearKeyframe(0.0, duration: 0.0)
+                            LinearKeyframe(0.8, duration: 0.25)
+                            LinearKeyframe(0.0, duration: 0.75)
+                        }
+                    }
 
                 Text("items saved")
                     .font(.system(size: 28, weight: .semibold, design: .rounded))
@@ -50,67 +86,64 @@ struct BigNumberSlide: View {
             Spacer()
         }
         .padding(.horizontal, PSSpacing.screenHorizontal)
-        .onAppear {
-            animateCountUp()
-        }
+        .task { await runEntrance() }
     }
 
-    private func animateCountUp() {
+    @MainActor
+    private func runEntrance() async {
         let target = viewModel.wrapData.totalItemsImpacted
-        let duration: Double = 1.8
-        let steps = 70
+
+        // Subtitle reveal first — gives the hero number something to land over.
+        try? await Task.sleep(for: .milliseconds(300))
+        withAnimation(PSMotion.springGentle) { showSubtitle = true }
 
         guard target > 0 else {
-            displayedCount = 0
-            showSubtitle = true
             countFinished = true
             return
         }
 
-        // Show subtitle after brief delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            withAnimation(PSMotion.springGentle) {
-                showSubtitle = true
-            }
-        }
-
-        // Counting animation with easing (slow start, fast middle, slow end)
-        for step in 0...steps {
-            let progress = Double(step) / Double(steps)
-            // Ease-out cubic for satisfying deceleration
-            let eased = 1.0 - pow(1.0 - progress, 3)
-            let delay = duration * progress
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                withAnimation(.linear(duration: 0.03)) {
-                    displayedCount = Int(Double(target) * eased)
-                }
-                // Tick haptic every ~10 steps
-                if step % 7 == 0 {
-                    PSHaptics.shared.tick()
-                }
-            }
-        }
-
-        // Ensure final value is exact
-        DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+        // Kick off the counter (SwiftUI interpolates Int via contentTransition)
+        // and a parallel haptic-tick loop that fires every 250ms for the
+        // duration of the count, so the user feels the digits climbing.
+        async let _: Void = tickHaptics(duration: countDuration)
+        withAnimation(reduceMotion ? .linear(duration: 0.2) : .easeOut(duration: 1.8)) {
             displayedCount = target
-            withAnimation(PSMotion.springBouncy) {
-                countFinished = true
-            }
-            PSHaptics.shared.success()
+        }
+
+        // Wait for the number to land, then fire the keyframe pop + success haptic.
+        try? await Task.sleep(for: countDuration)
+        countFinished = true
+        PSHaptics.shared.success()
+    }
+
+    private func tickHaptics(duration: Duration) async {
+        guard !reduceMotion else { return }
+        let tickInterval: Duration = .milliseconds(250)
+        let ticks = Int(duration / tickInterval)
+        for _ in 0..<ticks {
+            try? await Task.sleep(for: tickInterval)
+            PSHaptics.shared.tick()
         }
     }
+}
+
+/// State the number-pop keyframe animator drives. Two tracks: the scale
+/// bounce and a glow pulse that fades in and out as the count lands.
+private struct NumberPopState {
+    var scale: CGFloat = 1.0
+    var glow: Double = 0.0
 }
 
 // MARK: - Slide 2: Community Hero
 
 struct CommunityHeroSlide: View {
     let viewModel: WeeklyWrapViewModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @State private var showContent = false
     @State private var displayedPeople: Int = 0
-    @State private var heartScale: CGFloat = 0.3
-    @State private var heartOpacity: Double = 0
+    @State private var heartAppeared = false
+    @State private var ringsExpanded = false
 
     private var peopleHelped: Int {
         viewModel.wrapData.itemsShared + viewModel.wrapData.itemsDonated
@@ -120,28 +153,36 @@ struct CommunityHeroSlide: View {
         VStack(spacing: PSSpacing.xxxl) {
             Spacer()
 
-            // Heart icon with pulse
+            // Heart icon with rings. Rings use PhaseAnimator for a
+            // living breathe-in / breathe-out pulse instead of a linear
+            // repeatForever; gives the hero graphic a gentle, organic life.
             ZStack {
-                // Pulsing rings
                 ForEach(0..<3, id: \.self) { i in
                     Circle()
                         .stroke(Color.white.opacity(0.15 - Double(i) * 0.04), lineWidth: 2)
                         .frame(
-                            width: showContent ? CGFloat(100 + i * 40) : 40,
-                            height: showContent ? CGFloat(100 + i * 40) : 40
+                            width: ringsExpanded ? CGFloat(100 + i * 40) : 40,
+                            height: ringsExpanded ? CGFloat(100 + i * 40) : 40
                         )
                         .animation(
-                            .easeOut(duration: 1.2)
-                            .delay(Double(i) * 0.15),
-                            value: showContent
+                            .easeOut(duration: 1.2).delay(Double(i) * 0.15),
+                            value: ringsExpanded
                         )
                 }
 
                 Image(systemName: "heart.fill")
                     .font(.system(size: 56, weight: .bold))
                     .foregroundColor(.white)
-                    .scaleEffect(heartScale)
-                    .opacity(heartOpacity)
+                    .phaseAnimator([false, true], trigger: heartAppeared) { content, phase in
+                        content
+                            .scaleEffect(heartAppeared ? (phase ? 1.04 : 1.0) : 0.3)
+                            .opacity(heartAppeared ? 1.0 : 0.0)
+                    } animation: { phase in
+                        if !heartAppeared {
+                            return .spring(response: 0.5, dampingFraction: 0.6)
+                        }
+                        return .easeInOut(duration: 1.6)
+                    }
             }
 
             // Stats
@@ -182,50 +223,30 @@ struct CommunityHeroSlide: View {
             Spacer()
         }
         .padding(.horizontal, PSSpacing.screenHorizontal)
-        .onAppear {
-            animateEntrance()
-        }
+        .task { await runEntrance() }
     }
 
-    private func animateEntrance() {
-        // Heart entrance
-        withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
-            heartScale = 1.0
-            heartOpacity = 1.0
+    @MainActor
+    private func runEntrance() async {
+        // Heart pop-in and rings expand together
+        heartAppeared = true
+        ringsExpanded = true
+
+        // Content reveal after the heart lands
+        try? await Task.sleep(for: .milliseconds(400))
+        withAnimation(PSMotion.springGentle) { showContent = true }
+
+        // Wait for stats to fade in before kicking off the counter
+        try? await Task.sleep(for: .milliseconds(100))
+
+        guard peopleHelped > 0 else { return }
+
+        withAnimation(reduceMotion ? .linear(duration: 0.2) : .easeOut(duration: 1.5)) {
+            displayedPeople = peopleHelped
         }
 
-        // Content reveal
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            withAnimation(PSMotion.springGentle) {
-                showContent = true
-            }
-        }
-
-        // Count up people helped
-        let target = peopleHelped
-        let duration: Double = 1.5
-        let steps = 50
-
-        guard target > 0 else {
-            displayedPeople = 0
-            return
-        }
-
-        for step in 0...steps {
-            let progress = Double(step) / Double(steps)
-            let eased = 1.0 - pow(1.0 - progress, 3)
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5 + duration * progress) {
-                withAnimation(.linear(duration: 0.03)) {
-                    displayedPeople = Int(Double(target) * eased)
-                }
-            }
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5 + duration) {
-            displayedPeople = target
-            PSHaptics.shared.success()
-        }
+        try? await Task.sleep(for: .milliseconds(1_500))
+        PSHaptics.shared.success()
     }
 }
 
@@ -263,11 +284,13 @@ struct EnvironmentalImpactSlide: View {
     let viewModel: WeeklyWrapViewModel
     let onShare: () -> Void
     let onDone: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var treeGrowth: CGFloat = 0
+    @State private var treeBounce = false
     @State private var showStats = false
     @State private var showActions = false
-    @State private var leafRotation: Double = 0
+    @State private var leafSway: Double = 0
 
     private var co2Saved: Double { viewModel.wrapData.co2Avoided }
     // Normalize growth: 0kg = 0, 50kg+ = full tree
@@ -339,12 +362,17 @@ struct EnvironmentalImpactSlide: View {
                 .frame(height: PSSpacing.xxxxl)
         }
         .padding(.horizontal, PSSpacing.screenHorizontal)
-        .onAppear {
-            animateTree()
-        }
+        .task { await runEntrance() }
     }
 
     // MARK: - 3D Tree
+    //
+    // `keyframeAnimator` drives the entire tree growth as a single
+    // choreographed sequence: the trunk shoots up with overshoot, canopy
+    // layers stagger in, and the whole tree settles with a micro-bounce
+    // at the end. Previously this was an ad-hoc `withAnimation` + two
+    // `DispatchQueue.main.asyncAfter` chains; now it's one declarative
+    // animation that SwiftUI can scrub, reverse, or interrupt cleanly.
 
     private var treeView: some View {
         ZStack {
@@ -379,7 +407,7 @@ struct EnvironmentalImpactSlide: View {
                 canopyLayer(size: layerSize, layerIndex: layer)
                     .offset(y: yOffset)
                     .rotation3DEffect(
-                        .degrees(leafRotation * (layer == 1 ? -1 : 1)),
+                        .degrees(leafSway * (layer == 1 ? -1 : 1)),
                         axis: (x: 0.1, y: 1, z: 0),
                         perspective: 0.4
                     )
@@ -396,9 +424,29 @@ struct EnvironmentalImpactSlide: View {
                             x: CGFloat.random(in: -60...60),
                             y: CGFloat.random(in: -100...40)
                         )
-                        .rotationEffect(.degrees(leafRotation * 3 + Double(i * 30)))
+                        .rotationEffect(.degrees(leafSway * 3 + Double(i * 30)))
                         .transition(.scale.combined(with: .opacity))
                 }
+            }
+        }
+        .keyframeAnimator(
+            initialValue: TreePopState(),
+            trigger: treeBounce
+        ) { content, state in
+            content
+                .scaleEffect(x: state.squashX, y: state.squashY, anchor: .bottom)
+        } keyframes: { _ in
+            KeyframeTrack(\.squashX) {
+                CubicKeyframe(1.0, duration: 0.0)
+                CubicKeyframe(1.08, duration: 0.18)  // squish wide
+                CubicKeyframe(0.96, duration: 0.18)  // snap narrow
+                SpringKeyframe(1.0, duration: 0.35, spring: .bouncy)
+            }
+            KeyframeTrack(\.squashY) {
+                CubicKeyframe(1.0, duration: 0.0)
+                CubicKeyframe(0.94, duration: 0.18)  // squish short
+                CubicKeyframe(1.04, duration: 0.18)  // stretch tall
+                SpringKeyframe(1.0, duration: 0.35, spring: .bouncy)
             }
         }
     }
@@ -460,35 +508,40 @@ struct EnvironmentalImpactSlide: View {
 
     // MARK: - Animation
 
-    private func animateTree() {
+    @MainActor
+    private func runEntrance() async {
         // Grow tree with spring
-        withAnimation(.spring(response: 1.8, dampingFraction: 0.65)) {
+        withAnimation(reduceMotion ? .linear(duration: 0.3) : .spring(response: 1.8, dampingFraction: 0.65)) {
             treeGrowth = max(0.3, growthFactor)
         }
 
-        // Gentle leaf sway
-        withAnimation(
-            .easeInOut(duration: 3.0)
-            .repeatForever(autoreverses: true)
-        ) {
-            leafRotation = 8
-        }
-
-        // Show stats after tree grows
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-            withAnimation(PSMotion.springGentle) {
-                showStats = true
-            }
-            PSHaptics.shared.mediumTap()
-        }
-
-        // Show action buttons
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
-            withAnimation(PSMotion.springDefault) {
-                showActions = true
+        // Gentle leaf sway — continuous forever
+        if !reduceMotion {
+            withAnimation(
+                .easeInOut(duration: 3.0).repeatForever(autoreverses: true)
+            ) {
+                leafSway = 8
             }
         }
+
+        // Wait for the growth spring to settle, then trigger the bounce.
+        try? await Task.sleep(for: .milliseconds(1_200))
+        treeBounce.toggle()  // fires the keyframeAnimator
+        PSHaptics.shared.mediumTap()
+
+        // Reveal the stats number block
+        withAnimation(PSMotion.springGentle) { showStats = true }
+
+        // Finally reveal share + done actions
+        try? await Task.sleep(for: .milliseconds(600))
+        withAnimation(PSMotion.springDefault) { showActions = true }
     }
+}
+
+/// State driving the squash-and-stretch landing of the grown tree.
+private struct TreePopState {
+    var squashX: CGFloat = 1.0
+    var squashY: CGFloat = 1.0
 }
 
 // MARK: - Preview

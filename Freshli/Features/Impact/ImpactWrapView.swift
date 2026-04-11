@@ -320,19 +320,10 @@ private struct ItemsSavedScreen: View {
     }
 
     private func animateCounter() {
-        let duration: Double = 1.5
-        let steps = 60
-        let increment = Double(wrapData.itemsSaved) / Double(steps)
-
-        for step in 0...steps {
-            DispatchQueue.main.asyncAfter(deadline: .now() + (duration / Double(steps)) * Double(step)) {
-                withAnimation(.linear(duration: 0.05)) {
-                    displayedCount = Int(increment * Double(step))
-                }
-            }
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+        // `.contentTransition(.numericText())` on the Text view interpolates
+        // Int changes automatically, so a single `withAnimation` does the
+        // entire count-up — no manual tick loop needed.
+        withAnimation(.easeOut(duration: 1.5)) {
             displayedCount = wrapData.itemsSaved
         }
     }
@@ -437,19 +428,9 @@ private struct MoneySavedScreen: View {
     }
 
     private func animateAmount() {
-        let duration: Double = 1.5
-        let steps = 60
-
-        for step in 0...steps {
-            let progress = Double(step) / Double(steps)
-            DispatchQueue.main.asyncAfter(deadline: .now() + duration * progress) {
-                withAnimation(.linear(duration: 0.05)) {
-                    displayedAmount = wrapData.moneySaved * progress
-                }
-            }
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+        // Double values interpolate natively under `withAnimation`; paired
+        // with `.contentTransition(.numericText())` the digits roll cleanly.
+        withAnimation(.easeOut(duration: 1.5)) {
             displayedAmount = wrapData.moneySaved
         }
     }
@@ -513,32 +494,19 @@ private struct EnvironmentalImpactScreen: View {
                 Spacer()
             }
             .padding(.horizontal, PSSpacing.screenHorizontal)
-            .onAppear {
-                animateCO2()
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    withAnimation(PSMotion.springGentle) {
-                        showTrees = true
-                    }
-                }
-            }
+            .task { await runEntrance() }
         }
     }
 
-    private func animateCO2() {
-        let duration: Double = 1.5
-        let steps = 60
-
-        for step in 0...steps {
-            let progress = Double(step) / Double(steps)
-            DispatchQueue.main.asyncAfter(deadline: .now() + duration * progress) {
-                withAnimation(.linear(duration: 0.05)) {
-                    displayedCO2 = wrapData.co2Avoided * progress
-                }
-            }
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
+    @MainActor
+    private func runEntrance() async {
+        // Counter interpolates natively; trees stagger in after it lands.
+        withAnimation(.easeOut(duration: 1.5)) {
             displayedCO2 = wrapData.co2Avoided
+        }
+        try? await Task.sleep(for: .seconds(1))
+        withAnimation(PSMotion.springGentle) {
+            showTrees = true
         }
     }
 }
