@@ -28,9 +28,9 @@ enum AppTab: String, CaseIterable, Identifiable {
         switch self {
         case .home: return "house.fill"
         case .pantry: return "refrigerator.fill" // Figma: pantry/refrigerator icon
-        case .recipes: return "fork.knife"      // Figma: Utensils
-        case .community: return "person.2.fill" // Figma: Users
-        case .profile: return "person.fill"     // Figma: Profile
+        case .recipes: return "fork.knife"        // Figma: Utensils
+        case .community: return "person.2.fill"  // Figma: Users
+        case .profile: return "person.fill"      // Figma: Profile
         }
     }
 }
@@ -55,42 +55,42 @@ struct AppTabView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // Content with custom Slide & Scale transition for organic tab switching
-            Group {
-                switch selectedTab {
-                case .home:
-                    NavigationStack {
-                        HomeView(showAddItem: $showAddItem, switchToTab: { switchTab(to: $0) })
-                    }
-                case .pantry:
-                    NavigationStack {
-                        FreshliView(showAddItem: $showAddItem)
-                    }
-                case .recipes:
-                    NavigationStack {
-                        RecipesView()
-                    }
-                case .community:
-                    NavigationStack {
-                        CommunityView()
-                    }
-                case .profile:
-                    NavigationStack {
-                        ProfileView()
-                    }
+        // Using safeAreaInset instead of ZStack + explicit padding so the tab bar
+        // properly adjusts the safe area for ALL child views (NavigationStack, ScrollView,
+        // List) on every device — including the 34 pt home indicator on modern iPhones.
+        // The old ZStack + PSLayout.tabBarContentPadding approach undershot by ~30 pt on
+        // Face ID devices because tabBarContentPadding was width-scaled (not height-aware).
+        Group {
+            switch selectedTab {
+            case .home:
+                NavigationStack {
+                    HomeView(showAddItem: $showAddItem, switchToTab: { switchTab(to: $0) })
+                }
+            case .pantry:
+                NavigationStack {
+                    FreshliView(showAddItem: $showAddItem)
+                }
+            case .recipes:
+                NavigationStack {
+                    RecipesView()
+                }
+            case .community:
+                NavigationStack {
+                    CommunityView()
+                }
+            case .profile:
+                NavigationStack {
+                    ProfileView()
                 }
             }
-            .transition(FLMotion.tabSlideTransition(direction: slideDirection))
-            .id(selectedTab)
-            .padding(.bottom, PSLayout.tabBarContentPadding)
-
-            // Figma: custom tab bar — bg-white/80 backdrop-blur-xl border-t
+        }
+        .transition(FLMotion.tabSlideTransition(direction: slideDirection))
+        .id(selectedTab)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             customTabBar
         }
-        .ignoresSafeArea(.container, edges: .bottom)
         .ignoresSafeArea(.keyboard)
-        // SensoryFeedback (.selection) on tab change — tactile click between Pantry & Community
+        // SensoryFeedback (.selection) on tab change — tactile click between tabs
         .sensoryFeedback(.selection, trigger: selectedTab)
         .sheet(isPresented: $showAddItem) {
             NavigationStack {
@@ -102,11 +102,16 @@ struct AppTabView: View {
             seedDataIfNeeded()
             // Check for weekly recap celebration
             await celebrationManager.checkWeeklyRecap(modelContext: modelContext)
-            
+
             // Perform initial sync if authenticated
             if let userId = authManager.currentUserId {
                 await syncService.performFullSync(userId: userId, modelContext: modelContext)
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
+            // Update widget data when app goes to background — uses the scene's ModelContext,
+            // not a second container (which would cause a SwiftData schema conflict crash).
+            WidgetDataService.updateWidgetData(modelContext: modelContext)
         }
     }
 
@@ -120,7 +125,9 @@ struct AppTabView: View {
     }
 
     // Figma: iOS-style bottom navigation
-    // Uses explicit bottom safe area inset so the material fills to the screen edge.
+    // The background Rectangle uses .ignoresSafeArea(edges: .bottom) so the
+    // ultraThinMaterial fills all the way to the physical screen edge (under
+    // the home indicator), while the tab buttons themselves sit above it.
     private var customTabBar: some View {
         HStack {
             ForEach(AppTab.allCases) { tab in
@@ -154,21 +161,17 @@ struct AppTabView: View {
         }
         .padding(.horizontal, PSSpacing.lg)
         .padding(.top, PSSpacing.sm)
-        .padding(.bottom, bottomSafeAreaInset + PSSpacing.md)
-        .background(.ultraThinMaterial)
-        .overlay(alignment: .top) {
-            Divider().opacity(0.5)
+        .padding(.bottom, PSSpacing.md)
+        .background {
+            // Fill the material all the way to the screen edge (under home indicator)
+            // without affecting the layout of the tab buttons above.
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .ignoresSafeArea(edges: .bottom)
+                .overlay(alignment: .top) {
+                    Divider().opacity(0.5)
+                }
         }
-    }
-
-    /// Bottom safe area inset for the current window.
-    @MainActor
-    private var bottomSafeAreaInset: CGFloat {
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let window = windowScene.windows.first else {
-            return 34 // Default safe area for devices with notch
-        }
-        return window.safeAreaInsets.bottom
     }
 
     private func seedDataIfNeeded() {

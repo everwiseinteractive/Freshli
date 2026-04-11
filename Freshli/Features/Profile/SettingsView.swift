@@ -1,4 +1,5 @@
 import SwiftUI
+import UserNotifications
 import os
 
 // MARK: - Settings View
@@ -11,9 +12,11 @@ struct SettingsView: View {
     @AppStorage("isDarkMode") private var isDarkMode = false
     @AppStorage("notificationsEnabled") private var notificationsEnabled = true
     @AppStorage("reduceMotion") private var reduceMotion = false
+    @AppStorage("expiryReminderDays") private var expiryReminderDays = 3
     @Environment(\.accessibilityReduceMotion) private var a11yReduceMotion
 
     @State private var appeared = false
+    @State private var notificationAuthStatus: UNAuthorizationStatus = .notDetermined
 
     private let logger = Logger(subsystem: "com.freshli.app", category: "SettingsView")
 
@@ -39,21 +42,140 @@ struct SettingsView: View {
 
             // MARK: - Notifications
             Section {
-                settingsToggle(
-                    icon: "bell.badge.fill",
-                    title: String(localized: "Expiry Reminders"),
-                    tint: PSColors.secondaryAmber,
-                    isOn: $notificationsEnabled
-                )
+                if notificationAuthStatus == .denied {
+                    // System permission denied — guide user to OS Settings
+                    HStack(spacing: 12) {
+                        Image(systemName: "bell.slash.fill")
+                            .font(.system(size: PSLayout.scaledFont(16)))
+                            .foregroundStyle(PSColors.expiredRed)
+                            .frame(width: 28, height: 28)
+                            .background(PSColors.expiredRed.opacity(0.12))
+                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(String(localized: "Notifications Blocked"))
+                                .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
+                            Text(String(localized: "Tap to enable in iOS Settings"))
+                                .font(.system(size: PSLayout.scaledFont(12)))
+                                .foregroundStyle(PSColors.textTertiary)
+                        }
+                        Spacer()
+                        Button {
+                            openNotificationSettings()
+                        } label: {
+                            Text(String(localized: "Open Settings"))
+                                .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
+                                .foregroundStyle(PSColors.primaryGreen)
+                        }
+                    }
+                } else {
+                    // Authorized or not yet determined — show toggle
+                    settingsToggle(
+                        icon: "bell.badge.fill",
+                        title: String(localized: "Expiry Reminders"),
+                        tint: PSColors.secondaryAmber,
+                        isOn: $notificationsEnabled
+                    )
+                    .onChange(of: notificationsEnabled) { _, enabled in
+                        guard enabled else { return }
+                        // If permission not yet asked, request it now
+                        if notificationAuthStatus == .notDetermined {
+                            Task {
+                                let service = NotificationService()
+                                await service.requestAuthorization()
+                                let settings = await UNUserNotificationCenter.current().notificationSettings()
+                                notificationAuthStatus = settings.authorizationStatus
+                                // If denied, revert the toggle
+                                if settings.authorizationStatus == .denied {
+                                    notificationsEnabled = false
+                                }
+                            }
+                        }
+                    }
+
+                    // Reminder timing — only shown when notifications are on and authorized
+                    if notificationsEnabled && notificationAuthStatus == .authorized {
+                        HStack(spacing: 12) {
+                            Image(systemName: "clock.badge.fill")
+                                .font(.system(size: PSLayout.scaledFont(16)))
+                                .foregroundStyle(PSColors.secondaryAmber)
+                                .frame(width: 28, height: 28)
+                                .background(PSColors.secondaryAmber.opacity(0.12))
+                                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                            Text(String(localized: "Remind me"))
+                                .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
+                            Spacer()
+                            Picker("", selection: $expiryReminderDays) {
+                                Text(String(localized: "1 day before")).tag(1)
+                                Text(String(localized: "2 days before")).tag(2)
+                                Text(String(localized: "3 days before")).tag(3)
+                                Text(String(localized: "5 days before")).tag(5)
+                                Text(String(localized: "1 week before")).tag(7)
+                            }
+                            .labelsHidden()
+                            .tint(PSColors.primaryGreen)
+                        }
+                    }
+                }
             } header: {
                 Text(String(localized: "Notifications"))
+            } footer: {
+                if notificationAuthStatus == .denied {
+                    Text(String(localized: "Freshli needs notification permission to alert you before food expires."))
+                }
             }
 
             // MARK: - About
             Section {
-                settingsRow(icon: "info.circle", title: String(localized: "Version"), detail: "1.0.0")
-                settingsLink(icon: "doc.text", title: String(localized: "Privacy Policy"), url: "https://freshli.app/privacy")
-                settingsLink(icon: "doc.plaintext", title: String(localized: "Terms of Service"), url: "https://freshli.app/terms")
+                NavigationLink {
+                    FreshliAboutView()
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "leaf.circle.fill")
+                            .font(.system(size: PSLayout.scaledFont(16)))
+                            .foregroundStyle(PSColors.primaryGreen)
+                            .frame(width: 28, height: 28)
+                            .background(PSColors.primaryGreen.opacity(0.12))
+                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        Text(String(localized: "About Freshli"))
+                            .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
+                        Spacer()
+                    }
+                }
+                NavigationLink {
+                    FreshliPrivacyPolicyView()
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "hand.raised.fill")
+                            .font(.system(size: PSLayout.scaledFont(16)))
+                            .foregroundStyle(Color(hex: 0x6366F1))
+                            .frame(width: 28, height: 28)
+                            .background(Color(hex: 0x6366F1).opacity(0.12))
+                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        Text(String(localized: "Privacy Policy"))
+                            .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
+                        Spacer()
+                    }
+                }
+                NavigationLink {
+                    FreshliTermsView()
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "doc.text.fill")
+                            .font(.system(size: PSLayout.scaledFont(16)))
+                            .foregroundStyle(PSColors.accentTeal)
+                            .frame(width: 28, height: 28)
+                            .background(PSColors.accentTeal.opacity(0.12))
+                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        Text(String(localized: "Terms of Service"))
+                            .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
+                        Spacer()
+                    }
+                }
+                settingsRow(
+                    icon: "app.badge",
+                    title: String(localized: "Version"),
+                    detail: (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0") + " (\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"))"
+                )
             } header: {
                 Text(String(localized: "About"))
             }
@@ -95,6 +217,12 @@ struct SettingsView: View {
         }
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 12)
+        .task {
+            // Always re-check the OS permission state when this screen appears,
+            // in case the user changed it in the system Settings app.
+            let settings = await UNUserNotificationCenter.current().notificationSettings()
+            notificationAuthStatus = settings.authorizationStatus
+        }
         .onAppear {
             logger.info("SettingsView appeared")
             let base: Animation = (a11yReduceMotion || reduceMotion)
@@ -124,6 +252,14 @@ struct SettingsView: View {
         }
         // Default: up to date
         return String(localized: "Up to date")
+    }
+
+    // MARK: - Actions
+
+    private func openNotificationSettings() {
+        if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
+            UIApplication.shared.open(url)
+        }
     }
 
     // MARK: - Row Helpers

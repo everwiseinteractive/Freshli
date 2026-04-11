@@ -5,6 +5,21 @@ import os
 
 @main
 struct FreshliApp: App {
+    // Built once with cloudKitDatabase: .none — prevents SwiftData from auto-enabling
+    // CloudKit sync, which requires all model attributes to be optional/have defaults
+    // and injects remote-notification background mode requirements.
+    // Supabase (SyncService) is the sync layer; SwiftData is local-only storage.
+    private static let modelContainer: ModelContainer = {
+        do {
+            let config = ModelConfiguration(cloudKitDatabase: .none)
+            return try ModelContainer(
+                for: FreshliItem.self, SharedListing.self, UserProfile.self,
+                configurations: config
+            )
+        } catch {
+            fatalError("SwiftData ModelContainer failed: \(error)")
+        }
+    }()
     @State private var hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
     @AppStorage("isDarkMode") private var isDarkMode = false
     @State private var celebrationManager = CelebrationManager()
@@ -26,6 +41,9 @@ struct FreshliApp: App {
     @State private var dataPrefetched = false
     @State private var sessionValidated = false
     @State private var splashProgress: CGFloat = 0
+    /// Enforces a minimum splash display time so the branded loading screen
+    /// is always visible even when auth resolves instantly (e.g. no saved session).
+    @State private var splashMinimumTimeMet = false
 
     private let logger = Logger(subsystem: "com.freshli.app", category: "AppLifecycle")
 
@@ -40,8 +58,9 @@ struct FreshliApp: App {
                             hasCompletedOnboarding = true
                         }
                     }
-                } else if showSplash && authManager.authState == .loading {
+                } else if showSplash {
                     // Step 2: Freshli Signature Loading Experience
+                    // Shown until BOTH auth resolves AND the minimum time has elapsed.
                     FreshliSplashView(
                         splashNamespace: splashNamespace,
                         onSessionValidated: {
@@ -90,6 +109,13 @@ struct FreshliApp: App {
                 logger.info("FreshliApp: Restoring session...")
                 splashProgress = 0.2
 
+                // Enforce minimum splash display time (2.5 s) in parallel with auth restore.
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(2.5))
+                    splashMinimumTimeMet = true
+                    checkAndTransition()
+                }
+
                 // Restore auth session
                 await authManager.restoreSession()
 
@@ -113,7 +139,7 @@ struct FreshliApp: App {
                 splashProgress = 1.0
                 dataPrefetched = true
 
-                // Trigger transition
+                // Trigger transition (only fires if minimum time is also met)
                 checkAndTransition()
             }
             .task(id: authManager.authState) {
@@ -122,10 +148,9 @@ struct FreshliApp: App {
                     await authManager.listenForAuthChanges()
                 }
 
-                // Auto-dismiss splash when auth state resolves
+                // Re-check transition whenever auth state changes —
+                // checkAndTransition also guards on splashMinimumTimeMet so it is safe.
                 if authManager.authState != .loading && showSplash {
-                    // Small delay to let animation complete
-                    try? await Task.sleep(for: .milliseconds(600))
                     checkAndTransition()
                 }
             }
@@ -137,14 +162,8 @@ struct FreshliApp: App {
                     }
                 }
             }
-            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
-                // Update widget data when app goes to background
-                if let container = try? ModelContainer(for: FreshliItem.self, UserProfile.self) {
-                    WidgetDataService.updateWidgetData(modelContext: container.mainContext)
-                }
-            }
         }
-        .modelContainer(for: [FreshliItem.self, SharedListing.self, UserProfile.self])
+        .modelContainer(Self.modelContainer)
     }
 
     // MARK: - Main App Content (post-splash)
@@ -173,8 +192,9 @@ struct FreshliApp: App {
     // MARK: - Splash → Dashboard Transition
 
     private func checkAndTransition() {
-        // Only transition when auth state has resolved
+        // Only transition when BOTH auth has resolved AND the minimum display time has elapsed
         guard authManager.authState != .loading else { return }
+        guard splashMinimumTimeMet else { return }
         guard showSplash else { return }
 
         logger.info("FreshliApp: Transitioning from splash → main content")

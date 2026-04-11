@@ -2,10 +2,6 @@ import SwiftUI
 import SwiftData
 import os
 
-// Figma: Home — bg-green-600 rounded-b-[40px] header with avatar, greeting, bell
-// Search bar inside header with bg-white/20 backdrop-blur
-// Expiring Soon card with horizontal items, Recipe Suggestion card, Community Swap card
-
 struct HomeView: View {
     @Binding var showAddItem: Bool
     var switchToTab: (AppTab) -> Void
@@ -18,9 +14,9 @@ struct HomeView: View {
     @Environment(AuthManager.self) private var authManager
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    @State private var selectedImpactStat: String?
     @State private var impactStats: ImpactService.ImpactStats?
     @State private var showWeeklyWrap = false
+    @State private var selectedImpactStat: String?
 
     private let logger = Logger(subsystem: "com.freshli.app", category: "HomeView")
 
@@ -30,9 +26,9 @@ struct HomeView: View {
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
-        if hour < 12 { return String(localized: "Good Morning,") }
-        if hour < 17 { return String(localized: "Good Afternoon,") }
-        return String(localized: "Good Evening,")
+        if hour < 12 { return String(localized: "Good Morning") }
+        if hour < 17 { return String(localized: "Good Afternoon") }
+        return String(localized: "Good Evening")
     }
 
     var body: some View {
@@ -48,7 +44,6 @@ struct HomeView: View {
             WeeklyWrapView()
         }
         .task {
-            logger.info("HomeView appeared — \(activeItems.count) active items")
             impactStats = ImpactService(modelContext: modelContext).calculateStats()
         }
         .onChange(of: activeItems.count) { _, _ in
@@ -56,114 +51,122 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Figma: Green curved header
+    // MARK: - Curved Header
 
     private var curvedHeader: some View {
         ZStack(alignment: .top) {
-            // Figma: bg-green-600 rounded-b-[40px]
+            // Base gradient — richer than flat green
             UnevenRoundedRectangle(bottomLeadingRadius: PSSpacing.radiusHero, bottomTrailingRadius: PSSpacing.radiusHero)
-                .fill(PSColors.headerGreen)
+                .fill(
+                    LinearGradient(
+                        colors: [PSColors.headerGreen, PSColors.primaryGreenDark],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .frame(height: PSLayout.headerHeight)
 
-            // Figma: decorative blur blob
+            // Decorative circles
             Circle()
-                .fill(PSColors.headerGreenLight.opacity(0.5))
-                .adaptiveFrame(width: 256, height: 256)
-                .blur(radius: PSLayout.scaled(80))
-                .offset(x: PSLayout.scaled(100), y: PSLayout.scaled(-60))
+                .fill(.white.opacity(0.06))
+                .frame(width: PSLayout.scaled(240))
+                .blur(radius: 40)
+                .offset(x: PSLayout.scaled(100), y: PSLayout.scaled(-40))
+
+            Circle()
+                .fill(.white.opacity(0.04))
+                .frame(width: PSLayout.scaled(180))
+                .blur(radius: 30)
+                .offset(x: PSLayout.scaled(-80), y: PSLayout.scaled(60))
 
             VStack(spacing: 0) {
-                // Figma: avatar + greeting + bell row
+                // Avatar + greeting + actions row
                 HStack(alignment: .center) {
-                    // Figma: w-12 h-12 rounded-full border-2 border-white avatar
                     NavigationLink(destination: ProfileView()) {
-                        Image(systemName: "person.crop.circle.fill")
-                            .font(.system(size: PSLayout.scaledFont(44)))
-                            .foregroundStyle(.white.opacity(0.8))
-                            .overlay(Circle().strokeBorder(.white, lineWidth: 2))
+                        ZStack {
+                            Circle()
+                                .fill(.white.opacity(0.15))
+                                .frame(width: PSLayout.scaled(52), height: PSLayout.scaled(52))
+                            Image(systemName: "person.crop.circle.fill")
+                                .font(.system(size: PSLayout.scaledFont(42)))
+                                .foregroundStyle(.white.opacity(0.9))
+                        }
                     }
 
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: 1) {
                         Text(greeting)
-                            .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
-                            .foregroundStyle(.white.opacity(0.7))
+                            .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
+                            .foregroundStyle(.white.opacity(0.65))
                         Text(authManager.currentDisplayName ?? String(localized: "Freshli User"))
-                            .font(.system(size: PSLayout.scaledFont(24), weight: .bold))
+                            .font(.system(size: PSLayout.scaledFont(22), weight: .bold))
                             .tracking(-0.3)
                             .foregroundStyle(.white)
+                            .lineLimit(1)
                     }
+                    .padding(.leading, PSSpacing.sm)
 
                     Spacer()
 
                     HStack(spacing: PSSpacing.sm) {
-                        // Weekly wrap button
                         Button {
                             PSHaptics.shared.lightTap()
                             showWeeklyWrap = true
                         } label: {
                             Image(systemName: "chart.line.uptrend.xyaxis")
-                                .font(.system(size: PSLayout.scaledFont(20)))
+                                .font(.system(size: PSLayout.scaledFont(18)))
                                 .foregroundStyle(.white)
                                 .frame(width: PSLayout.iconButtonSize, height: PSLayout.iconButtonSize)
-                                .background(.white.opacity(0.2))
+                                .background(.white.opacity(0.15))
                                 .clipShape(Circle())
                         }
-                        .accessibilityLabel(String(localized: "View Weekly Wrap"))
-                        .accessibilityHint(String(localized: "See your weekly impact summary"))
 
-                        // Figma: notification bell with badge — navigates to ExpiryAlertsView
                         NavigationLink(destination: ExpiryAlertsView()) {
                             ZStack(alignment: .topTrailing) {
                                 Image(systemName: "bell.fill")
-                                    .font(.system(size: PSLayout.scaledFont(20)))
+                                    .font(.system(size: PSLayout.scaledFont(18)))
                                     .foregroundStyle(.white)
                                     .frame(width: PSLayout.iconButtonSize, height: PSLayout.iconButtonSize)
-                                    .background(.white.opacity(0.2))
+                                    .background(.white.opacity(0.15))
                                     .clipShape(Circle())
-
-                                // Figma: w-2 h-2 bg-red-500 border border-green-600
                                 if !expiringItems.isEmpty {
                                     Circle()
                                         .fill(PSColors.expiredRed)
                                         .frame(width: PSLayout.scaled(8), height: PSLayout.scaled(8))
-                                        .overlay(Circle().strokeBorder(PSColors.headerGreen, lineWidth: 1))
-                                        .offset(x: -2, y: 2)
+                                        .overlay(Circle().strokeBorder(PSColors.headerGreen, lineWidth: 1.5))
+                                        .offset(x: -1, y: 2)
                                 }
                             }
                         }
-                        .accessibilityLabel(String(localized: "View Expiry Alerts"))
-                        .accessibilityHint(String(localized: "Notifications: \(expiringItems.count) items expiring soon"))
                     }
                 }
                 .padding(.top, PSLayout.headerTopPadding)
                 .adaptiveHPadding()
-                .padding(.bottom, PSLayout.cardPadding)
+                .padding(.bottom, PSSpacing.lg)
 
-                // Figma: search bar with bg-white/20 backdrop-blur rounded-2xl
+                // Search bar
                 HStack(spacing: PSSpacing.sm) {
                     Image(systemName: "magnifyingglass")
-                        .font(.system(size: PSLayout.scaledFont(20)))
-                        .foregroundStyle(.white.opacity(0.8))
+                        .font(.system(size: PSLayout.scaledFont(18)))
+                        .foregroundStyle(.white.opacity(0.75))
                         .padding(.leading, PSSpacing.lg)
-
                     Text(String(localized: "Search recipes, ingredients..."))
-                        .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
-                        .foregroundStyle(.white.opacity(0.7))
-
+                        .font(.system(size: PSLayout.scaledFont(15), weight: .medium))
+                        .foregroundStyle(.white.opacity(0.6))
                     Spacer()
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: PSLayout.scaledFont(16)))
+                        .foregroundStyle(.white.opacity(0.6))
+                        .padding(.trailing, PSSpacing.lg)
                 }
                 .frame(height: PSLayout.searchBarHeight)
-                // Figma: bg-white/20 backdrop-blur-md rounded-2xl border border-white/10
-                .background(.ultraThinMaterial.opacity(0.3))
-                .background(.white.opacity(0.2))
+                .background(.white.opacity(0.12))
+                .background(.ultraThinMaterial.opacity(0.2))
                 .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
-                        .strokeBorder(.white.opacity(0.1), lineWidth: 1)
+                        .strokeBorder(.white.opacity(0.15), lineWidth: 1)
                 )
                 .adaptiveHPadding()
-                .scaleEffect(0.97, anchor: .center)
-                .opacity(0.9)
                 .onTapGesture {
                     PSHaptics.shared.selection()
                     switchToTab(.pantry)
@@ -172,12 +175,10 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Content Sections
+    // MARK: - Content
 
     private var contentSections: some View {
-        VStack(spacing: PSSpacing.xxl) {
-            // Figma: cards overlap header by -mt-10
-            // Clamp overlap to prevent clipping on SE
+        VStack(spacing: PSSpacing.xl) {
             expiringSoonCard
                 .padding(.top, max(PSLayout.headerOverlap, PSLayout.scaled(-20)))
                 .dashboardEntrance(index: 0)
@@ -195,19 +196,30 @@ struct HomeView: View {
         .padding(.bottom, PSSpacing.xxxl)
     }
 
-    // MARK: - Figma: Expiring Soon Card
+    // MARK: - Expiring Soon Card
 
     private var expiringSoonCard: some View {
         VStack(alignment: .leading, spacing: PSSpacing.lg) {
             HStack {
                 HStack(spacing: PSSpacing.sm) {
-                    Image(systemName: "clock.fill")
-                        .font(.system(size: PSLayout.scaledFont(20)))
-                        .foregroundStyle(PSColors.secondaryAmber)
-                    Text(String(localized: "Expiring Soon"))
-                        .font(.system(size: PSLayout.scaledFont(18), weight: .bold))
-                        .foregroundStyle(PSColors.textPrimary)
-                        .psAccessibleHeader(String(localized: "Expiring Soon"))
+                    ZStack {
+                        Circle()
+                            .fill(PSColors.secondaryAmber.opacity(0.15))
+                            .frame(width: PSLayout.scaled(34), height: PSLayout.scaled(34))
+                        Image(systemName: "clock.fill")
+                            .font(.system(size: PSLayout.scaledFont(16)))
+                            .foregroundStyle(PSColors.secondaryAmber)
+                    }
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(String(localized: "Expiring Soon"))
+                            .font(.system(size: PSLayout.scaledFont(17), weight: .bold))
+                            .foregroundStyle(PSColors.textPrimary)
+                        if !expiringItems.isEmpty {
+                            Text(String(localized: "\(expiringItems.count) item\(expiringItems.count == 1 ? "" : "s") need attention"))
+                                .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
+                                .foregroundStyle(PSColors.secondaryAmber)
+                        }
+                    }
                 }
                 Spacer()
                 Button {
@@ -215,22 +227,36 @@ struct HomeView: View {
                     switchToTab(.pantry)
                 } label: {
                     Text(String(localized: "View All"))
-                        .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
+                        .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
                         .foregroundStyle(PSColors.primaryGreen)
+                        .padding(.horizontal, PSSpacing.md)
+                        .padding(.vertical, PSSpacing.xs)
+                        .background(PSColors.primaryGreen.opacity(0.1))
+                        .clipShape(Capsule())
                 }
             }
 
             if expiringItems.isEmpty {
-                Text(String(localized: "All items are fresh!"))
-                    .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
-                    .foregroundStyle(PSColors.textSecondary)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, PSSpacing.lg)
+                HStack(spacing: PSSpacing.md) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: PSLayout.scaledFont(24)))
+                        .foregroundStyle(PSColors.primaryGreen)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(String(localized: "All good!"))
+                            .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
+                            .foregroundStyle(PSColors.textPrimary)
+                        Text(String(localized: "All your items are fresh."))
+                            .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
+                            .foregroundStyle(PSColors.textSecondary)
+                    }
+                    Spacer()
+                }
+                .padding(PSSpacing.lg)
+                .background(PSColors.primaryGreen.opacity(0.06))
+                .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
             } else {
-                // Figma: horizontal scroll w-36 items with emoji icons
-                // Safe area handling for scroll edge
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: PSSpacing.lg) {
+                    HStack(spacing: PSSpacing.md) {
                         ForEach(Array(expiringItems.enumerated()), id: \.element.id) { index, item in
                             ExpiringItemPill(item: item)
                                 .staggeredAppearance(index: index)
@@ -246,9 +272,14 @@ struct HomeView: View {
         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
-                .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
+                .strokeBorder(
+                    expiringItems.isEmpty
+                        ? PSColors.primaryGreen.opacity(0.12)
+                        : PSColors.secondaryAmber.opacity(0.2),
+                    lineWidth: 1
+                )
         )
-        .shadow(color: PSColors.primaryGreen.opacity(0.08), radius: 12, y: 4)
+        .shadow(color: .black.opacity(0.06), radius: 16, y: 6)
     }
 
     // MARK: - Impact Summary Card
@@ -256,302 +287,288 @@ struct HomeView: View {
     private var impactSummaryCard: some View {
         NavigationLink(destination: ImpactDashboardView()) {
             VStack(alignment: .leading, spacing: PSSpacing.lg) {
-                HStack(spacing: PSSpacing.sm) {
-                    Image(systemName: "leaf.circle.fill")
-                        .font(.system(size: PSLayout.scaledFont(20)))
-                        .foregroundStyle(PSColors.primaryGreen)
-                    Text(String(localized: "Your Impact"))
-                        .font(.system(size: PSLayout.scaledFont(18), weight: .bold))
-                        .foregroundStyle(PSColors.textPrimary)
-                        .psAccessibleHeader(String(localized: "Your Impact"))
-
+                HStack {
+                    HStack(spacing: PSSpacing.sm) {
+                        Image(systemName: "leaf.circle.fill")
+                            .font(.system(size: PSLayout.scaledFont(22)))
+                            .foregroundStyle(.white)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(String(localized: "Your Impact"))
+                                .font(.system(size: PSLayout.scaledFont(17), weight: .bold))
+                                .foregroundStyle(.white)
+                            Text(String(localized: "Tap to see full breakdown"))
+                                .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
+                                .foregroundStyle(.white.opacity(0.6))
+                        }
+                    }
                     Spacer()
-
                     Image(systemName: "chevron.right")
-                        .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
-                        .foregroundStyle(PSColors.primaryGreen.opacity(0.5))
+                        .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.5))
+                        .padding(PSSpacing.sm)
+                        .background(.white.opacity(0.1))
+                        .clipShape(Circle())
                 }
 
                 if let stats = impactStats {
-                // Adaptive layout: stack on SE, horizontal otherwise
-                if PSLayout.isCompact {
-                    VStack(spacing: PSSpacing.lg) {
-                        impactStatTile(
-                            icon: "leaf.fill",
-                            value: "\(stats.itemsSaved)",
-                            label: String(localized: "Saved")
-                        )
-
-                        impactStatTile(
-                            icon: "wind",
-                            value: stats.co2Display,
-                            label: String(localized: "CO\u{2082} Avoided")
-                        )
-
-                        impactStatTile(
-                            icon: "dollarsign.circle",
-                            value: stats.moneySavedDisplay,
-                            label: String(localized: "Money Saved")
-                        )
+                    HStack(spacing: 0) {
+                        impactStatTile(icon: "leaf.fill",        value: "\(stats.itemsSaved)",        label: "Rescued", color: .white)
+                        impactStatDivider()
+                        impactStatTile(icon: "wind",             value: stats.co2Display,             label: "CO₂ Saved", color: .white)
+                        impactStatDivider()
+                        impactStatTile(icon: "dollarsign.circle", value: stats.moneySavedDisplay,      label: "Money", color: .white)
                     }
                 } else {
                     HStack(spacing: 0) {
-                        impactStatTile(
-                            icon: "leaf.fill",
-                            value: "\(stats.itemsSaved)",
-                            label: String(localized: "Saved")
-                        )
-
-                        impactStatTile(
-                            icon: "wind",
-                            value: stats.co2Display,
-                            label: String(localized: "CO\u{2082} Avoided")
-                        )
-
-                        impactStatTile(
-                            icon: "dollarsign.circle",
-                            value: stats.moneySavedDisplay,
-                            label: String(localized: "Money Saved")
-                        )
-                    }
-                }
-            } else {
-                // Placeholder/shimmer while loading
-                if PSLayout.isCompact {
-                    VStack(spacing: PSSpacing.lg) {
-                        PSShimmerView()
-                        PSShimmerView()
-                        PSShimmerView()
-                    }
-                } else {
-                    HStack(spacing: 0) {
-                        PSShimmerView()
-                        PSShimmerView()
-                        PSShimmerView()
+                        PSShimmerView().frame(maxWidth: .infinity)
+                        PSShimmerView().frame(maxWidth: .infinity)
+                        PSShimmerView().frame(maxWidth: .infinity)
                     }
                 }
             }
+            .adaptiveCardPadding()
+            .background(
+                LinearGradient(
+                    colors: [PSColors.primaryGreen, PSColors.accentTeal.opacity(0.9)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
+            .shadow(color: PSColors.primaryGreen.opacity(0.35), radius: 20, y: 8)
+        }
+    }
+
+    private func impactStatDivider() -> some View {
+        Rectangle()
+            .fill(.white.opacity(0.15))
+            .frame(width: 1, height: PSLayout.scaled(40))
+    }
+
+    private func impactStatTile(icon: String, value: String, label: String, color: Color) -> some View {
+        VStack(spacing: PSSpacing.xxs) {
+            Image(systemName: icon)
+                .font(.system(size: PSLayout.scaledFont(18)))
+                .foregroundStyle(color.opacity(0.8))
+            Text(value)
+                .font(.system(size: PSLayout.scaledFont(22), weight: .black))
+                .foregroundStyle(color)
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
+            Text(label)
+                .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
+                .foregroundStyle(color.opacity(0.65))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, PSSpacing.sm)
+    }
+
+    // MARK: - Recipe Suggestion Card
+
+    private var recipeSuggestionCard: some View {
+        VStack(alignment: .leading, spacing: PSSpacing.lg) {
+            HStack(spacing: PSSpacing.sm) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: PSLayout.scaledFont(18)))
+                    .foregroundStyle(.purple)
+                    .padding(PSSpacing.xs)
+                    .background(.purple.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                Text(String(localized: "Suggested for You"))
+                    .font(.system(size: PSLayout.scaledFont(17), weight: .bold))
+                    .foregroundStyle(PSColors.textPrimary)
+                Spacer()
+                Button {
+                    switchToTab(.recipes)
+                } label: {
+                    Text(String(localized: "More"))
+                        .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
+                        .foregroundStyle(.purple)
+                        .padding(.horizontal, PSSpacing.md)
+                        .padding(.vertical, PSSpacing.xs)
+                        .background(.purple.opacity(0.1))
+                        .clipShape(Capsule())
+                }
+            }
+
+            let suggestions = RecipeService.shared.recipesForFreshli(items: activeItems)
+            if let recipe = suggestions.first {
+                Button {
+                    PSHaptics.shared.lightTap()
+                    switchToTab(.recipes)
+                } label: {
+                    ZStack(alignment: .bottomLeading) {
+                        // Rich food-category image
+                        FoodCardImage(
+                            imageSystemName: recipe.imageSystemName,
+                            height: PSLayout.cardImageHeight,
+                            cornerRadius: PSSpacing.radiusXl
+                        )
+
+                        LinearGradient(
+                            colors: [.clear, .black.opacity(0.65)],
+                            startPoint: .center,
+                            endPoint: .bottom
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
+
+                        VStack(alignment: .leading, spacing: PSSpacing.xs) {
+                            HStack(spacing: PSSpacing.xs) {
+                                Text(String(localized: "Uses expiring items"))
+                                    .font(.system(size: PSLayout.scaledFont(11), weight: .semibold))
+                                    .foregroundStyle(.white.opacity(0.9))
+                                    .padding(.horizontal, PSSpacing.sm)
+                                    .padding(.vertical, PSSpacing.xxxs)
+                                    .background(PSColors.primaryGreen)
+                                    .clipShape(Capsule())
+                                Text("•  \(recipe.prepTimeDisplay)")
+                                    .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
+                                    .foregroundStyle(.white.opacity(0.7))
+                            }
+                            Text(recipe.title)
+                                .font(.system(size: PSLayout.scaledFont(20), weight: .bold))
+                                .foregroundStyle(.white)
+                                .lineLimit(1)
+                        }
+                        .padding(PSSpacing.lg)
+                    }
+                }
+                .buttonStyle(PressableButtonStyle())
+                .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
+                .shadow(color: PSColors.primaryGreen.opacity(0.15), radius: 12, y: 6)
+            } else {
+                PSEmptyState(
+                    icon: "book",
+                    title: String(localized: "No Recipes Yet"),
+                    message: String(localized: "Add items to your pantry to discover recipes!"),
+                    actionTitle: nil, action: nil
+                )
+            }
+        }
+        .adaptiveCardPadding()
+        .background(PSColors.surfaceCard)
+        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
+                .strokeBorder(.purple.opacity(0.1), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.04), radius: 12, y: 4)
+    }
+
+    // MARK: - Community Swap Card
+
+    private var communitySwapCard: some View {
+        Button {
+            PSHaptics.shared.lightTap()
+            switchToTab(.community)
+        } label: {
+            HStack(spacing: PSSpacing.xl) {
+                VStack(alignment: .leading, spacing: PSSpacing.sm) {
+                    HStack(spacing: PSSpacing.xs) {
+                        Image(systemName: "leaf.arrow.triangle.circlepath")
+                            .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
+                            .foregroundStyle(PSColors.primaryGreen)
+                        Text(String(localized: "Community Active"))
+                            .font(.system(size: PSLayout.scaledFont(11), weight: .bold))
+                            .foregroundStyle(PSColors.primaryGreen)
+                    }
+                    .padding(.horizontal, PSSpacing.md)
+                    .padding(.vertical, PSSpacing.xxs)
+                    .background(PSColors.primaryGreen.opacity(0.12))
+                    .clipShape(Capsule())
+
+                    Text(String(localized: "Community Swap"))
+                        .font(.system(size: PSLayout.scaledFont(18), weight: .bold))
+                        .foregroundStyle(Color(hex: 0x064E3B))
+
+                    Text(String(localized: "Share surplus food with neighbors nearby."))
+                        .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
+                        .foregroundStyle(PSColors.primaryGreen.opacity(0.8))
+                        .lineLimit(2)
+                }
+
+                Spacer()
+
+                ZStack {
+                    Circle()
+                        .fill(PSColors.primaryGreen.opacity(0.12))
+                        .frame(width: PSLayout.scaled(56), height: PSLayout.scaled(56))
+                    Circle()
+                        .fill(PSColors.primaryGreen)
+                        .frame(width: PSLayout.scaled(44), height: PSLayout.scaled(44))
+                        .shadow(color: PSColors.primaryGreen.opacity(0.35), radius: 12, y: 4)
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: PSLayout.scaledFont(18), weight: .bold))
+                        .foregroundStyle(.white)
+                }
             }
             .adaptiveCardPadding()
             .background(PSColors.emeraldSurface)
             .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
-                    .strokeBorder(PSColors.primaryGreen.opacity(0.15), lineWidth: 1)
+                    .strokeBorder(PSColors.primaryGreen.opacity(0.18), lineWidth: 1)
             )
+            .shadow(color: PSColors.primaryGreen.opacity(0.1), radius: 16, y: 6)
         }
-    }
-
-    private func impactStatTile(icon: String, value: String, label: String) -> some View {
-        Button {
-            PSHaptics.shared.lightTap()
-            withAnimation(FLMotion.adaptive(FLMotion.celebrationPop, reduceMotion: reduceMotion)) {
-                selectedImpactStat = label
-            }
-        } label: {
-            VStack(spacing: PSSpacing.xxs) {
-                Image(systemName: icon)
-                    .font(.system(size: PSLayout.scaledFont(20)))
-                    .foregroundStyle(PSColors.primaryGreen)
-                    .scaleEffect(selectedImpactStat == label ? 1.15 : 1.0)
-                Text(value)
-                    .font(.system(size: PSLayout.scaledFont(22), weight: .bold))
-                    .foregroundStyle(PSColors.textPrimary)
-                Text(label)
-                    .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
-                    .foregroundStyle(PSColors.textSecondary)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, PSSpacing.sm)
-            .background(selectedImpactStat == label ? PSColors.primaryGreen.opacity(0.08) : Color.clear)
-            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
-            .scaleEffect(selectedImpactStat == label ? 0.96 : 1.0)
-        }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(label)
-        .accessibilityValue(value)
-    }
-
-    // MARK: - Figma: Recipe Suggestion Card
-
-    private var recipeSuggestionCard: some View {
-        VStack(alignment: .leading, spacing: PSSpacing.lg) {
-            HStack(spacing: PSSpacing.sm) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: PSLayout.scaledFont(20)))
-                    .foregroundStyle(.purple)
-                Text(String(localized: "Suggested for You"))
-                    .font(.system(size: PSLayout.scaledFont(18), weight: .bold))
-                    .foregroundStyle(PSColors.textPrimary)
-                    .psAccessibleHeader(String(localized: "Suggested for You"))
-            }
-
-            let suggestions = RecipeService.shared.recipesForFreshli(items: activeItems)
-            if !suggestions.isEmpty {
-                if let recipe = suggestions.first {
-                // Figma: bg-white rounded-3xl overflow-hidden shadow-sm border border-neutral-100
-                Button {
-                    PSHaptics.shared.lightTap()
-                    switchToTab(.recipes)
-                } label: {
-                    VStack(alignment: .leading, spacing: 0) {
-                        // Figma: h-48 image with gradient overlay
-                        ZStack(alignment: .bottomLeading) {
-                            LinearGradient(
-                                colors: [PSColors.primaryGreen.opacity(0.3), PSColors.accentTeal.opacity(0.4)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                            .frame(height: PSLayout.cardImageHeight)
-                            .overlay(alignment: .center) {
-                                Image(systemName: recipe.imageSystemName)
-                                    .font(.system(size: PSLayout.scaledFont(48)))
-                                    .foregroundStyle(.white.opacity(0.6))
-                            }
-
-                            // Figma: bg-gradient-to-t from-black/60 to-transparent
-                            LinearGradient(
-                                colors: [.clear, .black.opacity(0.6)],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                // Figma: px-3 py-1 bg-white/20 backdrop-blur-md rounded-full
-                                Text(String(localized: "Uses your expiring items"))
-                                    .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
-                                    .foregroundStyle(.white.opacity(0.9))
-                                    .padding(.horizontal, PSSpacing.md)
-                                    .padding(.vertical, PSSpacing.xxs)
-                                    .background(.white.opacity(0.2))
-                                    .clipShape(Capsule())
-
-                                Text(recipe.title)
-                                    .font(.system(size: PSLayout.scaledFont(20), weight: .bold))
-                                    .foregroundStyle(.white)
-                                    .lineLimit(1)
-
-                                Text("\(recipe.prepTimeDisplay) • \(recipe.difficulty.displayName)")
-                                    .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
-                                    .foregroundStyle(.white.opacity(0.8))
-                            }
-                            .padding(PSSpacing.lg)
-                        }
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
-                            .strokeBorder(LinearGradient(
-                                gradient: Gradient(colors: [Color.white.opacity(0.15), Color.white.opacity(0.05)]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ), lineWidth: 1)
-                    )
-                    .shadow(color: PSColors.primaryGreen.opacity(0.06), radius: 4, y: 2)
-                }
-                .buttonStyle(PressableButtonStyle())
-                }
-            } else {
-                PSEmptyState(
-                    icon: "book",
-                    title: String(localized: "No Recipes Yet"),
-                    message: String(localized: "Add items to your pantry to discover recipes you can make!"),
-                    actionTitle: nil,
-                    action: nil
-                )
-            }
-        }
-    }
-
-    // MARK: - Figma: Community Swap Card
-
-    private var communitySwapCard: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: PSSpacing.xxs) {
-                Text(String(localized: "Community Swap"))
-                    .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
-                    .foregroundStyle(Color(hex: 0x064E3B))
-                Text(String(localized: "Share surplus food with neighbors. Every item counts."))
-                    .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
-                    .foregroundStyle(PSColors.primaryGreen)
-                    .lineLimit(2)
-                    .frame(maxWidth: PSLayout.scaled(200), alignment: .leading)
-            }
-
-            Spacer()
-
-            Button {
-                PSHaptics.shared.lightTap()
-                switchToTab(.community)
-            } label: {
-                Image(systemName: "arrow.right")
-                    .font(.system(size: PSLayout.scaledFont(20), weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: PSLayout.communityAvatarSize, height: PSLayout.communityAvatarSize)
-                    .background(PSColors.primaryGreen)
-                    .clipShape(Circle())
-                    .shadow(color: PSColors.primaryGreen.opacity(0.25), radius: 12, y: 4)
-            }
-            .buttonStyle(PressableButtonStyle())
-        }
-        .adaptiveCardPadding()
-        .background(PSColors.emeraldSurface)
-        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
-                .strokeBorder(PSColors.primaryGreen.opacity(0.15), lineWidth: 1)
-        )
+        .buttonStyle(PressableButtonStyle())
     }
 }
 
-// MARK: - Figma: Expiring item pill (w-36, rounded-2xl, emoji icon)
+// MARK: - Expiring Item Pill
 
 private struct ExpiringItemPill: View {
     let item: FreshliItem
 
+    private var urgencyColor: Color {
+        switch item.expiryStatus {
+        case .expired:       return PSColors.expiredRed
+        case .expiringToday: return PSColors.expiredRed
+        case .expiringSoon:  return PSColors.secondaryAmber
+        case .fresh:         return PSColors.primaryGreen
+        }
+    }
+
     var body: some View {
         NavigationLink(destination: FreshliDetailView(item: item)) {
-            VStack(spacing: PSSpacing.md) {
-            // Figma: w-14 h-14 rounded-full emoji container
-            Text(item.category.emoji)
-                .font(.system(size: PSLayout.scaledFont(28)))
-                .frame(width: PSLayout.emojiCircleSize, height: PSLayout.emojiCircleSize)
-                .background(PSColors.categoryColor(for: item.category).opacity(0.15))
-                .clipShape(Circle())
+            VStack(spacing: PSSpacing.sm) {
+                ZStack(alignment: .topTrailing) {
+                    Text(item.category.emoji)
+                        .font(.system(size: PSLayout.scaledFont(30)))
+                        .frame(width: PSLayout.emojiCircleSize, height: PSLayout.emojiCircleSize)
+                        .background(urgencyColor.opacity(0.12))
+                        .clipShape(Circle())
 
-            VStack(spacing: 2) {
-                Text(item.name)
-                    .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
-                    .foregroundStyle(PSColors.textPrimary)
-                    .lineLimit(1)
-                    .frame(width: PSLayout.scaled(112))
+                    Circle()
+                        .fill(urgencyColor)
+                        .frame(width: 10, height: 10)
+                        .overlay(Circle().strokeBorder(.white, lineWidth: 1.5))
+                }
 
-                Text(item.expiryDate.expiryDisplayText)
-                    .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
-                    .foregroundStyle(PSColors.expiredRed)
+                VStack(spacing: 2) {
+                    Text(item.name)
+                        .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
+                        .foregroundStyle(PSColors.textPrimary)
+                        .lineLimit(1)
+                        .frame(width: PSLayout.scaled(100))
+
+                    Text(item.expiryDate.expiryDisplayText)
+                        .font(.system(size: PSLayout.scaledFont(11), weight: .bold))
+                        .foregroundStyle(urgencyColor)
+                }
             }
-        }
-        .padding(PSSpacing.lg)
-        .frame(width: PSLayout.pillWidth)
-        .background(PSColors.categoryColor(for: item.category).opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
-                .strokeBorder(PSColors.categoryColor(for: item.category).opacity(0.15), lineWidth: 1)
-        )
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(item.name)
-        .accessibilityValue(item.expiryDate.expiryDisplayText)
-        .accessibilityHint(item.expiryStatus == .expired ? String(localized: "Expired") : item.expiryStatus.displayName)
+            .padding(PSSpacing.md)
+            .frame(width: PSLayout.pillWidth)
+            .background(urgencyColor.opacity(0.06))
+            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
+                    .strokeBorder(urgencyColor.opacity(0.2), lineWidth: 1)
+            )
         }
     }
 }
 
-#Preview("HomeView - iPhone SE") {
-    HomeView(showAddItem: .constant(false), switchToTab: { _ in })
-}
-
-#Preview("HomeView - iPhone 16 Pro Max") {
+#Preview {
     HomeView(showAddItem: .constant(false), switchToTab: { _ in })
 }

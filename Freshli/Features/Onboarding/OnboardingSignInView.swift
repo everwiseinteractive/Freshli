@@ -175,7 +175,7 @@ struct OnboardingSignInView: View {
                 .opacity(appeared ? 1 : 0)
             }
             .padding(.horizontal, PSLayout.formHorizontalPadding)
-            .padding(.bottom, PSLayout.scaled(48))
+            .padding(.bottom, PSLayout.screenHeight * 0.05)
         }
         .onAppear {
             guard !reduceMotion else { appeared = true; return }

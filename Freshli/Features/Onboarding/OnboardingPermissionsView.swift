@@ -55,7 +55,7 @@ struct OnboardingPermissionsView: View {
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
             }
-            .padding(.bottom, PSLayout.scaled(48))
+            .padding(.bottom, PSLayout.screenHeight * 0.05)
             .opacity(appeared ? 1 : 0)
         }
         .animation(PSMotion.springDefault, value: currentPermission)

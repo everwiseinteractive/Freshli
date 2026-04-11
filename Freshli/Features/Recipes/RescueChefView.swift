@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct RescueChefView: View {
+    @Environment(\.dismiss) private var dismiss
     @Query(filter: #Predicate<FreshliItem> { !$0.isConsumed && !$0.isShared && !$0.isDonated },
            sort: [SortDescriptor(\FreshliItem.expiryDate)])
     private var pantryItems: [FreshliItem]
@@ -73,22 +74,56 @@ struct RescueChefView: View {
     // MARK: - Header
 
     private var rescueHeader: some View {
-        VStack(alignment: .leading, spacing: PSSpacing.md) {
-            Text(String(localized: "Rescue Chef"))
-                .font(.system(size: PSLayout.scaledFont(30), weight: .bold))
-                .tracking(-0.3)
-                .foregroundStyle(PSColors.textPrimary)
-                .adaptiveHPadding()
+        VStack(spacing: 0) {
+            // Top bar with back button
+            HStack(alignment: .center) {
+                Button {
+                    PSHaptics.shared.lightTap()
+                    dismiss()
+                } label: {
+                    HStack(spacing: PSSpacing.xs) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: PSLayout.scaledFont(16), weight: .semibold))
+                        Text(String(localized: "Back"))
+                            .font(.system(size: PSLayout.scaledFont(16), weight: .semibold))
+                    }
+                    .foregroundStyle(PSColors.primaryGreen)
+                }
+
+                Spacer()
+
+                Text(String(localized: "Rescue Chef"))
+                    .font(.system(size: PSLayout.scaledFont(18), weight: .bold))
+                    .foregroundStyle(PSColors.textPrimary)
+
+                Spacer()
+
+                // Balance the back button
+                HStack(spacing: PSSpacing.xs) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: PSLayout.scaledFont(16), weight: .semibold))
+                    Text(String(localized: "Back"))
+                        .font(.system(size: PSLayout.scaledFont(16), weight: .semibold))
+                }
+                .opacity(0)  // invisible spacer
+            }
+            .adaptiveHPadding()
+            .padding(.top, PSSpacing.md)
+            .padding(.bottom, PSSpacing.sm)
 
             if hasAtRiskItems {
-                Text(String(localized: "Use items before they expire"))
-                    .font(.system(size: PSLayout.scaledFont(14)))
-                    .foregroundStyle(PSColors.textSecondary)
-                    .adaptiveHPadding()
+                HStack(spacing: PSSpacing.sm) {
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: PSLayout.scaledFont(13)))
+                        .foregroundStyle(PSColors.expiredRed)
+                    Text(String(localized: "Use \(rescueService.atRiskItemsCount) item\(rescueService.atRiskItemsCount == 1 ? "" : "s") before they expire"))
+                        .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
+                        .foregroundStyle(PSColors.textSecondary)
+                }
+                .adaptiveHPadding()
+                .padding(.bottom, PSSpacing.md)
             }
         }
-        .padding(.top, PSSpacing.md)
-        .padding(.bottom, PSSpacing.lg)
         .background(PSColors.surfaceCard)
         .overlay(alignment: .bottom) { Divider().opacity(0.5) }
     }

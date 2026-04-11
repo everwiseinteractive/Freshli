@@ -2,11 +2,6 @@ import SwiftUI
 import SwiftData
 import os
 
-// Figma: Pantry — bg-neutral-50, sticky white header, search (bg-neutral-100 rounded-2xl)
-// Category chips: active bg-green-600 text-white shadow-md, icons (Carrot, Milk, Wheat, Beef)
-// Item cards: rounded-[1.25rem] with w-16 h-16 image, Badge, MoreVertical
-// FAB: w-16 h-16 bg-green-500 rounded-[1.25rem] bottom-24 right-6
-
 struct FreshliView: View {
     @Binding var showAddItem: Bool
 
@@ -25,13 +20,7 @@ struct FreshliView: View {
     @State private var showFilterSheet = false
     @State private var showHarvestCelebration = false
     @State private var harvestIntensity: SparkleIntensity = .standard
-    @State private var showSmartAdd = false
-    @State private var showReplenish = false
-    @State private var showDepletionInsights = false
-    @State private var showReceiptScanner = false
-    @State private var showDepletion = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Namespace private var pantryHeroNS
 
     private let logger = Logger(subsystem: "com.freshli.app", category: "FreshliView")
 
@@ -46,14 +35,17 @@ struct FreshliView: View {
         return items
     }
 
-    // MARK: - Action Handlers (deduplicated swipe + context menu actions)
+    // Status counts for the health strip
+    private var expiredCount: Int   { allItems.filter { $0.expiryStatus == .expired }.count }
+    private var urgentCount: Int    { allItems.filter { $0.expiryStatus == .expiringToday || $0.expiryStatus == .expiringSoon }.count }
+    private var freshCount: Int     { allItems.filter { $0.expiryStatus == .fresh }.count }
+
+    // MARK: - Actions
 
     private func consumeItem(_ item: FreshliItem) {
-        // Trigger haptic harvest and sparkle celebration
         HapticHarvestService.shared.harvestCelebration()
         harvestIntensity = .standard
         showHarvestCelebration = true
-
         let itemName = item.name
         withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) {
             item.isConsumed = true
@@ -65,13 +57,7 @@ struct FreshliView: View {
                 if let userId = authManager.currentUserId {
                     Task {
                         await syncService.pushFreshliItem(item, userId: userId)
-                        await syncService.recordImpactEvent(
-                            userId: userId,
-                            eventType: "consumed",
-                            itemName: itemName,
-                            moneySaved: 3.50,
-                            co2Avoided: 2.5
-                        )
+                        await syncService.recordImpactEvent(userId: userId, eventType: "consumed", itemName: itemName, moneySaved: 3.50, co2Avoided: 2.5)
                     }
                 }
             } catch {
@@ -112,12 +98,7 @@ struct FreshliView: View {
                 if let userId = authManager.currentUserId {
                     Task {
                         await syncService.pushFreshliItem(item, userId: userId)
-                        await syncService.recordImpactEvent(
-                            userId: userId,
-                            eventType: "shared",
-                            itemName: itemName,
-                            co2Avoided: 2.5
-                        )
+                        await syncService.recordImpactEvent(userId: userId, eventType: "shared", itemName: itemName, co2Avoided: 2.5)
                     }
                 }
             } catch {
@@ -136,27 +117,33 @@ struct FreshliView: View {
             .background(PSColors.backgroundSecondary)
             .harvestCelebration(isActive: $showHarvestCelebration, intensity: harvestIntensity)
 
-            // Figma: FAB w-16 h-16 bg-green-500 rounded-[1.25rem]
+            // FAB — padding is from the layout edge (which safeAreaInset already places
+            // above the tab bar), so just a comfortable gap from that edge.
             Button { showAddItem = true } label: {
                 Image(systemName: "plus")
                     .font(.system(size: PSLayout.scaledFont(28), weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(width: PSLayout.fabSize, height: PSLayout.fabSize)
-                    .background(PSColors.primaryGreen)
+                    .background(
+                        LinearGradient(
+                            colors: [PSColors.primaryGreen, PSColors.primaryGreenDark],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
-                    .shadow(color: PSColors.primaryGreen.opacity(0.4), radius: 16, y: 8)
-                    .shadow(color: PSColors.primaryGreen.opacity(0.15), radius: 24, y: 12)
+                    .shadow(color: PSColors.primaryGreen.opacity(0.45), radius: 20, y: 8)
+                    .shadow(color: PSColors.primaryGreen.opacity(0.2), radius: 40, y: 16)
             }
             .buttonStyle(PressableButtonStyle())
             .accessibilityLabel(String(localized: "Add Item"))
             .accessibilityHint(String(localized: "Double tap to add a new item to your pantry"))
             .padding(.trailing, PSLayout.adaptiveHorizontalPadding)
-            // Ensure FAB clears tab bar + safe area
-            .padding(.bottom, max(PSLayout.adaptiveHorizontalPadding + PSLayout.tabBarContentPadding, PSLayout.scaled(80)))
+            .padding(.bottom, PSSpacing.xl)   // gap above tab bar edge (safeAreaInset handles boundary)
         }
         .navigationBarHidden(true)
         .onAppear {
-            logger.info("FreshliView (Pantry) appeared — \(allItems.count) items, category: \(String(describing: selectedCategory))")
+            logger.info("FreshliView appeared — \(allItems.count) items")
         }
         .sheet(item: $selectedItem) { item in
             NavigationStack {
@@ -179,17 +166,23 @@ struct FreshliView: View {
         }
     }
 
-    // MARK: - Figma: Sticky Header
+    // MARK: - Header
 
     private var stickyHeader: some View {
         VStack(spacing: PSSpacing.lg) {
-            // Figma: text-3xl font-bold custom inline title
+            // Title row
             HStack {
-                Text(String(localized: "My Pantry"))
-                    .font(.system(size: PSLayout.scaledFont(30), weight: .bold))
-                    .tracking(-0.3)
-                    .foregroundStyle(PSColors.textPrimary)
-                    .psAccessibleHeader(String(localized: "My Pantry, \(filteredItems.count) items"))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(String(localized: "My Pantry"))
+                        .font(.system(size: PSLayout.scaledFont(30), weight: .bold))
+                        .tracking(-0.3)
+                        .foregroundStyle(PSColors.textPrimary)
+                    if !allItems.isEmpty {
+                        Text(String(localized: "\(allItems.count) items"))
+                            .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
+                            .foregroundStyle(PSColors.textTertiary)
+                    }
+                }
                 Spacer()
                 HStack(spacing: PSSpacing.sm) {
                     NavigationLink(destination: DepletionInsightsView()) {
@@ -200,71 +193,58 @@ struct FreshliView: View {
                     }
                     .scaleEffect(selectedCategory != nil ? 1.08 : 1.0)
                 }
-                .accessibilityLabel(String(localized: "Filter and sort"))
-                .accessibilityHint(selectedCategory != nil ? String(localized: "Filter active: \(selectedCategory?.displayName ?? "Unknown")") : String(localized: "No filters applied"))
             }
 
-            // Quick action buttons for Smart Add, Replenish, Receipt Scanner
-            HStack(spacing: PSSpacing.md) {
-                NavigationLink(destination: SmartAddView()) {
-                    Label(String(localized: "Smart Add"), systemImage: "camera.viewfinder")
-                        .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
-                        .foregroundStyle(PSColors.primaryGreen)
-                        .padding(.horizontal, PSSpacing.md)
-                        .padding(.vertical, PSSpacing.sm)
-                        .background(PSColors.primaryGreen.opacity(0.1))
-                        .clipShape(Capsule())
-                }
-                NavigationLink(destination: ReceiptScannerView()) {
-                    Label(String(localized: "Receipt"), systemImage: "doc.text.viewfinder")
-                        .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
-                        .foregroundStyle(PSColors.accentTeal)
-                        .padding(.horizontal, PSSpacing.md)
-                        .padding(.vertical, PSSpacing.sm)
-                        .background(PSColors.accentTeal.opacity(0.1))
-                        .clipShape(Capsule())
-                }
-                NavigationLink(destination: ReplenishView()) {
-                    Label(String(localized: "Replenish"), systemImage: "cart.fill")
-                        .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
-                        .foregroundStyle(PSColors.secondaryAmber)
-                        .padding(.horizontal, PSSpacing.md)
-                        .padding(.vertical, PSSpacing.sm)
-                        .background(PSColors.secondaryAmber.opacity(0.1))
-                        .clipShape(Capsule())
-                }
-                Spacer()
+            // Pantry health strip — only visible when items exist
+            if !allItems.isEmpty {
+                pantryHealthStrip
             }
-            .padding(.top, PSSpacing.sm)
 
-            // Figma: search input — bg-neutral-100 rounded-2xl py-3.5
+            // Quick actions
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: PSSpacing.md) {
+                    NavigationLink(destination: SmartAddView()) {
+                        quickActionChip(label: "Smart Add", icon: "camera.viewfinder", color: PSColors.primaryGreen)
+                    }
+                    NavigationLink(destination: ReceiptScannerView()) {
+                        quickActionChip(label: "Receipt", icon: "doc.text.viewfinder", color: PSColors.accentTeal)
+                    }
+                    NavigationLink(destination: ReplenishView()) {
+                        quickActionChip(label: "Replenish", icon: "cart.fill", color: PSColors.secondaryAmber)
+                    }
+                }
+                .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
+            }
+            .scrollClipDisabled()
+
+            // Search bar
             HStack(spacing: PSSpacing.sm) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: PSLayout.scaledFont(18)))
                     .foregroundStyle(PSColors.textTertiary)
                     .padding(.leading, PSSpacing.lg)
-
                 TextField(String(localized: "Search ingredients..."), text: $searchText)
                     .font(.system(size: PSLayout.scaledFont(16)))
                     .foregroundStyle(PSColors.textPrimary)
+                if !searchText.isEmpty {
+                    Button { searchText = "" } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(PSColors.textTertiary)
+                            .padding(.trailing, PSSpacing.md)
+                    }
+                }
             }
             .frame(height: PSLayout.searchBarHeight)
             .background(PSColors.backgroundSecondary)
             .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
 
-            // Figma: category chips — horizontal scroll
-            // Safe area handling with scroll clip disabled
+            // Category chips
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: PSSpacing.md) {
-                    // "All Items" chip
-                    categoryChip(title: String(localized: "All Items"), icon: nil, isActive: selectedCategory == nil) {
+                    categoryChip(title: String(localized: "All"), icon: nil, isActive: selectedCategory == nil) {
                         PSHaptics.shared.selection()
-                        withAnimation(FLMotion.adaptive(PSMotion.springQuick, reduceMotion: reduceMotion)) {
-                            selectedCategory = nil
-                        }
+                        withAnimation(FLMotion.adaptive(PSMotion.springQuick, reduceMotion: reduceMotion)) { selectedCategory = nil }
                     }
-
-                    // Category chips with icons
                     ForEach([FoodCategory.fruits, .vegetables, .dairy, .meat, .grains, .bakery], id: \.self) { cat in
                         categoryChip(title: cat.displayName, icon: cat.icon, isActive: selectedCategory == cat) {
                             PSHaptics.shared.selection()
@@ -282,24 +262,79 @@ struct FreshliView: View {
         .padding(.top, PSSpacing.md)
         .padding(.bottom, PSSpacing.lg)
         .background(PSColors.surfaceCard)
-        // Figma: border-b border-neutral-100 shadow-sm
         .shadow(color: .black.opacity(0.04), radius: 2, y: 1)
         .overlay(alignment: .bottom) {
             Divider().opacity(0.5)
         }
     }
 
-    // Figma: category chip — active: bg-green-600 text-white shadow-md, inactive: bg-white border
+    // Horizontal freshness bar showing expired/urgent/fresh breakdown
+    private var pantryHealthStrip: some View {
+        HStack(spacing: PSSpacing.md) {
+            if expiredCount > 0 {
+                healthPill(count: expiredCount, label: "Expired", color: PSColors.expiredRed)
+            }
+            if urgentCount > 0 {
+                healthPill(count: urgentCount, label: "Soon", color: PSColors.secondaryAmber)
+            }
+            if freshCount > 0 {
+                healthPill(count: freshCount, label: "Fresh", color: PSColors.primaryGreen)
+            }
+            Spacer()
+            // Freshness bar
+            GeometryReader { geo in
+                HStack(spacing: 2) {
+                    if expiredCount > 0 {
+                        Capsule().fill(PSColors.expiredRed)
+                            .frame(width: geo.size.width * CGFloat(expiredCount) / CGFloat(allItems.count))
+                    }
+                    if urgentCount > 0 {
+                        Capsule().fill(PSColors.secondaryAmber)
+                            .frame(width: geo.size.width * CGFloat(urgentCount) / CGFloat(allItems.count))
+                    }
+                    if freshCount > 0 {
+                        Capsule().fill(PSColors.primaryGreen)
+                            .frame(width: geo.size.width * CGFloat(freshCount) / CGFloat(allItems.count))
+                    }
+                }
+            }
+            .frame(width: PSLayout.scaled(80), height: 6)
+            .clipShape(Capsule())
+        }
+        .padding(.horizontal, PSSpacing.md)
+        .padding(.vertical, PSSpacing.sm)
+        .background(PSColors.backgroundSecondary)
+        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
+    }
+
+    private func healthPill(count: Int, label: String, color: Color) -> some View {
+        HStack(spacing: 4) {
+            Circle().fill(color).frame(width: 6, height: 6)
+            Text("\(count) \(label)")
+                .font(.system(size: PSLayout.scaledFont(11), weight: .semibold))
+                .foregroundStyle(color)
+        }
+    }
+
+    private func quickActionChip(label: String, icon: String, color: Color) -> some View {
+        Label(label, systemImage: icon)
+            .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+            .foregroundStyle(color)
+            .padding(.horizontal, PSSpacing.md)
+            .padding(.vertical, PSSpacing.sm)
+            .background(color.opacity(0.1))
+            .clipShape(Capsule())
+    }
+
     private func categoryChip(title: String, icon: String?, isActive: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: PSSpacing.sm) {
+            HStack(spacing: PSSpacing.xs) {
                 if let icon {
                     Image(systemName: icon)
-                        .font(.system(size: PSLayout.scaledFont(16), weight: isActive ? .semibold : .regular))
+                        .font(.system(size: PSLayout.scaledFont(14), weight: isActive ? .semibold : .regular))
                 }
                 Text(title)
                     .font(.system(size: PSLayout.scaledFont(14), weight: .bold))
-                    .tracking(-0.2)
             }
             .padding(.horizontal, PSSpacing.lg)
             .padding(.vertical, PSLayout.scaled(10))
@@ -311,12 +346,12 @@ struct FreshliView: View {
                     Capsule().strokeBorder(PSColors.border, lineWidth: 1)
                 }
             }
-            .shadow(color: isActive ? PSColors.headerGreen.opacity(0.2) : .clear, radius: 8, y: 4)
+            .shadow(color: isActive ? PSColors.headerGreen.opacity(0.25) : .clear, radius: 8, y: 4)
         }
         .buttonStyle(PressableButtonStyle())
     }
 
-    // MARK: - Figma: Item List
+    // MARK: - Item List
 
     private var itemList: some View {
         Group {
@@ -324,65 +359,49 @@ struct FreshliView: View {
                 ScrollView {
                     PSEmptyState(
                         icon: searchText.isEmpty ? "refrigerator" : "magnifyingglass",
-                        title: searchText.isEmpty
-                            ? String(localized: "Your pantry is empty")
-                            : String(localized: "No matching ingredients"),
+                        title: searchText.isEmpty ? String(localized: "Your pantry is empty") : String(localized: "No matching ingredients"),
                         message: searchText.isEmpty
                             ? String(localized: "Start adding ingredients to keep track of what you have and get recipe suggestions.")
-                            : String(localized: "Try adjusting your search or category filter to find what you're looking for."),
+                            : String(localized: "Try adjusting your search or category filter."),
                         actionTitle: searchText.isEmpty ? String(localized: "Add Ingredient") : nil,
                         action: searchText.isEmpty ? { showAddItem = true } : nil
                     )
                     .adaptiveCardPadding()
-                    .frame(maxHeight: .infinity)
                 }
-                .frame(maxHeight: .infinity)
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 12) {
+                    LazyVStack(spacing: 10) {
                         ForEach(Array(filteredItems.enumerated()), id: \.element.id) { index, item in
                             freshliItemCard(item: item)
                                 .staggeredAppearance(index: index)
-                                .bounceButtonModifier(pressedScale: 0.97, haptic: false)
                                 .onTapGesture {
                                     PSHaptics.shared.lightTap()
                                     selectedItem = item
                                 }
                                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                    Button(role: .destructive) {
-                                        deleteItem(item)
-                                    } label: {
+                                    Button(role: .destructive) { deleteItem(item) } label: {
                                         Label(String(localized: "Delete"), systemImage: "trash")
                                     }
-                                    .tint(PSColors.expiredRed)
-                                    .accessibilityLabel(String(localized: "Delete \(item.name)"))
                                 }
                                 .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                                    Button {
-                                        consumeItem(item)
-                                    } label: {
+                                    Button { consumeItem(item) } label: {
                                         Label(String(localized: "Consume"), systemImage: "checkmark.circle")
                                     }
                                     .tint(PSColors.primaryGreen)
-                                    .accessibilityLabel(String(localized: "Mark \(item.name) as consumed"))
                                 }
                                 .contextMenu {
-                                    Button(String(localized: "Mark as Consumed"), systemImage: "checkmark.circle") {
-                                        consumeItem(item)
-                                    }
-                                    Button(String(localized: "Share"), systemImage: "hand.raised") {
-                                        shareItem(item)
-                                    }
+                                    Button(String(localized: "Mark as Consumed"), systemImage: "checkmark.circle") { consumeItem(item) }
+                                    Button(String(localized: "Share"), systemImage: "hand.raised") { shareItem(item) }
                                     Divider()
-                                    Button(String(localized: "Delete"), systemImage: "trash", role: .destructive) {
-                                        deleteItem(item)
-                                    }
+                                    Button(String(localized: "Delete"), systemImage: "trash", role: .destructive) { deleteItem(item) }
                                 }
                         }
                     }
                     .adaptiveHPadding()
-                    .padding(.vertical, PSLayout.cardPadding)
-                    .padding(.bottom, PSLayout.tabBarContentPadding)
+                    .padding(.top, PSSpacing.lg)
+                    // Bottom padding clears the FAB (fabSize + gap + extra breathing room).
+                    // safeAreaInset in AppTabView handles the tab bar boundary.
+                    .padding(.bottom, PSLayout.fabSize + PSSpacing.xxxl)
                     .listChangeAnimation(filteredItems.map(\.id))
                 }
                 .refreshable {
@@ -393,72 +412,80 @@ struct FreshliView: View {
         }
     }
 
-    // Figma: item card — rounded-[1.25rem] p-3 with w-16 h-16 image, badge, more button
+    // MARK: - Item Card
+
     private func freshliItemCard(item: FreshliItem) -> some View {
-        HStack(spacing: PSSpacing.lg) {
-            // Figma: w-16 h-16 rounded-[1rem] = 64x64 16px radius
-            ZStack {
-                RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
-                    .fill(PSColors.categoryColor(for: item.category).opacity(0.12))
-                    .frame(width: PSLayout.categoryIconSize, height: PSLayout.categoryIconSize)
+        HStack(spacing: 0) {
+            // Colored left accent strip — color encodes urgency at a glance
+            RoundedRectangle(cornerRadius: 2, style: .continuous)
+                .fill(PSColors.expiryColor(for: item.expiryStatus))
+                .frame(width: 3)
+                .padding(.vertical, 10)
+                .padding(.leading, 12)
 
-                Text(item.category.emoji)
-                    .font(.system(size: PSLayout.scaledFont(28)))
+            HStack(spacing: PSSpacing.lg) {
+                // Category icon container
+                ZStack {
+                    RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
+                        .fill(PSColors.categoryColor(for: item.category).opacity(0.12))
+                        .frame(width: PSLayout.categoryIconSize, height: PSLayout.categoryIconSize)
+                    Text(item.category.emoji)
+                        .font(.system(size: PSLayout.scaledFont(28)))
+                    // Urgency dot
+                    if item.expiryStatus != .fresh {
+                        Circle()
+                            .fill(PSColors.expiryColor(for: item.expiryStatus))
+                            .frame(width: 10, height: 10)
+                            .overlay(Circle().strokeBorder(.white, lineWidth: 1.5))
+                            .offset(x: PSLayout.scaled(22), y: PSLayout.scaled(-22))
+                    }
+                }
 
-                // Figma: expiry dot indicator — w-3 h-3 bg-amber-500 border-2 border-white
-                if item.expiryStatus == .expiringSoon || item.expiryStatus == .expiringToday {
-                    Circle()
-                        .fill(PSColors.secondaryAmber)
-                        .frame(width: PSLayout.scaled(12), height: PSLayout.scaled(12))
-                        .overlay(Circle().strokeBorder(.white, lineWidth: 2))
-                        .offset(x: PSLayout.scaled(24), y: PSLayout.scaled(-24))
+                // Name + badges
+                VStack(alignment: .leading, spacing: PSSpacing.xxs) {
+                    Text(item.name)
+                        .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
+                        .foregroundStyle(PSColors.textPrimary)
+                        .lineLimit(1)
+                    HStack(spacing: PSSpacing.sm) {
+                        Text(item.quantityDisplay)
+                            .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
+                            .foregroundStyle(PSColors.textSecondary)
+                            .padding(.horizontal, PSSpacing.sm)
+                            .padding(.vertical, 2)
+                            .background(PSColors.backgroundSecondary)
+                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        PSExpiryBadge(status: item.expiryStatus)
+                    }
+                }
+
+                Spacer(minLength: 0)
+
+                // Right-side: expiry date + chevron
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text(item.expiryDate.expiryDisplayText)
+                        .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
+                        .foregroundStyle(PSColors.expiryColor(for: item.expiryStatus))
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
+                        .foregroundStyle(PSColors.textTertiary)
                 }
             }
-
-            VStack(alignment: .leading, spacing: PSSpacing.xxs) {
-                Text(item.name)
-                    .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
-                    .foregroundStyle(PSColors.textPrimary)
-                    .lineLimit(1)
-
-                HStack(spacing: PSSpacing.md) {
-                    Text(item.quantityDisplay)
-                        .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
-                        .foregroundStyle(PSColors.textSecondary)
-                        .padding(.horizontal, PSSpacing.sm)
-                        .padding(.vertical, PSSpacing.xxxs)
-                        .background(PSColors.backgroundSecondary)
-                        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.xs, style: .continuous))
-
-                    PSExpiryBadge(status: item.expiryStatus)
-                }
-            }
-
-            Spacer()
-
-            Image(systemName: "ellipsis")
-                .font(.system(size: PSLayout.scaledFont(20)))
-                .foregroundStyle(PSColors.textTertiary)
-                .padding(PSSpacing.md)
+            .padding(.vertical, PSSpacing.md)
+            .padding(.horizontal, PSSpacing.lg)
         }
-        .padding(PSSpacing.md) // Figma: p-3
         .background(PSColors.surfaceCard)
         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
-        // Figma: shadow-sm border border-neutral-100
         .overlay(
             RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous)
-                .strokeBorder(PSColors.borderLight, lineWidth: 1)
+                .strokeBorder(
+                    item.expiryStatus == .fresh
+                        ? PSColors.borderLight
+                        : PSColors.expiryColor(for: item.expiryStatus).opacity(0.2),
+                    lineWidth: 1
+                )
         )
-        .shadow(color: PSColors.textPrimary.opacity(0.04), radius: 2, y: 1)
-        // GPU-offload complex cell rendering to eliminate jitter in LazyVStack
+        .shadow(color: PSColors.textPrimary.opacity(0.04), radius: 4, y: 2)
         .drawingGroup(opaque: false, colorMode: .nonLinear)
     }
-}
-
-#Preview("FreshliView - iPhone SE") {
-    FreshliView(showAddItem: .constant(false))
-}
-
-#Preview("FreshliView - iPhone 16 Pro Max") {
-    FreshliView(showAddItem: .constant(false))
 }

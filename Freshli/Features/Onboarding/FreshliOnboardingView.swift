@@ -173,7 +173,7 @@ struct FreshliOnboardingView: View {
                 }
             }
             .padding(.horizontal, PSLayout.formHorizontalPadding)
-            .padding(.bottom, PSLayout.scaled(48))
+            .padding(.bottom, PSLayout.screenHeight * 0.05)
         }
     }
 

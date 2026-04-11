@@ -29,7 +29,7 @@ struct KitchenOptimizedPage: View {
                 // Floating food items around the fridge
                 floatingFoodItems
             }
-            .frame(height: PSLayout.scaled(300))
+            .frame(height: PSLayout.screenHeight * 0.34)
 
             // Text content
             VStack(spacing: PSSpacing.lg) {
@@ -162,6 +162,9 @@ struct SavingsImpactPage: View {
     @State private var sliderInteracted = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
+    // Illustration height scales with screen height so it never overflows on compact devices (e.g. iPhone SE 667 pt).
+    private var illustrationHeight: CGFloat { PSLayout.screenHeight * 0.28 }
+
     // $3.50 avg per rescued meal, 2.5 kg CO2 per meal
     private var dollarsSaved: Double { savedMeals * 3.5 }
     private var co2Avoided: Double { savedMeals * 2.5 }
@@ -212,27 +215,28 @@ struct SavingsImpactPage: View {
                 .scaleEffect(appeared ? 1 : 0.5)
                 .opacity(appeared ? 1 : 0)
 
-                // Floating impact labels
+                // Floating impact labels — y is proportional to illustrationHeight so they
+                // stay within bounds on all devices (iPhone SE through 17 Pro Max).
                 impactLabel(
                     value: String(format: "$%.0f", dollarsSaved),
                     label: String(localized: "saved"),
                     color: PSColors.primaryGreen,
-                    x: -95, y: -60
+                    x: -95, y: -illustrationHeight * 0.22
                 )
                 impactLabel(
                     value: String(format: "%.1fkg", co2Avoided),
                     label: String(localized: "CO₂ avoided"),
                     color: PSColors.accentTeal,
-                    x: 95, y: -40
+                    x: 95, y: -illustrationHeight * 0.15
                 )
                 impactLabel(
                     value: String(format: "%.1f", treesEquivalent),
                     label: String(localized: "trees worth"),
                     color: PSColors.secondaryAmber,
-                    x: 0, y: 100
+                    x: 0, y: illustrationHeight * 0.36
                 )
             }
-            .frame(height: PSLayout.scaled(280))
+            .frame(height: illustrationHeight)
 
             // Text content
             VStack(spacing: PSSpacing.lg) {
@@ -329,7 +333,7 @@ struct SavingsImpactPage: View {
         .clipShape(Capsule())
         .overlay(Capsule().strokeBorder(.white.opacity(0.2), lineWidth: 0.5))
         .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
-        .offset(x: PSLayout.scaled(x), y: PSLayout.scaled(y))
+        .offset(x: PSLayout.scaled(x), y: y)
         .opacity(appeared ? 1 : 0)
         .scaleEffect(appeared ? 1 : 0.5)
     }
@@ -384,7 +388,7 @@ struct CommunityMapPage: View {
                     .offset(y: PSLayout.scaled(28))
                     .opacity(appeared ? 1 : 0)
             }
-            .frame(width: PSLayout.scaled(300), height: PSLayout.scaled(260))
+            .frame(width: PSLayout.scaled(300), height: PSLayout.screenHeight * 0.30)
             .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
