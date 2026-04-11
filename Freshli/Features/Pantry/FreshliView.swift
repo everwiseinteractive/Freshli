@@ -496,7 +496,7 @@ struct FreshliView: View {
                     .listChangeAnimation(filteredItems.map(\.id))
                 }
                 // Clears the FAB + floating tab bar in one go (~200pt total).
-                .contentMargins(.bottom, PSLayout.fabSize + PSLayout.scaled(120), for: .scrollContent)
+                .contentMargins(.bottom, PSLayout.fabSize + PSLayout.scaled(150), for: .scrollContent)
                 .refreshable {
                     PSHaptics.shared.refreshSnap()
                     WidgetDataService.updateWidgetData(modelContext: modelContext)

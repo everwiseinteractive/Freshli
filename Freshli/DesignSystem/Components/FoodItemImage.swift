@@ -128,20 +128,24 @@ struct FoodItemImage: View {
     // MARK: - Body
 
     var body: some View {
-        ZStack {
-            Image(assetName)
-                .resizable()
-                .scaledToFill()
-
-            // Subtle top-left highlight — "lit from above" editorial feel
-            LinearGradient(
-                colors: [.white.opacity(0.08), .clear],
-                startPoint: .topLeading,
-                endPoint: UnitPoint(x: 0.5, y: 0.5)
+        // Same stable-frame pattern as FoodCardImage — outer Color.clear
+        // gives the container a known size so scaledToFill can't bleed
+        // onto adjacent layout siblings.
+        Color.clear
+            .overlay(
+                Image(assetName)
+                    .resizable()
+                    .scaledToFill()
             )
-        }
-        .frame(width: size, height: size)
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .overlay(
+                LinearGradient(
+                    colors: [.white.opacity(0.08), .clear],
+                    startPoint: .topLeading,
+                    endPoint: UnitPoint(x: 0.5, y: 0.5)
+                )
+            )
+            .frame(width: size, height: size)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
 }
 

@@ -420,7 +420,7 @@ struct CommunityView: View {
                     .padding(.top, PSSpacing.xl)
                     .listChangeAnimation(feedListings.map(\.id))
                 }
-                .contentMargins(.bottom, PSLayout.scaled(120), for: .scrollContent)
+                .contentMargins(.bottom, PSLayout.scaled(150), for: .scrollContent)
                 .refreshable { await refreshFeed() }
             }
         }
@@ -451,7 +451,7 @@ struct CommunityView: View {
                     .padding(.top, PSSpacing.xl)
                     .listChangeAnimation(communityService.myListings.map(\.id))
                 }
-                .contentMargins(.bottom, PSLayout.scaled(120), for: .scrollContent)
+                .contentMargins(.bottom, PSLayout.scaled(150), for: .scrollContent)
                 .refreshable {
                     if let userId = authManager.currentUserId {
                         await communityService.fetchMyListings(userId: userId)

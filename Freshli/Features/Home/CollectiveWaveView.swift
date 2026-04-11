@@ -19,7 +19,7 @@ struct CollectiveWaveView: View {
             .padding(.horizontal, PSSpacing.screenHorizontal)
             .padding(.vertical, PSSpacing.xl)
         }
-        .contentMargins(.bottom, PSLayout.scaled(120), for: .scrollContent)
+        .contentMargins(.bottom, PSLayout.scaled(150), for: .scrollContent)
         .background(PSColors.backgroundPrimary)
         .navigationTitle(String(localized: "Live Rescue Wave"))
         .navigationBarTitleDisplayMode(.inline)

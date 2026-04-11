@@ -46,7 +46,7 @@ struct HomeView: View {
         }
         // Reserve space for the floating tab bar so the last card never
         // sits under it. Mirrors the pattern used in RecipesView.
-        .contentMargins(.bottom, PSLayout.scaled(120), for: .scrollContent)
+        .contentMargins(.bottom, PSLayout.scaled(150), for: .scrollContent)
         .background(PSColors.backgroundSecondary)
         .ignoresSafeArea(edges: .top)
         .navigationDestination(isPresented: $showWeeklyWrap) {
@@ -206,44 +206,92 @@ struct HomeView: View {
     }
 
     // MARK: - Streak Strip
+    //
+    // Apple-Design-Award-level treatment: an earned moment, not a bolted-
+    // on banner. When the user has an active streak, the flame gets a
+    // luminous glow, the day dots fill with warm orange, and the copy
+    // celebrates. When there's no streak, the whole strip reads as a
+    // gentle invitation, not a nag.
 
     private var streakStrip: some View {
         let streak = UserDefaults.standard.integer(forKey: "celebration_currentStreak")
-        return HStack(spacing: PSSpacing.sm) {
-            // Flame icon
+        let hasStreak = streak > 0
+
+        return HStack(spacing: PSSpacing.md) {
+            // Luminous flame with multi-layer glow when earned
             ZStack {
-                Circle()
-                    .fill(streak > 0 ? Color.orange.opacity(0.2) : .white.opacity(0.1))
-                    .frame(width: PSLayout.scaled(32), height: PSLayout.scaled(32))
-                Image(systemName: "flame.fill")
-                    .font(.system(size: PSLayout.scaledFont(14)))
-                    .foregroundStyle(streak > 0 ? Color.orange : .white.opacity(0.4))
-            }
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text(streak > 0 ? "\(streak) day streak 🔥" : "Start your streak today!")
-                    .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
-                    .foregroundStyle(.white)
-                Text(streak > 0 ? "Keep going — you're on a roll!" : "Check in daily to build your streak")
-                    .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
-                    .foregroundStyle(.white.opacity(0.6))
-            }
-
-            Spacer()
-
-            // Mini day indicators (last 7 days visual)
-            HStack(spacing: 3) {
-                ForEach(0..<7) { day in
+                if hasStreak {
                     Circle()
-                        .fill(day < streak ? Color.orange : .white.opacity(0.2))
-                        .frame(width: PSLayout.scaled(7), height: PSLayout.scaled(7))
+                        .fill(Color.orange.opacity(0.35))
+                        .frame(width: PSLayout.scaled(44), height: PSLayout.scaled(44))
+                        .blur(radius: 8)
+                }
+                Circle()
+                    .fill(hasStreak ? Color.orange.opacity(0.22) : .white.opacity(0.14))
+                    .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
+                Image(systemName: "flame.fill")
+                    .font(.system(size: PSLayout.scaledFont(17), weight: .bold))
+                    .foregroundStyle(
+                        hasStreak
+                            ? AnyShapeStyle(
+                                LinearGradient(
+                                    colors: [Color(hex: 0xFBBF24), Color(hex: 0xF97316)],
+                                    startPoint: .top, endPoint: .bottom
+                                )
+                              )
+                            : AnyShapeStyle(Color.white.opacity(0.5))
+                    )
+                    .symbolEffect(.pulse, options: .repeat(.periodic(delay: 3.0)), isActive: hasStreak)
+            }
+            .fixedSize()
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(hasStreak
+                     ? String(localized: "\(streak)-day rescue streak")
+                     : String(localized: "Begin your rescue journey"))
+                    .font(.system(size: PSLayout.scaledFont(14), weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                Text(hasStreak
+                     ? String(localized: "You're making this planet better, one rescue at a time")
+                     : String(localized: "One item saved today starts a habit that lasts"))
+                    .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
+                    .foregroundStyle(.white.opacity(0.72))
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            // 7-day ring of accent dots — fills from left as streak grows
+            HStack(spacing: 4) {
+                ForEach(0..<7, id: \.self) { day in
+                    Circle()
+                        .fill(
+                            day < streak
+                                ? AnyShapeStyle(
+                                    LinearGradient(
+                                        colors: [Color(hex: 0xFBBF24), Color(hex: 0xF97316)],
+                                        startPoint: .top, endPoint: .bottom
+                                    )
+                                  )
+                                : AnyShapeStyle(Color.white.opacity(0.22))
+                        )
+                        .frame(width: 7, height: 7)
+                        .shadow(color: day < streak ? Color.orange.opacity(0.55) : .clear, radius: 3)
                 }
             }
+            .fixedSize()
         }
         .padding(.horizontal, PSSpacing.lg)
         .padding(.vertical, PSSpacing.md)
-        .background(.white.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
+        .background {
+            RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
+                .fill(.white.opacity(hasStreak ? 0.12 : 0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
+                        .strokeBorder(.white.opacity(0.14), lineWidth: 1)
+                )
+        }
     }
 
     // MARK: - Content

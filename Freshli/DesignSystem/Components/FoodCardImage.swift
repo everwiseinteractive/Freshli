@@ -198,36 +198,42 @@ struct FoodCardImage: View {
     // MARK: - Body
 
     var body: some View {
-        ZStack {
-            // 1. Real food photography
-            Image(assetName)
-                .resizable()
-                .scaledToFill()
-
-            // 2. Subtle top micro-vignette
-            LinearGradient(
-                colors: [.black.opacity(0.12), .clear],
-                startPoint: .top,
-                endPoint: UnitPoint(x: 0.5, y: 0.30)
+        // Two-layer approach: outer Color() gives the ZStack a stable
+        // intrinsic size so scaledToFill() on the Image never pushes
+        // content beyond the frame on adjacent layout peers. The Image
+        // is then overlaid and clipped before anything renders.
+        Color.clear
+            .overlay(
+                Image(assetName)
+                    .resizable()
+                    .scaledToFill()
             )
-
-            // 3. Gentle bottom lift — legibility aid for caller overlays
-            LinearGradient(
-                colors: [.clear, .black.opacity(0.18)],
-                startPoint: UnitPoint(x: 0.5, y: 0.55),
-                endPoint: .bottom
+            .overlay(
+                // Subtle top micro-vignette — photographic lens depth
+                LinearGradient(
+                    colors: [.black.opacity(0.12), .clear],
+                    startPoint: .top,
+                    endPoint: UnitPoint(x: 0.5, y: 0.30)
+                )
             )
-
-            // 4. Subtle left-edge highlight — editorial lighting
-            LinearGradient(
-                colors: [.white.opacity(0.06), .clear],
-                startPoint: .leading,
-                endPoint: UnitPoint(x: 0.5, y: 0.5)
+            .overlay(
+                // Gentle bottom lift — legibility aid for caller overlays
+                LinearGradient(
+                    colors: [.clear, .black.opacity(0.18)],
+                    startPoint: UnitPoint(x: 0.5, y: 0.55),
+                    endPoint: .bottom
+                )
             )
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: height)
-        .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .overlay(
+                // Subtle left-edge highlight — editorial studio lighting
+                LinearGradient(
+                    colors: [.white.opacity(0.06), .clear],
+                    startPoint: .leading,
+                    endPoint: UnitPoint(x: 0.5, y: 0.5)
+                )
+            )
+            .frame(height: height)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
 }
 

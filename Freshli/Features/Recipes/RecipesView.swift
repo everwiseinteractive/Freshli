@@ -69,7 +69,7 @@ struct RecipesView: View {
                 .padding(.top, PSSpacing.md)
             }
             // Make sure the last card always sits above the floating tab bar.
-            .contentMargins(.bottom, PSLayout.scaled(120), for: .scrollContent)
+            .contentMargins(.bottom, PSLayout.scaled(150), for: .scrollContent)
         }
         .background(PSColors.backgroundSecondary)
         .toolbar(.hidden, for: .navigationBar)
@@ -488,16 +488,19 @@ struct RecipesView: View {
     // MARK: - Recipe List Card
 
     private func recipeListCard(recipe: Recipe) -> some View {
-        HStack(spacing: PSSpacing.lg) {
-            // Real food photograph — matched to recipe title
+        let imageSize = PSLayout.recipeImageSize
+        return HStack(spacing: PSSpacing.lg) {
+            // Real food photograph — matched to recipe title.
+            // Explicit outer frame + layoutPriority(0) ensures the image
+            // can never push its width into the title column.
             ZStack(alignment: .topLeading) {
                 FoodCardImage(
                     title: recipe.title,
                     imageSystemName: recipe.imageSystemName,
-                    height: PSLayout.recipeImageSize,
+                    height: imageSize,
                     cornerRadius: PSSpacing.radiusLg
                 )
-                .frame(width: PSLayout.recipeImageSize, height: PSLayout.recipeImageSize)
+                .frame(width: imageSize, height: imageSize)
 
                 // Match percentage badge
                 Text(recipe.matchPercentageDisplay)
@@ -509,12 +512,16 @@ struct RecipesView: View {
                     .clipShape(Capsule())
                     .padding(PSSpacing.xs)
             }
+            .frame(width: imageSize, height: imageSize)
+            .layoutPriority(0)
 
             VStack(alignment: .leading, spacing: PSSpacing.sm) {
                 Text(recipe.title)
                     .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
                     .foregroundStyle(PSColors.textPrimary)
                     .lineLimit(2)
+                    .minimumScaleFactor(0.85)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                 // Difficulty + time chips
                 HStack(spacing: PSSpacing.xs) {
@@ -548,6 +555,7 @@ struct RecipesView: View {
                 }
             }
             .padding(.vertical, PSSpacing.xs)
+            .layoutPriority(1)
         }
         .padding(PSSpacing.md)
         .background(PSColors.surfaceCard)

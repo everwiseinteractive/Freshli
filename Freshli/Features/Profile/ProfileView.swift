@@ -51,7 +51,7 @@ struct ProfileView: View {
                 .adaptiveHPadding()
             }
         }
-        .contentMargins(.bottom, PSLayout.scaled(120), for: .scrollContent)
+        .contentMargins(.bottom, PSLayout.scaled(150), for: .scrollContent)
         .background(PSColors.backgroundSecondary)
         .ignoresSafeArea(edges: .top)
         .navigationTitle("")
