@@ -288,8 +288,7 @@ struct ExpiryAlertsView: View {
             case .delete: break
             }
 
-            // Widget update is the most expensive call — run last on next runloop turn
-            WidgetDataService.updateWidgetData(modelContext: modelContext)
+            // Widget data updated on willResignActive in AppTabView — no call needed here.
         }
 
         PSLogger.general.info("Expiry action '\(String(describing: action))' applied to: \(itemName)")

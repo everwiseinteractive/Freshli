@@ -76,6 +76,9 @@ struct FreshliApp: App {
                 } else {
                     // Step 3: Main app content
                     mainAppContent
+                        // Solid background prevents any white flash during the
+                        // fade-in transition from the splash screen.
+                        .background(PSColors.backgroundPrimary.ignoresSafeArea())
                         .splashTransition(
                             isTransitioning: splashTransitioning,
                             namespace: splashNamespace
@@ -88,6 +91,10 @@ struct FreshliApp: App {
                         )
                 }
             }
+            // Dark splash background applied to the root Group so the window
+            // is never black while services and SwiftData initialise.
+            // FreshliSplashView overlays its own animated content on top of this.
+            .background(Color(hex: 0x051A0D).ignoresSafeArea())
             .celebrationOverlay(manager: celebrationManager)
             .toastOverlay(manager: toastManager)
             .environment(celebrationManager)

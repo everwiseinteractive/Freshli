@@ -287,7 +287,9 @@ struct CommunityView: View {
         .accessibilityLabel(String(localized: "Create New Post"))
         .accessibilityHint(String(localized: "Double tap to create a new community listing"))
         .padding(.trailing, PSLayout.adaptiveHorizontalPadding)
-        .padding(.bottom, PSLayout.adaptiveHorizontalPadding)
+        // Increased to PSSpacing.xxl (24pt) — the safeAreaInset on NavigationStack
+        // handles the tab bar boundary; this is the comfortable visual gap above it.
+        .padding(.bottom, PSSpacing.xxl)
     }
 
     // MARK: - Feed Content
@@ -397,10 +399,10 @@ struct CommunityView: View {
                 )
                 .padding(PSSpacing.screenHorizontal)
                 .frame(maxHeight: .infinity)
-            } else if let myListings = communityService.myListings, !myListings.isEmpty {
+            } else if !communityService.myListings.isEmpty {
                 ScrollView {
                     LazyVStack(spacing: PSSpacing.lg) {
-                        ForEach(Array(myListings.enumerated()), id: \.element.id) { index, listing in
+                        ForEach(Array(communityService.myListings.enumerated()), id: \.element.id) { index, listing in
                             myListingCard(listing: listing)
                                 .staggeredAppearance(index: index)
                                 .onTapGesture { selectedListing = listing }
@@ -409,7 +411,7 @@ struct CommunityView: View {
                     .adaptiveHPadding()
                     .padding(.top, PSSpacing.xl)
                     .padding(.bottom, PSLayout.tabBarContentPadding + PSSpacing.xl)
-                    .listChangeAnimation(myListings.map(\.id))
+                    .listChangeAnimation(communityService.myListings.map(\.id))
                 }
                 .refreshable {
                     if let userId = authManager.currentUserId {
@@ -783,8 +785,8 @@ struct CommunityView: View {
     // MARK: - Helpers
 
     private var feedListings: [CommunityListingDTO] {
-        if let listings = communityService.listings, !listings.isEmpty {
-            return listings
+        if !communityService.listings.isEmpty {
+            return communityService.listings
         }
         // Fallback: show seed data when unauthenticated or no results
         return CommunityFeedData.cachedSeedListings

@@ -47,18 +47,22 @@ struct FreshliView: View {
         harvestIntensity = .standard
         showHarvestCelebration = true
         let itemName = item.name
-        withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) {
-            item.isConsumed = true
+
+        // Mutate state and animate the removal — keep withAnimation lightweight.
+        item.isConsumed = true
+        withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) { }
+
+        // Heavy I/O runs AFTER the animation pass in a deferred task.
+        // WidgetDataService is intentionally omitted here — AppTabView already
+        // calls it on willResignActive, avoiding redundant main-thread work.
+        Task { @MainActor in
             do {
                 try modelContext.save()
                 toastManager.show(.itemConsumed(itemName))
                 celebrationManager.fireFoodSaved(modelContext: modelContext)
-                WidgetDataService.updateWidgetData(modelContext: modelContext)
                 if let userId = authManager.currentUserId {
-                    Task {
-                        await syncService.pushFreshliItem(item, userId: userId)
-                        await syncService.recordImpactEvent(userId: userId, eventType: "consumed", itemName: itemName, moneySaved: 3.50, co2Avoided: 2.5)
-                    }
+                    await syncService.pushFreshliItem(item, userId: userId)
+                    await syncService.recordImpactEvent(userId: userId, eventType: "consumed", itemName: itemName, moneySaved: 3.50, co2Avoided: 2.5)
                 }
             } catch {
                 toastManager.show(.error("Something went wrong. Please try again."))
@@ -71,13 +75,16 @@ struct FreshliView: View {
         PSHaptics.shared.heavyTap()
         let itemName = item.name
         let itemId = item.id
-        withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) {
-            modelContext.delete(item)
+        // Delete the item object (lightweight — just marks it deleted in the context)
+        modelContext.delete(item)
+        withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) { }
+        // Defer save and sync off the animation pass
+        Task { @MainActor in
             do {
                 try modelContext.save()
                 toastManager.show(.itemDeleted(itemName))
                 if authManager.currentUserId != nil {
-                    Task { await syncService.deleteFreshliItem(id: itemId) }
+                    await syncService.deleteFreshliItem(id: itemId)
                 }
             } catch {
                 toastManager.show(.error("Something went wrong. Please try again."))
@@ -88,13 +95,14 @@ struct FreshliView: View {
 
     private func shareItem(_ item: FreshliItem) {
         let itemName = item.name
-        withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) {
-            item.isShared = true
+        item.isShared = true
+        withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) { }
+        Task { @MainActor in
             do {
                 try modelContext.save()
                 toastManager.show(.itemShared(itemName))
                 celebrationManager.fireShareCompleted(itemName: itemName, modelContext: modelContext)
-                WidgetDataService.updateWidgetData(modelContext: modelContext)
+                // WidgetDataService deferred to willResignActive in AppTabView
                 if let userId = authManager.currentUserId {
                     Task {
                         await syncService.pushFreshliItem(item, userId: userId)

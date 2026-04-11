@@ -63,23 +63,31 @@ struct AppTabView: View {
                 NavigationStack {
                     HomeView(showAddItem: $showAddItem, switchToTab: { switchTab(to: $0) })
                 }
+                // safeAreaInset is applied to EACH NavigationStack individually.
+                // Applying it to the outer Group is insufficient — NavigationStack
+                // intercepts safe area propagation on real devices, so child views
+                // (ScrollViews, ZStack FABs) would not see the correct inset.
+                .safeAreaInset(edge: .bottom, spacing: 0) { floatingTabBar }
+
             case .pantry:
                 NavigationStack { FreshliView(showAddItem: $showAddItem) }
+                    .safeAreaInset(edge: .bottom, spacing: 0) { floatingTabBar }
+
             case .recipes:
                 NavigationStack { RecipesView() }
+                    .safeAreaInset(edge: .bottom, spacing: 0) { floatingTabBar }
+
             case .community:
                 NavigationStack { CommunityView() }
+                    .safeAreaInset(edge: .bottom, spacing: 0) { floatingTabBar }
+
             case .profile:
                 NavigationStack { ProfileView() }
+                    .safeAreaInset(edge: .bottom, spacing: 0) { floatingTabBar }
             }
         }
         .transition(FLMotion.tabSlideTransition(direction: slideDirection))
         .id(selectedTab)
-        // safeAreaInset correctly adjusts the scroll/navigation safe area for ALL
-        // child views — the floating bar is the inset view so content never hides beneath it.
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            floatingTabBar
-        }
         .ignoresSafeArea(.keyboard)
         .sensoryFeedback(.selection, trigger: selectedTab)
         .sheet(isPresented: $showAddItem) {
