@@ -15,6 +15,7 @@ struct ProfileView: View {
     @State private var showHouseholdSettings = false
     @State private var showLanguageSettings = false
     @State private var householdSize: Int = 1
+    @Environment(SubscriptionService.self) private var subscriptionService
     @AppStorage("isDarkMode") private var isDarkMode = false
 
     private var profile: UserProfile {
@@ -496,36 +497,111 @@ struct ProfileView: View {
     // MARK: - Pro Card
 
     private var proCard: some View {
+        Group {
+            if subscriptionService.isProUser {
+                proMemberCard
+            } else {
+                proUpgradeCard
+            }
+        }
+    }
+
+    // Already subscribed — show appreciation & manage link
+    private var proMemberCard: some View {
+        HStack(spacing: PSSpacing.lg) {
+            ZStack {
+                Circle()
+                    .fill(PSColors.primaryGreen.opacity(0.12))
+                    .frame(width: PSLayout.scaled(50), height: PSLayout.scaled(50))
+                Image(systemName: "crown.fill")
+                    .font(.system(size: PSLayout.scaledFont(22)))
+                    .foregroundStyle(PSColors.primaryGreen)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(String(localized: "Freshli+ Member"))
+                    .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
+                    .foregroundStyle(PSColors.textPrimary)
+                Text(String(localized: "Thank you for supporting zero waste 🌱"))
+                    .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
+                    .foregroundStyle(PSColors.textSecondary)
+            }
+            Spacer()
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: PSLayout.scaledFont(22)))
+                .foregroundStyle(PSColors.primaryGreen)
+        }
+        .adaptiveCardPadding()
+        .background(PSColors.primaryGreen.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: PSLayout.profileCardRadius, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: PSLayout.profileCardRadius, style: .continuous)
+                .strokeBorder(PSColors.primaryGreen.opacity(0.2), lineWidth: 1)
+        )
+    }
+
+    // Free user — show compelling feature-preview upgrade card
+    private var proUpgradeCard: some View {
         NavigationLink(destination: FreshliProView()) {
-            HStack(spacing: PSSpacing.lg) {
-                ZStack {
-                    Circle()
-                        .fill(PSColors.secondaryAmber.opacity(0.15))
-                        .frame(width: PSLayout.scaled(52), height: PSLayout.scaled(52))
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: PSLayout.scaledFont(22)))
+            VStack(alignment: .leading, spacing: PSSpacing.lg) {
+                // Top row: badge + chevron
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: PSSpacing.xxs) {
+                        HStack(spacing: PSSpacing.xs) {
+                            Image(systemName: "crown.fill")
+                                .font(.system(size: PSLayout.scaledFont(11), weight: .black))
+                            Text("FRESHLI+")
+                                .font(.system(size: PSLayout.scaledFont(11), weight: .black))
+                                .tracking(0.8)
+                        }
                         .foregroundStyle(PSColors.secondaryAmber)
+
+                        Text(String(localized: "Unlock your full potential"))
+                            .font(.system(size: PSLayout.scaledFont(18), weight: .black))
+                            .tracking(-0.3)
+                            .foregroundStyle(PSColors.textPrimary)
+
+                        Text(String(localized: "14-day free trial — no commitment"))
+                            .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
+                            .foregroundStyle(PSColors.textSecondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: PSLayout.scaledFont(14), weight: .bold))
+                        .foregroundStyle(PSColors.textTertiary)
+                        .padding(PSSpacing.xs)
                 }
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(String(localized: "Upgrade to Freshli+"))
-                        .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
-                        .foregroundStyle(PSColors.textPrimary)
-                    Text(String(localized: "Unlock premium features and insights"))
-                        .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
-                        .foregroundStyle(PSColors.textSecondary)
+                // Feature tiles — 3 concrete benefits
+                HStack(spacing: PSSpacing.sm) {
+                    proFeatureTile(icon: "sparkles",            color: Color(hex: 0x8B5CF6), title: "AI Chef",    detail: "Recipes from\nexpiring food")
+                    proFeatureTile(icon: "chart.bar.fill",      color: PSColors.secondaryAmber, title: "Analytics", detail: "Savings &\nwaste trends")
+                    proFeatureTile(icon: "person.2.fill",       color: Color(hex: 0x3B82F6), title: "Family",     detail: "Share with\nup to 6")
                 }
 
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
-                    .foregroundStyle(PSColors.textTertiary)
+                // CTA pill
+                HStack {
+                    Spacer()
+                    Text(String(localized: "Start Free Trial  →"))
+                        .font(.system(size: PSLayout.scaledFont(14), weight: .black))
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, PSSpacing.xxl)
+                        .padding(.vertical, PSSpacing.md)
+                        .background(
+                            LinearGradient(
+                                colors: [PSColors.primaryGreen, Color(hex: 0x059652)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .clipShape(Capsule())
+                        .shadow(color: PSColors.primaryGreen.opacity(0.35), radius: 10, y: 4)
+                    Spacer()
+                }
             }
             .adaptiveCardPadding()
             .background(
                 LinearGradient(
-                    colors: [PSColors.secondaryAmber.opacity(0.08), PSColors.secondaryAmber.opacity(0.03)],
+                    colors: [PSColors.secondaryAmber.opacity(0.07), PSColors.secondaryAmber.opacity(0.02)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -535,9 +611,36 @@ struct ProfileView: View {
                 RoundedRectangle(cornerRadius: PSLayout.profileCardRadius, style: .continuous)
                     .strokeBorder(PSColors.secondaryAmber.opacity(0.25), lineWidth: 1)
             )
-            .shadow(color: PSColors.secondaryAmber.opacity(0.1), radius: 12, y: 6)
+            .shadow(color: PSColors.secondaryAmber.opacity(0.12), radius: 16, y: 6)
         }
         .buttonStyle(PressableButtonStyle())
+    }
+
+    private func proFeatureTile(icon: String, color: Color, title: String, detail: String) -> some View {
+        VStack(spacing: PSSpacing.sm) {
+            ZStack {
+                RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
+                    .fill(color.opacity(0.12))
+                    .frame(width: PSLayout.scaled(40), height: PSLayout.scaled(40))
+                Image(systemName: icon)
+                    .font(.system(size: PSLayout.scaledFont(18), weight: .semibold))
+                    .foregroundStyle(color)
+            }
+            Text(title)
+                .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
+                .foregroundStyle(PSColors.textPrimary)
+            Text(detail)
+                .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
+                .foregroundStyle(PSColors.textSecondary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(1)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, PSSpacing.md)
+        .padding(.horizontal, PSSpacing.xs)
+        .background(PSColors.surfaceCard.opacity(0.7))
+        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
     }
 
     // MARK: - Household Sheet

@@ -186,11 +186,16 @@ struct HomeView: View {
             impactSummaryCard
                 .dashboardEntrance(index: 1)
 
-            recipeSuggestionCard
+            // Pro nudge — appears after impact card so user is in a positive state.
+            // Self-hides for subscribed users and after dismissal (7 days).
+            ProUpgradeNudge()
                 .dashboardEntrance(index: 2)
 
-            communitySwapCard
+            recipeSuggestionCard
                 .dashboardEntrance(index: 3)
+
+            communitySwapCard
+                .dashboardEntrance(index: 4)
         }
         .adaptiveHPadding()
         .padding(.bottom, PSSpacing.xxxl)
