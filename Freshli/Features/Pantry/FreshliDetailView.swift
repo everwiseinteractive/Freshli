@@ -21,6 +21,7 @@ struct FreshliDetailView: View {
     @State private var editedNotes: String = ""
     @State private var showSuccessAnimation = false
     @State private var successFlashTrigger = false
+    @State private var showPreservationGuide = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -58,6 +59,9 @@ struct FreshliDetailView: View {
                 .fontWeight(.semibold)
                 .foregroundStyle(PSColors.primaryGreen)
             }
+        }
+        .sheet(isPresented: $showPreservationGuide) {
+            PreservationGuideView(item: item)
         }
         .confirmationDialog(String(localized: "Delete Item"), isPresented: $showDeleteConfirmation) {
             Button(String(localized: "Delete"), role: .destructive) {
@@ -273,6 +277,26 @@ struct FreshliDetailView: View {
                     dismiss()
                 }
             }
+
+            Button {
+                PSHaptics.shared.lightTap()
+                showPreservationGuide = true
+            } label: {
+                HStack(spacing: PSSpacing.sm) {
+                    Image(systemName: "snowflake")
+                        .font(.system(size: PSLayout.scaledFont(15), weight: .semibold))
+                    Text(String(localized: "Save it for Later 🧊"))
+                        .font(.system(size: PSLayout.scaledFont(15), weight: .semibold))
+                }
+                .foregroundStyle(PSColors.accentTeal)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, PSSpacing.md)
+                .background(PSColors.accentTeal.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
+                    .strokeBorder(PSColors.accentTeal.opacity(0.2), lineWidth: 1))
+            }
+            .buttonStyle(PressableButtonStyle())
 
             PSButton(title: String(localized: "Delete Item"), icon: "trash", style: .destructive) {
                 PSHaptics.shared.heavyTap()

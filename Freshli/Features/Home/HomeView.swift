@@ -19,6 +19,8 @@ struct HomeView: View {
     @State private var showWeeklyWrap = false
     @State private var selectedImpactStat: String?
     @State private var bulkPlans: [IngredientMealPlan] = []
+    @State private var ethyleneConflicts: [EthyleneConflict] = []
+    @State private var gapFillSuggestions: [GapFillSuggestion] = []
 
     private let logger = Logger(subsystem: "com.freshli.app", category: "HomeView")
 
@@ -50,12 +52,22 @@ struct HomeView: View {
             impactStats = service.calculateStats()
             monthlyStats = service.calculateMonthlyStats()
             bulkPlans = MealPlanService.shared.generateBulkPlan(for: activeItems)
+            ethyleneConflicts = PreservationGuideService.shared.conflicts(in: activeItems)
+            gapFillSuggestions = SmartShoppingService.shared.fillGapSuggestions(
+                pantryItems: activeItems,
+                recipes: RecipeService.shared.recipes
+            )
         }
         .onChange(of: activeItems.count) { _, _ in
             let service = ImpactService(modelContext: modelContext)
             impactStats = service.calculateStats()
             monthlyStats = service.calculateMonthlyStats()
             bulkPlans = MealPlanService.shared.generateBulkPlan(for: activeItems)
+            ethyleneConflicts = PreservationGuideService.shared.conflicts(in: activeItems)
+            gapFillSuggestions = SmartShoppingService.shared.fillGapSuggestions(
+                pantryItems: activeItems,
+                recipes: RecipeService.shared.recipes
+            )
         }
     }
 
@@ -237,6 +249,11 @@ struct HomeView: View {
                 .padding(.top, max(PSLayout.headerOverlap, PSLayout.scaled(-20)))
                 .dashboardEntrance(index: 0)
 
+            if !ethyleneConflicts.isEmpty {
+                ethyleneWarningCard
+                    .dashboardEntrance(index: 0)
+            }
+
             impactSummaryCard
                 .dashboardEntrance(index: 1)
 
@@ -256,8 +273,13 @@ struct HomeView: View {
             cashNotTrashedCard
                 .dashboardEntrance(index: 5)
 
+            if !gapFillSuggestions.isEmpty {
+                fillTheGapCard
+                    .dashboardEntrance(index: 6)
+            }
+
             communitySwapCard
-                .dashboardEntrance(index: 6)
+                .dashboardEntrance(index: 7)
         }
         .adaptiveHPadding()
         .padding(.bottom, PSSpacing.xxxl)
@@ -726,6 +748,108 @@ struct HomeView: View {
                 .minimumScaleFactor(0.8)
         }
         .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Ethylene Warning Card
+
+    private var ethyleneWarningCard: some View {
+        let topConflict = ethyleneConflicts.first!
+        return VStack(alignment: .leading, spacing: PSSpacing.md) {
+            HStack(spacing: PSSpacing.sm) {
+                ZStack {
+                    Circle()
+                        .fill(PSColors.secondaryAmber.opacity(0.15))
+                        .frame(width: PSLayout.scaled(34), height: PSLayout.scaled(34))
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: PSLayout.scaledFont(15)))
+                        .foregroundStyle(PSColors.secondaryAmber)
+                }
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(String(localized: "Ethylene Alert"))
+                        .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
+                        .foregroundStyle(PSColors.textPrimary)
+                    Text(String(localized: "\(ethyleneConflicts.count) storage conflict\(ethyleneConflicts.count == 1 ? "" : "s") detected"))
+                        .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
+                        .foregroundStyle(PSColors.secondaryAmber)
+                }
+                Spacer()
+            }
+            Text(topConflict.advice)
+                .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
+                .foregroundStyle(PSColors.textSecondary)
+                .lineSpacing(2)
+            if ethyleneConflicts.count > 1 {
+                Text(String(localized: "+\(ethyleneConflicts.count - 1) more conflict\(ethyleneConflicts.count - 1 == 1 ? "" : "s") — check your pantry"))
+                    .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                    .foregroundStyle(PSColors.secondaryAmber)
+            }
+        }
+        .adaptiveCardPadding()
+        .background(PSColors.secondaryAmber.opacity(0.06))
+        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
+            .strokeBorder(PSColors.secondaryAmber.opacity(0.25), lineWidth: 1))
+    }
+
+    // MARK: - Fill the Gap Card
+
+    private var fillTheGapCard: some View {
+        let top = gapFillSuggestions.prefix(2)
+        return NavigationLink(destination: SmartShoppingListView()) {
+            VStack(alignment: .leading, spacing: PSSpacing.lg) {
+                HStack(spacing: PSSpacing.sm) {
+                    ZStack {
+                        Circle()
+                            .fill(Color(hex: 0x8B5CF6).opacity(0.15))
+                            .frame(width: PSLayout.scaled(34), height: PSLayout.scaled(34))
+                        Image(systemName: "cart.badge.plus")
+                            .font(.system(size: PSLayout.scaledFont(15)))
+                            .foregroundStyle(Color(hex: 0x8B5CF6))
+                    }
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(String(localized: "Fill the Gap"))
+                            .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
+                            .foregroundStyle(PSColors.textPrimary)
+                        Text(String(localized: "One purchase unlocks multiple recipes"))
+                            .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
+                            .foregroundStyle(PSColors.textSecondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                        .foregroundStyle(PSColors.textTertiary)
+                }
+                ForEach(top) { suggestion in
+                    HStack(spacing: PSSpacing.md) {
+                        Text(suggestion.category.emoji)
+                            .font(.system(size: PSLayout.scaledFont(22)))
+                        VStack(alignment: .leading, spacing: 2) {
+                            HStack(spacing: PSSpacing.xs) {
+                                Text("Buy")
+                                    .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
+                                    .foregroundStyle(PSColors.textSecondary)
+                                Text(suggestion.itemToBuy)
+                                    .font(.system(size: PSLayout.scaledFont(13), weight: .black))
+                                    .foregroundStyle(Color(hex: 0x8B5CF6))
+                            }
+                            Text("→ unlocks \(suggestion.unlocksRecipes.count) recipes")
+                                .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
+                                .foregroundStyle(PSColors.textTertiary)
+                        }
+                        Spacer()
+                    }
+                    .padding(PSSpacing.sm)
+                    .background(Color(hex: 0x8B5CF6).opacity(0.06))
+                    .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
+                }
+            }
+            .adaptiveCardPadding()
+            .background(PSColors.surfaceCard)
+            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
+                .strokeBorder(Color(hex: 0x8B5CF6).opacity(0.15), lineWidth: 1))
+        }
+        .buttonStyle(PressableButtonStyle())
     }
 
     // MARK: - Community Swap Card

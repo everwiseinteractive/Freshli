@@ -15,6 +15,9 @@ struct ProfileView: View {
     @State private var showHouseholdSettings = false
     @State private var showLanguageSettings = false
     @State private var showRetailerLink = false
+    @State private var showPerks = false
+    @State private var showLocalPods = false
+    @State private var showSmartShopping = false
     @State private var householdSize: Int = 1
     @Environment(SubscriptionService.self) private var subscriptionService
     @AppStorage("isDarkMode") private var isDarkMode = false
@@ -69,6 +72,9 @@ struct ProfileView: View {
         }
         .navigationDestination(isPresented: $showExpiryAlerts) { ExpiryAlertsView() }
         .navigationDestination(isPresented: $showRetailerLink) { RetailerLinkView() }
+        .navigationDestination(isPresented: $showPerks) { PerksView() }
+        .navigationDestination(isPresented: $showLocalPods) { LocalPodsView() }
+        .navigationDestination(isPresented: $showSmartShopping) { SmartShoppingListView() }
         .sheet(isPresented: $showAuthSheet) {
             AuthView().presentationDragIndicator(.visible)
         }
@@ -516,6 +522,12 @@ struct ProfileView: View {
             settingsNavRow(icon: "clock.badge.exclamationmark", iconBg: PSColors.secondaryAmber, title: String(localized: "Expiry Alerts")) { showExpiryAlerts = true }
             settingsDivider()
             settingsNavRow(icon: "cart.badge.plus", iconBg: PSColors.primaryGreen, title: String(localized: "Connect Supermarket")) { showRetailerLink = true }
+            settingsDivider()
+            settingsNavRow(icon: "gift.fill", iconBg: PSColors.secondaryAmber, title: String(localized: "Zero Waste Perks")) { showPerks = true }
+            settingsDivider()
+            settingsNavRow(icon: "person.3.fill", iconBg: Color(hex: 0x3B82F6), title: String(localized: "Local Network & Pods")) { showLocalPods = true }
+            settingsDivider()
+            settingsNavRow(icon: "cart.badge.questionmark", iconBg: Color(hex: 0x8B5CF6), title: String(localized: "Smart Shopping List")) { showSmartShopping = true }
             settingsDivider()
             settingsNavRow(icon: "globe", iconBg: PSColors.infoBlue, title: String(localized: "Language")) { showLanguageSettings = true }
             settingsDivider()
