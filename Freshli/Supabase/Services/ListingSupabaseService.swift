@@ -11,10 +11,11 @@ private struct ListingReportUpdate: Encodable {
 // MARK: - Listing Supabase Service
 // Handles community marketplace listing operations including CRUD, claims, and location-based queries.
 
-@Observable @MainActor
 final class ListingSupabaseService: Sendable {
-    private let client = AppSupabase.client
-    private let logger = Logger(subsystem: "com.freshli.app", category: "ListingSupabaseService")
+    nonisolated private let client = AppSupabase.client
+    nonisolated private let logger = Logger(subsystem: "com.freshli.app", category: "ListingSupabaseService")
+
+    nonisolated init() {}
 
     // MARK: - Fetch Operations
 

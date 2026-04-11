@@ -56,8 +56,9 @@ final class RatingService {
         UserDefaults.standard.set(0, forKey: momentsKey)
         UserDefaults.standard.set(Date(), forKey: lastRequestKey)
 
-        // Delay slightly so it appears after any animations complete
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+        // Delay slightly so it appears after any animations complete.
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(1_800))
             guard let scene = UIApplication.shared.connectedScenes
                 .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
             else { return }

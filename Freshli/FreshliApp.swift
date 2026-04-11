@@ -10,14 +10,32 @@ struct FreshliApp: App {
     // and injects remote-notification background mode requirements.
     // Supabase (SyncService) is the sync layer; SwiftData is local-only storage.
     private static let modelContainer: ModelContainer = {
+        let config = ModelConfiguration(cloudKitDatabase: .none)
         do {
-            let config = ModelConfiguration(cloudKitDatabase: .none)
             return try ModelContainer(
                 for: FreshliItem.self, SharedListing.self, UserProfile.self,
                 configurations: config
             )
         } catch {
-            fatalError("SwiftData ModelContainer failed: \(error)")
+            // Persistent store is unreadable — almost always a stale schema on an
+            // upgrade or a corrupt sqlite file in the sandbox. Log the details and
+            // fall back to an in-memory store so the app still launches, so the user
+            // can navigate to Settings → Reset Data instead of being stuck at a black
+            // crash screen. A crash here is the worst UX possible on launch.
+            Logger(subsystem: "com.freshli.app", category: "AppLifecycle")
+                .error("SwiftData ModelContainer failed, falling back to in-memory: \(error.localizedDescription, privacy: .public)")
+            let memoryConfig = ModelConfiguration(isStoredInMemoryOnly: true)
+            do {
+                return try ModelContainer(
+                    for: FreshliItem.self, SharedListing.self, UserProfile.self,
+                    configurations: memoryConfig
+                )
+            } catch {
+                // If even the in-memory store cannot be created, the SwiftData runtime
+                // is broken — surface the error to the system so TestFlight/analytics
+                // can capture it. This is genuinely unrecoverable.
+                fatalError("SwiftData ModelContainer unrecoverable: \(error)")
+            }
         }
     }()
     @State private var hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")

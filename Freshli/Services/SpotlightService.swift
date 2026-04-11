@@ -4,13 +4,17 @@ import UniformTypeIdentifiers
 import os
 
 enum SpotlightService {
-    private static let logger = PSLogger(category: .pantry)
+    // Apple's `os.Logger` is Sendable; safe to use from @Sendable completion handlers.
+    nonisolated static let logger = Logger(subsystem: "com.freshli.app", category: "Spotlight")
     private static let domainIdentifier = "com.everwise.Freshli.freshliItems"
 
     /// Index a single pantry item in Spotlight
     static func indexItem(_ item: FreshliItem) {
+        // Snapshot Sendable values before crossing the @Sendable closure boundary.
+        let itemName = item.name
+
         let attributeSet = CSSearchableItemAttributeSet(contentType: .content)
-        attributeSet.title = item.name
+        attributeSet.title = itemName
         attributeSet.contentDescription = buildDescription(for: item)
         attributeSet.keywords = buildKeywords(for: item)
 
@@ -25,16 +29,18 @@ enum SpotlightService {
 
         CSSearchableIndex.default().indexSearchableItems([searchableItem]) { error in
             if let error {
-                logger.error("Failed to index item in Spotlight: \(error.localizedDescription)")
+                logger.error("Failed to index item in Spotlight: \(error.localizedDescription, privacy: .public)")
             } else {
-                logger.debug("Indexed item in Spotlight: \(item.name)")
+                logger.debug("Indexed item in Spotlight: \(itemName, privacy: .public)")
             }
         }
     }
 
     /// Index multiple pantry items
     static func indexItems(_ items: [FreshliItem]) {
-        let searchableItems = items.map { item -> CSSearchableItem in
+        // Build all CSSearchableItem instances and snapshot count on the current actor,
+        // then hand off the Sendable array + int to the completion closure.
+        let searchableItems: [CSSearchableItem] = items.map { item in
             let attributeSet = CSSearchableItemAttributeSet(contentType: .content)
             attributeSet.title = item.name
             attributeSet.contentDescription = buildDescription(for: item)
@@ -48,12 +54,13 @@ enum SpotlightService {
             searchableItem.expirationDate = Calendar.current.date(byAdding: .day, value: 30, to: Date())
             return searchableItem
         }
+        let count = searchableItems.count
 
         CSSearchableIndex.default().indexSearchableItems(searchableItems) { error in
             if let error {
-                logger.error("Failed to index \(items.count) items in Spotlight: \(error.localizedDescription)")
+                logger.error("Failed to index \(count) items in Spotlight: \(error.localizedDescription, privacy: .public)")
             } else {
-                logger.info("Indexed \(items.count) items in Spotlight")
+                logger.info("Indexed \(count) items in Spotlight")
             }
         }
     }
@@ -62,7 +69,7 @@ enum SpotlightService {
     static func removeItem(_ itemId: UUID) {
         CSSearchableIndex.default().deleteSearchableItems(withIdentifiers: [itemId.uuidString]) { error in
             if let error {
-                logger.error("Failed to remove item from Spotlight: \(error.localizedDescription)")
+                logger.error("Failed to remove item from Spotlight: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
@@ -71,7 +78,7 @@ enum SpotlightService {
     static func removeAllItems() {
         CSSearchableIndex.default().deleteSearchableItems(withDomainIdentifiers: [domainIdentifier]) { error in
             if let error {
-                logger.error("Failed to remove all items from Spotlight: \(error.localizedDescription)")
+                logger.error("Failed to remove all items from Spotlight: \(error.localizedDescription, privacy: .public)")
             } else {
                 logger.info("Cleared all Freshli items from Spotlight")
             }

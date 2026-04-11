@@ -116,15 +116,14 @@ struct FLToastView: View {
         }
         .padding(.horizontal, FLSpacing.xl)
         .padding(.vertical, FLSpacing.lg)
-        .background {
-            RoundedRectangle(cornerRadius: FLSpacing.radiusLg, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .shadow(color: PSColors.textPrimary.opacity(0.1), radius: 20, y: 10)
-        }
+        // Liquid Glass (iOS 26) — toast refracts content behind it instead of
+        // presenting a flat translucent pane.
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: FLSpacing.radiusLg, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: FLSpacing.radiusLg, style: .continuous)
                 .strokeBorder(toast.color.opacity(0.15), lineWidth: 1)
         }
+        .shadow(color: PSColors.textPrimary.opacity(0.1), radius: 20, y: 10)
         .padding(.horizontal, FLSpacing.screenHorizontal)
     }
 }

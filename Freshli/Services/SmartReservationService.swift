@@ -270,9 +270,12 @@ final class SmartReservationService {
     // MARK: - Periodic Check
 
     private func scheduleExpiryCheck() {
-        // Check for expired claims every minute
+        // Check for expired claims every minute. Timer fires on a nonisolated
+        // context, so hop back to the MainActor before touching this service's state.
         Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            self?.checkExpiredClaims()
+            Task { @MainActor in
+                self?.checkExpiredClaims()
+            }
         }
     }
 }

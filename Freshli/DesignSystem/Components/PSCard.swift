@@ -86,10 +86,10 @@ struct PSGlassCard<Content: View>: View {
     var body: some View {
         content()
             .padding(padding)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg))
+            // Liquid Glass (iOS 26): real refractive blur instead of a flat material.
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: PSSpacing.radiusLg)
+                RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
                     .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
             )
             .shadow(color: PSColors.textPrimary.opacity(0.04), radius: 8, y: 2)

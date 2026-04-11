@@ -36,8 +36,8 @@ struct SmartAddSearchBar: View {
             }
             .padding(.horizontal, PSSpacing.lg)
             .padding(.vertical, PSSpacing.md)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
+            // Liquid Glass (iOS 26) — search field feels anchored but translucent.
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
                     .strokeBorder(.white.opacity(0.5), lineWidth: 0.5)
@@ -111,8 +111,8 @@ struct SmartAddSearchBar: View {
                 .accessibilityHint("\(suggestion.category.displayName), expires in about \(suggestion.expiryDays) days")
             }
         }
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
+        // Liquid Glass (iOS 26) — suggestions float above the content.
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
                 .strokeBorder(.white.opacity(0.5), lineWidth: 0.5)

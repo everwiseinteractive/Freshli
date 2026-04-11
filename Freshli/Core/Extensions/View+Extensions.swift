@@ -17,6 +17,34 @@ extension View {
             .shadow(color: PSColors.textPrimary.opacity(0.08), radius: 12, x: 0, y: 4)
     }
 
+    // MARK: - Liquid Glass (iOS 26)
+
+    /// Freshli's canonical Liquid Glass surface. iOS 26 signature visual.
+    /// Use this instead of `.background(.ultraThinMaterial)` on cards, toolbars,
+    /// floating controls, and overlay sheets. Falls through to `.glassEffect()`
+    /// which lets the system produce a properly blurred, specular-highlighted
+    /// background that adapts to the content behind it.
+    ///
+    /// - Parameter shape: The clip shape. Defaults to the design-system's large
+    ///   rounded rectangle — pass `.capsule` for pill buttons, or a custom radius
+    ///   rect for tighter controls.
+    func freshliGlass(in shape: some Shape = RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)) -> some View {
+        self.glassEffect(.regular, in: shape)
+    }
+
+    /// Interactive variant — the glass highlights and subtly deforms in response
+    /// to touches. Use on tappable glass surfaces (floating action buttons,
+    /// glass-chip filters, the tab bar).
+    func freshliGlassInteractive(in shape: some Shape = Capsule()) -> some View {
+        self.glassEffect(.regular.interactive(), in: shape)
+    }
+
+    /// Tinted glass — use sparingly for hero CTAs or branded accents. The glass
+    /// still refracts content behind it, but carries a subtle colour cast.
+    func freshliGlassTinted(_ color: Color, in shape: some Shape = RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)) -> some View {
+        self.glassEffect(.regular.tint(color), in: shape)
+    }
+
     /// Emerald surface card style (profile, add item screens)
     func emeraldCardStyle() -> some View {
         background(PSColors.surfaceCard)

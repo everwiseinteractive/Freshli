@@ -86,7 +86,8 @@ struct FreshliProView: View {
             withAnimation(anim) { appeared = true }
             // Pulse the "Most Popular" badge to draw attention
             if !reduceMotion {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(600))
                     withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) {
                         pulseBadge = true
                     }
