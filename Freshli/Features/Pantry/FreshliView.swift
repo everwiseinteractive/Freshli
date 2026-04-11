@@ -20,6 +20,7 @@ struct FreshliView: View {
     @State private var showFilterSheet = false
     @State private var showHarvestCelebration = false
     @State private var harvestIntensity: SparkleIntensity = .standard
+    @State private var showFridgeScanner = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let logger = Logger(subsystem: "com.freshli.app", category: "FreshliView")
@@ -60,6 +61,7 @@ struct FreshliView: View {
                 try modelContext.save()
                 toastManager.show(.itemConsumed(itemName))
                 celebrationManager.fireFoodSaved(modelContext: modelContext)
+                RatingService.shared.recordJoyMoment()
                 if let userId = authManager.currentUserId {
                     await syncService.pushFreshliItem(item, userId: userId)
                     await syncService.recordImpactEvent(userId: userId, eventType: "consumed", itemName: itemName, moneySaved: 3.50, co2Avoided: 2.5)
@@ -172,6 +174,11 @@ struct FreshliView: View {
             .presentationDragIndicator(.visible)
             .presentationDetents([.medium])
         }
+        .sheet(isPresented: $showFridgeScanner) {
+            FoodScannerView()
+                .presentationDragIndicator(.visible)
+                .presentationDetents([.large])
+        }
     }
 
     // MARK: - Header
@@ -211,6 +218,12 @@ struct FreshliView: View {
             // Quick actions
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: PSSpacing.md) {
+                    Button {
+                        PSHaptics.shared.lightTap()
+                        showFridgeScanner = true
+                    } label: {
+                        quickActionChip(label: "Scan Fridge", icon: "camera.fill", color: Color(hex: 0x8B5CF6))
+                    }
                     NavigationLink(destination: SmartAddView()) {
                         quickActionChip(label: "Smart Add", icon: "camera.viewfinder", color: PSColors.primaryGreen)
                     }

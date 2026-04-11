@@ -154,6 +154,7 @@ struct RecipeDetailView: View {
             .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
 
             ingredientsSection
+            smartSwapsSection
             stepsSection
         }
         .padding(.bottom, PSSpacing.xxxl)
@@ -246,6 +247,100 @@ struct RecipeDetailView: View {
             .shadow(color: .black.opacity(0.04), radius: 12, y: 4)
             .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
         }
+    }
+
+    // MARK: - Smart Swaps (Dynamic Substitutions)
+    // Shows real-time ingredient swaps for ingredients the user doesn't have.
+    // Only renders when the recipe has substitution data AND missing ingredients.
+
+    @ViewBuilder
+    private var smartSwapsSection: some View {
+        // Find missing ingredients that have available substitutions
+        let missingWithSwaps = recipe.ingredients
+            .dropFirst(recipe.matchingIngredientCount)          // skip pantry-matched ones
+            .filter { recipe.substitutions[$0] != nil }
+
+        if !missingWithSwaps.isEmpty && !recipe.substitutions.isEmpty {
+            VStack(alignment: .leading, spacing: PSSpacing.md) {
+                // Header
+                HStack(spacing: PSSpacing.sm) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(Color(hex: 0xF59E0B).opacity(0.12))
+                            .frame(width: 32, height: 32)
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: PSLayout.scaledFont(15), weight: .semibold))
+                            .foregroundStyle(Color(hex: 0xF59E0B))
+                    }
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(String(localized: "Smart Swaps"))
+                            .font(.system(size: PSLayout.scaledFont(20), weight: .bold, design: .rounded))
+                            .foregroundStyle(PSColors.textPrimary)
+                        Text(String(localized: "You're missing \(missingWithSwaps.count) ingredient\(missingWithSwaps.count == 1 ? "" : "s") — here's what to use instead"))
+                            .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
+                            .foregroundStyle(PSColors.textSecondary)
+                            .lineLimit(2)
+                    }
+                }
+                .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
+
+                // Swap cards
+                VStack(spacing: PSSpacing.sm) {
+                    ForEach(Array(missingWithSwaps.enumerated()), id: \.offset) { _, ingredient in
+                        if let alternatives = recipe.substitutions[ingredient] {
+                            swapRow(missing: ingredient, alternatives: alternatives)
+                        }
+                    }
+                }
+                .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
+            }
+        }
+    }
+
+    private func swapRow(missing: String, alternatives: [String]) -> some View {
+        VStack(alignment: .leading, spacing: PSSpacing.sm) {
+            // Missing ingredient label
+            HStack(spacing: PSSpacing.sm) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: PSLayout.scaledFont(14)))
+                    .foregroundStyle(PSColors.textTertiary.opacity(0.5))
+                Text(missing)
+                    .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
+                    .foregroundStyle(PSColors.textSecondary)
+                    .strikethrough(true, color: PSColors.textTertiary)
+            }
+
+            // Arrow + alternatives chips
+            HStack(alignment: .top, spacing: PSSpacing.sm) {
+                Image(systemName: "arrow.turn.down.right")
+                    .font(.system(size: PSLayout.scaledFont(12)))
+                    .foregroundStyle(Color(hex: 0xF59E0B))
+                    .padding(.top, 4)
+
+                FlowLayout(spacing: PSSpacing.xs) {
+                    ForEach(alternatives, id: \.self) { alt in
+                        Text(alt)
+                            .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                            .foregroundStyle(Color(hex: 0x92400E))
+                            .padding(.horizontal, PSSpacing.md)
+                            .padding(.vertical, PSSpacing.xxs)
+                            .background(Color(hex: 0xFEF3C7))
+                            .clipShape(Capsule())
+                            .overlay(
+                                Capsule()
+                                    .strokeBorder(Color(hex: 0xF59E0B).opacity(0.4), lineWidth: 1)
+                            )
+                    }
+                }
+            }
+        }
+        .padding(PSSpacing.lg)
+        .background(Color(hex: 0xFFFBEB))
+        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
+                .strokeBorder(Color(hex: 0xF59E0B).opacity(0.25), lineWidth: 1)
+        )
     }
 
     // MARK: - Steps

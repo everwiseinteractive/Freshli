@@ -53,7 +53,9 @@ final class RecipeService {
                 difficulty: recipe.difficulty,
                 matchingIngredientCount: matching.count,
                 totalIngredientCount: recipe.totalIngredientCount,
-                imageSystemName: recipe.imageSystemName
+                imageSystemName: recipe.imageSystemName,
+                isLeftoverHero: recipe.isLeftoverHero,
+                substitutions: recipe.substitutions
             )
         }
 
@@ -149,6 +151,177 @@ final class RecipeService {
             Recipe(title: "Spaghetti Carbonara", summary: "Roman classic — silky egg-and-cheese sauce with crispy pancetta", ingredients: ["Pasta", "Eggs", "Cheddar Cheese", "Garlic", "Olive Oil", "Butter"], steps: ["Boil spaghetti in well-salted water until al dente", "Whisk eggs with grated cheese and lots of black pepper", "Sauté garlic in olive oil until fragrant, remove from heat", "Drain pasta, reserving a cup of pasta water", "Working off the heat, toss pasta with egg mixture and garlic oil", "Add pasta water a splash at a time until silky — serve immediately"], prepTimeMinutes: 18, difficulty: .medium, matchingIngredientCount: 0, totalIngredientCount: 6, imageSystemName: "fork.knife"),
 
             Recipe(title: "Avocado Toast", summary: "Elevated toast with smashed avocado, chilli flakes, and a poached egg", ingredients: ["Sourdough Bread", "Avocados", "Eggs", "Lemon", "Olive Oil"], steps: ["Toast sourdough until golden and crisp", "Mash avocado with lemon juice, salt, and pepper", "Bring a pan of water to a gentle simmer, add a splash of vinegar", "Crack an egg into a cup, swirl the water, slide egg in", "Poach for 3-4 minutes for a runny yolk", "Pile avocado on toast, top with egg, chilli flakes, and olive oil"], prepTimeMinutes: 12, difficulty: .easy, matchingIngredientCount: 0, totalIngredientCount: 5, imageSystemName: "fork.knife"),
+
+            // MARK: — Leftover Hero Recipes
+            // Curated specifically for reinventing common leftovers.
+            // Each includes substitutions so users can always find a swap.
+
+            Recipe(
+                title: "Chicken Tortilla Soup",
+                summary: "One-pot hero that transforms leftover chicken into a bold, smoky Mexican soup ready in 20 minutes",
+                ingredients: ["Cooked Chicken", "Black Beans", "Canned Tomatoes", "Chicken Broth", "Onion", "Garlic", "Tortilla Strips", "Cumin"],
+                steps: [
+                    "Shred leftover cooked chicken into bite-sized pieces",
+                    "Sauté diced onion and garlic in oil for 3 minutes until soft",
+                    "Add cumin, stir for 30 seconds until fragrant",
+                    "Pour in canned tomatoes, broth, and drained black beans",
+                    "Simmer 10 minutes, then stir in shredded chicken",
+                    "Serve topped with crispy tortilla strips, lime juice, and sour cream"
+                ],
+                prepTimeMinutes: 22,
+                difficulty: .easy,
+                matchingIngredientCount: 0,
+                totalIngredientCount: 8,
+                imageSystemName: "fork.knife",
+                isLeftoverHero: true,
+                substitutions: [
+                    "Cooked Chicken": ["Rotisserie Chicken", "Canned Tuna", "Chickpeas", "Tofu", "Cooked Turkey"],
+                    "Black Beans": ["Kidney Beans", "Pinto Beans", "Lentils", "Cannellini Beans"],
+                    "Tortilla Strips": ["Corn Chips", "Croutons", "Pita Chips", "Crackers"],
+                    "Canned Tomatoes": ["Fresh Tomatoes", "Salsa", "Tomato Passata", "Diced Tinned Tomatoes"],
+                    "Chicken Broth": ["Vegetable Stock", "Water + Bouillon Cube", "Beef Broth"]
+                ]
+            ),
+
+            Recipe(
+                title: "Leftover Fried Rice",
+                summary: "The ultimate leftover transformer — cold rice, odds-and-ends veggies, and eggs become a restaurant-quality stir-fry",
+                ingredients: ["Cooked Rice", "Eggs", "Mixed Vegetables", "Soy Sauce", "Sesame Oil", "Garlic", "Green Onions"],
+                steps: [
+                    "Use day-old cold rice — fresh rice makes it soggy",
+                    "Beat eggs and scramble in a very hot wok until just set, push to sides",
+                    "Add minced garlic, stir 30 seconds",
+                    "Add cold rice and press flat — let it fry undisturbed for 2 minutes to get crispy bits",
+                    "Toss everything together with any leftover vegetables",
+                    "Season with soy sauce, finish with sesame oil and sliced green onions"
+                ],
+                prepTimeMinutes: 15,
+                difficulty: .easy,
+                matchingIngredientCount: 0,
+                totalIngredientCount: 7,
+                imageSystemName: "frying.pan.fill",
+                isLeftoverHero: true,
+                substitutions: [
+                    "Cooked Rice": ["Cauliflower Rice", "Quinoa", "Leftover Noodles", "Leftover Couscous"],
+                    "Mixed Vegetables": ["Frozen Peas", "Corn", "Carrot", "Broccoli", "Bell Pepper", "Spinach"],
+                    "Soy Sauce": ["Tamari", "Coconut Aminos", "Fish Sauce", "Worcestershire Sauce"],
+                    "Sesame Oil": ["Olive Oil", "Chilli Oil", "Any Neutral Oil"],
+                    "Green Onions": ["Chives", "Parsley", "Leek", "Any Fresh Herb"]
+                ]
+            ),
+
+            Recipe(
+                title: "Hearty Vegetable Soup",
+                summary: "Clear the fridge in one pot — any combination of vegetables becomes a nourishing, deeply flavoured soup",
+                ingredients: ["Mixed Vegetables", "Vegetable Broth", "Canned Tomatoes", "Onion", "Garlic", "Pasta", "Olive Oil", "Herbs"],
+                steps: [
+                    "Dice onion and any firm vegetables (carrot, potato, celery) into similar-sized pieces",
+                    "Sauté onion and garlic in olive oil for 4 minutes",
+                    "Add all firm vegetables and cook 3 minutes more",
+                    "Pour in broth and canned tomatoes, bring to a boil",
+                    "Add pasta or grains if using, simmer until tender (8-10 min)",
+                    "Stir in any leafy greens in the last 2 minutes, season well and serve"
+                ],
+                prepTimeMinutes: 30,
+                difficulty: .easy,
+                matchingIngredientCount: 0,
+                totalIngredientCount: 8,
+                imageSystemName: "drop.fill",
+                isLeftoverHero: true,
+                substitutions: [
+                    "Mixed Vegetables": ["Carrot", "Celery", "Zucchini", "Potato", "Sweet Potato", "Pumpkin", "Broccoli"],
+                    "Vegetable Broth": ["Chicken Stock", "Beef Stock", "Water + Stock Cube"],
+                    "Pasta": ["Rice", "Barley", "Lentils", "Chickpeas", "Any Grains"],
+                    "Herbs": ["Thyme", "Rosemary", "Parsley", "Basil", "Bay Leaf", "Mixed Italian Herbs"],
+                    "Canned Tomatoes": ["Fresh Tomatoes", "Tomato Paste + Water", "Salsa"]
+                ]
+            ),
+
+            Recipe(
+                title: "Pasta Frittata",
+                summary: "Italian street food classic that turns leftover pasta into a golden, crispy-edged egg cake — incredible hot or cold",
+                ingredients: ["Cooked Pasta", "Eggs", "Parmesan Cheese", "Garlic", "Olive Oil", "Parsley", "Salt", "Pepper"],
+                steps: [
+                    "Beat 4-5 eggs with grated parmesan, salt, pepper, and chopped parsley",
+                    "Fold in leftover cooked pasta — any shape works",
+                    "Heat olive oil with garlic in a 22cm oven-safe skillet",
+                    "Pour in pasta-egg mixture and press flat with a spatula",
+                    "Cook over medium-low for 8-10 minutes until edges are set",
+                    "Finish under the grill for 3-4 minutes until top is golden, slice like a pizza"
+                ],
+                prepTimeMinutes: 18,
+                difficulty: .easy,
+                matchingIngredientCount: 0,
+                totalIngredientCount: 8,
+                imageSystemName: "frying.pan.fill",
+                isLeftoverHero: true,
+                substitutions: [
+                    "Cooked Pasta": ["Leftover Rice", "Leftover Noodles", "Leftover Gnocchi", "Leftover Couscous"],
+                    "Parmesan Cheese": ["Pecorino", "Cheddar", "Gruyère", "Any Hard Cheese", "Nutritional Yeast"],
+                    "Parsley": ["Basil", "Chives", "Spinach", "Rocket", "Any Fresh Herb"],
+                    "Garlic": ["Garlic Powder", "Onion", "Shallots"]
+                ]
+            ),
+
+            Recipe(
+                title: "Classic Bread Pudding",
+                summary: "Give stale bread a second life — this custardy, vanilla-scented pudding is pure comfort and takes just minutes to prepare",
+                ingredients: ["Stale Bread", "Eggs", "Milk", "Sugar", "Butter", "Vanilla Extract", "Cinnamon", "Raisins"],
+                steps: [
+                    "Preheat oven to 350°F. Cube stale bread into rough 2cm pieces",
+                    "Whisk eggs, milk, sugar, vanilla, and cinnamon together",
+                    "Grease a baking dish with butter and layer in bread pieces",
+                    "Pour custard evenly over bread, press down gently and let soak 10 minutes",
+                    "Scatter raisins over the top, dot with small pieces of butter",
+                    "Bake 35-40 minutes until golden and set, serve warm with cream"
+                ],
+                prepTimeMinutes: 55,
+                difficulty: .easy,
+                matchingIngredientCount: 0,
+                totalIngredientCount: 8,
+                imageSystemName: "oven.fill",
+                isLeftoverHero: true,
+                substitutions: [
+                    "Stale Bread": ["Brioche", "Croissants", "Bagels", "Hot Cross Buns", "Panettone", "Any Bread"],
+                    "Raisins": ["Chocolate Chips", "Dried Cranberries", "Sultanas", "Chopped Dried Apricots"],
+                    "Milk": ["Cream", "Plant-Based Milk", "Half-and-Half", "Oat Milk"],
+                    "Vanilla Extract": ["Vanilla Paste", "Almond Extract", "Orange Zest", "Cinnamon"]
+                ]
+            ),
+
+            Recipe(
+                title: "Potato & Veggie Hash",
+                summary: "The ultimate leftover breakfast hash — crispy golden potatoes with any leftover vegetables, topped with fried eggs",
+                ingredients: ["Cooked Potatoes", "Mixed Vegetables", "Eggs", "Onion", "Garlic", "Olive Oil", "Paprika", "Herbs"],
+                steps: [
+                    "Dice cooked potatoes into 2cm cubes — they fry best when already cooked",
+                    "Heat oil in a large cast-iron skillet over medium-high heat",
+                    "Add diced onion, cook 3 minutes, then add garlic and paprika",
+                    "Add potatoes and press down, let them fry undisturbed 4 minutes for a golden crust",
+                    "Fold in any leftover vegetables, season generously",
+                    "Make wells in the hash, crack in eggs, cover and cook until whites are set but yolks still runny"
+                ],
+                prepTimeMinutes: 20,
+                difficulty: .easy,
+                matchingIngredientCount: 0,
+                totalIngredientCount: 8,
+                imageSystemName: "frying.pan.fill",
+                isLeftoverHero: true,
+                substitutions: [
+                    "Cooked Potatoes": ["Sweet Potato", "Leftover Roasted Vegetables", "Canned Chickpeas", "Butternut Squash"],
+                    "Mixed Vegetables": ["Bell Pepper", "Mushrooms", "Zucchini", "Spinach", "Kale", "Corn", "Peas"],
+                    "Paprika": ["Smoked Paprika", "Cumin", "Chilli Flakes", "Cajun Seasoning", "Mixed Spice"],
+                    "Eggs": ["Tofu Scramble", "Extra Vegetables Only"],
+                    "Herbs": ["Parsley", "Chives", "Thyme", "Rosemary", "Mixed Herbs"]
+                ]
+            ),
         ]
+    }
+
+    // MARK: - Leftover Heroes
+
+    /// All built-in leftover hero recipes (unfiltered, regardless of pantry).
+    var leftoverHeroes: [Recipe] {
+        Self.cachedRecipes.filter { $0.isLeftoverHero }
     }
 }

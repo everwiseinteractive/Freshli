@@ -171,8 +171,54 @@ struct HomeView: View {
                     PSHaptics.shared.selection()
                     switchToTab(.pantry)
                 }
+
+                // Streak strip — Duolingo-style daily check-in indicator
+                streakStrip
+                    .adaptiveHPadding()
+                    .padding(.bottom, PSSpacing.lg)
             }
         }
+    }
+
+    // MARK: - Streak Strip
+
+    private var streakStrip: some View {
+        let streak = UserDefaults.standard.integer(forKey: "celebration_currentStreak")
+        return HStack(spacing: PSSpacing.sm) {
+            // Flame icon
+            ZStack {
+                Circle()
+                    .fill(streak > 0 ? Color.orange.opacity(0.2) : .white.opacity(0.1))
+                    .frame(width: PSLayout.scaled(32), height: PSLayout.scaled(32))
+                Image(systemName: "flame.fill")
+                    .font(.system(size: PSLayout.scaledFont(14)))
+                    .foregroundStyle(streak > 0 ? Color.orange : .white.opacity(0.4))
+            }
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(streak > 0 ? "\(streak) day streak 🔥" : "Start your streak today!")
+                    .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
+                    .foregroundStyle(.white)
+                Text(streak > 0 ? "Keep going — you're on a roll!" : "Check in daily to build your streak")
+                    .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
+                    .foregroundStyle(.white.opacity(0.6))
+            }
+
+            Spacer()
+
+            // Mini day indicators (last 7 days visual)
+            HStack(spacing: 3) {
+                ForEach(0..<7) { day in
+                    Circle()
+                        .fill(day < streak ? Color.orange : .white.opacity(0.2))
+                        .frame(width: PSLayout.scaled(7), height: PSLayout.scaled(7))
+                }
+            }
+        }
+        .padding(.horizontal, PSSpacing.lg)
+        .padding(.vertical, PSSpacing.md)
+        .background(.white.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
     }
 
     // MARK: - Content

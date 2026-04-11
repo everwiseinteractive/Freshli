@@ -371,6 +371,10 @@ struct CommunityView: View {
                     }
 
                     LazyVStack(spacing: PSSpacing.xl) {
+                        // Global impact milestone — pinned at top of feed
+                        CommunityMilestoneCard()
+                            .padding(.top, PSSpacing.xs)
+
                         ForEach(Array(feedListings.enumerated()), id: \.element.id) { index, listing in
                             listingCard(listing: listing)
                                 .staggeredAppearance(index: index)

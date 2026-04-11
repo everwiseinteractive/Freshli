@@ -1154,6 +1154,7 @@ struct CookingScreenView: View {
             let phrase = "Amazing work! You've completed all steps. Enjoy your meal!"
             speakStep(phrase)
             PSHaptics.shared.celebrate()
+            RatingService.shared.recordJoyMoment()
             withAnimation(reduceMotion ? .none : PSMotion.springGentle.delay(0.5)) {
                 showCompletion = true
             }

@@ -44,6 +44,12 @@ struct RecipesView: View {
                             .staggeredAppearance(index: 0)
                     }
 
+                    // Leftover Heroes — always visible in "For You" filter
+                    if activeFilter == "For You" {
+                        leftoverHeroesSection
+                            .staggeredAppearance(index: urgentCount > 0 ? 1 : 0)
+                    }
+
                     if recipes.isEmpty && activeFilter != "For You" {
                         PSEmptyState(
                             icon: activeFilter == "Vegan" ? "leaf" : activeFilter == "Breakfast" ? "sunrise.fill" : activeFilter == "Desserts" ? "birthday.cake" : "timer",
@@ -55,7 +61,7 @@ struct RecipesView: View {
                         .padding(.top, 40)
                     } else if !recipes.isEmpty {
                         if activeFilter == "For You" {
-                            featuredRecipe.staggeredAppearance(index: urgentCount > 0 ? 1 : 0)
+                            featuredRecipe.staggeredAppearance(index: urgentCount > 0 ? 2 : 1)
                         }
                         recipeList
                     }
@@ -115,6 +121,120 @@ struct RecipesView: View {
         .background(PSColors.surfaceCard)
         .shadow(color: .black.opacity(0.04), radius: 2, y: 1)
         .overlay(alignment: .bottom) { Divider().opacity(0.5) }
+    }
+
+    // MARK: - Leftover Heroes Section
+
+    private var leftoverHeroesSection: some View {
+        let heroes = RecipeService.shared.leftoverHeroes
+        return VStack(alignment: .leading, spacing: PSSpacing.md) {
+            // Section header
+            HStack(spacing: PSSpacing.sm) {
+                HStack(spacing: PSSpacing.xs) {
+                    Image(systemName: "trophy.fill")
+                        .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
+                        .foregroundStyle(Color(hex: 0xF59E0B))
+                    Text("LEFTOVER HEROES")
+                        .font(.system(size: PSLayout.scaledFont(11), weight: .black))
+                        .tracking(0.6)
+                        .foregroundStyle(Color(hex: 0xF59E0B))
+                }
+                .padding(.horizontal, PSSpacing.sm)
+                .padding(.vertical, PSSpacing.xxs)
+                .background(Color(hex: 0xF59E0B).opacity(0.12))
+                .clipShape(Capsule())
+
+                Spacer()
+
+                Text("Turn leftovers into magic")
+                    .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
+                    .foregroundStyle(PSColors.textTertiary)
+            }
+            .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
+
+            // Horizontal scroll of hero recipe cards
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: PSSpacing.md) {
+                    ForEach(heroes) { recipe in
+                        Button { selectedRecipe = recipe } label: {
+                            leftoverHeroCard(recipe)
+                        }
+                        .buttonStyle(PressableButtonStyle())
+                    }
+                }
+                .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
+            }
+            .scrollClipDisabled()
+        }
+    }
+
+    private func leftoverHeroCard(_ recipe: Recipe) -> some View {
+        ZStack(alignment: .bottomLeading) {
+            FoodCardImage(
+                imageSystemName: recipe.imageSystemName,
+                height: PSLayout.scaled(170),
+                cornerRadius: PSSpacing.radiusXl
+            )
+
+            // Dark scrim
+            LinearGradient(
+                colors: [.clear, .black.opacity(0.72)],
+                startPoint: .center,
+                endPoint: .bottom
+            )
+            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
+
+            VStack(alignment: .leading, spacing: PSSpacing.xs) {
+                // Hero badge
+                HStack(spacing: PSSpacing.xxs) {
+                    Image(systemName: "trophy.fill")
+                        .font(.system(size: 9, weight: .bold))
+                    Text("HERO")
+                        .font(.system(size: 9, weight: .black))
+                        .tracking(0.5)
+                }
+                .foregroundStyle(Color(hex: 0x1A1A1A))
+                .padding(.horizontal, PSSpacing.sm)
+                .padding(.vertical, 3)
+                .background(
+                    LinearGradient(
+                        colors: [Color(hex: 0xFBBF24), Color(hex: 0xF59E0B)],
+                        startPoint: .leading, endPoint: .trailing
+                    )
+                )
+                .clipShape(Capsule())
+
+                Text(recipe.title)
+                    .font(.system(size: PSLayout.scaledFont(15), weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: PSSpacing.xs) {
+                    Image(systemName: "clock")
+                        .font(.system(size: 10))
+                    Text(recipe.prepTimeDisplay)
+                        .font(.system(size: PSLayout.scaledFont(11), weight: .semibold))
+
+                    if !recipe.substitutions.isEmpty {
+                        Text("·")
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 10))
+                        Text("\(recipe.substitutions.count) swaps")
+                            .font(.system(size: PSLayout.scaledFont(11), weight: .semibold))
+                    }
+                }
+                .foregroundStyle(.white.opacity(0.7))
+            }
+            .padding(PSSpacing.md)
+        }
+        .frame(width: PSLayout.scaled(200))
+        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous)
+                .strokeBorder(Color(hex: 0xF59E0B).opacity(0.4), lineWidth: 1.5)
+        )
+        .shadow(color: Color(hex: 0xF59E0B).opacity(0.15), radius: 12, y: 5)
     }
 
     // MARK: - Rescue Chef Banner

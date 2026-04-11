@@ -35,6 +35,11 @@ struct Recipe: Identifiable, Hashable {
     let matchingIngredientCount: Int
     let totalIngredientCount: Int
     let imageSystemName: String
+    /// True for curated "hero" recipes designed specifically to reinvent leftovers.
+    let isLeftoverHero: Bool
+    /// Ingredient substitutions: key = ingredient name, value = list of alternatives.
+    /// Used by RecipeDetailView to show real-time Smart Swap suggestions.
+    let substitutions: [String: [String]]
 
     var matchPercentage: Double {
         guard totalIngredientCount > 0 else { return 0 }
@@ -75,7 +80,9 @@ struct Recipe: Identifiable, Hashable {
         difficulty: RecipeDifficulty,
         matchingIngredientCount: Int,
         totalIngredientCount: Int,
-        imageSystemName: String
+        imageSystemName: String,
+        isLeftoverHero: Bool = false,
+        substitutions: [String: [String]] = [:]
     ) {
         self.id = UUID()
         self.title = title
@@ -87,6 +94,8 @@ struct Recipe: Identifiable, Hashable {
         self.matchingIngredientCount = matchingIngredientCount
         self.totalIngredientCount = totalIngredientCount
         self.imageSystemName = imageSystemName
+        self.isLeftoverHero = isLeftoverHero
+        self.substitutions = substitutions
     }
 
     func hash(into hasher: inout Hasher) {
