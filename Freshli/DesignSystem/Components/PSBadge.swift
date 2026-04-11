@@ -103,8 +103,28 @@ struct PSExpiryBadge: View {
         }
     }
 
+    // Inclusivity — the badge must not rely on colour alone. Each status
+    // gets a distinct SF Symbol glyph prefixed inside the capsule so
+    // red/green colour-blind users (≈8% of men, ≈0.5% of women worldwide)
+    // can still tell fresh from expired at a glance.
     var body: some View {
-        PSBadge(text: status.displayName, variant: variant)
+        HStack(spacing: 4) {
+            Image(systemName: status.icon)
+                .font(.system(size: 9, weight: .bold))
+            Text(status.displayName.uppercased())
+                .font(.system(size: 10, weight: .bold))
+                .tracking(0.8)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 2)
+        .foregroundStyle(variant.foregroundColor)
+        .background(variant.backgroundColor)
+        .clipShape(Capsule())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(status.accessibilityLabel)
+        .accessibilityHint(status.accessibilityHint)
     }
 }
 

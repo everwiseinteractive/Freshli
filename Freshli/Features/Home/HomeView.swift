@@ -41,6 +41,28 @@ struct HomeView: View {
         ScrollView {
             VStack(spacing: 0) {
                 curvedHeader
+                    // Scroll-linked parallax: when the user pulls down past
+                    // the top (overscroll), the header stretches from its
+                    // bottom anchor, giving the hero a tactile, premium feel
+                    // — the signature iOS "rubber-band" hero stretch. When
+                    // scrolling up, the header scales subtly towards its
+                    // center and gains a hint of blur so it feels like it's
+                    // receding into the distance beneath the content cards.
+                    .visualEffect { content, proxy in
+                        let minY = proxy.frame(in: .scrollView).minY
+                        // `minY > 0` means overscroll pull-down; `minY < 0`
+                        // means the user has scrolled the hero offscreen.
+                        let overscroll = max(minY, 0)
+                        let scrolledAway = max(-minY, 0)
+                        return content
+                            .scaleEffect(
+                                x: 1 + (overscroll / 1_000),
+                                y: 1 + (overscroll / 400),
+                                anchor: .bottom
+                            )
+                            .offset(y: -scrolledAway * 0.25)
+                            .blur(radius: min(scrolledAway / 40, 6))
+                    }
                 contentSections
             }
         }
@@ -117,6 +139,8 @@ struct HomeView: View {
                                 .foregroundStyle(.white.opacity(0.9))
                         }
                     }
+                    .accessibilityLabel(String(localized: "Your profile"))
+                    .accessibilityHint(String(localized: "Opens your profile, stats, and settings"))
 
                     VStack(alignment: .leading, spacing: 1) {
                         Text(greeting)
@@ -144,6 +168,8 @@ struct HomeView: View {
                                 .background(.white.opacity(0.15))
                                 .clipShape(Circle())
                         }
+                        .accessibilityLabel(String(localized: "Weekly Wrap"))
+                        .accessibilityHint(String(localized: "Shows your impact story for this week"))
 
                         NavigationLink(destination: ExpiryAlertsView()) {
                             ZStack(alignment: .topTrailing) {
@@ -162,6 +188,12 @@ struct HomeView: View {
                                 }
                             }
                         }
+                        .accessibilityLabel(
+                            expiringItems.isEmpty
+                                ? String(localized: "Notifications")
+                                : String(localized: "Notifications, \(expiringItems.count) items need attention")
+                        )
+                        .accessibilityHint(String(localized: "Opens your expiry alerts"))
                     }
                 }
                 .padding(.top, PSLayout.headerTopPadding)
@@ -184,9 +216,11 @@ struct HomeView: View {
                         .padding(.trailing, PSSpacing.lg)
                 }
                 .frame(height: PSLayout.searchBarHeight)
-                .background(.white.opacity(0.12))
-                .background(.ultraThinMaterial.opacity(0.2))
-                .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
+                // Liquid Glass (iOS 26) — search bar refracts the hero
+                // gradient through it, so the field feels embedded in the
+                // header surface instead of painted on top.
+                .background(.white.opacity(0.06))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
                         .strokeBorder(.white.opacity(0.15), lineWidth: 1)

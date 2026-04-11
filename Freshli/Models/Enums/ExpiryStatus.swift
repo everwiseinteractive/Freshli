@@ -8,7 +8,7 @@ enum ExpiryStatus: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var displayName: String {
+    nonisolated var displayName: String {
         switch self {
         case .fresh: return String(localized: "Fresh")
         case .expiringSoon: return String(localized: "Expiring Soon")
@@ -17,7 +17,7 @@ enum ExpiryStatus: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    var icon: String {
+    nonisolated var icon: String {
         switch self {
         case .fresh: return "checkmark.circle.fill"
         case .expiringSoon: return "exclamationmark.triangle.fill"
@@ -26,7 +26,40 @@ enum ExpiryStatus: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    var sortOrder: Int {
+    /// A short, screen-reader-friendly description that VoiceOver reads
+    /// alongside each item in the pantry. Crucially, it does not rely on
+    /// colour or shape — it is a plain-language status that works
+    /// identically for every user regardless of vision.
+    nonisolated var accessibilityLabel: String {
+        switch self {
+        case .fresh:
+            return String(localized: "Status: fresh")
+        case .expiringSoon:
+            return String(localized: "Status: expiring within a few days")
+        case .expiringToday:
+            return String(localized: "Status: expires today")
+        case .expired:
+            return String(localized: "Status: expired, needs attention")
+        }
+    }
+
+    /// Extra context VoiceOver reads after the label. Explains what a
+    /// user can do about each state so the announcement is actionable,
+    /// not just descriptive.
+    nonisolated var accessibilityHint: String {
+        switch self {
+        case .fresh:
+            return String(localized: "Safe to use at your leisure")
+        case .expiringSoon:
+            return String(localized: "Plan to use this soon to avoid waste")
+        case .expiringToday:
+            return String(localized: "Use today or donate to avoid waste")
+        case .expired:
+            return String(localized: "No longer safe to eat, consider composting")
+        }
+    }
+
+    nonisolated var sortOrder: Int {
         switch self {
         case .expired: return 0
         case .expiringToday: return 1
@@ -35,7 +68,7 @@ enum ExpiryStatus: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    static func from(expiryDate: Date) -> ExpiryStatus {
+    nonisolated static func from(expiryDate: Date) -> ExpiryStatus {
         let calendar = Calendar.current
         let now = calendar.startOfDay(for: Date())
         let expiry = calendar.startOfDay(for: expiryDate)
