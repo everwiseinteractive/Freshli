@@ -7,10 +7,13 @@ import SwiftData
 struct PerksView: View {
     @Query private var allItems: [FreshliItem]
     @Environment(\.modelContext) private var modelContext
+    @Environment(PSToastManager.self) private var toastManager
 
     @State private var selectedCategory: RewardCategory? = nil
     @State private var showRedeemAlert = false
     @State private var selectedReward: WasteReward?
+    @State private var showRedemptionConfetti = false
+    @State private var lastRedeemedReward: WasteReward?
 
     private var stats: ImpactService.ImpactStats {
         ImpactService(modelContext: modelContext).calculateStats()
@@ -37,11 +40,25 @@ struct PerksView: View {
         .navigationTitle("Zero Waste Perks")
         .navigationBarTitleDisplayMode(.inline)
         .alert("Redeem Reward", isPresented: $showRedeemAlert, presenting: selectedReward) { reward in
-            Button("Redeem \(reward.pointsCost) pts") { }
+            Button("Redeem \(reward.pointsCost) pts") {
+                redeem(reward)
+            }
             Button("Cancel", role: .cancel) { }
         } message: { reward in
             Text("Redeem \(reward.discountValue) from \(reward.retailer) for \(reward.pointsCost) Zero Waste Points?")
         }
+    }
+
+    // MARK: - Redemption
+
+    private func redeem(_ reward: WasteReward) {
+        guard points >= reward.pointsCost else {
+            toastManager.show(.warning(String(localized: "Not enough points yet — keep rescuing!")))
+            return
+        }
+        PSHaptics.shared.success()
+        lastRedeemedReward = reward
+        toastManager.show(.success(String(localized: "\(reward.discountValue) from \(reward.retailer) redeemed! Check your email for the code.")))
     }
 
     // MARK: - Points Hero

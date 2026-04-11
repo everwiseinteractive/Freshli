@@ -822,7 +822,13 @@ struct ProfileView: View {
                 }
             }
             .pickerStyle(.wheel)
-            PSButton(title: String(localized: "Save"), icon: "checkmark.circle") {
+            FreshliButton(
+                String(localized: "Save"),
+                systemImage: "checkmark.circle",
+                variant: .primary,
+                size: .large,
+                isFullWidth: true
+            ) {
                 showHouseholdSettings = false
                 try? modelContext.save()
             }

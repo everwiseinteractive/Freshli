@@ -203,7 +203,13 @@ struct FreshliDetailView: View {
 
     private var actionsSection: some View {
         VStack(spacing: PSSpacing.md) {
-            PSButton(title: String(localized: "Mark as Consumed"), icon: "checkmark.circle", style: .secondary) {
+            FreshliButton(
+                String(localized: "Mark as Consumed"),
+                systemImage: "checkmark.circle",
+                variant: .primary,
+                size: .large,
+                isFullWidth: true
+            ) {
                 PSHaptics.shared.success()
                 let itemName = item.name
                 successFlashTrigger = true
@@ -235,7 +241,13 @@ struct FreshliDetailView: View {
             }
 
             HStack(spacing: PSSpacing.md) {
-                PSButton(title: String(localized: "Share"), icon: "hand.raised", style: .secondary, isFullWidth: true) {
+                FreshliButton(
+                    String(localized: "Share"),
+                    systemImage: "hand.raised",
+                    variant: .secondary,
+                    size: .medium,
+                    isFullWidth: true
+                ) {
                     PSHaptics.shared.success()
                     let itemName = item.name
                     item.isShared = true
@@ -258,7 +270,13 @@ struct FreshliDetailView: View {
                     }
                     dismiss()
                 }
-                PSButton(title: String(localized: "Donate"), icon: "heart", style: .secondary, isFullWidth: true) {
+                FreshliButton(
+                    String(localized: "Donate"),
+                    systemImage: "heart",
+                    variant: .secondary,
+                    size: .medium,
+                    isFullWidth: true
+                ) {
                     PSHaptics.shared.success()
                     let itemName = item.name
                     item.isDonated = true
@@ -303,7 +321,13 @@ struct FreshliDetailView: View {
             }
             .buttonStyle(PressableButtonStyle())
 
-            PSButton(title: String(localized: "Delete Item"), icon: "trash", style: .destructive) {
+            FreshliButton(
+                String(localized: "Delete Item"),
+                systemImage: "trash",
+                variant: .destructive,
+                size: .large,
+                isFullWidth: true
+            ) {
                 PSHaptics.shared.heavyTap()
                 showDeleteConfirmation = true
             }

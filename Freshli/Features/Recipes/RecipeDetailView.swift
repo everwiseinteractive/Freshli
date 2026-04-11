@@ -128,41 +128,17 @@ struct RecipeDetailView: View {
                 .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
                 .padding(.top, PSSpacing.xl)
 
-            // Primary CTA: Start Cooking
-            Button {
-                PSHaptics.shared.mediumTap()
+            // Primary CTA: Start Cooking — uses the unified FreshliButton
+            FreshliButton(
+                String(localized: "Start Cooking"),
+                systemImage: "flame.fill",
+                trailingSymbol: "chevron.right",
+                variant: .primary,
+                size: .extraLarge,
+                isFullWidth: true
+            ) {
                 startedCooking = true
-            } label: {
-                HStack(spacing: PSSpacing.md) {
-                    ZStack {
-                        Circle()
-                            .fill(.white.opacity(0.2))
-                            .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
-                        Image(systemName: "flame.fill")
-                            .font(.system(size: PSLayout.scaledFont(18)))
-                            .foregroundStyle(.white)
-                    }
-                    Text(String(localized: "Start Cooking"))
-                        .font(.system(size: PSLayout.scaledFont(18), weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: PSLayout.scaledFont(14), weight: .bold))
-                        .foregroundStyle(.white.opacity(0.7))
-                }
-                .padding(.horizontal, PSSpacing.xl)
-                .padding(.vertical, PSSpacing.lg)
-                .background(
-                    LinearGradient(
-                        colors: [PSColors.primaryGreen, PSColors.accentTeal.opacity(0.85)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
-                .shadow(color: PSColors.primaryGreen.opacity(0.4), radius: 16, y: 8)
             }
-            .buttonStyle(PressableButtonStyle())
             .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
 
             // Secondary CTA: Hands-Free Voice Mode.
