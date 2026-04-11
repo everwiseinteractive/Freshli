@@ -8,10 +8,16 @@ struct RescueChefView: View {
     private var pantryItems: [FreshliItem]
 
     @State private var rescueService = RescueChefService.shared
+    @State private var aiRescueService = AIRescueService.shared
     @State private var selectedMission: UsageMission?
     @State private var activeFilter: UrgencyLevel = .critical
     @State private var isRefreshing = false
     @State private var appeared = false
+
+    /// True once the user has tapped "Ask Freshli" for this session. Before
+    /// that we show a teaser card inviting them to try it; after, we show
+    /// the generated missions (or the loading state while they stream in).
+    @State private var hasTriggeredAI = false
 
     private var filteredMissions: [UsageMission] {
         if activeFilter == .critical {
@@ -32,6 +38,9 @@ struct RescueChefView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: PSSpacing.lg) {
                         rescueDashboard
+                        if aiRescueService.isAvailable {
+                            aiRescueSection
+                        }
                         urgencyFilterChips
                         missionsList
                     }
@@ -176,6 +185,212 @@ struct RescueChefView: View {
                 )
                 .scaleEffect(appeared ? 1 : 0.95)
                 .opacity(appeared ? 1 : 0)
+            }
+        }
+        .adaptiveHPadding()
+    }
+
+    // MARK: - Ask Freshli AI Section (iOS 26 FoundationModels)
+    //
+    // On-device Apple Intelligence generates bespoke rescue recipes for the
+    // user's actual at-risk pantry items. Before the user taps "Ask Freshli",
+    // we show a teaser card explaining what the button does. After the tap
+    // we render the generated missions inline above the rule-based list,
+    // with a loading state while the model streams its response.
+
+    private var aiRescueSection: some View {
+        VStack(alignment: .leading, spacing: PSSpacing.md) {
+            HStack(spacing: PSSpacing.sm) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: PSLayout.scaledFont(16), weight: .semibold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [PSColors.primaryGreen, PSColors.accentTeal],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .symbolEffect(.pulse, options: .repeat(.periodic(delay: 3.0)))
+
+                Text(String(localized: "Ask Freshli"))
+                    .font(.system(size: PSLayout.scaledFont(18), weight: .bold, design: .rounded))
+                    .foregroundStyle(PSColors.textPrimary)
+
+                Spacer()
+
+                if hasTriggeredAI && !aiRescueService.missions.isEmpty {
+                    Button {
+                        PSHaptics.shared.lightTap()
+                        Task { await generateAIMissions() }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
+                            .foregroundStyle(PSColors.textSecondary)
+                            .padding(8)
+                            .background(Circle().fill(PSColors.backgroundSecondary))
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                    .accessibilityLabel(String(localized: "Regenerate AI rescue recipes"))
+                }
+            }
+            .adaptiveHPadding()
+
+            if !hasTriggeredAI {
+                aiTeaserCard
+            } else if aiRescueService.isGenerating {
+                aiLoadingCard
+            } else if let errorMessage = aiRescueService.lastError {
+                aiErrorCard(errorMessage)
+            } else if !aiRescueService.missions.isEmpty {
+                aiMissionsList
+            }
+        }
+    }
+
+    private var aiTeaserCard: some View {
+        Button {
+            PSHaptics.shared.mediumTap()
+            hasTriggeredAI = true
+            Task { await generateAIMissions() }
+        } label: {
+            HStack(alignment: .center, spacing: PSSpacing.md) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(String(localized: "Rescue Chef, powered by Apple Intelligence"))
+                        .font(.system(size: PSLayout.scaledFont(14), weight: .bold, design: .rounded))
+                        .foregroundStyle(PSColors.textPrimary)
+                        .multilineTextAlignment(.leading)
+
+                    Text(String(localized: "Get 3 bespoke recipes for your exact pantry — on-device, private, no network needed."))
+                        .font(.system(size: PSLayout.scaledFont(12)))
+                        .foregroundStyle(PSColors.textSecondary)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 8)
+
+                Image(systemName: "wand.and.stars")
+                    .font(.system(size: PSLayout.scaledFont(24), weight: .semibold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [PSColors.primaryGreen, PSColors.accentTeal],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+            .padding(PSSpacing.lg)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                LinearGradient(
+                    colors: [
+                        PSColors.primaryGreen.opacity(0.08),
+                        PSColors.accentTeal.opacity(0.08)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [PSColors.primaryGreen.opacity(0.4), PSColors.accentTeal.opacity(0.4)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
+        }
+        .buttonStyle(PressableButtonStyle())
+        .adaptiveHPadding()
+        .accessibilityHint(String(localized: "Generates three rescue recipes using on-device Apple Intelligence"))
+    }
+
+    private var aiLoadingCard: some View {
+        HStack(spacing: PSSpacing.md) {
+            Image(systemName: "sparkles")
+                .font(.system(size: PSLayout.scaledFont(22)))
+                .foregroundStyle(PSColors.primaryGreen)
+                .symbolEffect(.variableColor.iterative, options: .repeating)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(String(localized: "Cooking up ideas…"))
+                    .font(.system(size: PSLayout.scaledFont(14), weight: .bold))
+                    .foregroundStyle(PSColors.textPrimary)
+                Text(String(localized: "Apple Intelligence is reviewing your pantry"))
+                    .font(.system(size: PSLayout.scaledFont(12)))
+                    .foregroundStyle(PSColors.textSecondary)
+            }
+
+            Spacer()
+        }
+        .padding(PSSpacing.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PSColors.surfaceCard)
+        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous)
+                .strokeBorder(PSColors.borderLight, lineWidth: 1)
+        )
+        .adaptiveHPadding()
+    }
+
+    private func aiErrorCard(_ message: String) -> some View {
+        HStack(spacing: PSSpacing.md) {
+            Image(systemName: "exclamationmark.circle")
+                .font(.system(size: PSLayout.scaledFont(20)))
+                .foregroundStyle(PSColors.warningAmber)
+
+            Text(message)
+                .font(.system(size: PSLayout.scaledFont(13)))
+                .foregroundStyle(PSColors.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer()
+
+            Button {
+                PSHaptics.shared.lightTap()
+                Task { await generateAIMissions() }
+            } label: {
+                Text(String(localized: "Retry"))
+                    .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
+                    .foregroundStyle(PSColors.primaryGreen)
+            }
+            .buttonStyle(PressableButtonStyle())
+        }
+        .padding(PSSpacing.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(PSColors.surfaceCard)
+        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous)
+                .strokeBorder(PSColors.warningAmber.opacity(0.3), lineWidth: 1)
+        )
+        .adaptiveHPadding()
+    }
+
+    private var aiMissionsList: some View {
+        LazyVStack(spacing: PSSpacing.md) {
+            ForEach(Array(aiRescueService.missions.enumerated()), id: \.element.id) { index, mission in
+                missionCard(mission: mission)
+                    .overlay(alignment: .topTrailing) {
+                        // Subtle sparkle marker so users know this recipe
+                        // came from Apple Intelligence, not the rule engine.
+                        Image(systemName: "sparkles")
+                            .font(.system(size: PSLayout.scaledFont(11), weight: .bold))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [PSColors.primaryGreen, PSColors.accentTeal],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .padding(10)
+                    }
+                    .staggeredAppearance(index: index)
             }
         }
         .adaptiveHPadding()
@@ -370,8 +585,24 @@ struct RescueChefView: View {
     private func refreshMissions() async {
         isRefreshing = true
         rescueService.generateMissions(for: pantryItems)
-        try? await Task.sleep(for: .milliseconds(500))
+        // Refresh AI missions too if the user has already opted in.
+        if hasTriggeredAI {
+            await generateAIMissions()
+        } else {
+            try? await Task.sleep(for: .milliseconds(500))
+        }
         isRefreshing = false
+    }
+
+    @MainActor
+    private func generateAIMissions() async {
+        // Filter to the at-risk subset — the rule-based service already
+        // computes this but doesn't expose it, so we reproduce the
+        // 48-hour window here to hand a clean list to the model.
+        let calendar = Calendar.current
+        let cutoff = calendar.date(byAdding: .hour, value: 48, to: Date()) ?? Date()
+        let atRiskItems = pantryItems.filter { $0.expiryDate <= cutoff && !$0.isConsumed }
+        await aiRescueService.generateMissions(for: atRiskItems)
     }
 }
 
