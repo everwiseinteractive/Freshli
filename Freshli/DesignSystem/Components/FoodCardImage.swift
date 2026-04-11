@@ -1,10 +1,12 @@
 import SwiftUI
 
 // MARK: - FoodCardImage
-// Rich visual recipe-image replacement that maps SF Symbol names to
-// food-category colour palettes. Each palette has a dominant gradient and
-// a photography-style diagonal highlight so the tile looks closer to a
-// real food photo than a plain icon.
+// Maps recipe-category SF Symbol names to beautiful food photography bundled
+// in Assets.xcassets. All existing call sites remain identical — only the
+// visual rendering changes from coloured SF Symbols to real food photos.
+//
+// Photography credits: Unsplash (unsplash.com) — free to use under the
+// Unsplash License. No attribution required per their licence terms.
 
 struct FoodCardImage: View {
 
@@ -12,64 +14,59 @@ struct FoodCardImage: View {
     var height: CGFloat
     var cornerRadius: CGFloat = 0
 
-    // MARK: - Palette
+    // MARK: - Symbol → Asset Mapping
 
-    private struct Palette {
-        let leading: Color
-        let trailing: Color
-        let accentSymbol: String
-    }
-
-    private var palette: Palette {
+    /// Maps the legacy SF Symbol name to a bundled photo asset.
+    private var assetName: String {
         switch imageSystemName {
 
-        // Breakfast, smoothies, drinks — warm honey-amber
+        // Breakfast / smoothies / drinks
         case "cup.and.saucer.fill", "mug.fill", "takeoutbag.and.cup.and.straw.fill":
-            return Palette(leading: Color(hex: 0xF59E0B), trailing: Color(hex: 0xB45309), accentSymbol: "sparkles")
+            return "recipe_smoothie"
 
-        // Hot wok / stir-fry / Asian cuisine — deep terracotta-red
+        // Asian / wok / stir-fry
         case "frying.pan.fill", "frying.pan":
-            return Palette(leading: Color(hex: 0xDC2626), trailing: Color(hex: 0x7F1D1D), accentSymbol: "smoke")
+            return "recipe_asian"
 
-        // Pasta / Italian / fork-and-knife dishes — rich tomato
+        // Italian / pasta / fork-and-knife dishes
         case "fork.knife", "fork.knife.circle.fill":
-            return Palette(leading: Color(hex: 0xEF4444), trailing: Color(hex: 0x991B1B), accentSymbol: "leaf")
+            return "recipe_pasta"
 
-        // Seafood / fish — ocean blue-teal
+        // Seafood / fish
         case "fish.fill", "fish":
-            return Palette(leading: Color(hex: 0x0EA5E9), trailing: Color(hex: 0x075985), accentSymbol: "drop.fill")
+            return "recipe_seafood"
 
-        // Comfort food / BBQ / grilled — fire orange
+        // BBQ / grilled / comfort food
         case "flame.fill", "flame":
-            return Palette(leading: Color(hex: 0xF97316), trailing: Color(hex: 0x9A3412), accentSymbol: "smoke.fill")
+            return "recipe_grilled"
 
-        // Salad / vegan / plant-based — fresh grass-green
+        // Salad / vegan / plant-based
         case "leaf.fill", "leaf":
-            return Palette(leading: Color(hex: 0x22C55E), trailing: Color(hex: 0x14532D), accentSymbol: "drop.fill")
+            return "recipe_salad"
 
-        // Desserts / baking — blush-pink
+        // Desserts / cakes / baking
         case "birthday.cake.fill", "birthday.cake", "oven.fill":
-            return Palette(leading: Color(hex: 0xEC4899), trailing: Color(hex: 0x831843), accentSymbol: "sparkles")
+            return "recipe_dessert"
 
-        // Breakfast / morning egg dishes — golden sunrise
+        // Breakfast / egg dishes / morning
         case "sunrise.fill", "sun.max.fill", "sun.horizon.fill":
-            return Palette(leading: Color(hex: 0xFBBF24), trailing: Color(hex: 0xB45309), accentSymbol: "sparkle")
+            return "recipe_breakfast"
 
-        // Soups / sauces / liquids — deep ocean-blue
+        // Soups / sauces / broths
         case "drop.fill", "drop":
-            return Palette(leading: Color(hex: 0x3B82F6), trailing: Color(hex: 0x1D4ED8), accentSymbol: "bubbles.and.sparkles")
+            return "recipe_soup"
 
-        // Bread / baking / grain — warm wheat
+        // Bread / baking / grain
         case "basket.fill", "loaf.fill":
-            return Palette(leading: Color(hex: 0xD97706), trailing: Color(hex: 0x78350F), accentSymbol: "sparkles")
+            return "recipe_bread"
 
-        // Pot / stew / slow cook — deep purple-plum
+        // Stew / slow-cook / pot dishes
         case "cooktop.fill", "pot.fill", "pot.fill.and.steam.fill":
-            return Palette(leading: Color(hex: 0x7C3AED), trailing: Color(hex: 0x3B0764), accentSymbol: "smoke.fill")
+            return "recipe_stew"
 
-        // Default — Freshli brand green-to-teal
+        // Default — vibrant healthy food
         default:
-            return Palette(leading: Color(hex: 0x22C55E), trailing: Color(hex: 0x0D9488), accentSymbol: "sparkles")
+            return "recipe_healthy"
         }
     }
 
@@ -77,42 +74,67 @@ struct FoodCardImage: View {
 
     var body: some View {
         ZStack {
-            // 1 — Gradient background (food-category colour)
+            // 1. Real food photography — fills frame, crops to fit
+            Image(assetName)
+                .resizable()
+                .scaledToFill()
+
+            // 2. Subtle top micro-vignette — adds photographic lens depth
             LinearGradient(
-                colors: [palette.leading, palette.trailing],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
+                colors: [.black.opacity(0.12), .clear],
+                startPoint: .top,
+                endPoint: UnitPoint(x: 0.5, y: 0.30)
             )
 
-            // 2 — Drop-shadow duplicate to add depth (simulates object shadow in photography)
-            Image(systemName: imageSystemName)
-                .font(.system(size: height * 0.50))
-                .foregroundStyle(.black.opacity(0.22))
-                .blur(radius: height * 0.10)
-                .offset(x: height * 0.06, y: height * 0.08)
-
-            // 3 — Ambient accent symbol (top-right, very faint)
-            Image(systemName: palette.accentSymbol)
-                .font(.system(size: height * 0.26))
-                .foregroundStyle(.white.opacity(0.14))
-                .offset(x: height * 0.26, y: -height * 0.20)
-                .blur(radius: 1.5)
-
-            // 4 — Main icon (centred, slightly smaller than height so it breathes)
-            Image(systemName: imageSystemName)
-                .font(.system(size: height * 0.50))
-                .foregroundStyle(.white.opacity(0.90))
-                .shadow(color: .black.opacity(0.18), radius: 4, x: 0, y: 2)
-
-            // 5 — Photography-style diagonal highlight (top-left radial)
+            // 3. Gentle bottom lift — aids text legibility for caller overlays
+            // (callers typically add their own heavier gradient over this)
             LinearGradient(
-                colors: [.white.opacity(0.22), .clear],
-                startPoint: .topLeading,
-                endPoint: UnitPoint(x: 0.65, y: 0.65)
+                colors: [.clear, .black.opacity(0.18)],
+                startPoint: UnitPoint(x: 0.5, y: 0.55),
+                endPoint: .bottom
+            )
+
+            // 4. Subtle left-edge highlight — editorial/studio lighting feel
+            LinearGradient(
+                colors: [.white.opacity(0.06), .clear],
+                startPoint: .leading,
+                endPoint: UnitPoint(x: 0.5, y: 0.5)
             )
         }
         .frame(maxWidth: .infinity)
         .frame(height: height)
         .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
     }
+}
+
+// MARK: - Preview
+
+#Preview("Recipe Cards") {
+    ScrollView {
+        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+            ForEach([
+                ("fork.knife",           "Pasta"),
+                ("frying.pan.fill",      "Asian"),
+                ("fish.fill",            "Seafood"),
+                ("leaf.fill",            "Salad"),
+                ("flame.fill",           "Grilled"),
+                ("cup.and.saucer.fill",  "Smoothie"),
+                ("birthday.cake.fill",   "Dessert"),
+                ("drop.fill",            "Soup"),
+                ("loaf.fill",            "Bread"),
+                ("sunrise.fill",         "Breakfast"),
+                ("pot.fill",             "Stew"),
+                ("sparkles",             "Default"),
+            ], id: \.0) { symbol, label in
+                VStack(spacing: 6) {
+                    FoodCardImage(imageSystemName: symbol, height: 120, cornerRadius: 16)
+                    Text(label)
+                        .font(.caption.bold())
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .padding()
+    }
+    .background(Color(.systemGroupedBackground))
 }
