@@ -69,9 +69,9 @@ struct FamilyGroup: Identifiable, Codable, Sendable, Hashable {
     
     // MARK: - Validation
     
-    static let maxMembers = 20
-    static let minNameLength = 1
-    static let maxNameLength = 100
+    nonisolated static let maxMembers = 20
+    nonisolated static let minNameLength = 1
+    nonisolated static let maxNameLength = 100
     
     var isValid: Bool {
         !name.isEmpty && 
@@ -240,8 +240,10 @@ final class FamilySyncService {
     private let familyZoneName = "FreshliFamily"
     private let logger = PSLogger(category: .sync)
 
-    // CloudKit container
-    private let container = CKContainer.default()
+    // CloudKit container — computed, not stored, so CKContainer.default() is never called
+    // at init() time. Calling it at startup without the CloudKit entitlement prints a fatal
+    // framework log and crashes. Access is deferred until an actual CloudKit operation runs.
+    private var container: CKContainer { CKContainer.default() }
     private var privateDatabase: CKDatabase { container.privateCloudDatabase }
 
     // State
@@ -975,9 +977,9 @@ final class FamilySyncService {
     }
     
     /// Timeout wrapper for operations that might hang
-    private func withTimeout<T>(
+    private func withTimeout<T: Sendable>(
         seconds: TimeInterval,
-        operation: @escaping () async throws -> T
+        operation: @escaping @Sendable () async throws -> T
     ) async throws -> T {
         try await withThrowingTaskGroup(of: T.self) { group in
             // Add the main operation
@@ -991,8 +993,12 @@ final class FamilySyncService {
                 throw FamilySyncError.operationFailed("Operation timed out after \(seconds) seconds")
             }
             
-            // Return first completed result and cancel others
-            let result = try await group.next()!
+            // Return first completed result (operation or timeout) and cancel the other.
+            // group.next() only returns nil when no tasks remain; we always add exactly 2,
+            // so this guard is defensive against unexpected group cancellation.
+            guard let result = try await group.next() else {
+                throw FamilySyncError.operationFailed("Task group exhausted unexpectedly")
+            }
             group.cancelAll()
             return result
         }

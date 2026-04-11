@@ -165,7 +165,11 @@ final class SubscriptionService {
     var error: SubscriptionError?
     var subscriptionStatus: SubscriptionStatus = .free
 
-    nonisolated(unsafe) private var transactionUpdateTask: Task<Void, Never>?
+    // @ObservationIgnored prevents @Observable from wrapping this in @MainActor-isolated
+    // accessors. Without it, deinit (nonisolated) calling transactionUpdateTask?.cancel()
+    // would go through the @MainActor synthesized getter → EXC_BREAKPOINT trap.
+    @ObservationIgnored
+    private var transactionUpdateTask: Task<Void, Never>?
 
     init() {
         loadSubscriptionState()

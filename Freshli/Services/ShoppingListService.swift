@@ -325,17 +325,26 @@ final class ShoppingListService {
             return currentList.items
         }
 
+        // Extract only Sendable data from EKReminder inside the callback to avoid data races
+        struct ReminderStatus: Sendable {
+            let identifier: String
+            let isCompleted: Bool
+        }
+
         let predicate = eventStore.predicateForReminders(in: [calendar])
-        let reminders = await withCheckedContinuation { continuation in
-            eventStore.fetchReminders(matching: predicate) { reminders in
-                continuation.resume(returning: reminders ?? [])
+        let reminders: [ReminderStatus] = await withCheckedContinuation { continuation in
+            eventStore.fetchReminders(matching: predicate) { fetched in
+                let statuses = (fetched ?? []).map {
+                    ReminderStatus(identifier: $0.calendarItemIdentifier, isCompleted: $0.isCompleted)
+                }
+                continuation.resume(returning: statuses)
             }
         }
 
         // Update local items with reminder data
         await MainActor.run {
             for reminder in reminders {
-                if let index = currentList.items.firstIndex(where: { $0.reminderIdentifier == reminder.calendarItemIdentifier }) {
+                if let index = currentList.items.firstIndex(where: { $0.reminderIdentifier == reminder.identifier }) {
                     currentList.items[index].isPurchased = reminder.isCompleted
                 }
             }

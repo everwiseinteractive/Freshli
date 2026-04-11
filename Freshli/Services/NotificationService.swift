@@ -12,9 +12,7 @@ final class NotificationService {
                 .requestAuthorization(options: [.alert, .badge, .sound])
             isAuthorized = granted
             if granted {
-                DispatchQueue.main.async {
-                    UIApplication.shared.registerForRemoteNotifications()
-                }
+                UIApplication.shared.registerForRemoteNotifications()
                 PSLogger.notifications.info("Notification authorization granted")
             } else {
                 PSLogger.notifications.warning("Notification authorization denied by user")
@@ -93,8 +91,9 @@ final class NotificationService {
     /// Reschedule reminders for all active items (call after batch operations).
     /// Only removes and re-adds reminders for changed items to avoid notification gaps.
     func scheduleRemindersForAllItems(_ items: [FreshliItem], daysBefore: Int = 1) {
-        // Get current pending notifications
-        UNUserNotificationCenter.current().getPendingNotificationRequests { pendingRequests in
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            let pendingRequests = await UNUserNotificationCenter.current().pendingNotificationRequests()
             let pendingIds = Set(pendingRequests.map { $0.identifier })
             let activeItemIds = Set(items.filter { $0.isActive }.map { "expiry-\($0.id.uuidString)" })
 

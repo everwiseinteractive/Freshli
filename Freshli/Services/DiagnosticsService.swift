@@ -24,73 +24,41 @@ final class DiagnosticsService: NSObject, MXMetricManagerSubscriber {
     }
 
     // MARK: - MXMetricManagerSubscriber
+    // MetricKit calls these on a background thread — must be nonisolated.
+    // Extract only Sendable values before hopping to @MainActor to avoid data-race warnings.
 
-    func didReceive(_ payloads: [MXMetricPayload]) {
-        lastPayloadDate = Date()
-        for payload in payloads {
-            processMetricPayload(payload)
+    nonisolated func didReceive(_ payloads: [MXMetricPayload]) {
+        // Extract Sendable data on the calling (background) thread
+        let peakMBValues: [Double] = payloads.compactMap {
+            $0.memoryMetrics?.peakMemoryUsage.converted(to: .megabytes).value
+        }
+        let cpuValues: [Double] = payloads.compactMap {
+            $0.cpuMetrics?.cumulativeCPUTime.converted(to: .seconds).value
+        }
+        let diskValues: [Double] = payloads.compactMap {
+            $0.diskIOMetrics?.cumulativeLogicalWrites.converted(to: .megabytes).value
+        }
+        Task { @MainActor in
+            self.lastPayloadDate = Date()
+            for mb in peakMBValues { self.logger.info("Peak memory: \(String(format: "%.0f", mb))MB") }
+            for cpu in cpuValues   { self.logger.info("Cumulative CPU: \(String(format: "%.1f", cpu))s") }
+            for disk in diskValues { self.logger.info("Disk writes: \(String(format: "%.1f", disk))MB") }
         }
     }
 
-    func didReceive(_ payloads: [MXDiagnosticPayload]) {
-        for payload in payloads {
-            processDiagnosticPayload(payload)
+    nonisolated func didReceive(_ payloads: [MXDiagnosticPayload]) {
+        // Extract Sendable counts on the calling (background) thread
+        let crashCount  = payloads.reduce(0) { $0 + ($1.crashDiagnostics?.count  ?? 0) }
+        let hangCount   = payloads.reduce(0) { $0 + ($1.hangDiagnostics?.count    ?? 0) }
+        let cpuCount    = payloads.reduce(0) { $0 + ($1.cpuExceptionDiagnostics?.count ?? 0) }
+        let diskCount   = payloads.reduce(0) { $0 + ($1.diskWriteExceptionDiagnostics?.count ?? 0) }
+        Task { @MainActor in
+            self.crashCount += crashCount
+            if crashCount > 0 { self.logger.error("Received \(crashCount) crash diagnostic(s)") }
+            if hangCount  > 0 { self.logger.warning("Received \(hangCount) hang diagnostic(s)") }
+            if cpuCount   > 0 { self.logger.warning("Received \(cpuCount) CPU exception diagnostic(s)") }
+            if diskCount  > 0 { self.logger.warning("Received \(diskCount) disk write exception diagnostic(s)") }
         }
     }
 
-    // MARK: - Processing
-
-    private func processMetricPayload(_ payload: MXMetricPayload) {
-        // Log app launch time
-        if let launchMetrics = payload.applicationLaunchMetrics {
-            if let resumeTime = launchMetrics.histogrammedApplicationResumeTime.bucketEnumerator.allObjects.first {
-                logger.info("App resume time bucket recorded")
-            }
-        }
-
-        // Log memory usage
-        if let memoryMetrics = payload.memoryMetrics {
-            let peakMB = memoryMetrics.peakMemoryUsage.converted(to: .megabytes).value
-            logger.info("Peak memory: \(String(format: "%.0f", peakMB))MB")
-        }
-
-        // Log CPU time
-        if let cpuMetrics = payload.cpuMetrics {
-            let cpuSeconds = cpuMetrics.cumulativeCPUTime.converted(to: .seconds).value
-            logger.info("Cumulative CPU: \(String(format: "%.1f", cpuSeconds))s")
-        }
-
-        // Log disk writes
-        if let diskMetrics = payload.diskIOMetrics {
-            let writeMB = diskMetrics.cumulativeLogicalWrites.converted(to: .megabytes).value
-            logger.info("Disk writes: \(String(format: "%.1f", writeMB))MB")
-        }
-
-        logger.info("MetricKit payload processed for period ending \(payload.timeStampEnd)")
-    }
-
-    private func processDiagnosticPayload(_ payload: MXDiagnosticPayload) {
-        // Count crashes
-        if let crashDiagnostics = payload.crashDiagnostics {
-            crashCount += crashDiagnostics.count
-            logger.error("Received \(crashDiagnostics.count) crash diagnostic(s)")
-        }
-
-        // Log hang diagnostics
-        if let hangDiagnostics = payload.hangDiagnostics {
-            logger.warning("Received \(hangDiagnostics.count) hang diagnostic(s)")
-        }
-
-        // Log CPU exceptions
-        if let cpuExceptions = payload.cpuExceptionDiagnostics {
-            logger.warning("Received \(cpuExceptions.count) CPU exception diagnostic(s)")
-        }
-
-        // Log disk write exceptions
-        if let diskExceptions = payload.diskWriteExceptionDiagnostics {
-            logger.warning("Received \(diskExceptions.count) disk write exception diagnostic(s)")
-        }
-
-        logger.info("Diagnostic payload processed")
-    }
 }
