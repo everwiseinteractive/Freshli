@@ -55,6 +55,8 @@ struct PSBadge: View {
         Text(text.uppercased())
             .font(.system(size: 10, weight: .bold))
             .tracking(0.8)
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
             .padding(.horizontal, 10)
             .padding(.vertical, 2)
             .foregroundStyle(effectiveForeground)

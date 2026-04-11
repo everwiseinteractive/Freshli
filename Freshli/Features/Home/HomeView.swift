@@ -42,6 +42,9 @@ struct HomeView: View {
                 contentSections
             }
         }
+        // Reserve space for the floating tab bar so the last card never
+        // sits under it. Mirrors the pattern used in RecipesView.
+        .contentMargins(.bottom, PSLayout.scaled(120), for: .scrollContent)
         .background(PSColors.backgroundSecondary)
         .ignoresSafeArea(edges: .top)
         .navigationDestination(isPresented: $showWeeklyWrap) {

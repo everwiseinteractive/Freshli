@@ -22,6 +22,7 @@ struct DiscoverView: View {
             .padding(.horizontal, PSSpacing.screenHorizontal)
             .padding(.vertical, PSSpacing.xl)
         }
+        .contentMargins(.bottom, PSLayout.scaled(120), for: .scrollContent)
         .background(PSColors.backgroundPrimary)
         .navigationTitle(String(localized: "Discover"))
         .navigationBarTitleDisplayMode(.inline)

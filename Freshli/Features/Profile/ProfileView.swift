@@ -49,9 +49,9 @@ struct ProfileView: View {
                     proCard.staggeredAppearance(index: 6)
                 }
                 .adaptiveHPadding()
-                .padding(.bottom, PSSpacing.xxxl)
             }
         }
+        .contentMargins(.bottom, PSLayout.scaled(120), for: .scrollContent)
         .background(PSColors.backgroundSecondary)
         .ignoresSafeArea(edges: .top)
         .navigationTitle("")

@@ -418,9 +418,9 @@ struct CommunityView: View {
                     }
                     .adaptiveHPadding()
                     .padding(.top, PSSpacing.xl)
-                    .padding(.bottom, PSLayout.tabBarContentPadding + PSSpacing.xl)
                     .listChangeAnimation(feedListings.map(\.id))
                 }
+                .contentMargins(.bottom, PSLayout.scaled(120), for: .scrollContent)
                 .refreshable { await refreshFeed() }
             }
         }
@@ -449,9 +449,9 @@ struct CommunityView: View {
                     }
                     .adaptiveHPadding()
                     .padding(.top, PSSpacing.xl)
-                    .padding(.bottom, PSLayout.tabBarContentPadding + PSSpacing.xl)
                     .listChangeAnimation(communityService.myListings.map(\.id))
                 }
+                .contentMargins(.bottom, PSLayout.scaled(120), for: .scrollContent)
                 .refreshable {
                     if let userId = authManager.currentUserId {
                         await communityService.fetchMyListings(userId: userId)
@@ -507,13 +507,17 @@ struct CommunityView: View {
 
             // User header
             HStack {
-                // Avatar
-                Text(listing.initials)
-                    .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
-                    .foregroundStyle(.white)
+                // Real avatar — deterministically hashed to one of 5 photos
+                Image(Self.avatarAsset(for: listing.displayName))
+                    .resizable()
+                    .scaledToFill()
                     .frame(width: PSLayout.communityAvatarSize, height: PSLayout.communityAvatarSize)
-                    .background(avatarColor(for: listing.displayName))
                     .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
+                            .strokeBorder(avatarColor(for: listing.displayName).opacity(0.3), lineWidth: 1.5)
+                    )
+                    .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(listing.displayName)
@@ -918,6 +922,14 @@ struct CommunityView: View {
         ]
         let hash = abs(name.hashValue)
         return colors[hash % colors.count]
+    }
+
+    /// Deterministically maps a display name to one of the 5 real avatar photos
+    /// so the same person always gets the same portrait across sessions.
+    fileprivate static func avatarAsset(for name: String) -> String {
+        let assets = ["avatar_1", "avatar_2", "avatar_3", "avatar_4", "avatar_5"]
+        let hash = abs(name.hashValue)
+        return assets[hash % assets.count]
     }
 
     private func statusBadgeVariant(_ status: String) -> PSBadgeVariant {

@@ -490,11 +490,10 @@ struct FreshliView: View {
                     }
                     .adaptiveHPadding()
                     .padding(.top, PSSpacing.lg)
-                    // Bottom padding clears the FAB (fabSize + gap + extra breathing room).
-                    // safeAreaInset in AppTabView handles the tab bar boundary.
-                    .padding(.bottom, PSLayout.fabSize + PSSpacing.xxxl)
                     .listChangeAnimation(filteredItems.map(\.id))
                 }
+                // Clears the FAB + floating tab bar in one go (~200pt total).
+                .contentMargins(.bottom, PSLayout.fabSize + PSLayout.scaled(120), for: .scrollContent)
                 .refreshable {
                     PSHaptics.shared.refreshSnap()
                     WidgetDataService.updateWidgetData(modelContext: modelContext)
@@ -602,35 +601,46 @@ struct FreshliView: View {
                     }
                 }
 
-                // Name + badges
-                VStack(alignment: .leading, spacing: PSSpacing.xxs) {
-                    Text(item.name)
-                        .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
-                        .foregroundStyle(PSColors.textPrimary)
-                        .lineLimit(1)
-                    HStack(spacing: PSSpacing.sm) {
+                // Name (full width) + badges row below
+                VStack(alignment: .leading, spacing: PSSpacing.xs) {
+                    HStack(alignment: .firstTextBaseline, spacing: PSSpacing.xs) {
+                        Text(item.name)
+                            .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
+                            .foregroundStyle(PSColors.textPrimary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
+                            .layoutPriority(2)
+
+                        Spacer(minLength: PSSpacing.sm)
+
+                        Text(item.expiryDate.expiryDisplayText)
+                            .font(.system(size: PSLayout.scaledFont(11), weight: .bold))
+                            .foregroundStyle(PSColors.expiryColor(for: item.expiryStatus))
+                            .lineLimit(1)
+                            .fixedSize()
+                    }
+
+                    HStack(spacing: PSSpacing.xs) {
                         Text(item.quantityDisplay)
-                            .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
+                            .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
                             .foregroundStyle(PSColors.textSecondary)
+                            .lineLimit(1)
+                            .fixedSize()
                             .padding(.horizontal, PSSpacing.sm)
                             .padding(.vertical, 2)
                             .background(PSColors.backgroundSecondary)
                             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+
                         PSExpiryBadge(status: item.expiryStatus)
+
+                        Spacer(minLength: 0)
+
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
+                            .foregroundStyle(PSColors.textTertiary)
                     }
                 }
-
-                Spacer(minLength: 0)
-
-                // Right-side: expiry date + chevron
-                VStack(alignment: .trailing, spacing: 3) {
-                    Text(item.expiryDate.expiryDisplayText)
-                        .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
-                        .foregroundStyle(PSColors.expiryColor(for: item.expiryStatus))
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
-                        .foregroundStyle(PSColors.textTertiary)
-                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.vertical, PSSpacing.md)
             .padding(.horizontal, PSSpacing.lg)
