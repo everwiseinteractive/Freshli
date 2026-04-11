@@ -389,6 +389,11 @@ struct CommunityCreateListingView: View {
             isSubmitting = false
 
             if success {
+                AnalyticsService.shared.track(.listingCreated, properties: .props([
+                    "listing_type":  listingType,
+                    "food_category": foodCategory ?? "unknown",
+                    "has_address":   !pickupAddress.isEmpty
+                ]))
                 // Also create local SwiftData listing
                 let localListing = SharedListing(
                     itemName: input.itemName,

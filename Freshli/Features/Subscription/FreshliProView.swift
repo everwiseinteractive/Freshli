@@ -82,6 +82,7 @@ struct FreshliProView: View {
             }
         }
         .onAppear {
+            AnalyticsService.shared.track(.paywallShown)
             let anim: Animation = reduceMotion ? .easeOut(duration: 0.15) : PSMotion.springDefault.delay(0.08)
             withAnimation(anim) { appeared = true }
             // Pulse the "Most Popular" badge to draw attention
@@ -94,6 +95,9 @@ struct FreshliProView: View {
                 }
             }
         }
+        .onDisappear {
+            AnalyticsService.shared.track(.paywallDismissed)
+        }
         .onChange(of: subscriptionService.products) { _, products in
             // Auto-select yearly plan for best conversion — pre-selecting higher-value plans
             // increases yearly conversion by ~20% (industry research). User can still switch.
@@ -104,6 +108,7 @@ struct FreshliProView: View {
         }
         .alert("Restore Purchases", isPresented: $showRestoreAlert) {
             Button("Restore") {
+                AnalyticsService.shared.track(.subscriptionRestored)
                 Task { await subscriptionService.restorePurchases() }
             }
             Button("Cancel", role: .cancel) {}
@@ -635,6 +640,9 @@ struct FreshliProView: View {
                 // Subscribe button
                 Button {
                     if let product = selectedProduct {
+                        AnalyticsService.shared.track(.subscriptionPurchased, properties: .props([
+                            "product_id": product.id
+                        ]))
                         Task { await subscriptionService.purchase(product) }
                     }
                 } label: {

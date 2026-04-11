@@ -65,6 +65,10 @@ struct FreshliDetailView: View {
         }
         .confirmationDialog(String(localized: "Delete Item"), isPresented: $showDeleteConfirmation) {
             Button(String(localized: "Delete"), role: .destructive) {
+                AnalyticsService.shared.track(.itemDeleted, properties: .props([
+                    "category": item.category.rawValue,
+                    "days_until_expiry": Calendar.current.dateComponents([.day], from: Date(), to: item.expiryDate).day ?? 0
+                ]))
                 modelContext.delete(item)
                 do {
                     try modelContext.save()

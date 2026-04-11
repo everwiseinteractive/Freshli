@@ -415,6 +415,9 @@ struct ListingDetailView: View {
                 PSHaptics.shared.celebrate()
                 successFlashTrigger = true
                 showClaimSuccess = true
+                AnalyticsService.shared.track(.listingClaimed, properties: .props([
+                    "listing_type": listing.listingType
+                ]))
 
                 // Trigger celebration
                 celebrationManager.fireShareCompleted(

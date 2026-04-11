@@ -197,6 +197,10 @@ struct FreshliView: View {
         .navigationBarHidden(true)
         .onAppear {
             logger.info("FreshliView appeared — \(allItems.count) items")
+            AnalyticsService.shared.track(.pantryViewed, properties: .props([
+                "item_count":     allItems.count,
+                "at_risk_count":  allItems.filter { ExpiryStatus.from(expiryDate: $0.expiryDate) != .fresh }.count
+            ]))
         }
         .sheet(item: $selectedItem) { item in
             NavigationStack {

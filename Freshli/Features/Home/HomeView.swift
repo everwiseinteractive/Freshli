@@ -504,7 +504,12 @@ struct HomeView: View {
     // neighbourhoods that anyone can drop surplus into, 24/7.
 
     private var communityFridgesCard: some View {
-        NavigationLink(destination: LocalPodsView()) {
+        NavigationLink(destination: LocalPodsView().onAppear {
+            AnalyticsService.shared.track(.fridgeViewed, properties: .props([
+                "fridge_count": CommunityPodsService.shared.communityFridges.count,
+                "from": "home_card"
+            ]))
+        }) {
             HStack(spacing: PSSpacing.lg) {
                 ZStack {
                     RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
