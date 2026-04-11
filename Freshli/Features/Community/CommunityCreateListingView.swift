@@ -7,6 +7,8 @@ import SwiftData
 
 struct CommunityCreateListingView: View {
     var onComplete: (Bool) -> Void
+    /// Optional pre-fill — passed when auto-list prompt is tapped
+    var prefillItemName: String? = nil
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
@@ -59,6 +61,11 @@ struct CommunityCreateListingView: View {
             ToolbarItem(placement: .topBarLeading) {
                 Button(String(localized: "Cancel")) { dismiss() }
                     .foregroundStyle(PSColors.textSecondary)
+            }
+        }
+        .onAppear {
+            if let prefill = prefillItemName, !prefill.isEmpty, itemName.isEmpty {
+                itemName = prefill
             }
         }
     }

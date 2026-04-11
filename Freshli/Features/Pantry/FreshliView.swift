@@ -21,6 +21,28 @@ struct FreshliView: View {
     @State private var showHarvestCelebration = false
     @State private var harvestIntensity: SparkleIntensity = .standard
     @State private var showFridgeScanner = false
+    @State private var autoListTarget: FreshliItem?
+    @AppStorage("autoListDismissedIds") private var autoListDismissedIdsRaw: String = ""
+
+    private var autoListDismissedIds: Set<String> {
+        Set(autoListDismissedIdsRaw.split(separator: ",").map(String.init))
+    }
+
+    /// Items expiring within 24 h that haven't been shared/consumed and aren't dismissed.
+    private var itemsNeedingAutoPrompt: [FreshliItem] {
+        let deadline = Date().addingTimeInterval(86_400)
+        return allItems.filter {
+            $0.expiryDate <= deadline &&
+            !$0.isShared &&
+            !autoListDismissedIds.contains($0.id.uuidString)
+        }
+    }
+
+    private func dismissAutoPrompt(_ item: FreshliItem) {
+        var ids = autoListDismissedIds
+        ids.insert(item.id.uuidString)
+        autoListDismissedIdsRaw = ids.joined(separator: ",")
+    }
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let logger = Logger(subsystem: "com.freshli.app", category: "FreshliView")
@@ -178,6 +200,18 @@ struct FreshliView: View {
             FoodScannerView()
                 .presentationDragIndicator(.visible)
                 .presentationDetents([.large])
+        }
+        .sheet(item: $autoListTarget) { item in
+            NavigationStack {
+                CommunityCreateListingView(
+                    onComplete: { success in
+                        if success { dismissAutoPrompt(item) }
+                        autoListTarget = nil
+                    },
+                    prefillItemName: item.name
+                )
+            }
+            .presentationDragIndicator(.visible)
         }
     }
 
@@ -392,6 +426,15 @@ struct FreshliView: View {
             } else {
                 ScrollView {
                     LazyVStack(spacing: 10) {
+                        // Auto-list prompts — shown for items expiring in < 24 h
+                        ForEach(itemsNeedingAutoPrompt) { item in
+                            autoSharePromptCard(item)
+                                .transition(.asymmetric(
+                                    insertion: .push(from: .top),
+                                    removal: .push(from: .bottom)
+                                ))
+                        }
+
                         ForEach(Array(filteredItems.enumerated()), id: \.element.id) { index, item in
                             freshliItemCard(item: item)
                                 .staggeredAppearance(index: index)
@@ -431,6 +474,69 @@ struct FreshliView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Auto-Share Prompt Card
+
+    private func autoSharePromptCard(_ item: FreshliItem) -> some View {
+        HStack(spacing: PSSpacing.md) {
+            // Icon
+            ZStack {
+                Circle()
+                    .fill(PSColors.secondaryAmber.opacity(0.15))
+                    .frame(width: PSLayout.scaled(44), height: PSLayout.scaled(44))
+                Text(item.category.emoji)
+                    .font(.system(size: PSLayout.scaledFont(22)))
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("You likely won't eat this \(item.name)")
+                    .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
+                    .foregroundStyle(PSColors.textPrimary)
+                    .lineLimit(1)
+                Text("Tap to list it free for neighbours 🏘️")
+                    .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
+                    .foregroundStyle(PSColors.secondaryAmber)
+            }
+
+            Spacer()
+
+            // Actions
+            HStack(spacing: PSSpacing.xs) {
+                Button {
+                    PSHaptics.shared.lightTap()
+                    withAnimation { dismissAutoPrompt(item) }
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                        .foregroundStyle(PSColors.textTertiary)
+                        .frame(width: PSLayout.scaled(28), height: PSLayout.scaled(28))
+                        .background(PSColors.backgroundSecondary)
+                        .clipShape(Circle())
+                }
+
+                Button {
+                    PSHaptics.shared.lightTap()
+                    autoListTarget = item
+                } label: {
+                    Text("List")
+                        .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, PSSpacing.md)
+                        .padding(.vertical, PSSpacing.xs)
+                        .background(PSColors.secondaryAmber)
+                        .clipShape(Capsule())
+                }
+            }
+        }
+        .padding(.horizontal, PSSpacing.lg)
+        .padding(.vertical, PSSpacing.md)
+        .background(PSColors.secondaryAmber.opacity(0.07))
+        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
+                .strokeBorder(PSColors.secondaryAmber.opacity(0.25), lineWidth: 1)
+        )
     }
 
     // MARK: - Item Card

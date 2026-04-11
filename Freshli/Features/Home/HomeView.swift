@@ -17,6 +17,7 @@ struct HomeView: View {
     @State private var impactStats: ImpactService.ImpactStats?
     @State private var showWeeklyWrap = false
     @State private var selectedImpactStat: String?
+    @State private var bulkPlans: [IngredientMealPlan] = []
 
     private let logger = Logger(subsystem: "com.freshli.app", category: "HomeView")
 
@@ -45,9 +46,11 @@ struct HomeView: View {
         }
         .task {
             impactStats = ImpactService(modelContext: modelContext).calculateStats()
+            bulkPlans = MealPlanService.shared.generateBulkPlan(for: activeItems)
         }
         .onChange(of: activeItems.count) { _, _ in
             impactStats = ImpactService(modelContext: modelContext).calculateStats()
+            bulkPlans = MealPlanService.shared.generateBulkPlan(for: activeItems)
         }
     }
 
@@ -240,8 +243,13 @@ struct HomeView: View {
             recipeSuggestionCard
                 .dashboardEntrance(index: 3)
 
+            if !bulkPlans.isEmpty {
+                bulkPlanCard
+                    .dashboardEntrance(index: 4)
+            }
+
             communitySwapCard
-                .dashboardEntrance(index: 4)
+                .dashboardEntrance(index: 5)
         }
         .adaptiveHPadding()
         .padding(.bottom, PSSpacing.xxxl)
@@ -414,50 +422,58 @@ struct HomeView: View {
         .padding(.vertical, PSSpacing.sm)
     }
 
-    // MARK: - Recipe Suggestion Card
+    // MARK: - Recipe Suggestion Card (Shelf-Life Prioritised)
 
     private var recipeSuggestionCard: some View {
-        VStack(alignment: .leading, spacing: PSSpacing.lg) {
+        // Use urgency-sorted recipes — items expiring soonest surface first
+        let suggestions = RecipeService.shared.urgencyPrioritisedRecipes(items: activeItems)
+        let recipe = suggestions.first
+        let urgentItem = recipe.flatMap { RecipeService.shared.mostUrgentIngredient(for: $0, items: activeItems) }
+        let isRescueMode = urgentItem.map { $0.expiryStatus != .fresh } ?? false
+
+        return VStack(alignment: .leading, spacing: PSSpacing.lg) {
             HStack(spacing: PSSpacing.sm) {
-                Image(systemName: "sparkles")
+                Image(systemName: isRescueMode ? "bolt.fill" : "sparkles")
                     .font(.system(size: PSLayout.scaledFont(18)))
-                    .foregroundStyle(.purple)
+                    .foregroundStyle(isRescueMode ? PSColors.secondaryAmber : .purple)
                     .padding(PSSpacing.xs)
-                    .background(.purple.opacity(0.1))
+                    .background((isRescueMode ? PSColors.secondaryAmber : Color.purple).opacity(0.1))
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                Text(String(localized: "Suggested for You"))
-                    .font(.system(size: PSLayout.scaledFont(17), weight: .bold))
-                    .foregroundStyle(PSColors.textPrimary)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(isRescueMode ? String(localized: "Cook This First") : String(localized: "Suggested for You"))
+                        .font(.system(size: PSLayout.scaledFont(17), weight: .bold))
+                        .foregroundStyle(PSColors.textPrimary)
+                    if isRescueMode, let urgentItem {
+                        Text("\(urgentItem.name) expires \(urgentItem.expiryStatus == .expiringToday ? "today" : "soon") — rescue it!")
+                            .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
+                            .foregroundStyle(PSColors.secondaryAmber)
+                    }
+                }
                 Spacer()
-                Button {
-                    switchToTab(.recipes)
-                } label: {
+                Button { switchToTab(.recipes) } label: {
                     Text(String(localized: "More"))
                         .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
-                        .foregroundStyle(.purple)
+                        .foregroundStyle(isRescueMode ? PSColors.secondaryAmber : .purple)
                         .padding(.horizontal, PSSpacing.md)
                         .padding(.vertical, PSSpacing.xs)
-                        .background(.purple.opacity(0.1))
+                        .background((isRescueMode ? PSColors.secondaryAmber : Color.purple).opacity(0.1))
                         .clipShape(Capsule())
                 }
             }
 
-            let suggestions = RecipeService.shared.recipesForFreshli(items: activeItems)
-            if let recipe = suggestions.first {
+            if let recipe {
                 Button {
                     PSHaptics.shared.lightTap()
                     switchToTab(.recipes)
                 } label: {
                     ZStack(alignment: .bottomLeading) {
-                        // Rich food-category image
                         FoodCardImage(
                             imageSystemName: recipe.imageSystemName,
                             height: PSLayout.cardImageHeight,
                             cornerRadius: PSSpacing.radiusXl
                         )
-
                         LinearGradient(
-                            colors: [.clear, .black.opacity(0.65)],
+                            colors: [.clear, .black.opacity(0.72)],
                             startPoint: .center,
                             endPoint: .bottom
                         )
@@ -465,13 +481,28 @@ struct HomeView: View {
 
                         VStack(alignment: .leading, spacing: PSSpacing.xs) {
                             HStack(spacing: PSSpacing.xs) {
-                                Text(String(localized: "Uses expiring items"))
-                                    .font(.system(size: PSLayout.scaledFont(11), weight: .semibold))
-                                    .foregroundStyle(.white.opacity(0.9))
+                                // Urgency badge
+                                if isRescueMode {
+                                    HStack(spacing: 3) {
+                                        Image(systemName: "bolt.fill")
+                                            .font(.system(size: PSLayout.scaledFont(9)))
+                                        Text(String(localized: "Rescue First!"))
+                                            .font(.system(size: PSLayout.scaledFont(11), weight: .black))
+                                    }
+                                    .foregroundStyle(.white)
                                     .padding(.horizontal, PSSpacing.sm)
                                     .padding(.vertical, PSSpacing.xxxs)
-                                    .background(PSColors.primaryGreen)
+                                    .background(PSColors.secondaryAmber)
                                     .clipShape(Capsule())
+                                } else {
+                                    Text(String(localized: "Uses your pantry"))
+                                        .font(.system(size: PSLayout.scaledFont(11), weight: .semibold))
+                                        .foregroundStyle(.white.opacity(0.9))
+                                        .padding(.horizontal, PSSpacing.sm)
+                                        .padding(.vertical, PSSpacing.xxxs)
+                                        .background(PSColors.primaryGreen)
+                                        .clipShape(Capsule())
+                                }
                                 Text("•  \(recipe.prepTimeDisplay)")
                                     .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
                                     .foregroundStyle(.white.opacity(0.7))
@@ -486,7 +517,10 @@ struct HomeView: View {
                 }
                 .buttonStyle(PressableButtonStyle())
                 .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
-                .shadow(color: PSColors.primaryGreen.opacity(0.15), radius: 12, y: 6)
+                .shadow(
+                    color: (isRescueMode ? PSColors.secondaryAmber : PSColors.primaryGreen).opacity(0.2),
+                    radius: 12, y: 6
+                )
             } else {
                 PSEmptyState(
                     icon: "book",
@@ -501,7 +535,100 @@ struct HomeView: View {
         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
-                .strokeBorder(.purple.opacity(0.1), lineWidth: 1)
+                .strokeBorder(
+                    (isRescueMode ? PSColors.secondaryAmber : Color.purple).opacity(0.12),
+                    lineWidth: 1
+                )
+        )
+        .shadow(color: .black.opacity(0.04), radius: 12, y: 4)
+    }
+
+    // MARK: - Waste-Free Bulk Plan Card
+
+    private var bulkPlanCard: some View {
+        VStack(alignment: .leading, spacing: PSSpacing.lg) {
+            // Header
+            HStack(spacing: PSSpacing.sm) {
+                Image(systemName: "calendar.badge.checkmark")
+                    .font(.system(size: PSLayout.scaledFont(18)))
+                    .foregroundStyle(PSColors.accentTeal)
+                    .padding(PSSpacing.xs)
+                    .background(PSColors.accentTeal.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(String(localized: "Zero-Waste Meal Plan"))
+                        .font(.system(size: PSLayout.scaledFont(17), weight: .bold))
+                        .foregroundStyle(PSColors.textPrimary)
+                    Text(String(localized: "Use every bit — nothing wasted"))
+                        .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
+                        .foregroundStyle(PSColors.textSecondary)
+                }
+                Spacer()
+            }
+
+            ForEach(bulkPlans) { plan in
+                VStack(alignment: .leading, spacing: PSSpacing.sm) {
+                    // Ingredient header row
+                    HStack(spacing: PSSpacing.sm) {
+                        Text(plan.ingredient.name)
+                            .font(.system(size: PSLayout.scaledFont(14), weight: .black))
+                            .foregroundStyle(PSColors.accentTeal)
+                        Text("·")
+                            .foregroundStyle(PSColors.textTertiary)
+                        Text(plan.totalPortionLabel)
+                            .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
+                            .foregroundStyle(PSColors.textSecondary)
+                        Spacer()
+                        // Coverage pill
+                        Text("\(plan.coveragePercent)% used")
+                            .font(.system(size: PSLayout.scaledFont(10), weight: .bold))
+                            .foregroundStyle(PSColors.accentTeal)
+                            .padding(.horizontal, PSSpacing.sm)
+                            .padding(.vertical, 3)
+                            .background(PSColors.accentTeal.opacity(0.12))
+                            .clipShape(Capsule())
+                    }
+
+                    // Meal slots
+                    HStack(spacing: PSSpacing.sm) {
+                        ForEach(plan.slots) { slot in
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(slot.dayLabel)
+                                    .font(.system(size: PSLayout.scaledFont(10), weight: .bold))
+                                    .foregroundStyle(PSColors.textTertiary)
+                                    .textCase(.uppercase)
+                                    .tracking(0.5)
+                                Text(slot.recipe.title)
+                                    .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                                    .foregroundStyle(PSColors.textPrimary)
+                                    .lineLimit(2)
+                                Text(slot.portionLabel)
+                                    .font(.system(size: PSLayout.scaledFont(10), weight: .medium))
+                                    .foregroundStyle(PSColors.accentTeal)
+                            }
+                            .padding(PSSpacing.sm)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(PSColors.accentTeal.opacity(0.06))
+                            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
+                                    .strokeBorder(PSColors.accentTeal.opacity(0.15), lineWidth: 1)
+                            )
+                        }
+                    }
+                }
+
+                if plan.id != bulkPlans.last?.id {
+                    Divider().opacity(0.5)
+                }
+            }
+        }
+        .adaptiveCardPadding()
+        .background(PSColors.surfaceCard)
+        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
+                .strokeBorder(PSColors.accentTeal.opacity(0.12), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.04), radius: 12, y: 4)
     }

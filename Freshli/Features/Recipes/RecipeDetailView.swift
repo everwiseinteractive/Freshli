@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 struct RecipeDetailView: View {
     let recipe: Recipe
@@ -7,6 +8,15 @@ struct RecipeDetailView: View {
     @State private var appeared = false
     @State private var completedSteps: Set<Int> = []
     @State private var startedCooking = false
+
+    // MARK: - Dynamic Ingredient Swaps
+    @Query(filter: #Predicate<FreshliItem> { !$0.isConsumed && !$0.isShared && !$0.isDonated },
+           sort: [SortDescriptor(\FreshliItem.expiryDate)])
+    private var pantryItems: [FreshliItem]
+
+    @State private var activeSwaps: [String: String] = [:]
+    @State private var adaptedSteps: [String] = []
+    @State private var isComputingSwaps = false
 
     // Ingredients that match the pantry (derived from matchingIngredientCount)
     private var pantryIngredients: [String] {
@@ -36,6 +46,7 @@ struct RecipeDetailView: View {
         .onAppear {
             withAnimation(PSMotion.springGentle.delay(0.1)) { appeared = true }
             triggerRecipeMatchIfNeeded()
+            Task { await computeIngredientSwaps() }
         }
     }
 
@@ -346,7 +357,8 @@ struct RecipeDetailView: View {
     // MARK: - Steps
 
     private var stepsSection: some View {
-        VStack(alignment: .leading, spacing: PSSpacing.md) {
+        let displaySteps = adaptedSteps.isEmpty ? recipe.steps : adaptedSteps
+        return VStack(alignment: .leading, spacing: PSSpacing.md) {
             HStack {
                 Text(String(localized: "Instructions"))
                     .font(.system(size: PSLayout.scaledFont(20), weight: .bold, design: .rounded))
@@ -358,8 +370,37 @@ struct RecipeDetailView: View {
             }
             .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
 
+            // "Adapted for your pantry" banner — shows when LLM swaps are active
+            if !activeSwaps.isEmpty {
+                HStack(spacing: PSSpacing.sm) {
+                    Image(systemName: "wand.and.stars")
+                        .font(.system(size: PSLayout.scaledFont(13)))
+                        .foregroundStyle(Color(hex: 0x7C3AED))
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(String(localized: "Adapted for your pantry"))
+                            .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
+                            .foregroundStyle(Color(hex: 0x7C3AED))
+                        Text(activeSwaps.map { "→ \($0.key) → \($0.value)" }.joined(separator: ", "))
+                            .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
+                            .foregroundStyle(PSColors.textSecondary)
+                            .lineLimit(2)
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, PSSpacing.lg)
+                .padding(.vertical, PSSpacing.sm)
+                .background(Color(hex: 0x7C3AED).opacity(0.07))
+                .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
+                        .strokeBorder(Color(hex: 0x7C3AED).opacity(0.2), lineWidth: 1)
+                )
+                .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
+                .transition(.opacity.combined(with: .scale(scale: 0.96)))
+            }
+
             VStack(spacing: PSSpacing.sm) {
-                ForEach(Array(recipe.steps.enumerated()), id: \.offset) { index, step in
+                ForEach(Array(displaySteps.enumerated()), id: \.offset) { index, step in
                     Button {
                         PSHaptics.shared.lightTap()
                         withAnimation(PSMotion.springBouncy) {
@@ -460,6 +501,28 @@ struct RecipeDetailView: View {
         if !UserDefaults.standard.bool(forKey: key) {
             UserDefaults.standard.set(true, forKey: key)
             celebrationManager.onRecipeMatch(recipeName: recipe.title)
+        }
+    }
+
+    // MARK: - Dynamic Ingredient Swap Computation
+
+    @MainActor
+    private func computeIngredientSwaps() async {
+        isComputingSwaps = true
+        defer { isComputingSwaps = false }
+        let swaps = IngredientSwapService.shared.computeSwaps(
+            recipeIngredients: recipe.ingredients,
+            pantryItems: pantryItems,
+            substitutions: recipe.substitutions
+        )
+        guard !swaps.isEmpty else {
+            withAnimation { activeSwaps = [:]; adaptedSteps = [] }
+            return
+        }
+        let rewritten = await IngredientSwapService.shared.rewriteSteps(recipe.steps, swaps: swaps)
+        withAnimation(PSMotion.springGentle) {
+            activeSwaps = swaps
+            adaptedSteps = rewritten
         }
     }
 }

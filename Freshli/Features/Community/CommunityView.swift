@@ -22,6 +22,7 @@ struct CommunityView: View {
 
     @State private var activeTab = 0
     @State private var showCreateListing = false
+    @State private var showMagicBag = false
     @State private var showPostSuccess = false
     @State private var showSearch = false
     @State private var searchText = ""
@@ -87,6 +88,21 @@ struct CommunityView: View {
             }
             .presentationDragIndicator(.visible)
         }
+        .sheet(isPresented: $showMagicBag) {
+            NavigationStack {
+                MagicBagView { success in
+                    showMagicBag = false
+                    if success {
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .milliseconds(300))
+                            showPostSuccess = true
+                        }
+                        Task { await refreshFeed() }
+                    }
+                }
+            }
+            .presentationDragIndicator(.visible)
+        }
         .sheet(item: $selectedListing) { listing in
             NavigationStack {
                 ListingDetailView(listing: listing) {
@@ -133,6 +149,25 @@ struct CommunityView: View {
                 Spacer(minLength: PSSpacing.md)
 
                 HStack(spacing: PSSpacing.sm) {
+                    // Magic Bag shortcut
+                    Button {
+                        PSHaptics.shared.lightTap()
+                        showMagicBag = true
+                    } label: {
+                        Text("🎁")
+                            .font(.system(size: PSLayout.scaledFont(16)))
+                            .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
+                            .background(
+                                LinearGradient(
+                                    colors: [Color(hex: 0x7C3AED).opacity(0.12), Color(hex: 0xDB2777).opacity(0.12)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .clipShape(Circle())
+                    }
+                    .accessibilityLabel(String(localized: "Post Magic Bag"))
+
                     NavigationLink(destination: CirclesView()) {
                         Image(systemName: "person.2.circle.fill")
                             .font(.system(size: PSLayout.scaledFont(18), weight: .medium))
@@ -439,7 +474,37 @@ struct CommunityView: View {
     // MARK: - Listing Card (Feed)
 
     private func listingCard(listing: CommunityListingDTO) -> some View {
-        VStack(alignment: .leading, spacing: PSSpacing.lg) {
+        let isMagicBag = listing.listingType == "magic_bag"
+        return VStack(alignment: .leading, spacing: PSSpacing.lg) {
+            // Magic Bag header banner
+            if isMagicBag {
+                HStack(spacing: PSSpacing.sm) {
+                    Text("🎁")
+                        .font(.system(size: PSLayout.scaledFont(14)))
+                    Text(String(localized: "Magic Bag — Pantry Clear-Out"))
+                        .font(.system(size: PSLayout.scaledFont(12), weight: .black))
+                        .foregroundStyle(Color(hex: 0x7C3AED))
+                    Spacer()
+                    Text(String(localized: "Peer to Peer"))
+                        .font(.system(size: PSLayout.scaledFont(10), weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, PSSpacing.sm)
+                        .padding(.vertical, 3)
+                        .background(
+                            LinearGradient(
+                                colors: [Color(hex: 0x7C3AED), Color(hex: 0xDB2777)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .clipShape(Capsule())
+                }
+                .padding(.horizontal, PSSpacing.md)
+                .padding(.vertical, PSSpacing.xs)
+                .background(Color(hex: 0x7C3AED).opacity(0.07))
+                .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusSm, style: .continuous))
+            }
+
             // User header
             HStack {
                 // Avatar
@@ -588,11 +653,26 @@ struct CommunityView: View {
             }
         }
         .padding(PSLayout.scaled(20))
-        .background(PSColors.surfaceCard)
+        .background(
+            listing.listingType == "magic_bag"
+                ? AnyView(
+                    LinearGradient(
+                        colors: [Color(hex: 0x7C3AED).opacity(0.07), Color(hex: 0xDB2777).opacity(0.05)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                : AnyView(PSColors.surfaceCard)
+        )
         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
-                .strokeBorder(PSColors.borderLight, lineWidth: 1)
+                .strokeBorder(
+                    listing.listingType == "magic_bag"
+                        ? Color(hex: 0x7C3AED).opacity(0.25)
+                        : PSColors.borderLight,
+                    lineWidth: listing.listingType == "magic_bag" ? 1.5 : 1
+                )
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(listing.itemName), \(listing.categoryEmoji)")

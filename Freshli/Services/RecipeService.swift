@@ -68,6 +68,61 @@ final class RecipeService {
         return result
     }
 
+    // MARK: - Shelf-Life Prioritisation
+
+    /// Returns matching recipes sorted by expiry urgency of the pantry items they use.
+    /// Items expiring in <24h boost a recipe's score dramatically, ensuring the app
+    /// always surfaces "rescue recipes" before food is wasted.
+    func urgencyPrioritisedRecipes(items: [FreshliItem]) -> [Recipe] {
+        guard !items.isEmpty else { return [] }
+
+        let now = Date()
+        let day: TimeInterval = 86_400
+
+        // Build name → urgency multiplier
+        var urgencyMap: [String: Double] = [:]
+        for item in items {
+            let secs = item.expiryDate.timeIntervalSince(now)
+            let multiplier: Double
+            if secs < 0          { multiplier = 200 }   // already expired
+            else if secs < day   { multiplier = 100 }   // < 24 h
+            else if secs < 3*day { multiplier = 20  }   // 1-3 days
+            else if secs < 7*day { multiplier = 4   }   // 3-7 days
+            else                 { multiplier = 1   }
+            urgencyMap[item.name.lowercased()] = multiplier
+        }
+
+        let matched = recipesForFreshli(items: items)
+
+        let scored: [(Recipe, Double)] = matched.map { recipe in
+            var score: Double = 0
+            for ingredient in recipe.ingredients {
+                let lower = ingredient.lowercased()
+                if let multiplier = urgencyMap.first(where: {
+                    lower.localizedCaseInsensitiveContains($0.key) ||
+                    $0.key.localizedCaseInsensitiveContains(lower)
+                })?.value {
+                    score += multiplier
+                }
+            }
+            return (recipe, score)
+        }
+
+        return scored.sorted { $0.1 > $1.1 }.map { $0.0 }
+    }
+
+    /// The pantry item expiring soonest that is used in this recipe.
+    func mostUrgentIngredient(for recipe: Recipe, items: [FreshliItem]) -> FreshliItem? {
+        items
+            .filter { item in
+                recipe.ingredients.contains(where: {
+                    $0.localizedCaseInsensitiveContains(item.name) ||
+                    item.name.localizedCaseInsensitiveContains($0)
+                })
+            }
+            .min(by: { $0.expiryDate < $1.expiryDate })
+    }
+
     func filteredRecipes(difficulty: RecipeDifficulty? = nil, maxTime: Int? = nil) -> [Recipe] {
         var result = recipes
         if let difficulty {
