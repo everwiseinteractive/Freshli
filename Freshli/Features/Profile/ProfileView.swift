@@ -14,15 +14,7 @@ struct ProfileView: View {
     @State private var showSettings = false
     @State private var showHouseholdSettings = false
     @State private var showLanguageSettings = false
-    @State private var showRetailerLink = false
-    @State private var showPerks = false
-    @State private var showLocalPods = false
-    @State private var showSmartShopping = false
-    @State private var showBarcodeAnalytics = false
-    @State private var showBinLog = false
-    @State private var showKarmaCredits = false
-    @State private var showCouncilReport = false
-    @State private var showIngredientPing = false
+    @State private var showDiscover = false
     @State private var householdSize: Int = 1
     @Environment(SubscriptionService.self) private var subscriptionService
     @AppStorage("isDarkMode") private var isDarkMode = false
@@ -51,9 +43,10 @@ struct ProfileView: View {
                     profileCard.staggeredAppearance(index: 0)
                     statsGrid.staggeredAppearance(index: 1)
                     heroTierCard.staggeredAppearance(index: 2)
-                    milestonesCard.staggeredAppearance(index: 3)
-                    settingsCard.staggeredAppearance(index: 4)
-                    proCard.staggeredAppearance(index: 5)
+                    discoverHeroCard.staggeredAppearance(index: 3)
+                    milestonesCard.staggeredAppearance(index: 4)
+                    settingsCard.staggeredAppearance(index: 5)
+                    proCard.staggeredAppearance(index: 6)
                 }
                 .adaptiveHPadding()
                 .padding(.bottom, PSSpacing.xxxl)
@@ -76,15 +69,7 @@ struct ProfileView: View {
             }
         }
         .navigationDestination(isPresented: $showExpiryAlerts) { ExpiryAlertsView() }
-        .navigationDestination(isPresented: $showRetailerLink) { RetailerLinkView() }
-        .navigationDestination(isPresented: $showPerks) { PerksView() }
-        .navigationDestination(isPresented: $showLocalPods) { LocalPodsView() }
-        .navigationDestination(isPresented: $showSmartShopping) { SmartShoppingListView() }
-        .navigationDestination(isPresented: $showBarcodeAnalytics) { BarcodeAnalyticsView() }
-        .navigationDestination(isPresented: $showBinLog) { BinLogDashboardView() }
-        .navigationDestination(isPresented: $showKarmaCredits) { KarmaCreditsView() }
-        .navigationDestination(isPresented: $showCouncilReport) { CouncilImpactReportView() }
-        .sheet(isPresented: $showIngredientPing) { IngredientPingView() }
+        .navigationDestination(isPresented: $showDiscover) { DiscoverView() }
         .sheet(isPresented: $showAuthSheet) {
             AuthView().presentationDragIndicator(.visible)
         }
@@ -415,6 +400,54 @@ struct ProfileView: View {
         .shadow(color: tier.color.opacity(0.08), radius: 16, y: 6)
     }
 
+    // MARK: - Discover Hero Card
+
+    private var discoverHeroCard: some View {
+        Button {
+            PSHaptics.shared.lightTap()
+            showDiscover = true
+        } label: {
+            HStack(spacing: PSSpacing.lg) {
+                ZStack {
+                    Circle()
+                        .fill(.white.opacity(0.18))
+                        .frame(width: PSLayout.scaled(56), height: PSLayout.scaled(56))
+                    Image(systemName: "sparkles")
+                        .font(.system(size: PSLayout.scaledFont(26)))
+                        .foregroundStyle(.white)
+                }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(String(localized: "DISCOVER"))
+                        .font(.system(size: PSLayout.scaledFont(10), weight: .black))
+                        .foregroundStyle(.white.opacity(0.75))
+                        .tracking(1.5)
+                    Text(String(localized: "Advanced Tools"))
+                        .font(.system(size: PSLayout.scaledFont(19), weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                    Text(String(localized: "Smart shopping, pods, analytics & more"))
+                        .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.8))
+                        .lineLimit(1)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
+                    .foregroundStyle(.white.opacity(0.65))
+            }
+            .padding(PSSpacing.xl)
+            .background(
+                LinearGradient(
+                    colors: [Color(hex: 0x8B5CF6), Color(hex: 0xEC4899).opacity(0.88)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: PSLayout.profileCardRadius, style: .continuous))
+            .shadow(color: Color(hex: 0x8B5CF6).opacity(0.3), radius: 18, y: 8)
+        }
+        .buttonStyle(PressableButtonStyle())
+    }
+
     // MARK: - Milestones Card
 
     private var milestonesCard: some View {
@@ -530,24 +563,6 @@ struct ProfileView: View {
             settingsNavRow(icon: "house.fill", iconBg: PSColors.accentTeal, title: String(localized: "Household Settings")) { showHouseholdSettings = true }
             settingsDivider()
             settingsNavRow(icon: "clock.badge.exclamationmark", iconBg: PSColors.secondaryAmber, title: String(localized: "Expiry Alerts")) { showExpiryAlerts = true }
-            settingsDivider()
-            settingsNavRow(icon: "cart.badge.plus", iconBg: PSColors.primaryGreen, title: String(localized: "Connect Supermarket")) { showRetailerLink = true }
-            settingsDivider()
-            settingsNavRow(icon: "gift.fill", iconBg: PSColors.secondaryAmber, title: String(localized: "Zero Waste Perks")) { showPerks = true }
-            settingsDivider()
-            settingsNavRow(icon: "person.3.fill", iconBg: Color(hex: 0x3B82F6), title: String(localized: "Local Network & Pods")) { showLocalPods = true }
-            settingsDivider()
-            settingsNavRow(icon: "cart.badge.questionmark", iconBg: Color(hex: 0x8B5CF6), title: String(localized: "Smart Shopping List")) { showSmartShopping = true }
-            settingsDivider()
-            settingsNavRow(icon: "barcode.viewfinder", iconBg: Color(hex: 0xEF4444), title: String(localized: "Packaging Analytics")) { showBarcodeAnalytics = true }
-            settingsDivider()
-            settingsNavRow(icon: "trash.circle.fill", iconBg: Color(hex: 0xF97316), title: String(localized: "Bin Log & Trash Analytics")) { showBinLog = true }
-            settingsDivider()
-            settingsNavRow(icon: "leaf.circle.fill", iconBg: Color(hex: 0x8B5CF6), title: String(localized: "Karma Credits")) { showKarmaCredits = true }
-            settingsDivider()
-            settingsNavRow(icon: "dot.radiowaves.left.and.right", iconBg: Color(hex: 0xEC4899), title: String(localized: "Ping Your Pod")) { showIngredientPing = true }
-            settingsDivider()
-            settingsNavRow(icon: "building.columns.fill", iconBg: Color(hex: 0x06B6D4), title: String(localized: "Council Impact Report")) { showCouncilReport = true }
             settingsDivider()
             settingsNavRow(icon: "globe", iconBg: PSColors.infoBlue, title: String(localized: "Language")) { showLanguageSettings = true }
             settingsDivider()

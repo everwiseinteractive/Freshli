@@ -21,7 +21,6 @@ struct FreshliView: View {
     @State private var showHarvestCelebration = false
     @State private var harvestIntensity: SparkleIntensity = .standard
     @State private var showFridgeScanner = false
-    @State private var showARScanner = false
     @State private var autoListTarget: FreshliItem?
     @State private var binLogTarget: FreshliItem?
     @AppStorage("autoListDismissedIds") private var autoListDismissedIdsRaw: String = ""
@@ -240,9 +239,6 @@ struct FreshliView: View {
                 performDelete(item)
                 binLogTarget = nil
             }
-        }
-        .fullScreenCover(isPresented: $showARScanner) {
-            ARPantryScannerView()
         }
     }
 

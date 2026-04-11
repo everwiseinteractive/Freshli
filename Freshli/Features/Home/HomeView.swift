@@ -244,45 +244,117 @@ struct HomeView: View {
     // MARK: - Content
 
     private var contentSections: some View {
+        // A deliberately lean layout — world-class apps surface 4-6 high-signal
+        // cards, not 9. Secondary features live in the Discover hub reachable
+        // from the profile tab. Alerts are consolidated into one rotating card.
         VStack(spacing: PSSpacing.xl) {
             expiringSoonCard
                 .padding(.top, max(PSLayout.headerOverlap, PSLayout.scaled(-20)))
                 .dashboardEntrance(index: 0)
 
-            if !ethyleneConflicts.isEmpty {
-                ethyleneWarningCard
-                    .dashboardEntrance(index: 0)
-            }
-
-            impactSummaryCard
+            smartAlertCard
                 .dashboardEntrance(index: 1)
 
-            // Pro nudge — appears after impact card so user is in a positive state.
-            // Self-hides for subscribed users and after dismissal (7 days).
-            ProUpgradeNudge()
+            cashNotTrashedCard
                 .dashboardEntrance(index: 2)
 
-            recipeSuggestionCard
+            // Self-hides for Pro subscribers and after dismissal.
+            ProUpgradeNudge()
                 .dashboardEntrance(index: 3)
+
+            recipeSuggestionCard
+                .dashboardEntrance(index: 4)
 
             if !bulkPlans.isEmpty {
                 bulkPlanCard
-                    .dashboardEntrance(index: 4)
-            }
-
-            cashNotTrashedCard
-                .dashboardEntrance(index: 5)
-
-            if !gapFillSuggestions.isEmpty {
-                fillTheGapCard
-                    .dashboardEntrance(index: 6)
+                    .dashboardEntrance(index: 5)
             }
 
             communitySwapCard
-                .dashboardEntrance(index: 7)
+                .dashboardEntrance(index: 6)
         }
         .adaptiveHPadding()
         .padding(.bottom, PSSpacing.xxxl)
+    }
+
+    // MARK: - Smart Alert Card (Unified)
+    // Prioritised rotating alert: ethylene conflicts > fill-the-gap suggestions.
+    // Only shows when there's something actionable — otherwise silently collapses.
+
+    @ViewBuilder
+    private var smartAlertCard: some View {
+        if let conflict = ethyleneConflicts.first {
+            smartAlertContainer(
+                category: String(localized: "ETHYLENE ALERT"),
+                title: String(localized: "Storage Conflict"),
+                message: conflict.advice,
+                icon: "exclamationmark.triangle.fill",
+                color: PSColors.secondaryAmber,
+                extraCount: ethyleneConflicts.count - 1,
+                destination: nil
+            )
+        } else if let suggestion = gapFillSuggestions.first {
+            NavigationLink(destination: SmartShoppingListView()) {
+                smartAlertContainer(
+                    category: String(localized: "FILL THE GAP"),
+                    title: String(localized: "Buy \(suggestion.itemToBuy)"),
+                    message: String(localized: "Unlocks \(suggestion.unlocksRecipes.count) recipes from your current pantry"),
+                    icon: "cart.badge.plus",
+                    color: Color(hex: 0x8B5CF6),
+                    extraCount: max(0, gapFillSuggestions.count - 1),
+                    destination: "SmartShopping"
+                )
+            }
+            .buttonStyle(PressableButtonStyle())
+        }
+    }
+
+    private func smartAlertContainer(category: String, title: String, message: String, icon: String, color: Color, extraCount: Int, destination: String?) -> some View {
+        HStack(alignment: .top, spacing: PSSpacing.md) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: PSLayout.scaled(42), height: PSLayout.scaled(42))
+                Image(systemName: icon)
+                    .font(.system(size: PSLayout.scaledFont(16)))
+                    .foregroundStyle(color)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(category)
+                    .font(.system(size: PSLayout.scaledFont(10), weight: .black))
+                    .foregroundStyle(color)
+                    .tracking(0.8)
+                Text(title)
+                    .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
+                    .foregroundStyle(PSColors.textPrimary)
+                Text(message)
+                    .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
+                    .foregroundStyle(PSColors.textSecondary)
+                    .lineSpacing(2)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                if extraCount > 0 {
+                    Text(String(localized: "+\(extraCount) more alert\(extraCount == 1 ? "" : "s")"))
+                        .font(.system(size: PSLayout.scaledFont(11), weight: .semibold))
+                        .foregroundStyle(color)
+                        .padding(.top, 2)
+                }
+            }
+            Spacer(minLength: 0)
+            if destination != nil {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                    .foregroundStyle(PSColors.textTertiary)
+                    .padding(.top, PSSpacing.xxs)
+            }
+        }
+        .adaptiveCardPadding()
+        .background(color.opacity(0.05))
+        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
+                .strokeBorder(color.opacity(0.2), lineWidth: 1)
+        )
     }
 
     // MARK: - Expiring Soon Card
@@ -369,87 +441,6 @@ struct HomeView: View {
                 )
         )
         .shadow(color: .black.opacity(0.06), radius: 16, y: 6)
-    }
-
-    // MARK: - Impact Summary Card
-
-    private var impactSummaryCard: some View {
-        NavigationLink(destination: ImpactDashboardView()) {
-            VStack(alignment: .leading, spacing: PSSpacing.lg) {
-                HStack {
-                    HStack(spacing: PSSpacing.sm) {
-                        Image(systemName: "leaf.circle.fill")
-                            .font(.system(size: PSLayout.scaledFont(22)))
-                            .foregroundStyle(.white)
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(String(localized: "Your Impact"))
-                                .font(.system(size: PSLayout.scaledFont(17), weight: .bold))
-                                .foregroundStyle(.white)
-                            Text(String(localized: "Tap to see full breakdown"))
-                                .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
-                                .foregroundStyle(.white.opacity(0.6))
-                        }
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.5))
-                        .padding(PSSpacing.sm)
-                        .background(.white.opacity(0.1))
-                        .clipShape(Circle())
-                }
-
-                if let stats = impactStats {
-                    HStack(spacing: 0) {
-                        impactStatTile(icon: "leaf.fill",        value: "\(stats.itemsSaved)",        label: "Rescued", color: .white)
-                        impactStatDivider()
-                        impactStatTile(icon: "wind",             value: stats.co2Display,             label: "CO₂ Saved", color: .white)
-                        impactStatDivider()
-                        impactStatTile(icon: "dollarsign.circle", value: stats.moneySavedDisplay,      label: "Money", color: .white)
-                    }
-                } else {
-                    HStack(spacing: 0) {
-                        PSShimmerView().frame(maxWidth: .infinity)
-                        PSShimmerView().frame(maxWidth: .infinity)
-                        PSShimmerView().frame(maxWidth: .infinity)
-                    }
-                }
-            }
-            .adaptiveCardPadding()
-            .background(
-                LinearGradient(
-                    colors: [PSColors.primaryGreen, PSColors.accentTeal.opacity(0.9)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
-            .shadow(color: PSColors.primaryGreen.opacity(0.35), radius: 20, y: 8)
-        }
-    }
-
-    private func impactStatDivider() -> some View {
-        Rectangle()
-            .fill(.white.opacity(0.15))
-            .frame(width: 1, height: PSLayout.scaled(40))
-    }
-
-    private func impactStatTile(icon: String, value: String, label: String, color: Color) -> some View {
-        VStack(spacing: PSSpacing.xxs) {
-            Image(systemName: icon)
-                .font(.system(size: PSLayout.scaledFont(18)))
-                .foregroundStyle(color.opacity(0.8))
-            Text(value)
-                .font(.system(size: PSLayout.scaledFont(22), weight: .black))
-                .foregroundStyle(color)
-                .minimumScaleFactor(0.7)
-                .lineLimit(1)
-            Text(label)
-                .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
-                .foregroundStyle(color.opacity(0.65))
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, PSSpacing.sm)
     }
 
     // MARK: - Recipe Suggestion Card (Shelf-Life Prioritised)
@@ -748,108 +739,6 @@ struct HomeView: View {
                 .minimumScaleFactor(0.8)
         }
         .frame(maxWidth: .infinity)
-    }
-
-    // MARK: - Ethylene Warning Card
-
-    private var ethyleneWarningCard: some View {
-        let topConflict = ethyleneConflicts.first!
-        return VStack(alignment: .leading, spacing: PSSpacing.md) {
-            HStack(spacing: PSSpacing.sm) {
-                ZStack {
-                    Circle()
-                        .fill(PSColors.secondaryAmber.opacity(0.15))
-                        .frame(width: PSLayout.scaled(34), height: PSLayout.scaled(34))
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: PSLayout.scaledFont(15)))
-                        .foregroundStyle(PSColors.secondaryAmber)
-                }
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(String(localized: "Ethylene Alert"))
-                        .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
-                        .foregroundStyle(PSColors.textPrimary)
-                    Text(String(localized: "\(ethyleneConflicts.count) storage conflict\(ethyleneConflicts.count == 1 ? "" : "s") detected"))
-                        .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
-                        .foregroundStyle(PSColors.secondaryAmber)
-                }
-                Spacer()
-            }
-            Text(topConflict.advice)
-                .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
-                .foregroundStyle(PSColors.textSecondary)
-                .lineSpacing(2)
-            if ethyleneConflicts.count > 1 {
-                Text(String(localized: "+\(ethyleneConflicts.count - 1) more conflict\(ethyleneConflicts.count - 1 == 1 ? "" : "s") — check your pantry"))
-                    .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
-                    .foregroundStyle(PSColors.secondaryAmber)
-            }
-        }
-        .adaptiveCardPadding()
-        .background(PSColors.secondaryAmber.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
-            .strokeBorder(PSColors.secondaryAmber.opacity(0.25), lineWidth: 1))
-    }
-
-    // MARK: - Fill the Gap Card
-
-    private var fillTheGapCard: some View {
-        let top = gapFillSuggestions.prefix(2)
-        return NavigationLink(destination: SmartShoppingListView()) {
-            VStack(alignment: .leading, spacing: PSSpacing.lg) {
-                HStack(spacing: PSSpacing.sm) {
-                    ZStack {
-                        Circle()
-                            .fill(Color(hex: 0x8B5CF6).opacity(0.15))
-                            .frame(width: PSLayout.scaled(34), height: PSLayout.scaled(34))
-                        Image(systemName: "cart.badge.plus")
-                            .font(.system(size: PSLayout.scaledFont(15)))
-                            .foregroundStyle(Color(hex: 0x8B5CF6))
-                    }
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(String(localized: "Fill the Gap"))
-                            .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
-                            .foregroundStyle(PSColors.textPrimary)
-                        Text(String(localized: "One purchase unlocks multiple recipes"))
-                            .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
-                            .foregroundStyle(PSColors.textSecondary)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
-                        .foregroundStyle(PSColors.textTertiary)
-                }
-                ForEach(top) { suggestion in
-                    HStack(spacing: PSSpacing.md) {
-                        Text(suggestion.category.emoji)
-                            .font(.system(size: PSLayout.scaledFont(22)))
-                        VStack(alignment: .leading, spacing: 2) {
-                            HStack(spacing: PSSpacing.xs) {
-                                Text("Buy")
-                                    .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
-                                    .foregroundStyle(PSColors.textSecondary)
-                                Text(suggestion.itemToBuy)
-                                    .font(.system(size: PSLayout.scaledFont(13), weight: .black))
-                                    .foregroundStyle(Color(hex: 0x8B5CF6))
-                            }
-                            Text("→ unlocks \(suggestion.unlocksRecipes.count) recipes")
-                                .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
-                                .foregroundStyle(PSColors.textTertiary)
-                        }
-                        Spacer()
-                    }
-                    .padding(PSSpacing.sm)
-                    .background(Color(hex: 0x8B5CF6).opacity(0.06))
-                    .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
-                }
-            }
-            .adaptiveCardPadding()
-            .background(PSColors.surfaceCard)
-            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
-                .strokeBorder(Color(hex: 0x8B5CF6).opacity(0.15), lineWidth: 1))
-        }
-        .buttonStyle(PressableButtonStyle())
     }
 
     // MARK: - Community Swap Card
