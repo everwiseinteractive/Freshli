@@ -126,6 +126,11 @@ final class SmartAddViewModel {
                 barcode: nil,
                 notes: nil
             )
+            AnalyticsService.shared.track(.itemAdded, properties: .props([
+                "category": parsed.category.rawValue,
+                "storage":  parsed.storageLocation.rawValue,
+                "source":   "smart_add"
+            ]))
             modelContext.insert(pantryItem)
         }
 

@@ -36,6 +36,10 @@ struct WeeklyWrapView: View {
             let dataService = ImpactWrapDataService(modelContext: modelContext)
             if let data = dataService.calculateCurrentWeekWrapData() {
                 viewModel = WeeklyWrapViewModel(wrapData: data)
+                AnalyticsService.shared.track(.weeklyWrapOpened, properties: .props([
+                    "items_saved":   data.totalItemsImpacted,
+                    "co2_avoided_g": Int(data.co2Avoided * 1_000)
+                ]))
             }
         }
     }
@@ -221,6 +225,9 @@ struct WeeklyWrapView: View {
 
     private func shareStory(viewModel: WeeklyWrapViewModel) {
         PSHaptics.shared.mediumTap()
+        AnalyticsService.shared.track(.weeklyWrapShared, properties: .props([
+            "items_saved": viewModel.wrapData.totalItemsImpacted
+        ]))
         let card = WeeklyWrapShareCard(viewModel: viewModel)
             .frame(width: 360, height: 640)
 

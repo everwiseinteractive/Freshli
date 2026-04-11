@@ -364,6 +364,14 @@ struct AddItemView: View {
             barcode: barcode,
             notes: nil
         )
+        AnalyticsService.shared.track(.itemAdded, properties: .props([
+            "category":        category.rawValue,
+            "storage":         storageLocation.rawValue,
+            "unit":            unit.rawValue,
+            "days_to_expiry":  Calendar.current.dateComponents([.day], from: Date(), to: expiryDate).day ?? 0,
+            "source":          "manual",
+            "has_barcode":     (barcode?.isEmpty == false)
+        ]))
         modelContext.insert(item)
 
         do {

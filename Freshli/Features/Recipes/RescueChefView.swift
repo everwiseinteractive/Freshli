@@ -74,6 +74,10 @@ struct RescueChefView: View {
         .onAppear {
             withAnimation(PSMotion.springGentle.delay(0.1)) { appeared = true }
             rescueService.generateMissions(for: pantryItems)
+            AnalyticsService.shared.track(.rescueChefOpened, properties: .props([
+                "at_risk_count": rescueService.atRiskItemsCount,
+                "ai_available":  aiRescueService.isAvailable
+            ]))
         }
         .onChange(of: pantryItems.count) { _, _ in
             rescueService.generateMissions(for: pantryItems)

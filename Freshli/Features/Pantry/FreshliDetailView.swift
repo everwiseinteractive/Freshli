@@ -212,6 +212,10 @@ struct FreshliDetailView: View {
             ) {
                 PSHaptics.shared.success()
                 let itemName = item.name
+                AnalyticsService.shared.track(.itemConsumed, properties: .props([
+                    "category": item.category.rawValue,
+                    "days_until_expiry": Calendar.current.dateComponents([.day], from: Date(), to: item.expiryDate).day ?? 0
+                ]))
                 successFlashTrigger = true
                 withAnimation(FLMotion.adaptive(PSMotion.springBouncy, reduceMotion: reduceMotion)) {
                     item.isConsumed = true
@@ -250,6 +254,9 @@ struct FreshliDetailView: View {
                 ) {
                     PSHaptics.shared.success()
                     let itemName = item.name
+                    AnalyticsService.shared.track(.itemShared, properties: .props([
+                        "category": item.category.rawValue
+                    ]))
                     item.isShared = true
                     do {
                         try modelContext.save()
@@ -279,6 +286,9 @@ struct FreshliDetailView: View {
                 ) {
                     PSHaptics.shared.success()
                     let itemName = item.name
+                    AnalyticsService.shared.track(.itemDonated, properties: .props([
+                        "category": item.category.rawValue
+                    ]))
                     item.isDonated = true
                     do {
                         try modelContext.save()

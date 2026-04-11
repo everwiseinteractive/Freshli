@@ -105,6 +105,11 @@ final class AIRescueService {
             return
         }
 
+        AnalyticsService.shared.track(.aiRescueRequested, properties: .props([
+            "at_risk_count": atRiskItems.count
+        ]))
+        let requestStart = Date()
+
         isGenerating = true
         lastError = nil
         defer { isGenerating = false }
@@ -134,6 +139,11 @@ final class AIRescueService {
 
             let aiMissions = response.content.missions
             logger.info("AIRescue: model generated \(aiMissions.count) missions")
+            AnalyticsService.shared.track(.aiRescueSucceeded, properties: .props([
+                "mission_count":  aiMissions.count,
+                "duration_ms":    Int(Date().timeIntervalSince(requestStart) * 1_000),
+                "at_risk_count":  atRiskItems.count
+            ]))
 
             // Map the Generable output to the app's existing UsageMission
             // type so the view layer can render AI missions through the
@@ -143,6 +153,10 @@ final class AIRescueService {
             }
         } catch {
             logger.error("AIRescue: generation failed: \(error.localizedDescription, privacy: .public)")
+            AnalyticsService.shared.track(.aiRescueFailed, properties: .props([
+                "duration_ms":   Int(Date().timeIntervalSince(requestStart) * 1_000),
+                "at_risk_count": atRiskItems.count
+            ]))
             lastError = String(localized: "Rescue Chef couldn't cook up ideas this time. Please try again.")
             missions = []
         }

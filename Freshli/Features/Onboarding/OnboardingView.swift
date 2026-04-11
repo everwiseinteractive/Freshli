@@ -162,6 +162,7 @@ struct OnboardingView: View {
                             // instead of a light tap because this is the
                             // user crossing the threshold into the app.
                             PSHaptics.shared.success()
+                            AnalyticsService.shared.track(.onboardingCompleted)
                             celebrateTrigger = true
                             Task { @MainActor in
                                 try? await Task.sleep(for: .milliseconds(450))
@@ -216,6 +217,10 @@ struct OnboardingView: View {
         .sensoryFeedback(.selection, trigger: currentStep)
         // Figma: initial rotate -20°, animate to 0 with springs.bouncy delay 0.2
         .onAppear {
+            AnalyticsService.shared.track(.onboardingStarted)
+            AnalyticsService.shared.track(.onboardingSlideViewed, properties: .props([
+                "slide_index": currentStep
+            ]))
             if reduceMotion {
                 blobVisible = true
                 iconRotation = 0
@@ -232,7 +237,10 @@ struct OnboardingView: View {
             }
         }
         // Figma: icon re-enters each step with rotate -20 → 0
-        .onChange(of: currentStep) { _, _ in
+        .onChange(of: currentStep) { _, newStep in
+            AnalyticsService.shared.track(.onboardingSlideViewed, properties: .props([
+                "slide_index": newStep
+            ]))
             if !reduceMotion {
                 iconRotation = -20
                 withAnimation(PSMotion.springBouncy.delay(0.1)) {
