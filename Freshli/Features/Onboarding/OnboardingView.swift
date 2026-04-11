@@ -20,26 +20,33 @@ struct OnboardingView: View {
     @State private var blobVisible = false
     @State private var iconRotation: Double = 0
     @State private var celebrateTrigger = false
+    @State private var collectiveImpact = CollectiveImpactService.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    // Three slides, one story: pain → magic → belonging. The copy goes
+    // from concrete personal cost, to the signature on-device AI feature,
+    // to the sense of joining something bigger. Each slide tries to earn
+    // the user's attention with a fact they will actually remember by the
+    // time they're standing in front of their fridge.
 
     private let steps: [OnboardingStep] = [
         OnboardingStep(
-            title: String(localized: "For people. For planet."),
-            description: String(localized: "The food you save saves someone, somewhere. Freshli turns every wilting vegetable into a meal, a memory, and a gift to the planet."),
+            title: String(localized: "£700 of food, gone each year."),
+            description: String(localized: "That's what the average household throws in the bin. Freshli tracks every item in your fridge, tells you what's about to go off, and helps you rescue it before it's too late."),
             icon: "leaf.fill",
             color: PSColors.primaryGreen,
             lightColor: PSColors.emeraldLight
         ),
         OnboardingStep(
-            title: String(localized: "Rescue, one item at a time"),
-            description: String(localized: "Scan your fridge in seconds. Every rescue keeps food on a plate and 2.5kg of CO₂ out of the sky."),
-            icon: "birthday.cake.fill",
+            title: String(localized: "Rescue Chef, on your phone."),
+            description: String(localized: "Tap one button and Apple Intelligence writes recipes for your exact pantry — on-device, private, no internet needed. Never stare at a wilting vegetable again."),
+            icon: "sparkles",
             color: PSColors.secondaryAmber,
             lightColor: Color(hex: 0xFEF3C7)
         ),
         OnboardingStep(
-            title: String(localized: "You're part of a wave"),
-            description: String(localized: "Hundreds of people are rescuing food alongside you right now. Share surplus, cook together, leave the planet better than you found it."),
+            title: String(localized: "You're not rescuing alone."),
+            description: String(localized: "Thousands of people are saving food alongside you right now — share surplus, donate to a community fridge, watch your impact climb. Every meal rescued is one less in a landfill."),
             icon: "person.2.fill",
             color: PSColors.infoBlue,
             lightColor: Color(hex: 0xDBEAFE)
@@ -151,6 +158,10 @@ struct OnboardingView: View {
                                 currentStep += 1
                             }
                         } else {
+                            // Final-slide commit moment: success haptic
+                            // instead of a light tap because this is the
+                            // user crossing the threshold into the app.
+                            PSHaptics.shared.success()
                             celebrateTrigger = true
                             Task { @MainActor in
                                 try? await Task.sleep(for: .milliseconds(450))
@@ -159,13 +170,19 @@ struct OnboardingView: View {
                         }
                     } label: {
                         HStack(spacing: 8) {
+                            // The final-slide label is a commitment, not a
+                            // generic "Get Started" — the user is saying
+                            // YES to rescuing food. The phrasing matters.
                             Text(currentStep == steps.count - 1
-                                 ? String(localized: "Get Started")
+                                 ? String(localized: "Start Rescuing")
                                  : String(localized: "Continue"))
                                 .font(.system(size: PSLayout.scaledFont(20), weight: .bold))
 
                             if currentStep < steps.count - 1 {
                                 Image(systemName: "chevron.right")
+                                    .font(.system(size: 16, weight: .bold))
+                            } else {
+                                Image(systemName: "leaf.fill")
                                     .font(.system(size: 16, weight: .bold))
                             }
                         }
@@ -177,6 +194,18 @@ struct OnboardingView: View {
                         .shadow(color: step.color.opacity(0.3), radius: 20, y: 8)
                     }
                     .buttonStyle(PressableButtonStyle())
+                    .accessibilityHint(
+                        currentStep == steps.count - 1
+                            ? String(localized: "Opens Freshli")
+                            : String(localized: "Goes to the next onboarding slide")
+                    )
+
+                    // Live "rescue wave" ticker — social proof that the
+                    // user is joining something already in motion. The
+                    // counter ticks live while they read the slides, so
+                    // by the time they tap Start Rescuing there's a
+                    // felt sense of urgency and community.
+                    liveRescueTicker(stepColor: step.color)
                 }
                 .padding(.horizontal, PSLayout.formHorizontalPadding)
                 .padding(.bottom, PSLayout.screenHeight * 0.05)
@@ -213,6 +242,58 @@ struct OnboardingView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(String(localized: "Onboarding step \(currentStep + 1) of \(steps.count)"))
+    }
+
+    // MARK: - Live Rescue Ticker
+    //
+    // A small, unobtrusive row pinned below the CTA that pulls from the
+    // existing CollectiveImpactService — the same service that powers the
+    // Home tab's Collective Wave card. The count ticks in real time
+    // while the user reads the slides, so by the time they decide to tap
+    // "Start Rescuing" there's a felt sense of momentum: thousands of
+    // other people are doing this right now, join them.
+
+    @ViewBuilder
+    private func liveRescueTicker(stepColor: Color) -> some View {
+        HStack(spacing: PSSpacing.sm) {
+            // Pulsing live dot
+            Circle()
+                .fill(PSColors.primaryGreen)
+                .frame(width: 8, height: 8)
+                .overlay(
+                    Circle()
+                        .fill(PSColors.primaryGreen.opacity(0.4))
+                        .frame(width: 16, height: 16)
+                        .scaleEffect(blobVisible ? 1.4 : 0.8)
+                        .opacity(blobVisible ? 0 : 0.6)
+                )
+
+            Text(liveTickerMessage)
+                .font(.system(size: PSLayout.scaledFont(13), weight: .semibold, design: .rounded))
+                .foregroundStyle(PSColors.textSecondary)
+                .contentTransition(.numericText())
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+        }
+        .padding(.top, PSSpacing.md)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(liveTickerAccessibilityLabel)
+    }
+
+    private var liveTickerMessage: String {
+        let count = collectiveImpact.rescuesThisHour
+        if count > 0 {
+            return String(localized: "\(collectiveImpact.rescueCountDisplay) rescues in the last hour")
+        }
+        return String(localized: "Join the rescue wave")
+    }
+
+    private var liveTickerAccessibilityLabel: String {
+        let count = collectiveImpact.rescuesThisHour
+        if count > 0 {
+            return String(localized: "\(count) people rescued food in the last hour")
+        }
+        return String(localized: "Join the rescue wave")
     }
 }
 
