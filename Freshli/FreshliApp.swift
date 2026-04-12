@@ -126,7 +126,7 @@ struct FreshliApp: App {
             .environment(subscriptionService)
             .environment(familySyncService)
             .environment(shoppingListService)
-            .preferredColorScheme(isDarkMode ? .dark : .light)
+            .preferredColorScheme(isDarkMode ? .dark : nil)
             .task {
                 // Configure TipKit once per cold launch so the
                 // contextual tips on the pantry + home tabs can evaluate
