@@ -81,6 +81,10 @@ enum WidgetDataService {
 
             // Reload widget timelines to reflect updated data
             WidgetCenter.shared.reloadAllTimelines()
+
+            // Also push to Apple Watch companion via shared App Group
+            WatchConnectivityService.updateWatchData(modelContext: modelContext)
+
             logger.info("Widget data updated successfully")
         } catch {
             logger.error("Failed to update widget data: \(error.localizedDescription)")
