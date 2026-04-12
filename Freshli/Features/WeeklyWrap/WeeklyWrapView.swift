@@ -1,15 +1,19 @@
 import SwiftUI
 import SwiftData
 
-/// Full-screen vertical-story format Weekly Wrap (Instagram/Spotify style)
+/// Full-screen vertical-story format Weekly Wrap (Instagram/Spotify style).
+///
+/// Visual revamp: animated MeshGradient background that shifts palette per
+/// slide, glowing capsule progress bar, "cards in a deck" scale transition,
+/// and celebrate haptic on the final slide.
 struct WeeklyWrapView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var viewModel: WeeklyWrapViewModel?
     @State private var currentSlide: Int = 0
     @State private var autoAdvanceTimer: Timer?
-    @State private var pulsePhase: CGFloat = 0
 
     private let totalSlides = 3
 
@@ -49,10 +53,10 @@ struct WeeklyWrapView: View {
     @ViewBuilder
     private func storyContent(viewModel: WeeklyWrapViewModel) -> some View {
         ZStack {
-            // Animated pulse background
-            pulseBackground(viewModel: viewModel)
+            // Animated MeshGradient background — shifts palette per slide
+            meshBackground(viewModel: viewModel)
 
-            // Slide content
+            // Slide content with "cards in a deck" scale transition
             Group {
                 switch currentSlide {
                 case 0:
@@ -70,15 +74,20 @@ struct WeeklyWrapView: View {
                 }
             }
             .transition(.asymmetric(
-                insertion: .move(edge: .trailing).combined(with: .opacity),
-                removal: .move(edge: .leading).combined(with: .opacity)
+                insertion: .move(edge: .trailing)
+                    .combined(with: .opacity)
+                    .combined(with: .scale(scale: 0.96)),
+                removal: .move(edge: .leading)
+                    .combined(with: .opacity)
+                    .combined(with: .scale(scale: 0.96))
             ))
 
             // Progress bar + close
             VStack(spacing: 0) {
-                progressBar
+                glowingProgressBar
                     .padding(.horizontal, PSSpacing.lg)
                     .padding(.top, PSSpacing.sm)
+                    .sensoryFeedback(.impact(weight: .light), trigger: currentSlide)
 
                 HStack {
                     Spacer()
@@ -107,66 +116,111 @@ struct WeeklyWrapView: View {
         .gesture(swipeGesture)
     }
 
-    // MARK: - Pulse Background
+    // MARK: - MeshGradient Background (iOS 26)
+    //
+    // Replaces the old flat-black-with-radial-pulses. A 3×3 MeshGradient
+    // driven by TimelineView creates an organic, living atmosphere. Corner
+    // points are pinned; edge and center points drift with a slow sin-wave.
+    // Colors crossfade when the user swipes between slides, so each slide
+    // has a distinct mood (forest green → warm amber → cool teal).
 
     @ViewBuilder
-    private func pulseBackground(viewModel: WeeklyWrapViewModel) -> some View {
-        let pulseColor = categoryPulseColor(for: viewModel.wrapData.topCategorySaved)
+    private func meshBackground(viewModel: WeeklyWrapViewModel) -> some View {
+        let colors = viewModel.meshColors(for: currentSlide)
 
         ZStack {
-            Color.black.ignoresSafeArea()
+            if reduceMotion {
+                // Static fallback — no TimelineView, no drift
+                MeshGradient(
+                    width: 3, height: 3,
+                    points: Self.staticMeshPoints,
+                    colors: colors
+                )
+            } else {
+                TimelineView(.animation) { context in
+                    let t = context.date.timeIntervalSince1970
+                        .truncatingRemainder(dividingBy: 10.0) / 10.0
+                    let phase = Float(t * .pi * 2)
+                    let d: Float = 0.03 // drift amplitude — subtle
 
-            // Layered radial pulses
-            ForEach(0..<3, id: \.self) { i in
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            gradient: Gradient(colors: [
-                                pulseColor.opacity(0.3 - Double(i) * 0.08),
-                                pulseColor.opacity(0)
-                            ]),
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: PSLayout.screenWidth * (0.6 + pulsePhase * 0.4)
-                        )
+                    MeshGradient(
+                        width: 3, height: 3,
+                        points: [
+                            // Row 0: top edge — corners pinned
+                            .init(0, 0),
+                            .init(0.5 + d * sin(phase * 1.3), 0),
+                            .init(1, 0),
+                            // Row 1: middle — center drifts most
+                            .init(0, 0.5 + d * sin(phase * 0.7)),
+                            .init(0.5 + d * sin(phase), 0.5 + d * cos(phase * 0.9)),
+                            .init(1, 0.5 + d * sin(phase * 1.1)),
+                            // Row 2: bottom edge — corners pinned
+                            .init(0, 1),
+                            .init(0.5 + d * cos(phase * 0.8), 1),
+                            .init(1, 1)
+                        ],
+                        colors: colors
                     )
-                    .scaleEffect(1.0 + pulsePhase * CGFloat(i + 1) * 0.15)
-                    .opacity(0.6 - pulsePhase * 0.2)
+                }
             }
+
+            // Vignette overlay — keeps text legible at all scroll positions
+            RadialGradient(
+                gradient: Gradient(colors: [.clear, Color.black.opacity(0.35)]),
+                center: .center,
+                startRadius: PSLayout.screenWidth * 0.3,
+                endRadius: PSLayout.screenWidth * 0.9
+            )
         }
         .ignoresSafeArea()
-        .onAppear {
-            withAnimation(
-                .easeInOut(duration: 2.5)
-                .repeatForever(autoreverses: true)
-            ) {
-                pulsePhase = 1
-            }
-        }
+        .animation(PSMotion.springDefault, value: currentSlide)
     }
 
-    // MARK: - Progress Bar
+    private static let staticMeshPoints: [SIMD2<Float>] = [
+        .init(0, 0), .init(0.5, 0), .init(1, 0),
+        .init(0, 0.5), .init(0.5, 0.5), .init(1, 0.5),
+        .init(0, 1), .init(0.5, 1), .init(1, 1)
+    ]
 
-    private var progressBar: some View {
-        HStack(spacing: PSSpacing.xs) {
+    // MARK: - Glowing Progress Bar
+    //
+    // 4pt capsules with green glow on completed slides, a trailing-edge
+    // glow dot on the current slide, and dimmed upcoming slides. Each
+    // slide change fires a `.sensoryFeedback(.impact)` on the container.
+
+    private var glowingProgressBar: some View {
+        HStack(spacing: PSSpacing.xxs) {
             ForEach(0..<totalSlides, id: \.self) { index in
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
+                        // Track
                         Capsule()
-                            .fill(Color.white.opacity(0.3))
+                            .fill(Color.white.opacity(0.2))
 
                         if index < currentSlide {
+                            // Completed — solid white + green glow
                             Capsule()
-                                .fill(Color.white)
+                                .fill(.white)
+                                .shadow(color: PSColors.primaryGreen.opacity(0.5), radius: 4)
                         } else if index == currentSlide {
+                            // Active — animated fill with trailing glow dot
                             Capsule()
-                                .fill(Color.white)
+                                .fill(.white)
                                 .frame(width: geo.size.width)
                                 .animation(.linear(duration: 6.0), value: currentSlide)
+                                .overlay(alignment: .trailing) {
+                                    if !reduceMotion {
+                                        Circle()
+                                            .fill(.white)
+                                            .frame(width: 8, height: 8)
+                                            .blur(radius: 3)
+                                            .shadow(color: .white.opacity(0.6), radius: 4)
+                                    }
+                                }
                         }
                     }
                 }
-                .frame(height: 3)
+                .frame(height: 4)
             }
         }
     }
@@ -185,9 +239,14 @@ struct WeeklyWrapView: View {
     }
 
     private func advanceToNext() {
-        PSHaptics.shared.lightTap()
         withAnimation(PSMotion.springQuick) {
             if currentSlide < totalSlides - 1 {
+                // Celebrate haptic on reaching the final slide
+                if currentSlide == totalSlides - 2 {
+                    PSHaptics.shared.success()
+                } else {
+                    PSHaptics.shared.lightTap()
+                }
                 currentSlide += 1
                 resetAutoAdvance()
             }
@@ -246,33 +305,6 @@ struct WeeklyWrapView: View {
            let window = windowScene.windows.first,
            let root = window.rootViewController {
             root.present(activity, animated: true)
-        }
-    }
-
-    // MARK: - Category Pulse Color
-
-    private func categoryPulseColor(for category: FoodCategory) -> Color {
-        switch category {
-        case .vegetables, .condiments:
-            return PSColors.primaryGreen
-        case .fruits, .bakery, .snacks:
-            return Color(hex: 0xFBBF24) // warm yellow
-        case .meat:
-            return Color(hex: 0xEF5350)
-        case .seafood:
-            return PSColors.accentTeal
-        case .dairy:
-            return Color(hex: 0x42A5F5)
-        case .beverages:
-            return Color(hex: 0x29B6F6)
-        case .grains:
-            return Color(hex: 0xA1887F)
-        case .frozen:
-            return Color(hex: 0x7E57C2)
-        case .canned:
-            return Color(hex: 0xAB47BC)
-        case .other:
-            return PSColors.primaryGreen
         }
     }
 }

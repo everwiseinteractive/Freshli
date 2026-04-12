@@ -154,6 +154,7 @@ struct HomeView: View {
                             .tracking(-0.3)
                             .foregroundStyle(.white)
                             .lineLimit(1)
+                            .minimumScaleFactor(0.85)
                     }
                     .padding(.leading, PSSpacing.sm)
 

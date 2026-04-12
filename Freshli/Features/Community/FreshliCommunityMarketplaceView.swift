@@ -50,7 +50,8 @@ struct FreshliCommunityMarketplaceView: View {
                     ) {
                         showCreateListing = true
                     }
-                    .padding(PSSpacing.xl)
+                    .padding(.trailing, PSLayout.adaptiveHorizontalPadding)
+                    .padding(.bottom, PSLayout.scaled(100))
                 }
             }
         }

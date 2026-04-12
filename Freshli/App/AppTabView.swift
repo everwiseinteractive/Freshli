@@ -277,6 +277,7 @@ struct AppTabView: View {
                         ))
                         .foregroundStyle(.white)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                         .fixedSize()
                         // Slide + fade the label in/out as tabs switch
                         .transition(.asymmetric(
