@@ -321,7 +321,12 @@ struct HomeView: View {
             .fixedSize()
         }
         .padding(.horizontal, PSSpacing.lg)
-        .padding(.vertical, PSSpacing.md)
+        // Increased from PSSpacing.md (12pt) → PSSpacing.lg (16pt)
+        // to give the 2-line subtitle enough vertical space. The text
+        // uses .fixedSize(horizontal: false, vertical: true) + lineLimit(2),
+        // but the tight vertical padding was clipping "that lasts" below
+        // the background container's rounded corners.
+        .padding(.vertical, PSSpacing.lg)
         .background {
             RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
                 .fill(.white.opacity(hasStreak ? 0.12 : 0.08))

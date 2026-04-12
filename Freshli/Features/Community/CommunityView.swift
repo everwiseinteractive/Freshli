@@ -322,9 +322,10 @@ struct CommunityView: View {
         .accessibilityLabel(String(localized: "Create New Post"))
         .accessibilityHint(String(localized: "Double tap to create a new community listing"))
         .padding(.trailing, PSLayout.adaptiveHorizontalPadding)
-        // Increased to PSSpacing.xxl (24pt) — the safeAreaInset on NavigationStack
-        // handles the tab bar boundary; this is the comfortable visual gap above it.
-        .padding(.bottom, PSSpacing.xxl)
+        // Must clear the floating tab bar pill (~60pt) + home indicator
+        // gap (~14pt) + visual breathing room. 100pt puts the FAB
+        // comfortably above the profile circle on all device sizes.
+        .padding(.bottom, PSLayout.scaled(100))
     }
 
     // MARK: - Feed Content

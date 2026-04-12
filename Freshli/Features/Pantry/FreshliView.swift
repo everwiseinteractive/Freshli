@@ -196,7 +196,10 @@ struct FreshliView: View {
             .accessibilityLabel(String(localized: "Add Item"))
             .accessibilityHint(String(localized: "Double tap to add a new item to your pantry"))
             .padding(.trailing, PSLayout.adaptiveHorizontalPadding)
-            .padding(.bottom, PSSpacing.xl)   // gap above tab bar edge (safeAreaInset handles boundary)
+            // Must clear the floating tab bar pill (~60pt) + home indicator
+            // gap (~14pt) + visual breathing room. 100pt puts the FAB
+            // comfortably above the profile circle on all device sizes.
+            .padding(.bottom, PSLayout.scaled(100))
             // First-run coach mark: appears above the FAB on an empty
             // pantry, auto-dismisses as soon as the user adds an item.
             .popoverTip(addItemTip)
@@ -540,10 +543,11 @@ struct FreshliView: View {
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("You likely won't eat this \(item.name)")
-                    .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
+                Text("You likely won't eat this **\(item.name)**")
+                    .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
                     .foregroundStyle(PSColors.textPrimary)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text("Tap to list it free for neighbours 🏘️")
                     .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
                     .foregroundStyle(PSColors.secondaryAmber)

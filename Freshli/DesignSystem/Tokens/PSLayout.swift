@@ -102,7 +102,10 @@ enum PSLayout {
 
     /// Curved header height for the Home screen.
     static var headerHeight: CGFloat {
-        scaled(220)
+        // Covers the avatar row + search bar + streak strip including
+        // the 2-line subtitle. Bumped from 220 → 250 so the streak
+        // strip text doesn't bleed into the white content area below.
+        scaled(250)
     }
 
     /// Hero/header height for detail views.
