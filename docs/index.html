@@ -260,23 +260,28 @@
       justify-content: center;
       align-items: flex-start;
       position: relative;
-      max-height: 640px;
-      overflow: hidden;
     }
 
-    .phone-mockup {
-      width: 300px;
-      max-height: 620px;
-      object-fit: cover;
-      object-position: top;
-      border-radius: 40px;
-      box-shadow: 0 40px 80px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04);
+    .phone-frame {
+      width: 280px;
+      height: 560px;
+      border-radius: 36px;
+      overflow: hidden;
+      background: #000;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.15), 0 0 0 8px #1a1a1a, 0 0 0 10px rgba(255,255,255,0.1);
       transform: perspective(1000px) rotateY(-5deg) rotateX(2deg);
       transition: transform 0.6s var(--transition-smooth);
     }
 
-    .phone-mockup:hover {
+    .phone-frame:hover {
       transform: perspective(1000px) rotateY(0deg) rotateX(0deg);
+    }
+
+    .phone-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
     }
 
     .badge-row {
@@ -552,12 +557,12 @@
       .hero-text .subtitle { margin: 0 auto 32px; }
       .hero-ctas { justify-content: center; }
       .badge-row { justify-content: center; }
-      .phone-mockup {
-        width: 240px;
-        max-height: 500px;
+      .phone-frame {
+        width: 220px;
+        height: 440px;
         transform: none;
       }
-      .phone-mockup:hover { transform: none; }
+      .phone-frame:hover { transform: none; }
       .hero-visual { order: -1; }
       .feature-grid { grid-template-columns: 1fr; }
       .section-subtitle { margin-left: auto; margin-right: auto; }
@@ -616,7 +621,9 @@
         </div>
       </div>
       <div class="hero-visual">
-        <img src="screenshot.png" alt="Freshli app — Home screen showing Live Wave rescue counter, expiring items, and streak tracker" class="phone-mockup" />
+        <div class="phone-frame">
+          <img src="screenshot.png" alt="Freshli app — Home screen showing Live Wave rescue counter, expiring items, and streak tracker" />
+        </div>
       </div>
     </div>
   </section>
