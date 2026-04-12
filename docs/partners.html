@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Partners & Support — Freshli</title>
+  <meta name="description" content="Partner with Freshli. Sponsorship, donations, retailer integrations, and community partnerships to fight food waste." />
+  <meta name="theme-color" content="#22C55E" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <style>
+    :root { --green-500: #22C55E; --green-600: #16A34A; --green-700: #15803D; --green-800: #166534; --green-900: #14532D; --green-50: #F0FDF4; --green-100: #DCFCE7; --teal-500: #14B8A6; --amber-500: #F59E0B; --neutral-50: #FAFAFA; --neutral-100: #F5F5F5; --neutral-600: #525252; --neutral-800: #1F2937; --neutral-900: #0A0A0A; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif; color: var(--neutral-800); background: #fff; }
+    nav { position: sticky; top: 0; z-index: 100; padding: 16px 24px; backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); background: rgba(255,255,255,0.72); border-bottom: 1px solid rgba(0,0,0,0.06); }
+    nav .inner { max-width: 900px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .logo { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 800; color: var(--green-800); text-decoration: none; letter-spacing: -0.5px; }
+    .logo img { width: 28px; height: 28px; border-radius: 7px; }
+    .back-link { font-size: 14px; font-weight: 600; color: var(--green-700); text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+    a { color: var(--green-700); }
+
+    /* Hero */
+    .partner-hero { padding: 80px 24px 60px; background: linear-gradient(135deg, var(--green-600), var(--teal-500)); color: #fff; text-align: center; }
+    .partner-hero .inner { max-width: 700px; margin: 0 auto; }
+    .partner-hero h1 { font-size: clamp(36px, 5vw, 52px); font-weight: 900; letter-spacing: -1.5px; line-height: 1.1; margin-bottom: 16px; }
+    .partner-hero p { font-size: 18px; color: rgba(255,255,255,0.8); line-height: 1.6; max-width: 560px; margin: 0 auto; }
+
+    /* Content */
+    .content { max-width: 900px; margin: 0 auto; padding: 60px 24px 80px; }
+    .content h2 { font-size: 28px; font-weight: 900; letter-spacing: -0.5px; margin-top: 56px; margin-bottom: 12px; }
+    .content h2:first-child { margin-top: 0; }
+    .content p { font-size: 16px; line-height: 1.8; color: var(--neutral-600); margin-bottom: 16px; }
+    .content strong { color: var(--neutral-800); }
+
+    /* Partnership tiers */
+    .tier-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin: 32px 0; }
+    .tier-card { padding: 32px; background: var(--neutral-50); border-radius: 24px; border: 2px solid var(--neutral-100); position: relative; overflow: hidden; transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s; }
+    .tier-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.08); }
+    .tier-card.featured { border-color: var(--green-500); background: var(--green-50); }
+    .tier-card.featured::before { content: 'MOST IMPACT'; position: absolute; top: 16px; right: -28px; background: var(--green-500); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: 0.5px; padding: 4px 32px; transform: rotate(45deg); }
+    .tier-card .icon { font-size: 36px; margin-bottom: 16px; }
+    .tier-card h3 { font-size: 22px; font-weight: 900; margin-bottom: 8px; }
+    .tier-card .price { font-size: 14px; font-weight: 700; color: var(--green-600); margin-bottom: 16px; }
+    .tier-card p { font-size: 14px; color: var(--neutral-600); line-height: 1.6; margin-bottom: 12px; }
+    .tier-card ul { padding-left: 0; list-style: none; margin: 16px 0; }
+    .tier-card li { font-size: 14px; color: var(--neutral-600); line-height: 1.6; padding: 6px 0; padding-left: 24px; position: relative; }
+    .tier-card li::before { content: '✓'; position: absolute; left: 0; color: var(--green-500); font-weight: 700; }
+    .tier-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 100px; text-decoration: none; font-size: 14px; font-weight: 700; transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1); margin-top: 8px; }
+    .tier-btn:hover { transform: scale(1.04); }
+    .tier-btn.primary { background: var(--green-500); color: #fff; }
+    .tier-btn.secondary { background: var(--neutral-800); color: #fff; }
+    .tier-btn.outline { background: #fff; color: var(--green-700); border: 2px solid var(--green-100); }
+
+    /* How it works */
+    .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 32px 0; }
+    .how-card { padding: 24px; background: var(--neutral-50); border-radius: 16px; border: 1px solid var(--neutral-100); text-align: center; }
+    .how-card .num { width: 40px; height: 40px; margin: 0 auto 12px; background: var(--green-500); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; }
+    .how-card h4 { font-size: 15px; font-weight: 800; margin-bottom: 6px; }
+    .how-card p { font-size: 13px; color: var(--neutral-600); line-height: 1.5; margin: 0; }
+
+    /* CTA band */
+    .cta-band { padding: 60px 24px; background: linear-gradient(135deg, var(--green-900), var(--neutral-900)); color: #fff; text-align: center; margin-top: 60px; border-radius: 24px; }
+    .cta-band h2 { font-size: 32px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 12px; }
+    .cta-band p { font-size: 16px; color: rgba(255,255,255,0.7); margin-bottom: 24px; max-width: 500px; margin-left: auto; margin-right: auto; }
+    .cta-band a { display: inline-flex; align-items: center; gap: 8px; padding: 16px 32px; background: var(--green-500); color: #fff; border-radius: 100px; text-decoration: none; font-size: 16px; font-weight: 700; transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1); }
+    .cta-band a:hover { transform: scale(1.05); color: #fff; }
+
+    /* Donation section */
+    .donation-box { padding: 32px; background: linear-gradient(135deg, var(--green-50), #fff); border: 2px solid var(--green-100); border-radius: 24px; margin: 32px 0; text-align: center; }
+    .donation-box h3 { font-size: 24px; font-weight: 900; margin-bottom: 8px; }
+    .donation-box p { font-size: 15px; color: var(--neutral-600); max-width: 500px; margin: 0 auto 20px; }
+    .donation-amounts { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
+    .donation-amounts span { padding: 12px 24px; background: #fff; border: 2px solid var(--green-100); border-radius: 100px; font-size: 16px; font-weight: 800; color: var(--green-700); cursor: pointer; transition: all 0.2s; }
+    .donation-amounts span:hover { border-color: var(--green-500); background: var(--green-50); }
+
+    footer { padding: 40px 24px; background: var(--neutral-900); color: rgba(255,255,255,0.5); text-align: center; font-size: 13px; }
+    footer a { color: rgba(255,255,255,0.5); text-decoration: none; margin: 0 12px; }
+    footer a:hover { color: #fff; }
+    @media (max-width: 640px) { .tier-grid { grid-template-columns: 1fr; } .donation-amounts span { padding: 10px 20px; font-size: 14px; } }
+  </style>
+</head>
+<body>
+  <nav><div class="inner"><a href="/" class="logo"><img src="icon.png" alt="Freshli" /> Freshli</a><a href="/" class="back-link">&larr; Back to home</a></div></nav>
+
+  <div class="partner-hero">
+    <div class="inner">
+      <h1>Let's fight food waste<br>together.</h1>
+      <p>Partner with Freshli to reach thousands of environmentally conscious households. Sponsor our mission. Donate to keep the app free.</p>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <h2>Why Partner with Freshli?</h2>
+    <p>Freshli users are <strong>actively trying to reduce their environmental footprint</strong>. They track their food, cook from what they have, share surplus with neighbours, and measure their CO&sup2; impact weekly. This is one of the most engaged, values-aligned audiences on the App Store.</p>
+
+    <div class="how-grid">
+      <div class="how-card">
+        <div class="num">🎯</div>
+        <h4>Targeted Reach</h4>
+        <p>Every Freshli user cares about sustainability. Your brand reaches people who actively choose eco-conscious products.</p>
+      </div>
+      <div class="how-card">
+        <div class="num">📊</div>
+        <h4>Measurable Impact</h4>
+        <p>We track items rescued, CO&sup2; avoided, and meals shared. Your partnership comes with real, reportable impact metrics.</p>
+      </div>
+      <div class="how-card">
+        <div class="num">💚</div>
+        <h4>Brand Alignment</h4>
+        <p>Associate your brand with a mission people feel good about. Food rescue is universally positive — no controversy, pure goodwill.</p>
+      </div>
+      <div class="how-card">
+        <div class="num">🌍</div>
+        <h4>Global Scale</h4>
+        <p>Freshli is available in 6 languages across the world's largest App Store markets. One partnership, global visibility.</p>
+      </div>
+    </div>
+
+    <h2>Partnership Opportunities</h2>
+
+    <div class="tier-grid">
+      <div class="tier-card">
+        <div class="icon">🏪</div>
+        <h3>Retailer Integration</h3>
+        <div class="price">For supermarkets & grocery chains</div>
+        <p>Connect your loyalty program to Freshli so customers can auto-import purchases and track their food at home.</p>
+        <ul>
+          <li>Loyalty card integration (Clubcard, Nectar, etc.)</li>
+          <li>Branded recipe suggestions using your products</li>
+          <li>In-app presence for millions of active users</li>
+          <li>Shared impact reporting for CSR campaigns</li>
+        </ul>
+        <a href="mailto:support@freshli.app?subject=Retailer%20Partnership" class="tier-btn secondary">Get in touch</a>
+      </div>
+
+      <div class="tier-card featured">
+        <div class="icon">🤝</div>
+        <h3>Mission Sponsor</h3>
+        <div class="price">For brands aligned with sustainability</div>
+        <p>Sponsor Freshli's free tier so more households can access food rescue tools without a paywall.</p>
+        <ul>
+          <li>"Powered by [Your Brand]" in the app</li>
+          <li>Featured in the Weekly Wrap share card</li>
+          <li>Co-branded impact reports</li>
+          <li>Press coverage as a founding sponsor</li>
+          <li>Priority access to new features</li>
+        </ul>
+        <a href="mailto:support@freshli.app?subject=Mission%20Sponsorship" class="tier-btn primary">Become a sponsor</a>
+      </div>
+
+      <div class="tier-card">
+        <div class="icon">🏛️</div>
+        <h3>Community Partner</h3>
+        <div class="price">For food banks, charities & councils</div>
+        <p>Integrate your community fridge network, food bank locations, or waste reduction programs into Freshli.</p>
+        <ul>
+          <li>List your fridges/drop-off points in-app</li>
+          <li>Real-time availability updates from users</li>
+          <li>Anonymised waste data for policy insights</li>
+          <li>Free — always, for non-profits</li>
+        </ul>
+        <a href="mailto:support@freshli.app?subject=Community%20Partnership" class="tier-btn outline">Partner with us</a>
+      </div>
+    </div>
+
+    <h2>Sponsor Freshli</h2>
+    <p>Sponsorship keeps Freshli's core features free for every household. Your support directly funds:</p>
+    <ul style="padding-left: 24px; margin: 16px 0;">
+      <li style="font-size: 15px; line-height: 2; color: var(--neutral-600);">Server infrastructure for the community marketplace</li>
+      <li style="font-size: 15px; line-height: 2; color: var(--neutral-600);">Expanding the community fridge network to new cities</li>
+      <li style="font-size: 15px; line-height: 2; color: var(--neutral-600);">Localisation into more languages so more people can rescue food</li>
+      <li style="font-size: 15px; line-height: 2; color: var(--neutral-600);">Accessibility improvements for users with disabilities</li>
+      <li style="font-size: 15px; line-height: 2; color: var(--neutral-600);">Schools outreach — teaching the next generation about food waste</li>
+    </ul>
+
+    <h2>Donate</h2>
+    <div class="donation-box">
+      <h3>Keep Freshli free for everyone</h3>
+      <p>Every donation goes directly to fighting food waste — server costs, fridge network expansion, and keeping the app free.</p>
+      <div class="donation-amounts">
+        <span>&pound;5</span>
+        <span>&pound;10</span>
+        <span>&pound;25</span>
+        <span>&pound;50</span>
+        <span>&pound;100</span>
+        <span>Custom</span>
+      </div>
+      <a href="mailto:support@freshli.app?subject=Donation%20Inquiry" class="tier-btn primary" style="font-size: 16px;">Donate &rarr;</a>
+      <p style="font-size: 12px; color: var(--neutral-600); margin-top: 16px; margin-bottom: 0;">Freshli is not yet a registered charity. Donations are processed as contributions to the project. We're working toward charitable status.</p>
+    </div>
+
+    <h2>Advertise with Freshli</h2>
+    <p>We offer limited, tasteful advertising opportunities for brands that align with our mission. No pop-ups, no tracking, no data selling — just relevant products shown to people who care about sustainability.</p>
+    <p><strong>What we accept:</strong> Eco-conscious food brands, sustainable kitchen products, zero-waste lifestyle brands, organic grocers, plant-based companies.</p>
+    <p><strong>What we don't:</strong> Fast food chains, single-use plastic products, anything that contradicts our mission.</p>
+    <p>Contact <a href="mailto:support@freshli.app?subject=Advertising%20Inquiry">support@freshli.app</a> for our rate card and audience demographics.</p>
+
+    <div class="cta-band">
+      <h2>Ready to make an impact?</h2>
+      <p>Whether you're a supermarket, a sustainability brand, a food bank, or someone who wants to help — we'd love to hear from you.</p>
+      <a href="mailto:support@freshli.app?subject=Partnership%20Inquiry">✉️ support@freshli.app</a>
+    </div>
+
+  </div>
+
+  <footer>
+    <a href="/">Home</a> <a href="about.html">Our Story</a> <a href="partners.html">Partners</a> <a href="privacy.html">Privacy</a> <a href="terms.html">Terms</a> <a href="support.html">Support</a> <a href="press.html">Press</a> <a href="mailto:support@freshli.app">Contact</a>
+    <p style="margin-top: 16px;">&copy; 2026 Freshli. All rights reserved.</p>
+  </footer>
+</body>
+</html>
