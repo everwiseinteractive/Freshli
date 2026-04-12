@@ -91,6 +91,26 @@
       justify-content: space-between;
     }
 
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .nav-links a.nav-link {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--neutral-600);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-links a.nav-link:hover { color: var(--green-700); }
+
+    @media (max-width: 640px) {
+      .nav-links a.nav-link { display: none; }
+    }
+
     .logo {
       display: flex;
       align-items: center;
@@ -243,7 +263,10 @@
     }
 
     .phone-mockup {
-      width: 320px;
+      width: 300px;
+      max-height: 620px;
+      object-fit: cover;
+      object-position: top;
       border-radius: 40px;
       box-shadow: 0 40px 80px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04);
       transform: perspective(1000px) rotateY(-5deg) rotateX(2deg);
@@ -528,7 +551,8 @@
       .hero-ctas { justify-content: center; }
       .badge-row { justify-content: center; }
       .phone-mockup {
-        width: 260px;
+        width: 240px;
+        max-height: 500px;
         transform: none;
       }
       .phone-mockup:hover { transform: none; }
@@ -549,6 +573,9 @@
       opacity: 1;
       transform: translateY(0);
     }
+
+    .faq-item-home.open .faq-answer { max-height: 200px !important; }
+    .faq-item-home.open .faq-toggle { transform: rotate(45deg); }
   </style>
 </head>
 
@@ -558,7 +585,12 @@
   <nav>
     <div class="inner">
       <a href="#" class="logo"><span>🌿</span> Freshli</a>
-      <a href="#download" class="cta-nav">Download Free</a>
+      <div class="nav-links">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#impact" class="nav-link">Impact</a>
+        <a href="support.html" class="nav-link">Support</a>
+        <a href="#download" class="cta-nav">Download Free</a>
+      </div>
     </div>
   </nav>
 
@@ -583,6 +615,31 @@
       </div>
       <div class="hero-visual">
         <img src="screenshot.png" alt="Freshli app — Home screen showing Live Wave rescue counter, expiring items, and streak tracker" class="phone-mockup" />
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section style="padding: 80px 24px 0; background: #fff;">
+    <div style="max-width: 900px; margin: 0 auto; text-align: center;">
+      <div class="section-label">🚀 How It Works</div>
+      <h2 class="section-title" style="margin-bottom: 48px;">Three steps to<br>zero food waste.</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 32px; text-align: center;">
+        <div class="fade-in">
+          <div style="width: 64px; height: 64px; margin: 0 auto 16px; background: var(--green-50); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px;">1️⃣</div>
+          <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px;">Add your food</h3>
+          <p style="font-size: 14px; color: var(--neutral-600); line-height: 1.6;">Scan a barcode, snap a receipt, or type manually. Takes 5 seconds.</p>
+        </div>
+        <div class="fade-in">
+          <div style="width: 64px; height: 64px; margin: 0 auto 16px; background: #FEF3C7; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px;">2️⃣</div>
+          <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px;">Get smart alerts</h3>
+          <p style="font-size: 14px; color: var(--neutral-600); line-height: 1.6;">Freshli tells you what's expiring and suggests AI recipes to use it up.</p>
+        </div>
+        <div class="fade-in">
+          <div style="width: 64px; height: 64px; margin: 0 auto 16px; background: #DBEAFE; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px;">3️⃣</div>
+          <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px;">Rescue or share</h3>
+          <p style="font-size: 14px; color: var(--neutral-600); line-height: 1.6;">Cook it, share with neighbours, or donate to a community fridge.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -629,6 +686,20 @@
     </div>
   </section>
 
+  <!-- TESTIMONIAL -->
+  <section style="padding: 80px 24px; background: var(--neutral-50);">
+    <div style="max-width: 700px; margin: 0 auto; text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 16px;">💬</div>
+      <blockquote style="font-size: 22px; font-weight: 600; line-height: 1.5; color: var(--neutral-800); font-style: italic; margin: 0 0 20px;">
+        "I used to throw away at least £15 of food a week. With Freshli, I haven't binned a single item in three weeks. The AI recipes are genuinely helpful."
+      </blockquote>
+      <p style="font-size: 15px; color: var(--neutral-600); font-weight: 600;">— Sarah K., London</p>
+      <div style="display: flex; gap: 4px; justify-content: center; margin-top: 12px;">
+        <span style="color: #FBBF24; font-size: 18px;">★★★★★</span>
+      </div>
+    </div>
+  </section>
+
   <!-- AI SECTION -->
   <section class="ai-section">
     <div class="inner">
@@ -670,6 +741,46 @@
           <div class="stat-label">Saved Per Household/Year</div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section style="padding: 80px 24px; background: #fff;">
+    <div style="max-width: 700px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: 48px;">
+        <div class="section-label">❓ FAQ</div>
+        <h2 class="section-title">Common questions.</h2>
+      </div>
+      <div id="faq-list">
+        <div class="faq-item-home" onclick="this.classList.toggle('open')">
+          <div style="padding: 20px 0; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; border-bottom: 1px solid var(--neutral-100);">
+            Is Freshli really free?
+            <span style="font-size: 20px; font-weight: 300; color: var(--neutral-600); transition: transform 0.2s;" class="faq-toggle">+</span>
+          </div>
+          <div style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;" class="faq-answer">
+            <p style="padding: 12px 0; font-size: 15px; color: var(--neutral-600); line-height: 1.6;">Yes. Core features — pantry tracking, expiry alerts, community sharing, and the AI Rescue Chef — are completely free. Freshli Pro is an optional subscription for power users.</p>
+          </div>
+        </div>
+        <div class="faq-item-home" onclick="this.classList.toggle('open')">
+          <div style="padding: 20px 0; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; border-bottom: 1px solid var(--neutral-100);">
+            Does the AI need the internet?
+            <span style="font-size: 20px; font-weight: 300; color: var(--neutral-600);" class="faq-toggle">+</span>
+          </div>
+          <div style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;" class="faq-answer">
+            <p style="padding: 12px 0; font-size: 15px; color: var(--neutral-600); line-height: 1.6;">No. Rescue Chef runs entirely on your device using Apple Intelligence. No server calls, no API costs, no data leaving your phone. Works completely offline.</p>
+          </div>
+        </div>
+        <div class="faq-item-home" onclick="this.classList.toggle('open')">
+          <div style="padding: 20px 0; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; border-bottom: 1px solid var(--neutral-100);">
+            What devices are supported?
+            <span style="font-size: 20px; font-weight: 300; color: var(--neutral-600);" class="faq-toggle">+</span>
+          </div>
+          <div style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;" class="faq-answer">
+            <p style="padding: 12px 0; font-size: 15px; color: var(--neutral-600); line-height: 1.6;">Freshli requires iOS 26 or later. AI Rescue Chef needs Apple Intelligence (iPhone 16+). Apple Watch complications need watchOS 26.</p>
+          </div>
+        </div>
+      </div>
+      <p style="text-align: center; margin-top: 24px;"><a href="support.html" style="color: var(--green-700); font-weight: 600; text-decoration: none;">More questions? Visit Support →</a></p>
     </div>
   </section>
 
