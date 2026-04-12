@@ -154,7 +154,12 @@ struct AppTabView: View {
                 .allowsHitTesting(visible)
 
             // Compact scroll-up prompt — drops in from above as the bar exits.
+            // Pinned to the bottom of the 88pt container so it sits near
+            // the home indicator instead of vertically centered, which
+            // prevents it from overlapping card content above the safe area.
             scrollUpPrompt
+                .frame(maxHeight: .infinity, alignment: .bottom)
+                .padding(.bottom, 10)
                 .opacity(visible ? 0 : 1)
                 .offset(y: visible ? 32 : 0)
                 .scaleEffect(visible ? 0.92 : 1, anchor: .bottom)
