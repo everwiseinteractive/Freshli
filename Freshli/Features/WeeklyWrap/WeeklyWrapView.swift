@@ -114,6 +114,11 @@ struct WeeklyWrapView: View {
         .onDisappear { stopAutoAdvance() }
         .onTapGesture { advanceToNext() }
         .gesture(swipeGesture)
+        // Handoff: resume Weekly Wrap on another Apple device
+        .userActivity("com.freshli.weeklyWrap") { activity in
+            activity.title = "Freshli Weekly Wrap"
+            activity.isEligibleForHandoff = true
+        }
     }
 
     // MARK: - MeshGradient Background (iOS 26)

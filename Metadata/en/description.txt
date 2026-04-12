@@ -1,0 +1,41 @@
+Stop throwing away food. Start rescuing it.
+
+The average household wastes £700 of food every year. Freshli changes that — track every item in your fridge, get AI-powered recipe suggestions before food expires, and share surplus with neighbours who need it.
+
+RESCUE CHEF — POWERED BY APPLE INTELLIGENCE
+Tap one button and Freshli's on-device AI writes recipes for your exact pantry. No internet needed. Your food data never leaves your phone. This is private, instant, intelligent cooking.
+
+TRACK EVERYTHING
+• Scan barcodes, receipts, or type items manually
+• Smart expiry alerts tell you what needs using first
+• Color-coded freshness badges at a glance
+• Beautiful food photography for every item
+
+SHARE WITH YOUR COMMUNITY
+• List surplus food for free collection by neighbours
+• Find and donate to community fridges near you
+• Join local pods for hyper-local food sharing
+• Earn karma credits for generosity
+
+SEE YOUR IMPACT
+• Weekly Wrap — a cinematic recap of your food rescue story
+• Track CO₂ avoided, money saved, and meals shared
+• Watch the global Live Rescue Wave in real-time
+• Climb hero tiers from Seedling to Champion
+
+WORKS ACROSS YOUR LIFE
+• Apple Watch complications show what's expiring
+• Live Activities track cooking timers on your Lock Screen
+• Siri shortcuts: "Hey Siri, rescue my pantry"
+• Control Center quick-log for instant item tracking
+• Interactive widgets with one-tap consume
+
+DESIGNED FOR EVERYONE
+• Full VoiceOver support with contextual hints
+• Color-blind safe expiry badges
+• Dynamic Type at every size
+• Reduce Motion respected throughout
+
+Built with Swift 6.2, SwiftUI, and SwiftData. Powered by Apple Intelligence. Designed for the planet.
+
+For the people. For the planet.

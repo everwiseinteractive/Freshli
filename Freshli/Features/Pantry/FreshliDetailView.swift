@@ -64,6 +64,14 @@ struct FreshliDetailView: View {
         .sheet(isPresented: $showPreservationGuide) {
             PreservationGuideView(item: item)
         }
+        // Handoff: donate NSUserActivity so the user can resume
+        // viewing this item on another Apple device (iPad, Mac).
+        .userActivity("com.freshli.viewItem") { activity in
+            activity.title = item.name
+            activity.isEligibleForHandoff = true
+            activity.isEligibleForSearch = true
+            activity.userInfo = ["itemId": item.id.uuidString]
+        }
         .confirmationDialog(String(localized: "Delete Item"), isPresented: $showDeleteConfirmation) {
             Button(String(localized: "Delete"), role: .destructive) {
                 AnalyticsService.shared.track(.itemDeleted, properties: .props([

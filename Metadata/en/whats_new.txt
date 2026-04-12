@@ -1,0 +1,8 @@
+Welcome to Freshli 1.0 — your food rescue companion.
+
+• Rescue Chef: on-device Apple Intelligence writes recipes for your exact pantry
+• Weekly Wrap: a cinematic story of your food rescue impact, shareable to Instagram
+• Live Rescue Wave: watch food being saved worldwide in real-time
+• Community marketplace: share surplus food with neighbours
+• Apple Watch complications, Live Activities, Siri shortcuts, and Control Center integration
+• Beautiful dark mode and full accessibility support
