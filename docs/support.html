@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Support — Freshli</title>
+  <meta name="description" content="Get help with Freshli. FAQs, troubleshooting, and contact support." />
+  <meta name="theme-color" content="#22C55E" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>" />
+  <style>
+    :root { --green-500: #22C55E; --green-600: #16A34A; --green-700: #15803D; --green-800: #166534; --green-50: #F0FDF4; --green-100: #DCFCE7; --teal-500: #14B8A6; --amber-500: #F59E0B; --neutral-50: #FAFAFA; --neutral-100: #F5F5F5; --neutral-600: #525252; --neutral-800: #1F2937; --neutral-900: #0A0A0A; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif; color: var(--neutral-800); background: #fff; }
+    nav { position: sticky; top: 0; z-index: 100; padding: 16px 24px; backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); background: rgba(255,255,255,0.72); border-bottom: 1px solid rgba(0,0,0,0.06); }
+    nav .inner { max-width: 800px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .logo { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 800; color: var(--green-800); text-decoration: none; letter-spacing: -0.5px; }
+    .logo span { font-size: 24px; }
+    .back-link { font-size: 14px; font-weight: 600; color: var(--green-700); text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+    .support { max-width: 800px; margin: 0 auto; padding: 60px 24px 120px; }
+    .support h1 { font-size: 36px; font-weight: 900; letter-spacing: -1px; margin-bottom: 8px; }
+    .support .intro { font-size: 18px; color: var(--neutral-600); line-height: 1.6; margin-bottom: 48px; max-width: 560px; }
+    .support h2 { font-size: 22px; font-weight: 800; margin-top: 48px; margin-bottom: 16px; letter-spacing: -0.3px; }
+    .support p { font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 12px; }
+    .support a { color: var(--green-700); }
+    .support strong { color: var(--neutral-800); }
+    .contact-card { padding: 32px; background: linear-gradient(135deg, var(--green-500), var(--green-600)); border-radius: 20px; text-align: center; margin: 32px 0; }
+    .contact-card h3 { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+    .contact-card p { color: rgba(255,255,255,0.85); font-size: 15px; margin-bottom: 20px; }
+    .contact-card a { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: #fff; color: var(--green-700); border-radius: 100px; text-decoration: none; font-size: 16px; font-weight: 700; transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1); }
+    .contact-card a:hover { transform: scale(1.05); }
+    .faq { margin: 16px 0; }
+    .faq-item { border-bottom: 1px solid var(--neutral-100); }
+    .faq-q { padding: 20px 0; font-size: 16px; font-weight: 700; color: var(--neutral-800); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .faq-q::after { content: '+'; font-size: 22px; font-weight: 300; color: var(--neutral-600); transition: transform 0.2s; }
+    .faq-item.open .faq-q::after { transform: rotate(45deg); }
+    .faq-a { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s; }
+    .faq-item.open .faq-a { max-height: 300px; padding-bottom: 20px; }
+    .faq-a p { font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin: 0; }
+    .help-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 24px 0; }
+    .help-card { padding: 24px; background: var(--neutral-50); border-radius: 16px; border: 1px solid var(--neutral-100); text-align: center; }
+    .help-card .icon { font-size: 32px; margin-bottom: 12px; }
+    .help-card h4 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .help-card p { font-size: 13px; color: var(--neutral-600); line-height: 1.5; margin: 0; }
+    footer { padding: 40px 24px; background: var(--neutral-900); color: rgba(255,255,255,0.5); text-align: center; font-size: 13px; }
+    footer a { color: rgba(255,255,255,0.5); text-decoration: none; margin: 0 12px; }
+    footer a:hover { color: #fff; }
+  </style>
+</head>
+<body>
+  <nav><div class="inner"><a href="/" class="logo"><span>🌿</span> Freshli</a><a href="/" class="back-link">&larr; Back to home</a></div></nav>
+
+  <div class="support">
+    <h1>Support</h1>
+    <p class="intro">We're here to help. Find answers below or reach out directly — we typically respond within 24 hours.</p>
+
+    <div class="contact-card">
+      <h3>Need help? We've got you.</h3>
+      <p>Our support team is available Monday to Friday, 9am — 6pm GMT.</p>
+      <a href="mailto:support@freshli.app">✉️ support@freshli.app</a>
+    </div>
+
+    <h2>Quick Help</h2>
+    <div class="help-grid">
+      <div class="help-card">
+        <div class="icon">📱</div>
+        <h4>Getting Started</h4>
+        <p>Download Freshli from the App Store, sign in with Apple, and add your first pantry item.</p>
+      </div>
+      <div class="help-card">
+        <div class="icon">🔔</div>
+        <h4>Notifications</h4>
+        <p>Enable expiry reminders in Settings to get alerts before your food goes off.</p>
+      </div>
+      <div class="help-card">
+        <div class="icon">🤖</div>
+        <h4>Rescue Chef AI</h4>
+        <p>Requires Apple Intelligence (iPhone 16+). Tap "Ask Freshli" in the Rescue Chef screen.</p>
+      </div>
+      <div class="help-card">
+        <div class="icon">🔒</div>
+        <h4>Account & Privacy</h4>
+        <p>Delete your account anytime in Settings. All data is removed within 30 days.</p>
+      </div>
+    </div>
+
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq">
+      <div class="faq-item">
+        <div class="faq-q">Is Freshli free?</div>
+        <div class="faq-a"><p>Yes. Freshli is free to download and use. Freshli Pro offers optional premium features via a subscription, but the core pantry tracking, expiry alerts, and community sharing are completely free.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Does the AI need internet?</div>
+        <div class="faq-a"><p>No. Rescue Chef uses Apple's on-device FoundationModels framework. Your pantry data is processed entirely on your iPhone — nothing is sent to any server. It works offline.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Which devices are supported?</div>
+        <div class="faq-a"><p>Freshli requires iOS 26 or later. The AI Rescue Chef feature requires Apple Intelligence (iPhone 16 and later). Apple Watch complications require watchOS 26.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">How do I delete my account?</div>
+        <div class="faq-a"><p>Open Freshli → Profile → Settings → scroll to the bottom → Delete Account. All your personal data will be permanently removed from our servers within 30 days.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Is my data safe?</div>
+        <div class="faq-a"><p>Yes. Your data is encrypted in transit (TLS 1.3) and at rest (AES-256). We use Row Level Security so only you can access your data. We never sell your data or use third-party trackers. See our <a href="privacy.html">Privacy Policy</a> for full details.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">How do I cancel my subscription?</div>
+        <div class="faq-a"><p>Open your iPhone Settings → tap your name → Subscriptions → Freshli Pro → Cancel Subscription. You'll retain access until the end of the current billing period.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Can I share food with neighbours?</div>
+        <div class="faq-a"><p>Yes! Go to the Community tab and tap "New Post" to list surplus food for free collection. You can also browse what neighbours are sharing and claim items near you.</p></div>
+      </div>
+    </div>
+
+    <h2>Still need help?</h2>
+    <p>If your question isn't answered above, email us at <a href="mailto:support@freshli.app">support@freshli.app</a> with a description of your issue. Include your device model and iOS version so we can help faster.</p>
+
+    <h2>Report a Bug</h2>
+    <p>Found something that doesn't look right? Email <a href="mailto:support@freshli.app">support@freshli.app</a> with the subject line "Bug Report" and include:</p>
+    <ul style="padding-left: 24px; margin: 12px 0;">
+      <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 6px;">What you were doing when the issue occurred</li>
+      <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 6px;">What you expected to happen vs what actually happened</li>
+      <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 6px;">A screenshot if possible</li>
+      <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 6px;">Your iPhone model and iOS version</li>
+    </ul>
+  </div>
+
+  <footer>
+    <a href="/">Home</a> <a href="privacy.html">Privacy</a> <a href="terms.html">Terms</a> <a href="press.html">Press</a> <a href="support.html">Support</a> <a href="mailto:support@freshli.app">Contact</a>
+    <p style="margin-top: 16px;">&copy; 2026 Freshli. All rights reserved.</p>
+  </footer>
+
+  <script>
+    document.querySelectorAll('.faq-q').forEach(q => {
+      q.addEventListener('click', () => q.parentElement.classList.toggle('open'));
+    });
+  </script>
+</body>
+</html>
