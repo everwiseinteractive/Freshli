@@ -708,6 +708,13 @@ struct HomeView: View {
                         ForEach(Array(expiringItems.enumerated()), id: \.element.id) { index, item in
                             ExpiringItemPill(item: item)
                                 .staggeredAppearance(index: index)
+                                // Scroll-linked scale: items at the edge
+                                // recede so the center item feels "picked".
+                                .scrollTransition(.animated(.spring(response: 0.35))) { content, phase in
+                                    content
+                                        .scaleEffect(phase.isIdentity ? 1.0 : 0.9)
+                                        .opacity(phase.isIdentity ? 1.0 : 0.5)
+                                }
                         }
                     }
                     .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)

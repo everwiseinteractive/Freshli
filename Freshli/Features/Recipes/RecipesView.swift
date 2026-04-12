@@ -172,10 +172,18 @@ struct RecipesView: View {
                             leftoverHeroCard(recipe)
                         }
                         .buttonStyle(PressableButtonStyle())
+                        // Scroll-linked parallax: cards scale up as they
+                        // enter the viewport and subtly fade at the edges.
+                        .scrollTransition(.animated(.spring(response: 0.4))) { content, phase in
+                            content
+                                .scaleEffect(phase.isIdentity ? 1.0 : 0.92)
+                                .opacity(phase.isIdentity ? 1.0 : 0.6)
+                        }
                     }
                 }
                 .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
             }
+            .scrollTargetBehavior(.viewAligned)
         }
     }
 
@@ -451,6 +459,13 @@ struct RecipesView: View {
                     }
                     .buttonStyle(PressableButtonStyle())
                     .staggeredAppearance(index: index)
+                    // Cards scale + fade in as they scroll into view for
+                    // a premium "card reveal" feel on the main list.
+                    .scrollTransition(.animated(.spring(response: 0.5))) { content, phase in
+                        content
+                            .scaleEffect(phase.isIdentity ? 1.0 : 0.95)
+                            .opacity(phase.isIdentity ? 1.0 : 0.4)
+                    }
                 }
             }
             .adaptiveHPadding()

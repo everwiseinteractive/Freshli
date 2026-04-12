@@ -16,6 +16,7 @@ struct ProfileView: View {
     @State private var showLanguageSettings = false
     @State private var showDiscover = false
     @State private var householdSize: Int = 1
+    @State private var profileAppeared = false
     @Environment(SubscriptionService.self) private var subscriptionService
     @AppStorage("isDarkMode") private var isDarkMode = false
 
@@ -54,6 +55,13 @@ struct ProfileView: View {
         .contentMargins(.bottom, PSLayout.scaled(150), for: .scrollContent)
         .background(PSColors.backgroundSecondary)
         .ignoresSafeArea(edges: .top)
+        .onAppear {
+            // Trigger stat card icon bounces and numericText transitions
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(400))
+                profileAppeared.toggle()
+            }
+        }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -276,11 +284,13 @@ struct ProfileView: View {
             Image(systemName: icon)
                 .font(.system(size: PSLayout.scaledFont(22)))
                 .foregroundStyle(isAccent ? .white.opacity(0.9) : iconColor)
+                .symbolEffect(.bounce, value: profileAppeared)
             Text(value)
                 .font(.system(size: PSLayout.scaledFont(28), weight: .black))
                 .foregroundStyle(isAccent ? .white : PSColors.textPrimary)
                 .minimumScaleFactor(0.7)
                 .lineLimit(1)
+                .contentTransition(.numericText())
             Text(label)
                 .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
                 .foregroundStyle(isAccent ? .white.opacity(0.75) : PSColors.textSecondary)
