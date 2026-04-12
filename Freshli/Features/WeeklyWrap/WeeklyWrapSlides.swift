@@ -383,7 +383,7 @@ struct EnvironmentalImpactSlide: View {
 
             Spacer()
 
-            // Share + Done
+            // Share + Done — pinned above the floating tab bar
             if showActions {
                 VStack(spacing: PSSpacing.md) {
                     Button(action: onShare) {
@@ -410,8 +410,11 @@ struct EnvironmentalImpactSlide: View {
                 .transition(PSMotion.slideUp)
             }
 
+            // Clear the floating tab bar pill (~60pt) + home indicator (14pt)
+            // + visual breathing room so the Share button sits comfortably
+            // above the tab bar on all device sizes.
             Spacer()
-                .frame(height: PSSpacing.xxxxl)
+                .frame(height: PSLayout.scaled(120))
         }
         .padding(.horizontal, PSSpacing.screenHorizontal)
         .task { await runEntrance() }
