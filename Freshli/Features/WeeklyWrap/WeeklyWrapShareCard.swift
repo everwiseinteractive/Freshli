@@ -233,50 +233,109 @@ struct WeeklyWrapShareCard: View {
         }
     }
 
-    // MARK: - Tree Illustration (static)
+    // MARK: - Tree Illustration (static Canvas — matches the animated in-app tree)
 
     private var treeIllustration: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 4, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [Color(hex: 0x8B6914), Color(hex: 0x5D4408)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .frame(width: 12, height: 40)
-                .offset(y: 30)
+        Canvas { ctx, size in
+            let cx = size.width / 2
+            let ground = size.height * 0.88
+            let g: CGFloat = 1.0 // fully grown for the static share card
 
-            ForEach(0..<3, id: \.self) { i in
-                Ellipse()
-                    .fill(
-                        RadialGradient(
-                            gradient: Gradient(colors: [
-                                [Color(hex: 0x4ADE80), Color(hex: 0x22C55E), Color(hex: 0x16A34A)][i],
-                                [Color(hex: 0x22C55E), Color(hex: 0x16A34A), Color(hex: 0x15803D)][i].opacity(0.7)
-                            ]),
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: CGFloat(40 - i * 8)
-                        )
-                    )
-                    .frame(
-                        width: CGFloat(70 - i * 12),
-                        height: CGFloat(55 - i * 10)
-                    )
-                    .offset(y: CGFloat(-10 - i * 22))
+            // Ground shadow
+            ctx.fill(
+                Path(ellipseIn: CGRect(x: cx - 50, y: ground - 4, width: 100, height: 12)),
+                with: .color(.white.opacity(0.06))
+            )
+
+            // Grass tufts
+            let grassColors: [Color] = [Color(hex: 0x22C55E), Color(hex: 0x16A34A), Color(hex: 0x4ADE80)]
+            let grassXs: [CGFloat] = [-35, -20, -8, 5, 18, 30]
+            for (i, xOff) in grassXs.enumerated() {
+                let h: CGFloat = [10, 14, 9, 12, 11, 13][i]
+                var blade = Path()
+                blade.move(to: CGPoint(x: cx + xOff - 1, y: ground))
+                blade.addQuadCurve(
+                    to: CGPoint(x: cx + xOff + 1, y: ground - h),
+                    control: CGPoint(x: cx + xOff + 2, y: ground - h * 0.6)
+                )
+                blade.addLine(to: CGPoint(x: cx + xOff + 1, y: ground))
+                ctx.fill(blade, with: .color(grassColors[i % 3].opacity(0.5)))
             }
 
-            ForEach(0..<4, id: \.self) { i in
-                Image(systemName: "leaf.fill")
-                    .font(.system(size: 10))
-                    .foregroundColor(PSColors.primaryGreen.opacity(0.5))
-                    .offset(
-                        x: [-35, 30, -20, 40][i],
-                        y: [-30, -45, 10, -15][i]
+            // Trunk (tapered bezier)
+            let trunkBase = CGPoint(x: cx, y: ground)
+            let trunkTop = CGPoint(x: cx, y: ground - 60)
+            var trunk = Path()
+            trunk.move(to: CGPoint(x: trunkBase.x - 6, y: trunkBase.y))
+            trunk.addQuadCurve(
+                to: CGPoint(x: trunkTop.x - 3, y: trunkTop.y),
+                control: CGPoint(x: cx - 5, y: (trunkBase.y + trunkTop.y) / 2)
+            )
+            trunk.addLine(to: CGPoint(x: trunkTop.x + 3, y: trunkTop.y))
+            trunk.addQuadCurve(
+                to: CGPoint(x: trunkBase.x + 6, y: trunkBase.y),
+                control: CGPoint(x: cx + 5, y: (trunkBase.y + trunkTop.y) / 2)
+            )
+            trunk.closeSubpath()
+            ctx.fill(trunk, with: .linearGradient(
+                Gradient(colors: [Color(hex: 0x5D4408), Color(hex: 0x8B6914), Color(hex: 0x6B5210)]),
+                startPoint: CGPoint(x: cx - 8, y: ground),
+                endPoint: CGPoint(x: cx + 8, y: ground)
+            ))
+
+            // Branches
+            let branches: [(dx: CGFloat, dy: CGFloat)] = [(-18, -12), (14, -16), (-10, -26)]
+            for (i, b) in branches.enumerated() {
+                let start = CGPoint(x: cx + b.dx * 0.3, y: trunkTop.y + 10 - CGFloat(i) * 6)
+                let end = CGPoint(x: cx + b.dx, y: trunkTop.y + b.dy)
+                var bp = Path()
+                bp.move(to: start)
+                bp.addQuadCurve(to: end, control: CGPoint(x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 - 3))
+                ctx.stroke(bp, with: .color(Color(hex: 0x6B5210).opacity(0.7)), lineWidth: 2.0 - CGFloat(i) * 0.3)
+            }
+
+            // Canopy (organic multi-blob — static version of the animated canopy)
+            let blobs: [(dx: CGFloat, dy: CGFloat, r: CGFloat, color: Color)] = [
+                (-3, -32, 36, Color(hex: 0x15803D)),
+                (14, -28, 30, Color(hex: 0x166534)),
+                (-14, -36, 28, Color(hex: 0x14532D)),
+                ( 0, -46, 34, Color(hex: 0x16A34A)),
+                (16, -42, 26, Color(hex: 0x22C55E)),
+                (-16, -44, 24, Color(hex: 0x15803D)),
+                ( 5, -54, 24, Color(hex: 0x4ADE80)),
+                (-8, -50, 20, Color(hex: 0x22C55E)),
+                ( 0, -60, 18, Color(hex: 0x86EFAC).opacity(0.7)),
+            ]
+            for blob in blobs {
+                let x = cx + blob.dx * g
+                let y = trunkTop.y + blob.dy * g
+                let r = blob.r * g
+                let rect = CGRect(x: x - r, y: y - r, width: r * 2, height: r * 1.7)
+                ctx.fill(
+                    Path(ellipseIn: rect),
+                    with: .radialGradient(
+                        Gradient(colors: [blob.color, blob.color.opacity(0.3)]),
+                        center: CGPoint(x: x - r * 0.15, y: y - r * 0.2),
+                        startRadius: 0,
+                        endRadius: r
                     )
-                    .rotationEffect(.degrees([15, -25, 40, -10][i]))
+                )
+            }
+
+            // Scattered static leaves
+            let leafPositions: [(dx: CGFloat, dy: CGFloat, rot: CGFloat, sz: CGFloat)] = [
+                (-30, -35, 0.4, 5), (25, -50, -0.6, 4), (-15, -10, 0.8, 4.5), (32, -20, -0.3, 5)
+            ]
+            let leafColors: [Color] = [Color(hex: 0x4ADE80), Color(hex: 0x86EFAC), Color(hex: 0xFBBF24), PSColors.primaryGreen]
+            for (i, lp) in leafPositions.enumerated() {
+                ctx.drawLayer { inner in
+                    inner.translateBy(x: cx + lp.dx, y: trunkTop.y + lp.dy)
+                    inner.rotate(by: .radians(lp.rot))
+                    inner.fill(
+                        Path(ellipseIn: CGRect(x: -lp.sz / 2, y: -lp.sz / 4, width: lp.sz, height: lp.sz / 2)),
+                        with: .color(leafColors[i].opacity(0.45))
+                    )
+                }
             }
         }
     }
