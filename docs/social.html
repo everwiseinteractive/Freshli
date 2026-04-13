@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Social — Freshli</title>
+  <meta name="description" content="Follow Freshli on social media. Live updates, food rescue tips, and community stories." />
+  <meta name="theme-color" content="#22C55E" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <style>
+    :root { --green-500: #22C55E; --green-600: #16A34A; --green-700: #15803D; --green-800: #166534; --green-900: #14532D; --green-50: #F0FDF4; --green-100: #DCFCE7; --teal-500: #14B8A6; --neutral-50: #FAFAFA; --neutral-100: #F5F5F5; --neutral-600: #525252; --neutral-800: #1F2937; --neutral-900: #0A0A0A; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif; color: var(--neutral-800); background: #fff; }
+    a { color: var(--green-700); text-decoration: none; }
+    nav { position: sticky; top: 0; z-index: 100; padding: 16px 24px; backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); background: rgba(255,255,255,0.72); border-bottom: 1px solid rgba(0,0,0,0.06); }
+    nav .inner { max-width: 900px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .logo { display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 800; color: var(--green-800); text-decoration: none; letter-spacing: -0.5px; }
+    .logo img { width: 28px; height: 28px; border-radius: 7px; }
+    .back-link { font-size: 14px; font-weight: 600; color: var(--green-700); }
+    .back-link:hover { text-decoration: underline; }
+
+    .hero { padding: 80px 24px 40px; background: linear-gradient(135deg, var(--green-50) 0%, #fff 50%, var(--green-50) 100%); text-align: center; }
+    .hero .inner { max-width: 700px; margin: 0 auto; }
+    .hero h1 { font-size: clamp(32px, 4vw, 48px); font-weight: 900; letter-spacing: -1px; line-height: 1.1; margin-bottom: 12px; }
+    .hero p { font-size: 18px; color: var(--neutral-600); line-height: 1.6; }
+
+    /* Social links grid */
+    .social-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; max-width: 900px; margin: 40px auto; padding: 0 24px; }
+    .social-card { display: flex; align-items: center; gap: 16px; padding: 20px 24px; background: #fff; border-radius: 20px; border: 2px solid var(--neutral-100); text-decoration: none; color: var(--neutral-800); transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s, border-color 0.2s; }
+    .social-card:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,0,0,0.08); border-color: var(--green-100); }
+    .social-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+    .social-card h3 { font-size: 17px; font-weight: 800; margin-bottom: 2px; }
+    .social-card .handle { font-size: 13px; color: var(--neutral-600); font-weight: 500; }
+
+    /* Live feed section */
+    .feed-section { max-width: 900px; margin: 0 auto; padding: 60px 24px 40px; }
+    .feed-section h2 { font-size: 28px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 8px; }
+    .feed-section > p { font-size: 15px; color: var(--neutral-600); margin-bottom: 32px; }
+    .live-dot { display: inline-block; width: 8px; height: 8px; background: var(--green-500); border-radius: 50%; margin-right: 6px; animation: pulse-dot 2s infinite; }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* Embedded feeds */
+    .feed-tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+    .feed-tab { padding: 10px 20px; border-radius: 100px; font-size: 14px; font-weight: 700; border: 2px solid var(--neutral-100); background: #fff; color: var(--neutral-600); cursor: pointer; transition: all 0.2s; }
+    .feed-tab:hover { border-color: var(--green-100); color: var(--green-700); }
+    .feed-tab.active { background: var(--green-500); color: #fff; border-color: var(--green-500); }
+
+    .feed-container { min-height: 400px; }
+    .feed-panel { display: none; }
+    .feed-panel.active { display: block; }
+
+    .feed-embed { width: 100%; border: 1px solid var(--neutral-100); border-radius: 16px; overflow: hidden; background: var(--neutral-50); }
+    .feed-embed iframe { width: 100%; border: none; }
+
+    /* Placeholder for feeds that can't embed */
+    .feed-placeholder { padding: 48px 32px; text-align: center; background: var(--neutral-50); border-radius: 16px; border: 2px dashed var(--neutral-100); }
+    .feed-placeholder .icon { font-size: 48px; margin-bottom: 16px; }
+    .feed-placeholder h3 { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+    .feed-placeholder p { font-size: 15px; color: var(--neutral-600); margin-bottom: 20px; }
+    .feed-placeholder a { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: var(--neutral-900); color: #fff; border-radius: 100px; font-size: 14px; font-weight: 700; transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1); }
+    .feed-placeholder a:hover { transform: scale(1.04); color: #fff; }
+
+    /* Newsletter CTA */
+    .newsletter { max-width: 600px; margin: 40px auto 0; padding: 40px 32px; background: linear-gradient(135deg, var(--green-900), var(--neutral-900)); border-radius: 24px; text-align: center; color: #fff; }
+    .newsletter h3 { font-size: 24px; font-weight: 900; margin-bottom: 8px; }
+    .newsletter p { font-size: 15px; color: rgba(255,255,255,0.7); margin-bottom: 20px; }
+    .newsletter .btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: var(--green-500); color: #fff; border-radius: 100px; font-size: 15px; font-weight: 700; transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1); }
+    .newsletter .btn:hover { transform: scale(1.04); color: #fff; }
+
+    .spacer { height: 80px; }
+
+    footer { padding: 40px 24px; background: var(--neutral-900); color: rgba(255,255,255,0.5); text-align: center; font-size: 13px; }
+    footer a { color: rgba(255,255,255,0.5); text-decoration: none; margin: 0 12px; }
+    footer a:hover { color: #fff; }
+    @media (max-width: 640px) { .social-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <nav><div class="inner"><a href="/" class="logo"><img src="icon.png" alt="Freshli" /> Freshli</a><a href="/" class="back-link">&larr; Back to home</a></div></nav>
+
+  <div class="hero">
+    <div class="inner">
+      <h1>Follow the rescue wave.</h1>
+      <p>Live updates, food rescue tips, community stories, and behind-the-scenes from the Freshli team.</p>
+    </div>
+  </div>
+
+  <!-- Social Links -->
+  <div class="social-grid">
+    <a href="https://x.com/everwiseapps" target="_blank" rel="noopener" class="social-card">
+      <div class="social-icon" style="background: #0A0A0A; color: #fff;">𝕏</div>
+      <div><h3>X (Twitter)</h3><span class="handle">@everwiseapps</span></div>
+    </a>
+    <a href="https://www.facebook.com/profile.php?id=61574361915882" target="_blank" rel="noopener" class="social-card">
+      <div class="social-icon" style="background: #1877F2; color: #fff;">f</div>
+      <div><h3>Facebook</h3><span class="handle">Freshli</span></div>
+    </a>
+    <a href="https://www.instagram.com/freshliapp" target="_blank" rel="noopener" class="social-card">
+      <div class="social-icon" style="background: linear-gradient(135deg, #F58529, #DD2A7B, #8134AF); color: #fff;">📷</div>
+      <div><h3>Instagram</h3><span class="handle">@freshliapp</span></div>
+    </a>
+    <a href="https://www.producthunt.com/@everwise" target="_blank" rel="noopener" class="social-card">
+      <div class="social-icon" style="background: #DA552F; color: #fff;">🚀</div>
+      <div><h3>Product Hunt</h3><span class="handle">@everwise</span></div>
+    </a>
+    <a href="https://ko-fi.com/freshli" target="_blank" rel="noopener" class="social-card">
+      <div class="social-icon" style="background: #FF5E5B; color: #fff;">☕</div>
+      <div><h3>Ko-fi</h3><span class="handle">Support Freshli</span></div>
+    </a>
+    <a href="mailto:support@freshli.app" class="social-card">
+      <div class="social-icon" style="background: var(--green-500); color: #fff;">✉️</div>
+      <div><h3>Email</h3><span class="handle">support@freshli.app</span></div>
+    </a>
+  </div>
+
+  <!-- Live Feed -->
+  <div class="feed-section">
+    <h2><span class="live-dot"></span>Live from Freshli</h2>
+    <p>See what we're sharing across our channels — tap a platform to view the latest.</p>
+
+    <div class="feed-tabs">
+      <button class="feed-tab active" onclick="showFeed('x')">𝕏 X / Twitter</button>
+      <button class="feed-tab" onclick="showFeed('facebook')">f Facebook</button>
+      <button class="feed-tab" onclick="showFeed('instagram')">📷 Instagram</button>
+      <button class="feed-tab" onclick="showFeed('producthunt')">🚀 Product Hunt</button>
+    </div>
+
+    <div class="feed-container">
+      <!-- X / Twitter Feed -->
+      <div class="feed-panel active" id="feed-x">
+        <div class="feed-embed">
+          <a class="twitter-timeline" data-height="500" data-theme="light" data-chrome="nofooter noborders" href="https://twitter.com/everwiseapps">Latest from @everwiseapps</a>
+          <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+        </div>
+      </div>
+
+      <!-- Facebook Feed -->
+      <div class="feed-panel" id="feed-facebook">
+        <div class="feed-embed" style="text-align: center; padding: 20px;">
+          <iframe src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fprofile.php%3Fid%3D61574361915882&tabs=timeline&width=500&height=500&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true" width="500" height="500" style="border:none;overflow:hidden;max-width:100%;" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+        </div>
+      </div>
+
+      <!-- Instagram Feed -->
+      <div class="feed-panel" id="feed-instagram">
+        <div class="feed-placeholder">
+          <div class="icon">📷</div>
+          <h3>Follow us on Instagram</h3>
+          <p>Behind-the-scenes, food rescue tips, and Weekly Wrap highlights. Follow @freshliapp for daily inspiration.</p>
+          <a href="https://www.instagram.com/freshliapp" target="_blank" rel="noopener">Open Instagram →</a>
+        </div>
+      </div>
+
+      <!-- Product Hunt Feed -->
+      <div class="feed-panel" id="feed-producthunt">
+        <div class="feed-placeholder">
+          <div class="icon">🚀</div>
+          <h3>Freshli on Product Hunt</h3>
+          <p>Upvote Freshli when we launch, leave a review, and help us reach the front page. Every upvote counts.</p>
+          <a href="https://www.producthunt.com/@everwise" target="_blank" rel="noopener">View on Product Hunt →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Newsletter CTA -->
+    <div class="newsletter">
+      <h3>Don't miss the launch.</h3>
+      <p>Follow us on your favourite platform to be the first to know when Freshli hits the App Store.</p>
+      <a href="https://x.com/everwiseapps" target="_blank" rel="noopener" class="btn">Follow @everwiseapps on X →</a>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+
+  <footer>
+    <a href="/">Home</a> <a href="about.html">Our Story</a> <a href="partners.html">Partners</a> <a href="social.html">Social</a> <a href="privacy.html">Privacy</a> <a href="terms.html">Terms</a> <a href="support.html">Support</a> <a href="press.html">Press</a> <a href="mailto:support@freshli.app">Contact</a>
+    <p style="margin-top: 16px;">&copy; 2026 Freshli. All rights reserved.</p>
+  </footer>
+
+  <script>
+    function showFeed(platform) {
+      document.querySelectorAll('.feed-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.feed-tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('feed-' + platform).classList.add('active');
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html>
