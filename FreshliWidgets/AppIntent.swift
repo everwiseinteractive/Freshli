@@ -18,11 +18,13 @@ enum WidgetCategoryFilter: String, AppEnum {
     case fridge
     case pantry
 
-    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Category"
-    static var caseDisplayRepresentations: [WidgetCategoryFilter: DisplayRepresentation] = [
-        .all: "All Items",
-        .expiringSoon: "Expiring Soon",
-        .fridge: "Fridge Only",
-        .pantry: "Pantry Only"
-    ]
+    static var typeDisplayRepresentation: TypeDisplayRepresentation { "Category" }
+    static var caseDisplayRepresentations: [WidgetCategoryFilter: DisplayRepresentation] {
+        [
+            .all: "All Items",
+            .expiringSoon: "Expiring Soon",
+            .fridge: "Fridge Only",
+            .pantry: "Pantry Only"
+        ]
+    }
 }

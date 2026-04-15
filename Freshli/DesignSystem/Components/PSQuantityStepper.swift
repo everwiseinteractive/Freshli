@@ -10,9 +10,14 @@ struct PSQuantityStepper: View {
     var body: some View {
         HStack(spacing: PSSpacing.lg) {
             Button {
-                PSHaptics.shared.tick()
+                let newValue = max(minimum, value - step)
+                if newValue <= minimum {
+                    PSHaptics.shared.heavyTap()  // Boundary thunk
+                } else {
+                    PSHaptics.shared.tick()
+                }
                 withAnimation(PSMotion.springBouncy) {
-                    value = max(minimum, value - step)
+                    value = newValue
                 }
             } label: {
                 Image(systemName: "minus")
@@ -30,8 +35,10 @@ struct PSQuantityStepper: View {
                     : String(format: "%.1f", value)
                 Text(formatted)
                     .font(PSTypography.title3)
+                    .monospacedDigit()
                     .foregroundStyle(PSColors.textPrimary)
                     .contentTransition(.numericText())
+                    .compositingGroup()
                 if !unit.isEmpty {
                     Text(unit)
                         .font(PSTypography.caption1)
@@ -41,9 +48,14 @@ struct PSQuantityStepper: View {
             .frame(minWidth: 50)
 
             Button {
-                PSHaptics.shared.tick()
+                let newValue = min(maximum, value + step)
+                if newValue >= maximum {
+                    PSHaptics.shared.heavyTap()  // Boundary thunk
+                } else {
+                    PSHaptics.shared.tick()
+                }
                 withAnimation(PSMotion.springBouncy) {
-                    value = min(maximum, value + step)
+                    value = newValue
                 }
             } label: {
                 Image(systemName: "plus")

@@ -62,9 +62,13 @@ struct StandardCelebrationView: View {
                     showContent = true
                 }
             }
-            // Haptic feedback
-            let generator = UINotificationFeedbackGenerator()
-            generator.notificationOccurred(.success)
+            // Haptic synced to visual entrance — fires when springBouncy
+            // animation begins (after 0.15s delay), not at raw onAppear,
+            // so the tactile and visual peaks land together.
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(150))
+                PSHaptics.shared.success()
+            }
         }
         .onDisappear { showContent = false }
     }

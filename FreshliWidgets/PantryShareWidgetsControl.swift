@@ -33,9 +33,9 @@ struct FreshliWidgetsControl: ControlWidget {
 // MARK: - Open Pantry Intent
 
 struct OpenPantryIntent: AppIntent {
-    static var title: LocalizedStringResource = "Open Pantry"
-    static var description: IntentDescription = "Opens the Freshli app."
-    static var openAppWhenRun: Bool = true
+    static var title: LocalizedStringResource { "Open Pantry" }
+    static var description: IntentDescription { "Opens the Freshli app." }
+    static var openAppWhenRun: Bool { true }
 
     func perform() async throws -> some IntentResult {
         return .result()

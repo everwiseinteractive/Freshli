@@ -53,8 +53,10 @@ struct BigNumberSlide: View {
             VStack(spacing: PSSpacing.lg) {
                 Text("\(displayedCount)")
                     .font(.system(size: 120, weight: .heavy, design: .rounded))
+                    .monospacedDigit()
                     .foregroundColor(.white)
                     .contentTransition(.numericText())
+                    .compositingGroup()
                     .keyframeAnimator(
                         initialValue: NumberPopState(),
                         trigger: countFinished
@@ -209,8 +211,10 @@ struct CommunityHeroSlide: View {
             VStack(spacing: PSSpacing.xl) {
                 Text("\(displayedPeople)")
                     .font(.system(size: 96, weight: .heavy, design: .rounded))
+                    .monospacedDigit()
                     .foregroundColor(.white)
                     .contentTransition(.numericText())
+                    .compositingGroup()
 
                 Text("meals shared with\nyour community")
                     .font(.system(size: 22, weight: .semibold, design: .rounded))

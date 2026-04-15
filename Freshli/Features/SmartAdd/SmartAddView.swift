@@ -13,6 +13,7 @@ struct SmartAddView: View {
     @State private var viewModel = SmartAddViewModel()
     @State private var scannerCoordinator: LiveScannerView.Coordinator?
     @State private var showUnsupportedAlert = false
+    @State private var isSearchFocused = false
 
     private var isDeviceSupported: Bool {
         LiveScannerView.isDeviceSupported
@@ -52,23 +53,35 @@ struct SmartAddView: View {
                 // Layer 3: Controls
                 VStack(spacing: 0) {
                     // Status indicator
-                    scanStatusBadge
-                        .padding(.top, PSSpacing.sm)
+                    if !isSearchFocused {
+                        scanStatusBadge
+                            .padding(.top, PSSpacing.sm)
+                    }
 
-                    Spacer()
+                    if !isSearchFocused {
+                        Spacer()
+                    } else {
+                        Spacer()
+                            .frame(height: PSSpacing.xl)
+                    }
 
                     // Search bar
-                    SmartAddSearchBar(viewModel: viewModel)
+                    SmartAddSearchBar(viewModel: viewModel, isFocusedBinding: $isSearchFocused)
                         .padding(.horizontal, PSSpacing.screenHorizontal)
                         .padding(.bottom, PSSpacing.md)
 
+                    if isSearchFocused {
+                        Spacer()
+                    }
+
                     // Pending tray
-                    if !viewModel.pendingItems.isEmpty {
+                    if !viewModel.pendingItems.isEmpty && !isSearchFocused {
                         PendingTrayView(viewModel: viewModel, onSaveAll: saveAllItems)
                             .transition(PSMotion.slideUp)
                     }
                 }
                 .flAnimation(PSMotion.springDefault, value: viewModel.pendingItems.isEmpty)
+                .animation(PSMotion.springQuick, value: isSearchFocused)
             }
             .ignoresSafeArea(edges: .bottom)
             .navigationBarTitleDisplayMode(.inline)
@@ -82,11 +95,7 @@ struct SmartAddView: View {
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.white)
                             .frame(width: PSLayout.iconButtonSize, height: PSLayout.iconButtonSize)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Circle())
-                            .overlay(
-                                Circle().strokeBorder(.white.opacity(0.3), lineWidth: 0.5)
-                            )
+                            .glassEffect(.regular, in: Circle())
                     }
                 }
 
@@ -104,11 +113,7 @@ struct SmartAddView: View {
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundStyle(.white)
                             .frame(width: PSLayout.iconButtonSize, height: PSLayout.iconButtonSize)
-                            .background(.ultraThinMaterial)
-                            .clipShape(Circle())
-                            .overlay(
-                                Circle().strokeBorder(.white.opacity(0.3), lineWidth: 0.5)
-                            )
+                            .glassEffect(.regular, in: Circle())
                     }
                 }
             }
@@ -190,11 +195,7 @@ struct SmartAddView: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, PSSpacing.xl)
                     .padding(.vertical, PSSpacing.md)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Capsule())
-                    .overlay(
-                        Capsule().strokeBorder(.white.opacity(0.3), lineWidth: 0.5)
-                    )
+                    .glassEffect(.regular.interactive(), in: Capsule())
                 }
                 .buttonStyle(PressableButtonStyle())
                 .padding(.top, PSSpacing.md)
@@ -233,11 +234,7 @@ struct SmartAddView: View {
         .font(.system(size: 13, weight: .medium))
         .padding(.horizontal, PSSpacing.lg)
         .padding(.vertical, PSSpacing.sm)
-        .background(.ultraThinMaterial)
-        .clipShape(Capsule())
-        .overlay(
-            Capsule().strokeBorder(.white.opacity(0.2), lineWidth: 0.5)
-        )
+        .glassEffect(.regular, in: Capsule())
         .flAnimation(PSMotion.springQuick, value: viewModel.scanState)
     }
 

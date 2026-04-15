@@ -52,12 +52,7 @@ struct LinkPreviewCard: View {
             Spacer()
         }
         .padding(PSSpacing.md)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd))
-        .overlay(
-            RoundedRectangle(cornerRadius: PSSpacing.radiusMd)
-                .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
-        )
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
     }
 
     private func loadedView(title: String, siteName: String?) -> some View {
@@ -90,12 +85,7 @@ struct LinkPreviewCard: View {
                 .foregroundStyle(PSColors.textTertiary)
         }
         .padding(PSSpacing.md)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd))
-        .overlay(
-            RoundedRectangle(cornerRadius: PSSpacing.radiusMd)
-                .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
-        )
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
     }
 
     private var fallbackView: some View {
@@ -126,12 +116,7 @@ struct LinkPreviewCard: View {
                 .foregroundStyle(PSColors.textTertiary)
         }
         .padding(PSSpacing.md)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd))
-        .overlay(
-            RoundedRectangle(cornerRadius: PSSpacing.radiusMd)
-                .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
-        )
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
     }
 
     // MARK: - Metadata Fetch

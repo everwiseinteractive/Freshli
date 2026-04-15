@@ -9,6 +9,7 @@ struct ReceiptPhotoScannerView: View {
     @State private var isScanning = false
     @State private var showError = false
     @State private var errorMessage = ""
+    @State private var showCamera = false
 
     @State private var receiptScanner = ReceiptScannerService()
     let importService = ReceiptImportService()
@@ -73,7 +74,7 @@ struct ReceiptPhotoScannerView: View {
                                                 .lineLimit(1)
 
                                             HStack(spacing: PSSpacing.md) {
-                                                Text("\(String(format: "%.1f", item.quantity)) \(item.unit.displayName)")
+                                                Text("\(String(format: "%.1f", item.quantity)) \(item.unit.displayName(for: item.quantity))")
                                                     .font(PSTypography.caption2)
                                                     .foregroundStyle(PSColors.textSecondary)
 
@@ -146,13 +147,13 @@ struct ReceiptPhotoScannerView: View {
                             }
 
                             PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                                PSButton(
-                                    title: "Choose Another Photo",
-                                    style: .secondary,
-                                    size: .medium,
-                                    isFullWidth: true,
-                                    action: {}
-                                )
+                                Text("Choose Another Photo")
+                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(PSColors.backgroundSecondary)
+                                    .foregroundStyle(PSColors.textPrimary)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                             }
                             .onChange(of: selectedPhotoItem) { _, newItem in
                                 Task {
@@ -189,15 +190,26 @@ struct ReceiptPhotoScannerView: View {
                             .padding(PSSpacing.xl)
                         }
 
+                        Button {
+                            showCamera = true
+                        } label: {
+                            Label("Take Photo", systemImage: "camera.fill")
+                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(PSColors.primaryGreen)
+                                .foregroundStyle(.white)
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        }
+
                         PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                            PSButton(
-                                title: "Take Photo",
-                                icon: "camera.fill",
-                                style: .primary,
-                                size: .large,
-                                isFullWidth: true,
-                                action: {}
-                            )
+                            Label("Choose from Photos", systemImage: "photo.fill")
+                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(PSColors.backgroundSecondary)
+                                .foregroundStyle(PSColors.textPrimary)
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
                         .onChange(of: selectedPhotoItem) { _, newItem in
                             Task {
@@ -216,6 +228,12 @@ struct ReceiptPhotoScannerView: View {
             }
             .navigationTitle("Scan Receipt")
             .navigationBarTitleDisplayMode(.inline)
+            .fullScreenCover(isPresented: $showCamera) {
+                ReceiptCameraPickerView { image in
+                    selectedImage = image
+                    receiptScanner.reset()
+                }
+            }
             .alert("Scan Error", isPresented: $showError) {
                 Button("OK", role: .cancel) {
                     receiptScanner.reset()
@@ -237,6 +255,43 @@ struct ReceiptPhotoScannerView: View {
 
         Task {
             await receiptScanner.scanReceipt(image)
+        }
+    }
+}
+
+// MARK: - Camera Picker
+
+private struct ReceiptCameraPickerView: UIViewControllerRepresentable {
+    @Environment(\.dismiss) private var dismiss
+    let onCapture: (UIImage) -> Void
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: ReceiptCameraPickerView
+        init(_ parent: ReceiptCameraPickerView) { self.parent = parent }
+
+        func imagePickerController(
+            _ picker: UIImagePickerController,
+            didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
+        ) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.onCapture(image)
+            }
+            parent.dismiss()
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
         }
     }
 }

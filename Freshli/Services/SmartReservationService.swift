@@ -227,7 +227,6 @@ final class SmartReservationService {
                 content.title = String(localized: "Claim Expiring Soon")
                 content.body = String(localized: "Your claim expires in 30 minutes. Confirm you're en route to complete the pickup.")
                 content.sound = .default
-                content.badge = NSNumber(value: UIApplication.shared.applicationIconBadgeNumber + 1)
                 return content
             }(),
             trigger: UNCalendarNotificationTrigger(
@@ -252,30 +251,41 @@ final class SmartReservationService {
             )
         )
 
-        UNUserNotificationCenter.current().add(warningRequest) { error in
+        UNUserNotificationCenter.current().add(warningRequest) { [weak self] error in
             if let error = error {
-                self.logger.error("Failed to schedule warning notification: \(error.localizedDescription)")
+                self?.logger.error("Failed to schedule warning notification: \(error.localizedDescription)")
             }
         }
 
-        UNUserNotificationCenter.current().add(expiryRequest) { error in
+        UNUserNotificationCenter.current().add(expiryRequest) { [weak self] error in
             if let error = error {
-                self.logger.error("Failed to schedule expiry notification: \(error.localizedDescription)")
+                self?.logger.error("Failed to schedule expiry notification: \(error.localizedDescription)")
             }
         }
+
+        // Update badge count using modern API
+        Task { try? await UNUserNotificationCenter.current().setBadgeCount(1) }
 
         logger.debug("Scheduled notifications for claim \(claim.id.uuidString)")
     }
 
     // MARK: - Periodic Check
 
+    private var expiryCheckTimer: Timer?
+
     private func scheduleExpiryCheck() {
         // Check for expired claims every minute. Timer fires on a nonisolated
         // context, so hop back to the MainActor before touching this service's state.
-        Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+        expiryCheckTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.checkExpiredClaims()
             }
         }
+    }
+
+    /// Call to stop the periodic expiry check timer.
+    func stopExpiryCheck() {
+        expiryCheckTimer?.invalidate()
+        expiryCheckTimer = nil
     }
 }

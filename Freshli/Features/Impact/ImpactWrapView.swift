@@ -19,7 +19,7 @@ struct ImpactWrapView: View {
     }
 
     var body: some View {
-        if let wrapData {
+        if wrapData != nil {
             ZStack {
                 // Dark background
                 Color.black
@@ -55,23 +55,25 @@ struct ImpactWrapView: View {
 
     @ViewBuilder
     private var screenContent: some View {
-        switch currentScreen {
-        case 0:
-            IntroScreen(wrapData: wrapData!)
-        case 1:
-            ItemsSavedScreen(wrapData: wrapData!)
-        case 2:
-            MoneySavedScreen(wrapData: wrapData!)
-        case 3:
-            EnvironmentalImpactScreen(wrapData: wrapData!)
-        case 4:
-            TopCategoryScreen(wrapData: wrapData!)
-        case 5:
-            StreakScreen(wrapData: wrapData!)
-        case 6:
-            SummaryScreen(wrapData: wrapData!, onShare: shareImpact, onDone: { dismiss() })
-        default:
-            IntroScreen(wrapData: wrapData!)
+        if let data = wrapData {
+            switch currentScreen {
+            case 0:
+                IntroScreen(wrapData: data)
+            case 1:
+                ItemsSavedScreen(wrapData: data)
+            case 2:
+                MoneySavedScreen(wrapData: data)
+            case 3:
+                EnvironmentalImpactScreen(wrapData: data)
+            case 4:
+                TopCategoryScreen(wrapData: data)
+            case 5:
+                StreakScreen(wrapData: data)
+            case 6:
+                SummaryScreen(wrapData: data, onShare: shareImpact, onDone: { dismiss() })
+            default:
+                IntroScreen(wrapData: data)
+            }
         }
     }
 
@@ -86,7 +88,10 @@ struct ImpactWrapView: View {
                 Text("Tap or swipe to continue")
                     .font(.system(size: 14, weight: .medium, design: .default))
                     .foregroundColor(.white.opacity(0.7))
-                    .transition(.opacity)
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .offset(y: 8)),
+                        removal: .opacity
+                    ))
             }
 
             // Progress dots
@@ -154,8 +159,10 @@ struct ImpactWrapView: View {
     private func startAutoAdvance() {
         stopAutoAdvance()
 
-        autoAdvanceTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { _ in
-            advanceToNext()
+        autoAdvanceTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [self] _ in
+            Task { @MainActor in
+                self.advanceToNext()
+            }
         }
     }
 
@@ -167,7 +174,8 @@ struct ImpactWrapView: View {
     // MARK: - Sharing
 
     private func shareImpact() {
-        let cardView = ImpactWrapCardView(wrapData: wrapData!, showBranding: true)
+        guard let wrapData else { return }
+        let cardView = ImpactWrapCardView(wrapData: wrapData, showBranding: true)
             .frame(width: 360, height: 640)
 
         if let image = renderViewToImage(cardView, scale: 3.0) {
@@ -282,8 +290,10 @@ private struct ItemsSavedScreen: View {
                     // Large counter
                     Text("\(displayedCount)")
                         .font(.system(size: 96, weight: .bold, design: .rounded))
+                        .monospacedDigit()
                         .foregroundColor(.white)
                         .contentTransition(.numericText())
+                        .compositingGroup()
 
                     Text("items rescued\nfrom waste")
                         .font(.system(size: 20, weight: .semibold, design: .default))
@@ -384,12 +394,9 @@ private struct MoneySavedScreen: View {
                 for _ in 0..<10 {
                     let x = CGFloat.random(in: 0...size.width)
                     let y = CGFloat.random(in: 0...size.height)
-                    let text = Text("$")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.white.opacity(0.1))
-
                     var stringContext = context
                     stringContext.translateBy(x: x, y: y)
+                    stringContext.draw(Text("$").font(.system(size: 32, weight: .bold)).foregroundColor(.white.opacity(0.1)), at: .zero)
                 }
             }
 
@@ -399,8 +406,10 @@ private struct MoneySavedScreen: View {
                 VStack(spacing: PSSpacing.xl) {
                     Text("$\(Int(displayedAmount))")
                         .font(.system(size: 96, weight: .bold, design: .rounded))
+                        .monospacedDigit()
                         .foregroundColor(.white)
                         .contentTransition(.numericText())
+                        .compositingGroup()
 
                     Text("Money Saved")
                         .font(.system(size: 20, weight: .semibold, design: .default))
@@ -461,8 +470,10 @@ private struct EnvironmentalImpactScreen: View {
                 VStack(spacing: PSSpacing.xl) {
                     Text("\(String(format: "%.1f", displayedCO2))kg")
                         .font(.system(size: 80, weight: .bold, design: .rounded))
+                        .monospacedDigit()
                         .foregroundColor(.white)
                         .contentTransition(.numericText())
+                        .compositingGroup()
 
                     Text("CO₂ Avoided")
                         .font(.system(size: 20, weight: .semibold, design: .default))
@@ -486,7 +497,7 @@ private struct EnvironmentalImpactScreen: View {
                         Text("That's like planting \(wrapData.treesEquivalent) tree\(wrapData.treesEquivalent > 1 ? "s" : "")")
                             .font(.system(size: 16, weight: .semibold, design: .default))
                             .foregroundColor(.white.opacity(0.9))
-                            .transition(.opacity)
+                            .transition(.opacity.combined(with: .offset(y: 10)))
                     }
                     .animation(.staggered(staggerInterval: 0.1), value: showTrees)
                 }
@@ -657,8 +668,10 @@ private struct StreakScreen: View {
                             VStack(alignment: .leading, spacing: PSSpacing.xs) {
                                 Text("\(wrapData.currentStreak)")
                                     .font(.system(size: 64, weight: .bold, design: .rounded))
+                                    .monospacedDigit()
                                     .foregroundColor(.white)
                                     .contentTransition(.numericText())
+                                    .compositingGroup()
 
                                 Text("Day Streak")
                                     .font(.system(size: 18, weight: .semibold, design: .default))
@@ -672,7 +685,7 @@ private struct StreakScreen: View {
                             .font(.system(size: 18, weight: .semibold, design: .default))
                             .foregroundColor(.white.opacity(0.95))
                             .multilineTextAlignment(.center)
-                            .transition(.opacity)
+                            .transition(.opacity.combined(with: .offset(y: 10)))
                     }
                     .animation(PSMotion.springGentle, value: showStreak)
                 }
@@ -788,10 +801,14 @@ extension Animation {
 
 #Preview {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: FreshliItem.self, configurations: config)
+    let container = try? ModelContainer(for: FreshliItem.self, configurations: config)
 
     NavigationStack {
-        ImpactWrapView(modelContext: container.mainContext)
-            .modelContainer(container)
+        if let container {
+            ImpactWrapView(modelContext: container.mainContext)
+                .modelContainer(container)
+        } else {
+            Text("Preview unavailable")
+        }
     }
 }

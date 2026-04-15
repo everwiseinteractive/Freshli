@@ -10,6 +10,7 @@ struct ReceiptScannerView: View {
     @State private var receiptScanner = ReceiptScannerService()
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var showCamera = false
+    @State private var showPhotoPicker = false
     @State private var selectedItemIndices: Set<Int> = []
     @State private var editingItemId: UUID?
     @State private var itemNameEdits: [UUID: String] = [:]
@@ -53,15 +54,22 @@ struct ReceiptScannerView: View {
                 }
             }
             .photosPicker(
-                isPresented: .constant(selectedPhotoItem != nil),
+                isPresented: $showPhotoPicker,
                 selection: $selectedPhotoItem,
                 matching: .images,
                 photoLibrary: .shared()
             )
+            .fullScreenCover(isPresented: $showCamera) {
+                CameraPickerView { image in
+                    Task {
+                        await receiptScanner.scanReceipt(image)
+                    }
+                }
+            }
             .onChange(of: selectedPhotoItem) { oldValue, newValue in
                 if let newValue {
                     Task {
-                        if let data = try await newValue.loadTransferable(type: Data.self),
+                        if let data = try? await newValue.loadTransferable(type: Data.self),
                            let uiImage = UIImage(data: data) {
                             await receiptScanner.scanReceipt(uiImage)
                         }
@@ -146,7 +154,7 @@ struct ReceiptScannerView: View {
                     icon: "photo.fill",
                     style: .secondary,
                     isFullWidth: true,
-                    action: { selectedPhotoItem = nil }  // Trigger picker
+                    action: { showPhotoPicker = true }
                 )
             }
             .padding(PSSpacing.screenHorizontal)
@@ -260,7 +268,7 @@ struct ReceiptScannerView: View {
             HStack(spacing: PSSpacing.md) {
                 // Checkbox
                 Button(action: {
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    withAnimation(PSMotion.springQuick) {
                         if selectedItemIndices.contains(index) {
                             selectedItemIndices.remove(index)
                         } else {
@@ -288,7 +296,7 @@ struct ReceiptScannerView: View {
                     }
 
                     HStack(spacing: PSSpacing.md) {
-                        Text("\(Int(itemQuantityEdits[item.id] ?? item.quantity)) \(item.unit.displayName)")
+                        Text("\(Int(itemQuantityEdits[item.id] ?? item.quantity)) \(item.unit.displayName(for: Double(Int(itemQuantityEdits[item.id] ?? item.quantity))))")
                             .font(.system(size: 13, weight: .regular))
                             .foregroundStyle(PSColors.textSecondary)
 
@@ -458,6 +466,40 @@ struct ReceiptScannerView: View {
         let calendar = Calendar.current
         let components = calendar.dateComponents([.day], from: Date(), to: date)
         return max(components.day ?? 0, 0)
+    }
+}
+
+// MARK: - Camera Picker
+
+private struct CameraPickerView: UIViewControllerRepresentable {
+    @Environment(\.dismiss) private var dismiss
+    let onCapture: (UIImage) -> Void
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: CameraPickerView
+        init(_ parent: CameraPickerView) { self.parent = parent }
+
+        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.onCapture(image)
+            }
+            parent.dismiss()
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
+        }
     }
 }
 

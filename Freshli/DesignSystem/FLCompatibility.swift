@@ -5,6 +5,9 @@ import SwiftUI
 // This allows incremental migration without touching every file at once.
 
 // Components
+typealias FLCard = PSCard
+typealias FLCompactCard = PSCompactCard
+typealias FLActionCard = PSActionCard
 typealias FLButton = PSButton
 typealias FLButtonStyle = PSButtonStyle
 typealias FLButtonSize = PSButtonSize
@@ -19,7 +22,6 @@ typealias FLEmptyState = PSEmptyState
 typealias FLStatTile = PSStatTile
 typealias FLStatTileRow = PSStatTileRow
 typealias FLFilterChip = PSFilterChip
-typealias FLSectionHeader = PSSectionHeader
 typealias FLBadge = PSBadge
 typealias FLExpiryBadge = PSExpiryBadge
 typealias FLBadgeVariant = PSBadgeVariant

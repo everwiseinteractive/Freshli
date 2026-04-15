@@ -45,16 +45,9 @@ struct SmartShoppingListView: View {
 
     private var heroHeader: some View {
         VStack(spacing: PSSpacing.md) {
-            ZStack {
-                Circle()
-                    .fill(LinearGradient(
-                        colors: [PSColors.primaryGreen.opacity(0.15), PSColors.accentTeal.opacity(0.1)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: PSLayout.scaled(80), height: PSLayout.scaled(80))
-                Image(systemName: "cart.badge.questionmark")
-                    .font(.system(size: PSLayout.scaledFont(34)))
-                    .foregroundStyle(PSColors.primaryGreen)
-            }
+            Image(systemName: "cart.badge.questionmark")
+                .font(.system(size: PSLayout.scaledFont(40)))
+                .foregroundStyle(PSColors.primaryGreen)
             VStack(spacing: PSSpacing.xs) {
                 Text("Buy Smarter, Waste Less")
                     .font(.system(size: PSLayout.scaledFont(20), weight: .black, design: .rounded))
@@ -123,14 +116,10 @@ struct SmartShoppingListView: View {
         VStack(alignment: .leading, spacing: PSSpacing.md) {
             // Top row
             HStack(spacing: PSSpacing.md) {
-                ZStack {
-                    Circle()
-                        .fill(PSColors.secondaryAmber.opacity(0.12))
-                        .frame(width: PSLayout.scaled(44), height: PSLayout.scaled(44))
-                    Image(systemName: "arrow.down.circle.fill")
-                        .font(.system(size: PSLayout.scaledFont(20)))
-                        .foregroundStyle(PSColors.secondaryAmber)
-                }
+                Image(systemName: "arrow.down.circle.fill")
+                    .font(.system(size: PSLayout.scaledFont(24)))
+                    .foregroundStyle(PSColors.secondaryAmber)
+                    .frame(width: PSLayout.scaled(44), height: PSLayout.scaled(44))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(p.itemName)
                         .font(.system(size: PSLayout.scaledFont(15), weight: .bold))

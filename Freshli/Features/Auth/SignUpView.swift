@@ -33,7 +33,7 @@ struct SignUpView: View {
                                 RoundedRectangle(cornerRadius: PSSpacing.radiusHero, style: .continuous)
                                     .strokeBorder(.white, lineWidth: 3)
                             )
-                            .shadow(color: .black.opacity(0.15), radius: 20, y: 8)
+                            .elevation(.z3)
                             .overlay {
                                 Image(systemName: "person.badge.plus")
                                     .font(.system(size: PSLayout.scaledFont(48), weight: .regular))
@@ -47,7 +47,7 @@ struct SignUpView: View {
                             .background(PSColors.secondaryAmber)
                             .clipShape(Circle())
                             .overlay(Circle().strokeBorder(.white, lineWidth: 2))
-                            .shadow(color: .black.opacity(0.1), radius: 6, y: 3)
+                            .elevation(.z1)
                             .offset(x: -20, y: -12)
                     }
 

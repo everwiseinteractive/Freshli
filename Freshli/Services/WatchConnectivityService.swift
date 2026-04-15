@@ -48,7 +48,7 @@ enum WatchConnectivityService {
             let expiringNames = expiringItems.prefix(5).map(\.name).joined(separator: "|")
 
             // This week's rescues (consumed + shared + donated)
-            let weekStart = Calendar.current.date(byAdding: .day, value: -7, to: now) ?? now
+            let _ = Calendar.current.date(byAdding: .day, value: -7, to: now) ?? now
             let allItemsDescriptor = FetchDescriptor<FreshliItem>()
             let allItems = try modelContext.fetch(allItemsDescriptor)
             let weeklyRescues = allItems.filter {

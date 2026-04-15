@@ -117,8 +117,10 @@ private struct CostColumn: View {
 
             Text(String(format: "$%.2f", amount))
                 .font(PSTypography.statMedium)
+                .monospacedDigit()
                 .foregroundStyle(color)
                 .contentTransition(.numericText())
+                .compositingGroup()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

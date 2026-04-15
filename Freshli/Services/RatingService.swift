@@ -1,6 +1,7 @@
 import Foundation
 import StoreKit
 import UIKit
+import SwiftUI
 
 // MARK: - RatingService
 // Tracks "joy moments" (recipe completed, item rescued, milestone hit) and
@@ -32,7 +33,7 @@ final class RatingService {
     /// - Recipe successfully completed
     /// - Impact milestone reached
     func recordJoyMoment() {
-        var count = UserDefaults.standard.integer(forKey: momentsKey) + 1
+        let count = UserDefaults.standard.integer(forKey: momentsKey) + 1
         UserDefaults.standard.set(count, forKey: momentsKey)
         PSLogger.general.info("RatingService: joy moment \(count)/\(self.momentsRequired) recorded")
         maybeRequestReview(currentCount: count)
@@ -59,11 +60,11 @@ final class RatingService {
         // Delay slightly so it appears after any animations complete.
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(1_800))
-            guard let scene = UIApplication.shared.connectedScenes
+            guard let windowScene = UIApplication.shared.connectedScenes
                 .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
             else { return }
 
-            SKStoreReviewController.requestReview(in: scene)
+            AppStore.requestReview(in: windowScene)
             PSLogger.general.info("RatingService: review prompt presented")
         }
     }

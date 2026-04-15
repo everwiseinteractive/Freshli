@@ -1,0 +1,41 @@
+Hör auf, Essen wegzuwerfen. Fang an, es zu retten.
+
+Der durchschnittliche Haushalt verschwendet 700 € Lebensmittel pro Jahr. Freshli ändert das — verfolge jedes Produkt in deinem Kühlschrank, erhalte KI-gestützte Rezeptvorschläge bevor etwas abläuft, und teile Überschüsse mit Nachbarn, die sie brauchen.
+
+RESCUE CHEF — ANGETRIEBEN VON APPLE INTELLIGENCE
+Tippe auf einen Button und Freshlis On-Device-KI erstellt Rezepte für deinen genauen Vorratsschrank. Kein Internet nötig. Deine Lebensmitteldaten verlassen nie dein Telefon. Privates, sofortiges, intelligentes Kochen.
+
+VERFOLGE ALLES
+• Scanne Barcodes, Kassenbons oder tippe Artikel manuell ein
+• Intelligente Ablauferinnerungen sagen dir, was zuerst verwendet werden muss
+• Farbcodierte Frische-Badges auf einen Blick
+• Schöne Lebensmittelfotografie für jeden Artikel
+
+TEILE MIT DEINER COMMUNITY
+• Biete überschüssige Lebensmittel zur kostenlosen Abholung durch Nachbarn an
+• Finde und spende an Gemeinschaftskühlschränke in deiner Nähe
+• Tritt lokalen Gruppen für hyperlokales Teilen bei
+• Verdiene Karma-Punkte für deine Großzügigkeit
+
+SIEH DEINEN IMPACT
+• Weekly Wrap — eine filmreife Zusammenfassung deiner Rettungsgeschichte
+• Verfolge vermiedenes CO₂, gespartes Geld und geteilte Mahlzeiten
+• Beobachte die globale Rettungswelle in Echtzeit
+• Steige auf von Sämling bis Champion
+
+FUNKTIONIERT IN DEINEM GANZEN LEBEN
+• Apple Watch Komplikationen zeigen, was abläuft
+• Live Activities verfolgen Kochtimer auf deinem Sperrbildschirm
+• Siri-Kurzbefehle: „Hey Siri, rette meinen Vorratsschrank"
+• Kontrollzentrum-Widget für sofortige Erfassung
+• Interaktive Widgets mit Ein-Tipp-Verbrauch
+
+FÜR ALLE GESTALTET
+• Volle VoiceOver-Unterstützung mit kontextuellen Hinweisen
+• Farbenblind-sichere Ablauf-Badges
+• Dynamic Type in jeder Größe
+• Bewegung reduzieren wird überall respektiert
+
+Gebaut mit Swift 6.2, SwiftUI und SwiftData. Angetrieben von Apple Intelligence. Gestaltet für den Planeten.
+
+Für die Menschen. Für den Planeten.

@@ -201,8 +201,8 @@ struct FreshliExpiringWidgetView: View {
 
 /// App Intent that marks a pantry item as consumed directly from the widget.
 struct ConsumeFromWidgetIntent: AppIntent {
-    static var title: LocalizedStringResource = "Mark as Consumed"
-    static var description: IntentDescription = "Mark a pantry item as consumed from the widget."
+    static var title: LocalizedStringResource { "Mark as Consumed" }
+    static var description: IntentDescription { "Mark a pantry item as consumed from the widget." }
 
     @Parameter(title: "Item ID")
     var itemId: String
@@ -267,9 +267,9 @@ struct FreshliQuickScanControl: ControlWidget {
 
 /// Intent that opens the app in Smart Add camera mode.
 struct OpenSmartScanIntent: AppIntent {
-    static var title: LocalizedStringResource = "Open Quick Scan"
-    static var description: IntentDescription = "Opens Freshli in Smart Add camera mode."
-    static var openAppWhenRun: Bool = true
+    static var title: LocalizedStringResource { "Open Quick Scan" }
+    static var description: IntentDescription { "Opens Freshli in Smart Add camera mode." }
+    static var openAppWhenRun: Bool { true }
 
     func perform() async throws -> some IntentResult {
         // Write a flag so the app navigates to SmartAdd on launch

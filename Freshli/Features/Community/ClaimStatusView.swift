@@ -64,6 +64,8 @@ struct ClaimStatusView: View {
             }
             .sheet(isPresented: $showQualityRating) {
                 qualityRatingSheet
+                    .presentationDragIndicator(.visible)
+                    .sheetTransition()
             }
             .alert(String(localized: "Confirm En Route"), isPresented: $showEnRouteConfirm) {
                 Button(String(localized: "Cancel"), role: .cancel) {}
@@ -142,8 +144,11 @@ struct ClaimStatusView: View {
             VStack(alignment: .leading, spacing: PSSpacing.md) {
                 HStack(spacing: PSSpacing.md) {
                     VStack(alignment: .center) {
-                        Text(listing.categoryEmoji)
-                            .font(.system(size: PSLayout.scaledFont(32)))
+                        Image(listing.categoryImageAsset)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 56, height: 56)
+                            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
 
                         Text(listing.foodCategory ?? "")
                             .font(PSTypography.caption1)
@@ -357,6 +362,7 @@ struct ClaimStatusView: View {
 
     private var progressRatio: CGFloat {
         let total = claim.expiryInterval
+        guard total > 0 else { return 0 }
         let remaining = max(0, claim.remainingTime)
         return CGFloat(remaining / total)
     }

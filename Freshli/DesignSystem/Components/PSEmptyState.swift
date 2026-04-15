@@ -18,10 +18,11 @@ struct PSEmptyState: View {
             Image(systemName: icon)
                 .font(.system(size: 40, weight: .light))
                 .foregroundStyle(PSColors.textTertiary)
+                .symbolEffect(.pulse.byLayer, options: .repeating.speed(0.5), isActive: appeared)
                 .frame(width: 96, height: 96)
                 .background(PSColors.surfaceCard)
                 .clipShape(Circle())
-                .shadow(color: PSColors.textPrimary.opacity(0.04), radius: 8, x: 0, y: 4)
+                .elevation(.z1)
                 .scaleEffect(appeared ? 1 : 0.5)
                 .opacity(appeared ? 1 : 0)
 
@@ -65,6 +66,7 @@ struct PSEmptyState: View {
             withAnimation(PSMotion.springBouncy.delay(0.1)) {
                 appeared = true
             }
+            PSHaptics.shared.softBounce()
         }
     }
 }

@@ -103,8 +103,9 @@ final class CollectiveImpactService {
                 }
             }
         } catch {
-            // Silent fallback — the simulated data already seeded at init
+            // Graceful fallback — the simulated data already seeded at init
             // keeps the card populated so the user never sees a blank state.
+            PSLogger.general.debug("Collective impact refresh failed: \(error.localizedDescription)")
         }
     }
 
@@ -149,7 +150,8 @@ final class CollectiveImpactService {
 
     /// Estimated meals-worth of people fed by this hour's rescues.
     var hourlyMealsFed: Int {
-        rescuesThisHour / FreshliBrand.itemsPerMealFed
+        guard FreshliBrand.itemsPerMealFed > 0 else { return 0 }
+        return rescuesThisHour / FreshliBrand.itemsPerMealFed
     }
 
     // MARK: - Simulation (until Supabase is wired up)

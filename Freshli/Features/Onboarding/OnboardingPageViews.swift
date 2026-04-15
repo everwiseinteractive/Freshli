@@ -38,6 +38,8 @@ struct KitchenOptimizedPage: View {
                     .tracking(-0.5)
                     .foregroundStyle(PSColors.textPrimary)
                     .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.8)
+                    .lineLimit(2)
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 20)
 
@@ -46,10 +48,11 @@ struct KitchenOptimizedPage: View {
                     .foregroundStyle(PSColors.textSecondary)
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
-                    .padding(.horizontal, PSSpacing.xl)
+                    .minimumScaleFactor(0.85)
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 15)
             }
+            .padding(.horizontal, PSLayout.formHorizontalPadding)
 
             Spacer()
             Spacer()
@@ -245,6 +248,8 @@ struct SavingsImpactPage: View {
                     .tracking(-0.5)
                     .foregroundStyle(PSColors.textPrimary)
                     .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.8)
+                    .lineLimit(2)
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 20)
 
@@ -253,10 +258,11 @@ struct SavingsImpactPage: View {
                     .foregroundStyle(PSColors.textSecondary)
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
-                    .padding(.horizontal, PSSpacing.xl)
+                    .minimumScaleFactor(0.85)
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 15)
             }
+            .padding(.horizontal, PSLayout.formHorizontalPadding)
 
             // Interactive slider
             VStack(spacing: PSSpacing.md) {
@@ -267,8 +273,10 @@ struct SavingsImpactPage: View {
                     Spacer()
                     Text("\(Int(savedMeals))")
                         .font(.system(size: PSLayout.scaledFont(20), weight: .bold, design: .rounded))
+                        .monospacedDigit()
                         .foregroundStyle(PSColors.primaryGreen)
                         .contentTransition(.numericText(value: savedMeals))
+                        .compositingGroup()
                 }
 
                 Slider(value: $savedMeals, in: 1...20, step: 1) {
@@ -296,12 +304,7 @@ struct SavingsImpactPage: View {
             }
             .padding(.horizontal, PSLayout.formHorizontalPadding)
             .padding(.vertical, PSSpacing.lg)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
-                    .strokeBorder(.white.opacity(0.2), lineWidth: 0.5)
-            )
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
             .padding(.horizontal, PSLayout.formHorizontalPadding)
             .opacity(appeared ? 1 : 0)
             .offset(y: appeared ? 0 : 30)
@@ -321,18 +324,18 @@ struct SavingsImpactPage: View {
         VStack(spacing: 2) {
             Text(value)
                 .font(.system(size: PSLayout.scaledFont(16), weight: .bold, design: .rounded))
+                .monospacedDigit()
                 .foregroundStyle(color)
                 .contentTransition(.numericText())
+                .compositingGroup()
             Text(label)
                 .font(.system(size: PSLayout.scaledFont(10), weight: .medium))
                 .foregroundStyle(PSColors.textTertiary)
         }
         .padding(.horizontal, PSSpacing.md)
         .padding(.vertical, PSSpacing.sm)
-        .background(.ultraThinMaterial)
-        .clipShape(Capsule())
-        .overlay(Capsule().strokeBorder(.white.opacity(0.2), lineWidth: 0.5))
-        .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
+        .glassEffect(.regular, in: Capsule())
+        .elevation(.z1)
         .offset(x: PSLayout.scaled(x), y: y)
         .opacity(appeared ? 1 : 0)
         .scaleEffect(appeared ? 1 : 0.5)
@@ -394,7 +397,7 @@ struct CommunityMapPage: View {
                 RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
                     .strokeBorder(.white.opacity(0.3), lineWidth: 0.5)
             )
-            .shadow(color: .black.opacity(0.08), radius: 20, y: 8)
+            .elevation(.z3)
 
             // Text content
             VStack(spacing: PSSpacing.lg) {
@@ -403,6 +406,8 @@ struct CommunityMapPage: View {
                     .tracking(-0.5)
                     .foregroundStyle(PSColors.textPrimary)
                     .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.8)
+                    .lineLimit(2)
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 20)
 
@@ -411,7 +416,7 @@ struct CommunityMapPage: View {
                     .foregroundStyle(PSColors.textSecondary)
                     .multilineTextAlignment(.center)
                     .lineSpacing(4)
-                    .padding(.horizontal, PSSpacing.xl)
+                    .minimumScaleFactor(0.85)
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 15)
 
@@ -424,6 +429,7 @@ struct CommunityMapPage: View {
                 .opacity(appeared ? 1 : 0)
                 .offset(y: appeared ? 0 : 10)
             }
+            .padding(.horizontal, PSLayout.formHorizontalPadding)
 
             Spacer()
             Spacer()

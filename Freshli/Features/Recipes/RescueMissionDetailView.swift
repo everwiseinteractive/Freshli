@@ -374,7 +374,7 @@ struct RescueMissionDetailView: View {
 
     @MainActor
     private func completeAndMarkConsumed() {
-        let itemIds = Set(mission.freshliItems.map { $0.id })
+        _ = Set(mission.freshliItems.map { $0.id })
 
         // Trigger haptic harvest celebration for mission completion
         HapticHarvestService.shared.streakMilestone()
@@ -438,11 +438,11 @@ struct RescueMissionDetailView: View {
 // MARK: - Preview
 
 #Preview {
-    let previewContainer = {
+    let previewContainer: ModelContainer? = {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try! ModelContainer(for: FreshliItem.self, configurations: config)
+        guard let container = try? ModelContainer(for: FreshliItem.self, configurations: config) else { return nil }
 
-        let tomorrowDate = Calendar.current.date(byAdding: .hour, value: 12, to: Date())!
+        let tomorrowDate = Calendar.current.date(byAdding: .hour, value: 12, to: Date()) ?? Date()
         let spinach = FreshliItem(
             name: "Fresh Spinach",
             category: .vegetables,
@@ -494,9 +494,13 @@ struct RescueMissionDetailView: View {
         additionalItems: ["Rice", "Soy sauce", "Vegetable oil"]
     )
 
-    NavigationStack {
-        RescueMissionDetailView(mission: sampleMission)
+    if let previewContainer {
+        NavigationStack {
+            RescueMissionDetailView(mission: sampleMission)
+        }
+        .modelContainer(previewContainer)
+        .environment(CelebrationManager())
+    } else {
+        Text("Preview unavailable")
     }
-    .modelContainer(previewContainer)
-    .environment(CelebrationManager())
 }

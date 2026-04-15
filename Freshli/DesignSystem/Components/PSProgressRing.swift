@@ -1,7 +1,8 @@
 import SwiftUI
 
 // MARK: - Animated Progress Ring
-// Premium circular progress indicator with spring-animated fill.
+// Premium circular progress indicator with spring-animated fill
+// and Metal GPU-powered breathing glow at the arc's leading edge.
 
 struct PSProgressRing: View {
     let progress: Double
@@ -10,6 +11,8 @@ struct PSProgressRing: View {
     let size: CGFloat
 
     @State private var animatedProgress: Double = 0
+    @State private var startDate = Date.now
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init(progress: Double, lineWidth: CGFloat = 6, color: Color = PSColors.primaryGreen, size: CGFloat = 48) {
         self.progress = progress
@@ -19,19 +22,33 @@ struct PSProgressRing: View {
     }
 
     var body: some View {
-        ZStack {
-            // Track
-            Circle()
-                .stroke(color.opacity(0.15), lineWidth: lineWidth)
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: reduceMotion)) { timeline in
+            let time = Float(timeline.date.timeIntervalSince(startDate))
+            let resolved = resolveRingColor()
 
-            // Fill
-            Circle()
-                .trim(from: 0, to: animatedProgress)
-                .stroke(
-                    color,
-                    style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
+            ZStack {
+                // Track
+                Circle()
+                    .stroke(color.opacity(0.15), lineWidth: lineWidth)
+
+                // Fill
+                Circle()
+                    .trim(from: 0, to: animatedProgress)
+                    .stroke(
+                        color,
+                        style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+                    )
+                    .rotationEffect(.degrees(-90))
+            }
+            .frame(width: size, height: size)
+            .modifier(ProgressGlowShaderModifier(
+                size: size,
+                progress: animatedProgress,
+                time: time,
+                r: resolved.r,
+                g: resolved.g,
+                b: resolved.b
+            ))
         }
         .frame(width: size, height: size)
         .accessibilityElement(children: .ignore)
@@ -46,6 +63,15 @@ struct PSProgressRing: View {
                 animatedProgress = min(newValue, 1.0)
             }
         }
+    }
+
+    private func resolveRingColor() -> (r: Float, g: Float, b: Float) {
+        var r: CGFloat = 0
+        var g: CGFloat = 0
+        var b: CGFloat = 0
+        var a: CGFloat = 0
+        UIColor(color).getRed(&r, green: &g, blue: &b, alpha: &a)
+        return (Float(r), Float(g), Float(b))
     }
 }
 
@@ -84,5 +110,35 @@ struct PSProgressRingLabeled: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel(label)
         .accessibilityValue(value)
+    }
+}
+
+// MARK: - Safe Progress Glow Shader Modifier
+
+private struct ProgressGlowShaderModifier: ViewModifier {
+    let size: CGFloat
+    let progress: Double
+    let time: Float
+    let r: Float
+    let g: Float
+    let b: Float
+
+    func body(content: Content) -> some View {
+        if ShaderWarmUpService.shadersAvailable {
+            content
+                .colorEffect(
+                    ShaderLibrary.freshnessGlow(
+                        .float2(Float(size), Float(size)),
+                        .float(Float(progress)),
+                        .float(time),
+                        .float(r),
+                        .float(g),
+                        .float(b)
+                    )
+                )
+                .drawingGroup()
+        } else {
+            content
+        }
     }
 }

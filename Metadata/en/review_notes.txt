@@ -1,0 +1,99 @@
+Freshli 1.0 — App Review Notes
+Thank you for reviewing Freshli. This app contains Metal 4 rendering and Apple
+Intelligence features that are central to the user experience. The three steps
+below will ensure you encounter the key innovation moments in under 5 minutes.
+
+No login required for steps 1 and 2. A demo account is provided for step 3.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1 — Experience Metal 4 Liquid Glass (30 seconds)
+Device requirement: iPhone 15 Pro or later, iOS 26, ProMotion enabled.
+
+1. Launch Freshli. The Home / Pantry screen appears.
+2. WITHOUT tapping anything, tilt the device slowly left and right (±20°).
+   ► You will see the specular highlight on each card track your physical
+     movement in real time — this is the gyroscope-driven Metal 4 specular
+     shader. The background glass material refracts simultaneously.
+3. Place the device flat on a table and watch for 4 seconds.
+   ► The interface continues to breathe — a slow idle animation cycle driven
+     by the Metal shader, not a pre-rendered video. The surface is always live.
+
+What to look for: the frosted-glass card bodies, the luminous freshness badges,
+and the Tab Bar — all rendered by a single refractive Metal shader. There are
+no static image backgrounds anywhere in the app.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 2 — Trigger the Gaze-Adaptive Bloom and Tab Melt (60 seconds)
+Device requirement: same as Step 1. Haptic intensity: set to maximum in
+iOS Settings > Sounds & Haptics before this step for full effect.
+
+GAZE BLOOM:
+1. Tap the Recipes tab (second icon in the Tab Bar).
+   ► The Melt transition fires: the Pantry view dissolves through a
+     noise-field of liquefying pixels edged in green light. Simultaneously,
+     your device produces a 400ms rumble that decays as the pixels dissolve,
+     followed by a sharp crystalline click as the Recipes screen solidifies.
+     This is the Core Haptics "melt dissolve" pattern — tuned to mimic the
+     viscosity of the material changing state.
+
+2. On the Recipes screen, find any recipe card. REST YOUR GAZE on it without
+   tapping — simply look at the card for approximately 0.6 seconds.
+   ► The card will bloom: refraction depth increases by 25%, a specular
+     hotspot appears and drifts toward the upper region of the card, and a
+     thin luminous green rim traces the card edge. This is Apple Intelligence
+     intent prediction activating the Metal 4 gaze response — the app is
+     anticipating your tap before you make it.
+
+3. Tilt the device while the card is in bloom state.
+   ► The specular highlight physically tracks your tilt angle — it moves
+     across the card surface like sunlight on a real glass object.
+
+TAB MELT (repeat to verify):
+4. Tap between the Recipes and Pantry tabs three times in quick succession.
+   ► Each transition is a unique noise-field dissolve — because the Metal
+     shader generates noise procedurally, no two melts are identical. The
+     haptic pattern fires each time.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 3 — Verify Rescue Chef (Apple Intelligence, on-device) (90 seconds)
+Demo account credentials:
+  Email:    reviewer@freshli-demo.app
+  Password: FreshliReview2026!
+
+Note: this account is pre-seeded with pantry data and does not require
+network access for recipe generation (Apple Intelligence runs fully on-device).
+
+1. Sign in using the credentials above (Profile tab > Sign In).
+2. Tap "Rescue Chef" — the green button on the Home screen.
+3. Apple Intelligence will generate a complete recipe using only the
+   pre-seeded pantry items. Generation completes in under 3 seconds on
+   an A18 Pro device. No network request is made — you can verify this
+   by enabling Airplane Mode before tapping; the feature works identically.
+4. Tap the generated recipe card.
+   ► The Gaze Bloom (Step 2) is active here too — rest your gaze on the
+     card to see the full Living Menu system respond to your intent.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ACCESSIBILITY NOTE
+If your review device has Reduce Motion enabled (Settings > Accessibility >
+Motion > Reduce Motion), the refractive shaders will automatically substitute
+high-contrast static mesh gradients and the Tab Bar will use a standard
+cross-dissolve. This is intentional — all Metal 4 features gracefully degrade
+in compliance with WCAG 2.2 AA. To see the full experience, please disable
+Reduce Motion for the duration of your review.
+
+ENERGY / BACKGROUND NOTE
+All motion sensors (CMMotionManager at 30Hz) and gaze-tracking timers pause
+immediately when the app enters the background (UIApplication.willResignActive).
+They resume on foreground (UIApplication.didBecomeActive). No background
+sensor activity occurs.
+
+Thank you for your time. We believe this is the most physically expressive
+iOS app submitted for 2026 review, and we hope the three steps above let
+you experience exactly what we mean by that.
+
+— The Freshli Team

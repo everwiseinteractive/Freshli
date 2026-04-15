@@ -107,6 +107,8 @@ struct FreshliConfirmPredictionView: View {
         )
         .sheet(isPresented: $showRefillSheet) {
             refillSheet
+                .presentationDragIndicator(.visible)
+                .sheetTransition()
         }
     }
 
@@ -132,7 +134,7 @@ struct FreshliConfirmPredictionView: View {
 
                 // Quantity stepper
                 VStack(spacing: PSSpacing.sm) {
-                    Text("\(formatQuantity(refillQuantity)) \(item.unit.displayName)")
+                    Text("\(formatQuantity(refillQuantity)) \(item.unit.displayName(for: refillQuantity))")
                         .font(PSTypography.statMedium)
                         .foregroundStyle(PSColors.textPrimary)
 
@@ -187,7 +189,7 @@ struct FreshliConfirmPredictionView: View {
         PSHaptics.shared.mediumTap()
 
         let itemName = item.name
-        let itemId = item.id
+        let _ = item.id
 
         // Record consumption and mark consumed locally
         if let service = predictionService {

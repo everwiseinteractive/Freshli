@@ -37,7 +37,6 @@ final class NotificationService {
         content.body = String(localized: "\(item.name) expires \(item.expiryDate.expiryDisplayText). Use it, share it, or donate it!")
         content.sound = .default
         content.categoryIdentifier = "EXPIRY_REMINDER"
-        content.badge = NSNumber(value: UIApplication.shared.applicationIconBadgeNumber + 1)
 
         guard let triggerDate = Calendar.current.date(byAdding: .day, value: -daysBefore, to: item.expiryDate) else {
             PSLogger.notifications.error("Failed to calculate trigger date for \(item.name)")
@@ -57,13 +56,19 @@ final class NotificationService {
         let identifier = "expiry-\(item.id.uuidString)"
         let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
 
+        // Extract properties before the @Sendable closure boundary
+        let itemName = item.name
+
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                PSLogger.notifications.error("Failed to schedule reminder for \(item.name): \(error.localizedDescription)")
+                PSLogger.notifications.error("Failed to schedule reminder for \(itemName): \(error.localizedDescription)")
             } else {
-                PSLogger.notifications.info("Scheduled reminder for \(item.name) on \(triggerDate)")
+                PSLogger.notifications.info("Scheduled reminder for \(itemName) on \(triggerDate)")
             }
         }
+
+        // Update badge count using modern API
+        Task { try? await UNUserNotificationCenter.current().setBadgeCount(1) }
     }
 
     /// Reschedule a reminder when an item's expiry date is edited.

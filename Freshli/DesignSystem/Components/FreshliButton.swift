@@ -265,7 +265,7 @@ struct FreshliButton: View {
                 endPoint: .bottomTrailing
             )
         case .secondary:
-            Color.white
+            PSColors.surfaceCard
         case .destructive:
             Color(hex: 0xFEE2E2)
         case .mission:

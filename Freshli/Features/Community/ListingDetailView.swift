@@ -89,7 +89,7 @@ struct ListingDetailView: View {
             Button(String(localized: "Cancel"), role: .cancel) {}
             Button(String(localized: "Remove"), role: .destructive) {
                 Task {
-                    let success = await communityService.deleteListing(listingId: listing.id) ?? false
+                    let success = await communityService.deleteListing(listingId: listing.id)
                     if success {
                         onDismissAction?()
                         dismiss()
@@ -107,21 +107,31 @@ struct ListingDetailView: View {
 
     private var heroHeader: some View {
         ZStack(alignment: .bottomLeading) {
-            // Gradient background based on category
-            Rectangle()
-                .fill(
+            // Real food photography based on category
+            Color.clear
+                .overlay(
+                    Image(listing.categoryImageAsset)
+                        .resizable()
+                        .scaledToFill()
+                )
+                .overlay(
+                    // Bottom gradient for badge legibility
                     LinearGradient(
-                        colors: categoryGradient,
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+                        colors: [.clear, .black.opacity(0.4)],
+                        startPoint: UnitPoint(x: 0.5, y: 0.4),
+                        endPoint: .bottom
+                    )
+                )
+                .overlay(
+                    // Top-edge micro-vignette for status bar blend
+                    LinearGradient(
+                        colors: [.black.opacity(0.15), .clear],
+                        startPoint: .top,
+                        endPoint: UnitPoint(x: 0.5, y: 0.25)
                     )
                 )
                 .frame(height: PSLayout.heroHeight)
-                .overlay(alignment: .center) {
-                    Text(listing.categoryEmoji)
-                        .font(.system(size: PSLayout.scaledFont(72)))
-                        .opacity(0.3)
-                }
+                .clipped()
 
             // Status + type overlays
             HStack(spacing: 8) {
@@ -340,7 +350,7 @@ struct ListingDetailView: View {
                     Task {
                         let success = await communityService.updateListingStatus(
                             listingId: listing.id, newStatus: "completed"
-                        ) ?? false
+                        )
                         if success {
                             onDismissAction?()
                             dismiss()
@@ -407,7 +417,7 @@ struct ListingDetailView: View {
         Task {
             let success = await communityService.claimListing(
                 listingId: listing.id, claimerId: userId
-            ) ?? false
+            )
 
             isClaiming = false
 

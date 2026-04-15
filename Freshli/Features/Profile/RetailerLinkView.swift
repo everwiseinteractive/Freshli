@@ -49,20 +49,9 @@ struct RetailerLinkView: View {
 
     private var heroHeader: some View {
         VStack(spacing: PSSpacing.md) {
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [PSColors.primaryGreen.opacity(0.15), PSColors.accentTeal.opacity(0.1)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: PSLayout.scaled(80), height: PSLayout.scaled(80))
-                Image(systemName: "cart.badge.plus")
-                    .font(.system(size: PSLayout.scaledFont(34)))
-                    .foregroundStyle(PSColors.primaryGreen)
-            }
+            Image(systemName: "cart.badge.plus")
+                .font(.system(size: PSLayout.scaledFont(40)))
+                .foregroundStyle(PSColors.primaryGreen)
 
             VStack(spacing: PSSpacing.xs) {
                 Text(String(localized: "Connect Your Supermarket"))

@@ -321,7 +321,7 @@ final class SubscriptionService {
 
     private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
         switch result {
-        case .unverified(let unverified, let error):
+        case .unverified(_, let error):
             logger.warning("Unverified transaction: \(error)")
             throw SubscriptionError.verificationFailed
         case .verified(let verified):

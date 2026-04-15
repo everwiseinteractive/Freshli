@@ -16,34 +16,34 @@ enum FreshliColor {
     // MARK: Primary — Figma: Tailwind green-500 light / green-400 dark
     /// Hero actions, tab bar highlights, impact streaks.
     /// Light: Tailwind green-500 (#22C55E) | Dark: Tailwind green-400 (#4ADE80)
-    static let freshliGreen = FLColors.primaryGreen
+    nonisolated static let freshliGreen = FLColors.primaryGreen
 
     /// Pressed / active state for primary surfaces.
     /// Light: Tailwind green-700 (#15803D) | Dark: Tailwind green-500 (#22C55E)
-    static let freshliGreenDeep = FLColors.primaryGreenDark
+    nonisolated static let freshliGreenDeep = FLColors.primaryGreenDark
 
     /// Subtle primary tint for backgrounds and badges.
     /// Light: Tailwind green-50 (#F0FDF4) | Dark: green-950/15%
-    static let freshliGreenSurface = FLColors.green50
+    nonisolated static let freshliGreenSurface = FLColors.green50
 
     // MARK: Expiry Amber — Figma: Tailwind amber-400/amber-500
     /// "Expiring Soon" badges, alert borders, countdown rings.
     /// Light: Tailwind amber-500 (#F59E0B) | Dark: amber-400 (#FBBF24)
-    static let expiryAmber = FLColors.warningAmber
+    nonisolated static let expiryAmber = FLColors.warningAmber
 
-    static let expiryAmberSurface = Color(
+    nonisolated static let expiryAmberSurface = Color(
         light: Color(hex: 0xFFF4DE),
         dark:  Color(hex: 0x3D2E0A).opacity(0.35)
     )
 
     // MARK: Impact Gold — Premium celebration
     /// Milestone badges, streak animations, weekly-wrap confetti.
-    static let impactGold = Color(
+    nonisolated static let impactGold = Color(
         light: Color(hex: 0xFFD700),
         dark:  Color(hex: 0xFFE34D)
     )
 
-    static let impactGoldSurface = Color(
+    nonisolated static let impactGoldSurface = Color(
         light: Color(hex: 0xFFFBE6),
         dark:  Color(hex: 0x3D3300).opacity(0.30)
     )
@@ -51,7 +51,7 @@ enum FreshliColor {
     // MARK: Hierarchical helpers
 
     /// Adaptive label that maps to the system hierarchy.
-    static func label(_ level: HierarchicalShapeStyle.Level) -> some ShapeStyle {
+    nonisolated static func label(_ level: HierarchicalShapeStyle.Level) -> some ShapeStyle {
         switch level {
         case .primary:    return AnyShapeStyle(.primary)
         case .secondary:  return AnyShapeStyle(.secondary)
@@ -73,32 +73,32 @@ extension Font {
     // MARK: Display
 
     /// Hero stat counters (e.g. "£42 saved").  Rounded, bold, scales with Dynamic Type.
-    static let freshliDisplayLarge: Font = .system(.largeTitle, design: .rounded, weight: .bold)
+    nonisolated static let freshliDisplayLarge: Font = .system(.largeTitle, design: .rounded, weight: .bold)
 
     /// Section headers inside cards.
-    static let freshliDisplayMedium: Font = .system(.title2, design: .rounded, weight: .semibold)
+    nonisolated static let freshliDisplayMedium: Font = .system(.title2, design: .rounded, weight: .semibold)
 
     /// Tab bar labels, compact stat tiles.
-    static let freshliDisplaySmall: Font = .system(.title3, design: .rounded, weight: .semibold)
+    nonisolated static let freshliDisplaySmall: Font = .system(.title3, design: .rounded, weight: .semibold)
 
     // MARK: Body
 
     /// Primary body copy — keeps the editorial feel with a slightly heavier weight.
-    static let freshliBody: Font = .system(.body, design: .rounded, weight: .regular)
+    nonisolated static let freshliBody: Font = .system(.body, design: .rounded, weight: .regular)
 
     /// Emphasised inline text (e.g. item names in lists).
-    static let freshliBodyMedium: Font = .system(.body, design: .rounded, weight: .medium)
+    nonisolated static let freshliBodyMedium: Font = .system(.body, design: .rounded, weight: .medium)
 
     /// Subheadlines and supporting text.
-    static let freshliSubheadline: Font = .system(.subheadline, design: .rounded, weight: .regular)
+    nonisolated static let freshliSubheadline: Font = .system(.subheadline, design: .rounded, weight: .regular)
 
     // MARK: Small
 
     /// Captions, timestamps, and metadata.
-    static let freshliCaption: Font = .system(.caption, design: .rounded, weight: .medium)
+    nonisolated static let freshliCaption: Font = .system(.caption, design: .rounded, weight: .medium)
 
     /// Tiny legal / expiry-date footnotes.
-    static let freshliFootnote: Font = .system(.footnote, design: .rounded, weight: .regular)
+    nonisolated static let freshliFootnote: Font = .system(.footnote, design: .rounded, weight: .regular)
 }
 
 /// View modifier that applies Freshli typography to a `Text` view while preserving
@@ -129,7 +129,7 @@ extension Text {
 
 // MARK: - 3. Shadows & Glass — FreshliCardStyle
 
-/// A premium glass-morphism card modifier using `.ultraThinMaterial` with a
+/// A premium Liquid Glass card modifier using `.glassEffect(.regular)` with a
 /// 0.5 pt primary border at 10 % opacity.
 struct FreshliCardStyle: ViewModifier {
     var cornerRadius: CGFloat = PSSpacing.radiusLg
@@ -138,8 +138,7 @@ struct FreshliCardStyle: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                     .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
@@ -161,35 +160,35 @@ extension View {
 /// Every icon supports Variable Color for state transitions and SymbolEffect animations.
 enum FreshliIcon {
     // Tab bar
-    static let pantry          = "refrigerator.fill"
-    static let impact          = "leaf.fill"
-    static let community       = "person.2.fill"
-    static let recipes         = "frying.pan.fill"
-    static let profile         = "person.crop.circle.fill"
+    nonisolated static let pantry          = "refrigerator.fill"
+    nonisolated static let impact          = "leaf.fill"
+    nonisolated static let community       = "person.2.fill"
+    nonisolated static let recipes         = "frying.pan.fill"
+    nonisolated static let profile         = "person.crop.circle.fill"
 
     // Actions
-    static let scan            = "barcode.viewfinder"
-    static let addItem         = "plus.circle.fill"
-    static let consume         = "checkmark.circle.fill"
-    static let share           = "square.and.arrow.up"
-    static let donate          = "hand.raised.fill"
-    static let delete          = "trash.fill"
+    nonisolated static let scan            = "barcode.viewfinder"
+    nonisolated static let addItem         = "plus.circle.fill"
+    nonisolated static let consume         = "checkmark.circle.fill"
+    nonisolated static let share           = "square.and.arrow.up"
+    nonisolated static let donate          = "hand.raised.fill"
+    nonisolated static let delete          = "trash.fill"
 
     // Status
-    static let fresh           = "leaf.fill"              // Variable color: 0→1 as freshness
-    static let expiringSoon    = "exclamationmark.triangle.fill"
-    static let expired         = "xmark.octagon.fill"
-    static let streak          = "flame.fill"
+    nonisolated static let fresh           = "leaf.fill"              // Variable color: 0→1 as freshness
+    nonisolated static let expiringSoon    = "exclamationmark.triangle.fill"
+    nonisolated static let expired         = "xmark.octagon.fill"
+    nonisolated static let streak          = "flame.fill"
 
     // Celebrations
-    static let milestone       = "star.circle.fill"
-    static let confetti        = "party.popper.fill"
+    nonisolated static let milestone       = "star.circle.fill"
+    nonisolated static let confetti        = "party.popper.fill"
 
     // System
-    static let calendar        = "calendar.badge.clock"
-    static let reminder        = "checklist"
-    static let notification    = "bell.badge.fill"
-    static let settings        = "gearshape.fill"
+    nonisolated static let calendar        = "calendar.badge.clock"
+    nonisolated static let reminder        = "checklist"
+    nonisolated static let notification    = "bell.badge.fill"
+    nonisolated static let settings        = "gearshape.fill"
 }
 
 /// View modifier that applies SF Symbols 6.0 Variable Color and SymbolEffect animations.

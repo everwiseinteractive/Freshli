@@ -309,9 +309,8 @@ struct IngredientPingView: View {
                 .foregroundStyle(PSColors.textPrimary)
         }
         .padding(PSSpacing.md)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
-        .shadow(color: .black.opacity(0.1), radius: 12, y: 4)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
+        .elevation(.z2)
     }
 }
 

@@ -302,7 +302,7 @@ struct RecipeDetailView: View {
                 RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
                     .strokeBorder(PSColors.border, lineWidth: 0.5)
             )
-            .shadow(color: .black.opacity(0.04), radius: 12, y: 4)
+            .elevation(.z2)
             .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
         }
     }
@@ -506,7 +506,7 @@ struct RecipeDetailView: View {
                                     lineWidth: 0.5
                                 )
                         )
-                        .shadow(color: .black.opacity(0.03), radius: 8, y: 3)
+                        .elevation(.z1)
                     }
                     .buttonStyle(PressableButtonStyle())
                     .staggeredAppearance(index: index)

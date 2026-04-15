@@ -78,7 +78,7 @@ enum FreshliPredictionReason: Sendable {
 /// Uses TabularData for regression when sufficient samples exist (>= 5),
 /// otherwise falls back to a weighted moving-average heuristic.
 actor ConsumptionActor {
-    private nonisolated(unsafe) let logger = PSLogger(category: .pantry)
+    private let logger = PSLogger(category: .pantry)
 
     // MARK: - Category Defaults (days to consume standard quantity)
 
@@ -306,6 +306,7 @@ actor ConsumptionActor {
             totalWeight += weight
         }
 
+        guard totalWeight > 0 else { return 1.0 }
         return max(1.0, weightedSum / totalWeight)
     }
 }

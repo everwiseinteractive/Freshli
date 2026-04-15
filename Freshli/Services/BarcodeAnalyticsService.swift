@@ -79,13 +79,13 @@ final class BarcodeAnalyticsService {
 
         var insights: [BarcodeInsight] = []
         for (barcode, barcodeItems) in grouped {
-            guard barcodeItems.count >= 2 else { continue }  // need at least 2 data points
+            guard barcodeItems.count >= 2,
+                  let sample = barcodeItems.first else { continue }  // need at least 2 data points
             let totalCount = barcodeItems.count
+            guard totalCount > 0 else { continue }
             let wastedCount = barcodeItems.filter {
                 !$0.isConsumed && !$0.isShared && !$0.isDonated && $0.expiryDate < now
             }.count
-
-            let sample = barcodeItems.first!
             let packaging = inferPackaging(category: sample.category)
             let eprCostPerUnit = packaging.eprCostPerUnit
             let totalImpact = Double(wastedCount) * eprCostPerUnit

@@ -198,7 +198,7 @@ struct FreshliOnboardingView: View {
             onComplete()
             return
         }
-        withAnimation(.easeInOut(duration: 0.5)) {
+        withAnimation(FLMotion.freshliCurve) {
             zoomOut = true
         }
         Task { @MainActor in

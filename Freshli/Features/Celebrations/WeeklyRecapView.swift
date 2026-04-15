@@ -74,12 +74,8 @@ struct WeeklyRecapView: View {
         VStack(spacing: 16) {
             // Figma: Chart icon in container
             ZStack {
-                Circle()
-                    .fill(.white.opacity(0.1))
-                    .frame(width: 80, height: 80)
-
                 Image(systemName: "chart.bar.fill")
-                    .font(.system(size: 36, weight: .semibold))
+                    .font(.system(size: 42, weight: .semibold))
                     .foregroundStyle(.white)
 
                 // Subtle particle accent

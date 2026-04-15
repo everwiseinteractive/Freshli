@@ -81,7 +81,7 @@ struct BarcodeAnalyticsView: View {
                 Spacer()
                 Image(systemName: "cube.box.fill")
                     .font(.system(size: PSLayout.scaledFont(44)))
-                    .foregroundStyle(.white.opacity(0.2))
+                    .foregroundStyle(.white.opacity(0.5))
             }
             HStack(spacing: PSSpacing.lg) {
                 summaryStat(value: "\(insights.count)", label: "Products tracked")

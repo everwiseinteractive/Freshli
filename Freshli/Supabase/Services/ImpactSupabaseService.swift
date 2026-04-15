@@ -66,7 +66,7 @@ final class ImpactSupabaseService: Sendable {
     func fetchWeeklyImpact(userId: UUID) async throws -> [SupabaseImpactEvent] {
         debugLog("ImpactSupabaseService: Fetching weekly impact for user \(userId)")
 
-        let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date())!
+        let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
         let formatter = ISO8601DateFormatter()
         let dateString = formatter.string(from: weekAgo)
 
@@ -90,7 +90,7 @@ final class ImpactSupabaseService: Sendable {
     func fetchMonthlyImpact(userId: UUID) async throws -> [SupabaseImpactEvent] {
         debugLog("ImpactSupabaseService: Fetching monthly impact for user \(userId)")
 
-        let monthAgo = Calendar.current.date(byAdding: .day, value: -30, to: Date())!
+        let monthAgo = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
         let formatter = ISO8601DateFormatter()
         let dateString = formatter.string(from: monthAgo)
 
@@ -272,8 +272,8 @@ final class ImpactSupabaseService: Sendable {
         let currentWeek = try await fetchWeeklyStats(userId: userId)
 
         // Fetch previous week
-        let twoWeeksAgo = Calendar.current.date(byAdding: .day, value: -14, to: Date())!
-        let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date())!
+        let twoWeeksAgo = Calendar.current.date(byAdding: .day, value: -14, to: Date()) ?? Date()
+        let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
         let formatter = ISO8601DateFormatter()
 
         let events: [SupabaseImpactEvent] = try await client

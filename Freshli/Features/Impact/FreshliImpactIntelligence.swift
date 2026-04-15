@@ -64,7 +64,7 @@ final class ImpactIntelligenceViewModel {
         for day in sortedDays {
             let dayItems = grouped[day] ?? []
             // Estimated savings per item
-            for item in dayItems {
+            for _ in dayItems {
                 cumulativeMoney += 2.50  // Estimated average savings per item
                 cumulativeCO2 += 0.5    // Estimated average CO₂ avoided per item
             }
@@ -269,8 +269,7 @@ struct FreshliImpactIntelligenceView: View {
                                     .foregroundStyle(PSColors.accentTeal)
                             }
                             .padding(6)
-                            .background(.ultraThinMaterial)
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 6, style: .continuous))
                         }
                     }
             }

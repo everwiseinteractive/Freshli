@@ -42,7 +42,7 @@ enum FoodCategory: String, Codable, CaseIterable, Identifiable {
         case .dairy: return "cup.and.saucer.fill"
         case .meat: return "flame.fill"
         case .seafood: return "fish.fill"
-        case .grains: return "wheat.bundle.fill"
+        case .grains: return "storefront.fill"
         case .bakery: return "birthday.cake.fill"
         case .frozen: return "snowflake"
         case .canned: return "cylinder.fill"

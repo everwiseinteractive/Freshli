@@ -260,27 +260,63 @@ struct CookingScreenView: View {
                     ))
                     .zIndex(20)
             }
+
         }
         .environment(\.colorScheme, .dark)
         .onAppear { handleAppear() }
         .onReceive(ticker) { _ in handleTick() }
         .onChange(of: currentStepIndex) { _, _ in handleStepChange() }
-        .sheet(isPresented: $showIngredients) { ingredientsSheet }
-        .sheet(isPresented: $showMusicPicker) { musicPickerSheet }
-        .sheet(isPresented: $showVoiceSettings) { voiceSettingsSheet }
+        .sheet(isPresented: $showIngredients) {
+            ingredientsSheet
+                .presentationDragIndicator(.visible)
+                .sheetTransition()
+        }
+        .sheet(isPresented: $showMusicPicker) {
+            musicPickerSheet
+                .presentationDragIndicator(.visible)
+                .sheetTransition()
+        }
+        .sheet(isPresented: $showVoiceSettings) {
+            voiceSettingsSheet
+                .presentationDragIndicator(.visible)
+                .sheetTransition()
+        }
     }
 
     // MARK: - Background
 
+    @State private var bgStartDate = Date.now
+
+    @ViewBuilder
     private var backgroundGradient: some View {
-        LinearGradient(
+        let gradient = LinearGradient(
             stops: [
                 .init(color: Color(hex: 0x060F0A), location: 0),
+                .init(color: Color(hex: 0x0A1A10), location: 0.5),
                 .init(color: Color(hex: 0x0C1E14), location: 1)
             ],
             startPoint: .top,
             endPoint: .bottom
         )
+        if ShaderWarmUpService.shadersAvailable {
+            TimelineView(.animation(minimumInterval: 1.0 / 15.0, paused: reduceMotion)) { timeline in
+                let time = Float(timeline.date.timeIntervalSince(bgStartDate))
+                gradient
+                    .visualEffect { view, proxy in
+                        view
+                            .colorEffect(
+                                ShaderLibrary.subtleNoise(
+                                    .float2(proxy.size),
+                                    .float(time),
+                                    .float(0.15)
+                                )
+                            )
+                    }
+                    .drawingGroup()
+            }
+        } else {
+            gradient
+        }
     }
 
     // MARK: - Top Bar
@@ -305,7 +341,8 @@ struct CookingScreenView: View {
                 Text(recipe.title)
                     .font(.system(size: PSLayout.scaledFont(15), weight: .semibold, design: .rounded))
                     .foregroundStyle(.white)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
                 Text("Step \(currentStepIndex + 1) of \(totalSteps)")
                     .font(.system(size: PSLayout.scaledFont(12), weight: .medium, design: .rounded))
                     .foregroundStyle(.white.opacity(0.55))
@@ -373,16 +410,16 @@ struct CookingScreenView: View {
                 .offset(y: PSLayout.scaled(-20))
                 .animation(.easeInOut(duration: 0.6), value: currentStepIndex)
 
-            // Glass card
+            // Glass card — frosted surface for step content
             RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
                 .fill(.ultraThinMaterial)
                 .overlay(
                     RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
-                        .fill(stepAmbientColor.opacity(0.06))
+                        .fill(stepAmbientColor.opacity(0.05))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
-                        .stroke(stepAmbientColor.opacity(0.18), lineWidth: 1)
+                        .stroke(stepAmbientColor.opacity(0.15), lineWidth: 0.5)
                 )
 
             VStack(spacing: PSSpacing.lg) {
@@ -400,12 +437,13 @@ struct CookingScreenView: View {
 
                 Spacer(minLength: PSSpacing.sm)
 
-                // Step instruction
+                // Step instruction — no line limit so text
+                // always displays fully; scales down if needed.
                 Text(currentStep)
                     .font(.system(size: PSLayout.scaledFont(22), weight: .semibold, design: .rounded))
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
-                    .lineLimit(5)
+                    .minimumScaleFactor(0.65)
                     .fixedSize(horizontal: false, vertical: true)
                     .id("step-\(currentStepIndex)")
                     .transition(.asymmetric(
@@ -1031,7 +1069,7 @@ struct CookingScreenView: View {
                                     } label: {
                                         Image(systemName: star <= userRating ? "star.fill" : "star")
                                             .font(.system(size: PSLayout.scaledFont(30), weight: .medium))
-                                            .foregroundStyle(star <= userRating ? Color(hex: 0xFFD700) : .white.opacity(0.22))
+                                            .foregroundStyle(star <= userRating ? Color(hex: 0xFFD700) : .white.opacity(0.5))
                                             .scaleEffect(star == userRating ? 1.25 : 1.0)
                                             .animation(PSMotion.springBouncy, value: userRating)
                                     }
@@ -1202,10 +1240,10 @@ struct CookingScreenView: View {
     private func maybeShowFunFact() {
         guard currentStepIndex > 0 else { return }
         funFactText = foodFacts.randomElement() ?? ""
-        withAnimation(.easeInOut(duration: 0.4)) { showFunFact = true }
+        withAnimation(PSMotion.springDefault) { showFunFact = true }
         Task {
             try? await Task.sleep(for: .seconds(3))
-            await MainActor.run { withAnimation(.easeInOut(duration: 0.4)) { showFunFact = false } }
+            await MainActor.run { withAnimation(PSMotion.springDefault) { showFunFact = false } }
         }
     }
 

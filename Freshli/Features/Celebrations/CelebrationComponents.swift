@@ -92,7 +92,7 @@ struct CelebrationHeroGraphic: View {
             RoundedRectangle(cornerRadius: PSSpacing.radiusHero, style: .continuous)
                 .fill(type.iconBackgroundColor)
                 .frame(width: 128, height: 128)
-                .shadow(color: .black.opacity(0.25), radius: 25, y: 12)
+                .elevation(.z5)
 
             // Figma: Icon — 64px white
             Image(systemName: type.icon)

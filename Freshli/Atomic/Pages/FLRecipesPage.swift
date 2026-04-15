@@ -1,7 +1,15 @@
 import SwiftUI
 import SwiftData
 
-struct RecipesView: View {
+// ══════════════════════════════════════════════════════════════════
+// MARK: - FLRecipesPage (Page)
+// The recipes discovery page — migrated to Atomic Design structure.
+// Preserves all backend logic: SwiftData pantry matching, filter
+// system, Rescue Chef navigation, scroll transitions, staggered
+// entrance animations. No icon background boxes.
+// ══════════════════════════════════════════════════════════════════
+
+struct FLRecipesPage: View {
     @Query(filter: #Predicate<FreshliItem> { !$0.isConsumed && !$0.isShared && !$0.isDonated },
            sort: [SortDescriptor(\FreshliItem.expiryDate)])
     private var pantryItems: [FreshliItem]
@@ -13,22 +21,21 @@ struct RecipesView: View {
 
     private let filters = ["For You", "Quick & Easy", "Breakfast", "Vegan", "Desserts"]
 
-    /// All recipes to display: pantry-matched when available, otherwise the full built-in library.
-    /// This ensures the screen is always filled with great content.
+    // MARK: - Derived
+
     private var displayRecipes: [Recipe] {
-        if matchedRecipes.isEmpty {
-            return RecipeService.shared.recipes
-        }
+        if matchedRecipes.isEmpty { return RecipeService.shared.recipes }
         return matchedRecipes
     }
 
     private var recipes: [Recipe] { filterRecipes(displayRecipes) }
     private var isPantryMatched: Bool { !matchedRecipes.isEmpty }
 
-    // Items expiring soon — used to show Rescue Chef banner
     private var urgentCount: Int {
         pantryItems.filter { $0.expiryStatus == .expiringSoon || $0.expiryStatus == .expiringToday || $0.expiryStatus == .expired }.count
     }
+
+    // MARK: - Body
 
     var body: some View {
         VStack(spacing: 0) {
@@ -36,7 +43,6 @@ struct RecipesView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: PSSpacing.xl) {
-                    // Rescue Chef urgent banner
                     if urgentCount > 0 {
                         rescueChefBanner
                             .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
@@ -44,7 +50,6 @@ struct RecipesView: View {
                             .staggeredAppearance(index: 0)
                     }
 
-                    // Leftover Heroes — always visible in "For You" filter
                     if activeFilter == "For You" {
                         leftoverHeroesSection
                             .staggeredAppearance(index: urgentCount > 0 ? 1 : 0)
@@ -68,7 +73,6 @@ struct RecipesView: View {
                 }
                 .padding(.top, PSSpacing.md)
             }
-            // Make sure the last card always sits above the floating tab bar.
             .contentMargins(.bottom, PSLayout.scaled(150), for: .scrollContent)
         }
         .background(PSColors.backgroundSecondary)
@@ -76,30 +80,33 @@ struct RecipesView: View {
         .sheet(item: $selectedRecipe) { recipe in
             NavigationStack { RecipeDetailView(recipe: recipe) }
                 .presentationDragIndicator(.visible)
+                .sheetTransition()
         }
         .task { matchedRecipes = RecipeService.shared.recipesForFreshli(items: pantryItems) }
         .onChange(of: pantryItems.count) { _, _ in matchedRecipes = RecipeService.shared.recipesForFreshli(items: pantryItems) }
     }
 
+    // ══════════════════════════════════════════════════════════════
     // MARK: - Header
+    // ══════════════════════════════════════════════════════════════
 
     private var recipesHeader: some View {
         VStack(alignment: .leading, spacing: PSSpacing.md) {
             HStack(alignment: .center, spacing: PSSpacing.md) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(String(localized: "Recipes"))
-                        .font(.system(size: PSLayout.scaledFont(28), weight: .bold))
+                    FLText("Recipes", .displayMedium, color: .primary)
                         .tracking(-0.3)
-                        .foregroundStyle(PSColors.textPrimary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
-                    Text(isPantryMatched
-                        ? String(localized: "\(matchedRecipes.count) recipes matched to your pantry")
-                        : String(localized: "\(RecipeService.shared.recipes.count) recipes to explore"))
-                        .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
-                        .foregroundStyle(PSColors.textTertiary)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.85)
+                    FLText(
+                        isPantryMatched
+                            ? String(localized: "\(matchedRecipes.count) recipes matched to your pantry")
+                            : String(localized: "\(RecipeService.shared.recipes.count) recipes to explore"),
+                        .caption,
+                        color: .tertiary
+                    )
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .layoutPriority(1)
@@ -128,25 +135,23 @@ struct RecipesView: View {
         .padding(.bottom, PSSpacing.md)
         .frame(maxWidth: .infinity)
         .background(PSColors.surfaceCard)
-        .shadow(color: .black.opacity(0.04), radius: 2, y: 1)
+        .elevation(.z1)
         .overlay(alignment: .bottom) { Divider().opacity(0.5) }
     }
 
-    // MARK: - Leftover Heroes Section
+    // ══════════════════════════════════════════════════════════════
+    // MARK: - Leftover Heroes
+    // ══════════════════════════════════════════════════════════════
 
     private var leftoverHeroesSection: some View {
         let heroes = RecipeService.shared.leftoverHeroes
         return VStack(alignment: .leading, spacing: PSSpacing.md) {
-            // Section header
             HStack(alignment: .center, spacing: PSSpacing.sm) {
                 HStack(spacing: PSSpacing.xs) {
                     Image(systemName: "trophy.fill")
                         .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
                         .foregroundStyle(Color(hex: 0xF59E0B))
-                    Text("LEFTOVER HEROES")
-                        .font(.system(size: PSLayout.scaledFont(10), weight: .black))
-                        .tracking(0.6)
-                        .foregroundStyle(Color(hex: 0xF59E0B))
+                    FLText("LEFTOVER HEROES", .sectionLabel, color: .custom(Color(hex: 0xF59E0B)))
                 }
                 .padding(.horizontal, PSSpacing.sm)
                 .padding(.vertical, PSSpacing.xxs)
@@ -155,16 +160,13 @@ struct RecipesView: View {
                 .fixedSize()
                 .layoutPriority(1)
 
-                Text("Turn leftovers into magic")
-                    .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
-                    .foregroundStyle(PSColors.textTertiary)
+                FLText("Turn leftovers into magic", .footnote, color: .tertiary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
 
-            // Horizontal scroll of hero recipe cards
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: PSSpacing.md) {
                     ForEach(heroes) { recipe in
@@ -172,8 +174,6 @@ struct RecipesView: View {
                             leftoverHeroCard(recipe)
                         }
                         .buttonStyle(PressableButtonStyle())
-                        // Scroll-linked parallax: cards scale up as they
-                        // enter the viewport and subtly fade at the edges.
                         .scrollTransition(.animated(.spring(response: 0.4))) { content, phase in
                             content
                                 .scaleEffect(phase.isIdentity ? 1.0 : 0.92)
@@ -191,7 +191,6 @@ struct RecipesView: View {
         let cardWidth = PSLayout.scaled(200)
         let cardHeight = PSLayout.scaled(170)
         return ZStack(alignment: .bottomLeading) {
-            // Base — real food photo sized to the card exactly.
             FoodCardImage(
                 title: recipe.title,
                 imageSystemName: recipe.imageSystemName,
@@ -200,7 +199,6 @@ struct RecipesView: View {
             )
             .frame(width: cardWidth, height: cardHeight)
 
-            // Dark scrim for legibility.
             LinearGradient(
                 colors: [.clear, .black.opacity(0.72)],
                 startPoint: .center,
@@ -209,8 +207,6 @@ struct RecipesView: View {
             .frame(width: cardWidth, height: cardHeight)
             .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
 
-            // Text overlay — constrained to the card's inner width so the
-            // first letter can never be clipped by the ZStack edge.
             VStack(alignment: .leading, spacing: PSSpacing.xs) {
                 HStack(spacing: PSSpacing.xxs) {
                     Image(systemName: "trophy.fill")
@@ -246,7 +242,7 @@ struct RecipesView: View {
                         .font(.system(size: PSLayout.scaledFont(11), weight: .semibold))
 
                     if !recipe.substitutions.isEmpty {
-                        Text("·")
+                        Text("\u{00B7}")
                         Image(systemName: "arrow.triangle.2.circlepath")
                             .font(.system(size: 10))
                         Text("\(recipe.substitutions.count) swaps")
@@ -267,30 +263,31 @@ struct RecipesView: View {
                 .strokeBorder(Color(hex: 0xF59E0B).opacity(0.4), lineWidth: 1.5)
         )
         .shadow(color: Color(hex: 0xF59E0B).opacity(0.15), radius: 12, y: 5)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(recipe.title), Leftover Hero, \(recipe.prepTimeDisplay)")
     }
 
+    // ══════════════════════════════════════════════════════════════
     // MARK: - Rescue Chef Banner
+    // No background box on the flame icon.
+    // ══════════════════════════════════════════════════════════════
 
     private var rescueChefBanner: some View {
         NavigationLink(destination: RescueChefView()) {
             HStack(spacing: PSSpacing.lg) {
-                ZStack {
-                    Circle()
-                        .fill(PSColors.expiredRed.opacity(0.15))
-                        .frame(width: PSLayout.scaled(52), height: PSLayout.scaled(52))
-                    Image(systemName: "flame.fill")
-                        .font(.system(size: PSLayout.scaledFont(24)))
-                        .foregroundStyle(PSColors.expiredRed)
-                }
+                // Flame icon — bare, no background circle
+                Image(systemName: "flame.fill")
+                    .font(.system(size: PSLayout.scaledFont(28)))
+                    .foregroundStyle(PSColors.expiredRed)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(String(localized: "Rescue Chef"))
-                        .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
-                        .foregroundStyle(PSColors.textPrimary)
-                    Text(String(localized: "\(urgentCount) item\(urgentCount == 1 ? "" : "s") need cooking now — get recipe ideas!"))
-                        .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
-                        .foregroundStyle(PSColors.textSecondary)
-                        .lineLimit(2)
+                    FLText("Rescue Chef", .headline, color: .primary)
+                    FLText(
+                        String(localized: "\(urgentCount) item\(urgentCount == 1 ? "" : "s") need cooking now — get recipe ideas!"),
+                        .subheadline,
+                        color: .secondary
+                    )
+                    .lineLimit(2)
                 }
 
                 Spacer()
@@ -337,14 +334,15 @@ struct RecipesView: View {
         }
     }
 
+    // ══════════════════════════════════════════════════════════════
     // MARK: - Featured Recipe
+    // ══════════════════════════════════════════════════════════════
 
     private var featuredRecipe: some View {
         Group {
             if let recipe = recipes.first {
                 Button { selectedRecipe = recipe } label: {
                     ZStack(alignment: .bottom) {
-                        // Real food photograph — matched to recipe title
                         FoodCardImage(
                             title: recipe.title,
                             imageSystemName: recipe.imageSystemName,
@@ -352,7 +350,6 @@ struct RecipesView: View {
                             cornerRadius: PSLayout.featuredRadius
                         )
 
-                        // Dark gradient scrim so white text is readable
                         LinearGradient(
                             colors: [.clear, .black.opacity(0.20), .black.opacity(0.82)],
                             startPoint: .top,
@@ -360,7 +357,6 @@ struct RecipesView: View {
                         )
                         .clipShape(RoundedRectangle(cornerRadius: PSLayout.featuredRadius, style: .continuous))
 
-                        // Content
                         VStack(alignment: .leading, spacing: PSSpacing.sm) {
                             HStack(spacing: PSSpacing.sm) {
                                 Text(recipe.matchPercentageDisplay)
@@ -419,7 +415,6 @@ struct RecipesView: View {
                         .padding(PSSpacing.lg)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
-                        // Heart button
                         VStack {
                             HStack {
                                 Spacer()
@@ -442,14 +437,14 @@ struct RecipesView: View {
         }
     }
 
+    // ══════════════════════════════════════════════════════════════
     // MARK: - Recipe List
+    // ══════════════════════════════════════════════════════════════
 
     private var recipeList: some View {
         VStack(alignment: .leading, spacing: PSSpacing.lg) {
-            Text(String(localized: "Recommended for You"))
-                .font(.system(size: PSLayout.scaledFont(20), weight: .bold))
+            FLText("Recommended for You", .displaySmall, color: .primary)
                 .tracking(-0.3)
-                .foregroundStyle(PSColors.textPrimary)
                 .adaptiveHPadding()
 
             LazyVStack(spacing: PSSpacing.md) {
@@ -459,8 +454,6 @@ struct RecipesView: View {
                     }
                     .buttonStyle(PressableButtonStyle())
                     .staggeredAppearance(index: index)
-                    // Cards scale + fade in as they scroll into view for
-                    // a premium "card reveal" feel on the main list.
                     .scrollTransition(.animated(.spring(response: 0.5))) { content, phase in
                         content
                             .scaleEffect(phase.isIdentity ? 1.0 : 0.95)
@@ -500,14 +493,13 @@ struct RecipesView: View {
         }
     }
 
+    // ══════════════════════════════════════════════════════════════
     // MARK: - Recipe List Card
+    // ══════════════════════════════════════════════════════════════
 
     private func recipeListCard(recipe: Recipe) -> some View {
         let imageSize = PSLayout.recipeImageSize
         return HStack(spacing: PSSpacing.lg) {
-            // Real food photograph — matched to recipe title.
-            // Explicit outer frame + layoutPriority(0) ensures the image
-            // can never push its width into the title column.
             ZStack(alignment: .topLeading) {
                 FoodCardImage(
                     title: recipe.title,
@@ -517,7 +509,6 @@ struct RecipesView: View {
                 )
                 .frame(width: imageSize, height: imageSize)
 
-                // Match percentage badge
                 Text(recipe.matchPercentageDisplay)
                     .font(.system(size: PSLayout.scaledFont(10), weight: .bold))
                     .foregroundStyle(.white)
@@ -538,15 +529,12 @@ struct RecipesView: View {
                     .minimumScaleFactor(0.85)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                // Difficulty + time chips
                 HStack(spacing: PSSpacing.xs) {
                     Label(recipe.prepTimeDisplay, systemImage: "clock")
                         .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
                         .foregroundStyle(PSColors.textSecondary)
-
-                    Text("•")
+                    Text("\u{2022}")
                         .foregroundStyle(PSColors.textTertiary)
-
                     Text(recipe.difficulty.displayName)
                         .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
                         .foregroundStyle(PSColors.textSecondary)
@@ -579,6 +567,13 @@ struct RecipesView: View {
             RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous)
                 .strokeBorder(PSColors.borderLight, lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.04), radius: 6, y: 3)
+        .elevation(.z1)
+        // Gaze-adaptive bloom: recipe card glows when user's gaze
+        // dwells on it, with liquidGlass refraction acceleration.
+        .gazeAdaptiveGlass(.low, enableHaptics: true)
+        .livingMenu()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(recipe.title), \(recipe.prepTimeDisplay), \(recipe.difficulty.displayName), rated \(recipe.ratingDisplay)")
+        .accessibilityHint("Double tap to view recipe details")
     }
 }

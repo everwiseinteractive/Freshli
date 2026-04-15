@@ -25,6 +25,7 @@ struct IdentityBadgeView: View {
             verifySheet
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
+                .sheetTransition()
         }
         .onAppear {
             verificationService.checkVerification()

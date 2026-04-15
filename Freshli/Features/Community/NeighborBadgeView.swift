@@ -60,6 +60,8 @@ struct NeighborBadgeView: View {
         }
         .sheet(isPresented: $showDetails) {
             BadgeDetailsSheet(badge: badge, isEarned: isEarned)
+                .presentationDragIndicator(.visible)
+                .sheetTransition()
         }
     }
 }

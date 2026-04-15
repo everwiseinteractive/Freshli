@@ -1,5 +1,5 @@
 import Foundation
-import Vision
+@preconcurrency import Vision
 import UIKit
 import os
 
@@ -119,7 +119,7 @@ final class ReceiptScannerService {
                 do {
                     try requestHandler.perform([request])
 
-                    guard let results = request.results as? [VNRecognizedTextObservation] else {
+                    guard let results = request.results else {
                         continuation.resume(returning: [])
                         return
                     }
@@ -208,7 +208,7 @@ final class ReceiptScannerService {
     /// Extract an item from a receipt line.
     private func extractItemFromLine(_ line: String) -> ParsedReceiptItem? {
         var cleanedName = line.trimmingCharacters(in: .whitespaces)
-        var originalLine = cleanedName
+        let originalLine = cleanedName
 
         // Remove quantity prefixes (e.g., "2x Milk" -> "Milk")
         let quantityPattern = "^([0-9]+\\.?[0-9]*)\\s*[xX×]\\s*"

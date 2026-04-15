@@ -285,6 +285,6 @@ struct CreateListingView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.ultraThinMaterial)
-        .transition(.opacity)
+        .transition(.opacity.combined(with: .scale(scale: 0.96)))
     }
 }

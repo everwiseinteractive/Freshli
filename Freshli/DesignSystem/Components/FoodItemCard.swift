@@ -16,7 +16,8 @@ struct FoodItemCard: View {
                     Text(item.name)
                         .font(compact ? PSTypography.calloutMedium : PSTypography.bodyMedium)
                         .foregroundStyle(PSColors.textPrimary)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.85)
 
                     HStack(spacing: PSSpacing.sm) {
                         Text(item.quantityDisplay)
@@ -91,14 +92,15 @@ struct FoodItemCardCompact: View {
                 Text(item.name)
                     .font(PSTypography.calloutMedium)
                     .foregroundStyle(PSColors.textPrimary)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
 
                 Text(item.expiryDate.expiryDisplayText)
                     .font(PSTypography.caption2)
                     .foregroundStyle(PSColors.expiryColor(for: item.expiryStatus))
             }
             .padding(PSSpacing.md)
-            .frame(width: 140)
+            .frame(width: PSLayout.scaled(150))
             .cardStyle()
         }
         .buttonStyle(PressableButtonStyle())

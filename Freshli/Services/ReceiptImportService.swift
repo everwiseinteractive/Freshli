@@ -89,7 +89,7 @@ final class ReceiptImportService {
     func parseReceiptFromText(_ text: String) -> GroceryReceipt {
         let lines = text.split(separator: "\n").map(String.init)
         var items: [ReceiptItem] = []
-        var storeName = "Manual Receipt"
+        let storeName = "Manual Receipt"
         var totalAmount: Double = 0
 
         for line in lines {

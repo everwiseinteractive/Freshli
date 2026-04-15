@@ -48,8 +48,6 @@ struct FreshliItemCell: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
         .contentShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
-        // GPU-offload complex cell rendering to eliminate jitter in LazyVStack/List
-        .drawingGroup(opaque: false, colorMode: .nonLinear)
     }
 
     // MARK: - Swipe Background
@@ -108,7 +106,7 @@ struct FreshliItemCell: View {
                         .matchedGeometryEffect(id: "name_\(item.id)", in: namespace)
 
                     HStack(spacing: PSSpacing.sm) {
-                        Text("\(String(format: "%.0f", item.quantity)) \(MeasurementUnit(rawValue: item.unit)?.displayName ?? item.unit)")
+                        Text("\(String(format: "%.0f", item.quantity)) \(MeasurementUnit(rawValue: item.unit)?.displayName(for: item.quantity) ?? item.unit)")
                             .font(.system(size: PSLayout.scaledFont(13), weight: .medium, design: .rounded))
                             .foregroundStyle(PSColors.textSecondary)
 
@@ -203,7 +201,7 @@ struct FreshliItemCell: View {
                 RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
                     .stroke(Color.white.opacity(0.15), lineWidth: 0.5)
             )
-            .shadow(color: PSColors.textPrimary.opacity(0.06), radius: 8, y: 2)
+            .elevation(.z1)
     }
 
     // MARK: - Swipe Gesture

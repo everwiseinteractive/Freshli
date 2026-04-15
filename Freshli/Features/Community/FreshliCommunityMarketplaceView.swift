@@ -62,6 +62,8 @@ struct FreshliCommunityMarketplaceView: View {
         }
         .sheet(isPresented: $showCreateListing) {
             CommunityCreateListingView(onComplete: { _ in showCreateListing = false })
+                .presentationDragIndicator(.visible)
+                .sheetTransition()
         }
         .alert("Report Listing", isPresented: $showReportConfirmation, presenting: reportingListing) { listing in
             Button("Cancel", role: .cancel) {}
@@ -71,7 +73,7 @@ struct FreshliCommunityMarketplaceView: View {
                         try await viewModel.reportListing(listing)
                         PSHaptics.shared.mediumTap()
                     } catch {
-                        print("Error reporting listing: \(error)")
+                        PSLogger(category: .community).error("Error reporting listing: \(error)")
                     }
                 }
             }
@@ -347,7 +349,7 @@ struct FreshliCommunityMarketplaceView: View {
                     try await viewModel.claimListing(listing, claimerId: userId)
                     PSHaptics.shared.mediumTap()
                 } catch {
-                    print("Error claiming listing: \(error)")
+                    PSLogger(category: .community).error("Error claiming listing: \(error)")
                 }
                 claimingListingId = nil
             }
@@ -509,6 +511,7 @@ struct FreshliCommunityMarketplaceView: View {
         .padding(PSSpacing.cardPadding)
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
+        .sheetTransition()
     }
 
     // MARK: - Empty State

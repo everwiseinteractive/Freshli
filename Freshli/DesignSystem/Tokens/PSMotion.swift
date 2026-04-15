@@ -78,23 +78,92 @@ enum FLMotion {
 
 // MARK: - Button Styles (with Reduce Motion support)
 
+/// Standard press style — 0.93× scale + Metal 4 liquid glass refraction ripple.
+/// All 100+ button usages across the app inherit the ripple automatically.
+/// Pass `density` to control refraction intensity per surface type.
 struct PressableButtonStyle: ButtonStyle {
+    var density: FLMaterialDensity = .med
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.93 : 1.0)
-            .animation(reduceMotion ? .none : FLMotion.springQuick, value: configuration.isPressed)
+        PressableContent(
+            configuration: configuration,
+            density: density,
+            reduceMotion: reduceMotion
+        )
     }
 }
 
+/// Inner view holding @State for ripple progress binding.
+private struct PressableContent: View {
+    let configuration: ButtonStyleConfiguration
+    let density: FLMaterialDensity
+    let reduceMotion: Bool
+
+    @State private var isPressed = false
+
+    var body: some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.93 : 1.0)
+            .animation(reduceMotion ? .none : FLMotion.springQuick, value: configuration.isPressed)
+            .metalLiquidGlassRipple(isPressed: $isPressed, density: density)
+            .onChange(of: configuration.isPressed) { _, pressed in
+                if pressed {
+                    isPressed = true
+                    FreshliHapticManager.shared.glassRipple(density: density)
+                    MotionVocabularyService.shared.speakMotion(.glassRipple(density: density))
+                } else {
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(500))
+                        isPressed = false
+                    }
+                }
+            }
+    }
+}
+
+/// Convenience alias — same as PressableButtonStyle with density param.
+typealias LiquidGlassPressStyle = PressableButtonStyle
+
 struct BounceButtonStyle: ButtonStyle {
+    var density: FLMaterialDensity = .low
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func makeBody(configuration: Configuration) -> some View {
+        BounceContent(
+            configuration: configuration,
+            density: density,
+            reduceMotion: reduceMotion
+        )
+    }
+}
+
+private struct BounceContent: View {
+    let configuration: ButtonStyleConfiguration
+    let density: FLMaterialDensity
+    let reduceMotion: Bool
+
+    @State private var isPressed = false
+
+    var body: some View {
         configuration.label
             .scaleEffect(configuration.isPressed && !reduceMotion ? 0.93 : 1.0)
             .animation(reduceMotion ? .none : FLMotion.springBouncy, value: configuration.isPressed)
+            .metalLiquidGlassRipple(isPressed: $isPressed, density: density)
+            .onChange(of: configuration.isPressed) { _, pressed in
+                if pressed {
+                    isPressed = true
+                    FreshliHapticManager.shared.glassRipple(density: density)
+                    MotionVocabularyService.shared.speakMotion(.glassRipple(density: density))
+                } else {
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(500))
+                        isPressed = false
+                    }
+                }
+            }
     }
 }
 
@@ -260,6 +329,11 @@ extension View {
         buttonStyle(BounceButtonStyle())
     }
 
+    /// Liquid Glass button press — Metal 4 refraction ripple + viscosity haptic.
+    func liquidGlassPress(density: FLMaterialDensity = .med) -> some View {
+        buttonStyle(LiquidGlassPressStyle(density: density))
+    }
+
     func refreshBounce(isRefreshing: Binding<Bool>) -> some View {
         modifier(RefreshBounceModifier(isRefreshing: isRefreshing))
     }
@@ -275,43 +349,37 @@ extension View {
     }
 }
 
-// MARK: - Shimmer Effect (Impact Cards — draws eye toward sustainability progress)
+// MARK: - Shimmer Effect (Impact Cards — Metal GPU-powered)
+// Upgraded from CPU LinearGradient overlay to Metal shader for
+// smoother diagonal sweep with zero main-thread layout cost.
 
 struct ShimmerModifier: ViewModifier {
-    @State private var phase: CGFloat = 0
+    @State private var phase: CGFloat = -0.3
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func body(content: Content) -> some View {
-        if reduceMotion {
+        if reduceMotion || !ShaderWarmUpService.shadersAvailable {
             content
         } else {
+            let capturedPhase = phase
             content
-                .overlay(
-                    GeometryReader { geo in
-                        LinearGradient(
-                            colors: [
-                                .clear,
-                                .white.opacity(0.08),
-                                .white.opacity(0.15),
-                                .white.opacity(0.08),
-                                .clear
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+                .visualEffect { view, proxy in
+                    view.colorEffect(
+                        ShaderLibrary.gpuShimmer(
+                            .float2(proxy.size),
+                            .float(Float(capturedPhase))
                         )
-                        .frame(width: geo.size.width * 0.6)
-                        .offset(x: -geo.size.width * 0.3 + (geo.size.width * 1.6) * phase)
-                    }
-                    .clipped()
-                    .allowsHitTesting(false)
-                )
-                .onAppear {
-                    withAnimation(
-                        .easeInOut(duration: 2.5)
-                        .repeatForever(autoreverses: false)
-                        .delay(1.0)
-                    ) {
-                        phase = 1.0
+                    )
+                }
+                .task {
+                    // Initial delay so shimmer doesn't fire instantly on scroll
+                    try? await Task.sleep(for: .seconds(1.0))
+                    while !Task.isCancelled {
+                        phase = -0.3
+                        withAnimation(.easeInOut(duration: 2.0)) {
+                            phase = 1.3
+                        }
+                        try? await Task.sleep(for: .seconds(3.5))
                     }
                 }
         }
@@ -335,6 +403,75 @@ struct SuccessSensoryFeedbackModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .sensoryFeedback(.success, trigger: trigger)
+    }
+}
+
+// MARK: - Metal Tab Melt Transition
+// GPU-powered noise-dissolve for tab switches — content melts
+// away with a luminous green edge glow instead of a flat slide.
+// Falls back to simple opacity when Reduce Motion is enabled.
+
+struct TabMeltModifier: ViewModifier, Animatable {
+    var progress: CGFloat
+
+    var animatableData: CGFloat {
+        get { progress }
+        set { progress = newValue }
+    }
+
+    func body(content: Content) -> some View {
+        if progress < 0.001 {
+            // Identity state (at rest) — NO shader, NO drawingGroup.
+            // Critical: .transition(active:identity:) applies the identity
+            // modifier to ALL content at ALL times. Wrapping all tabs in a
+            // shader pipeline causes prohibition if the shader fails.
+            content
+        } else if progress > 0.999 {
+            // Fully dissolved — just hide
+            content.opacity(0)
+        } else if ShaderWarmUpService.shadersAvailable {
+            // Active transition — Metal noise-field dissolve.
+            // IMPORTANT: Do NOT use .drawingGroup() here. The content
+            // contains NavigationStack (UIKit-backed UINavigationController)
+            // which cannot be rasterized into a Metal texture.
+            // .drawingGroup() would cause hundreds of
+            // "Unable to render flattened version of
+            //  PlatformViewControllerRepresentableAdaptor<NavigationStackRepresentable>"
+            // errors. SwiftUI handles rasterization internally when
+            // .colorEffect() is applied via .visualEffect.
+            content
+                .compositingGroup()
+                .visualEffect { view, proxy in
+                    view.colorEffect(
+                        ShaderLibrary.tabMeltDissolve(
+                            .float2(proxy.size),
+                            .float(Float(progress))
+                        )
+                    )
+                }
+        } else {
+            // Fallback — simple opacity fade
+            content
+                .opacity(Double(1 - progress))
+        }
+    }
+}
+
+extension FLMotion {
+    /// Metal-backed melt transition for tab switches.
+    /// When reduceMotion is true, gracefully degrades to a simple fade.
+    static func tabMeltTransition(reduceMotion: Bool) -> AnyTransition {
+        // On Simulator, Metal shaders are unavailable and the custom
+        // TabMeltModifier's Animatable interpolation can fail to complete,
+        // leaving inserted views stuck at opacity 0. Use a plain .opacity
+        // transition as the safe fallback for both reduceMotion AND Simulator.
+        if reduceMotion || !ShaderWarmUpService.shadersAvailable {
+            return .opacity
+        }
+        return .modifier(
+            active: TabMeltModifier(progress: 1),
+            identity: TabMeltModifier(progress: 0)
+        )
     }
 }
 

@@ -284,6 +284,8 @@ struct DonationAnalyticsView: View {
             let exportText = donationService.exportTaxReport(year: selectedYear)
 
             ShareSheet(text: exportText, filename: "Freshli-Tax-Report-\(selectedYear).txt")
+                .presentationDragIndicator(.visible)
+                .sheetTransition()
         }
     }
 

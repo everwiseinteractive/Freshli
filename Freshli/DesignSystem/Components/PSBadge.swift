@@ -103,6 +103,15 @@ struct PSExpiryBadge: View {
         }
     }
 
+    /// Metal pulse color — amber for expiring, red for expired
+    private var pulseColor: Color? {
+        switch status {
+        case .expiringSoon: return PSColors.warningAmber
+        case .expiringToday, .expired: return PSColors.expiredRed
+        case .fresh: return nil
+        }
+    }
+
     // Inclusivity — the badge must not rely on colour alone. Each status
     // gets a distinct SF Symbol glyph prefixed inside the capsule so
     // red/green colour-blind users (≈8% of men, ≈0.5% of women worldwide)
@@ -122,9 +131,24 @@ struct PSExpiryBadge: View {
         .foregroundStyle(variant.foregroundColor)
         .background(variant.backgroundColor)
         .clipShape(Capsule())
+        // Metal GPU pulse — subtle breathing glow for urgency badges
+        .modifier(ExpiryPulseWrapper(pulseColor: pulseColor))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(status.accessibilityLabel)
         .accessibilityHint(status.accessibilityHint)
+    }
+}
+
+/// Conditionally applies Metal expiry pulse only for non-fresh statuses
+private struct ExpiryPulseWrapper: ViewModifier {
+    let pulseColor: Color?
+
+    func body(content: Content) -> some View {
+        if let pulseColor {
+            content.metalExpiryPulse(color: pulseColor)
+        } else {
+            content
+        }
     }
 }
 

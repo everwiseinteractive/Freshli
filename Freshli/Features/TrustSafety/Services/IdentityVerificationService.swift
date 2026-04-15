@@ -28,6 +28,7 @@ final class IdentityVerificationService: @unchecked Sendable {
 
     var biometricName: String {
         switch biometricType {
+        case .none: String(localized: "Biometrics")
         case .faceID: "Face ID"
         case .touchID: "Touch ID"
         case .opticID: "Optic ID"
@@ -37,6 +38,7 @@ final class IdentityVerificationService: @unchecked Sendable {
 
     var biometricIcon: String {
         switch biometricType {
+        case .none: "person.badge.key"
         case .faceID: "faceid"
         case .touchID: "touchid"
         case .opticID: "opticid"
@@ -86,6 +88,7 @@ final class IdentityVerificationService: @unchecked Sendable {
             }
 
             let method: String = switch biometricType {
+            case .none: "none"
             case .faceID: "faceID"
             case .touchID: "touchID"
             case .opticID: "opticID"

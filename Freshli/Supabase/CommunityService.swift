@@ -297,6 +297,41 @@ struct CommunityListingDTO: Codable, Identifiable, Sendable {
         default: return "🍽️"
         }
     }
+
+    /// Maps the listing's food category to a real photography asset name.
+    /// Uses the existing `food_*` image assets in the Asset Catalog.
+    var categoryImageAsset: String {
+        // Tier 1: try title-based matching (e.g. "Fresh Lemons" → fruits)
+        let lower = itemName.lowercased()
+
+        // Seafood keywords
+        if lower.contains("salmon") || lower.contains("tuna") || lower.contains("fish") ||
+           lower.contains("shrimp") || lower.contains("prawn") || lower.contains("cod") {
+            return "food_salmon"
+        }
+        // Egg keywords
+        if lower.contains("egg") { return "food_egg" }
+        // Cheese keywords
+        if lower.contains("cheese") || lower.contains("cheddar") || lower.contains("mozzarella") {
+            return "food_cheese"
+        }
+
+        // Tier 2: category-based fallback
+        switch foodCategory {
+        case "fruits":      return "food_fruit"
+        case "vegetables":  return "food_veg"
+        case "dairy":       return "food_milk"
+        case "meat":        return "food_chicken"
+        case "bakery":      return "food_bread"
+        case "grains":      return "food_grains"
+        case "frozen":      return "food_generic"
+        case "canned":      return "food_generic"
+        case "beverages":   return "food_fruit"
+        case "condiments":  return "food_generic"
+        case "snacks":      return "food_generic"
+        default:            return "food_generic"
+        }
+    }
 }
 
 // MARK: - Listing Profile DTO (joined from profiles table)

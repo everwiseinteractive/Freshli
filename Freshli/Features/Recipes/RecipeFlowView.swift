@@ -91,7 +91,7 @@ struct RecipeFlowView: View {
         .padding(.top, PSSpacing.md)
         .padding(.bottom, PSSpacing.lg)
         .background(PSColors.surfaceCard)
-        .shadow(color: .black.opacity(0.04), radius: 2, y: 1)
+        .elevation(.z1)
         .overlay(alignment: .bottom) { Divider().opacity(0.5) }
     }
 

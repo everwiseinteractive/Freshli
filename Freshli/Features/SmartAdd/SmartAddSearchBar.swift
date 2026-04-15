@@ -3,6 +3,7 @@ import SwiftUI
 /// A glassmorphic search bar for manual food entry with SF Symbol suggestions.
 struct SmartAddSearchBar: View {
     @Bindable var viewModel: SmartAddViewModel
+    var isFocusedBinding: Binding<Bool>?
     @FocusState private var isFocused: Bool
 
     var body: some View {
@@ -42,7 +43,7 @@ struct SmartAddSearchBar: View {
                 RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
                     .strokeBorder(.white.opacity(0.5), lineWidth: 0.5)
             )
-            .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
+            .elevation(.z1)
 
             // Suggestions dropdown
             if !viewModel.searchSuggestions.isEmpty && isFocused {
@@ -51,6 +52,9 @@ struct SmartAddSearchBar: View {
             }
         }
         .animation(PSMotion.springQuick, value: viewModel.searchSuggestions.isEmpty)
+        .onChange(of: isFocused) { _, focused in
+            isFocusedBinding?.wrappedValue = focused
+        }
     }
 
     // MARK: - Suggestions
@@ -117,7 +121,7 @@ struct SmartAddSearchBar: View {
             RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
                 .strokeBorder(.white.opacity(0.5), lineWidth: 0.5)
         )
-        .shadow(color: .black.opacity(0.08), radius: 12, y: 4)
+        .elevation(.z2)
         .padding(.top, PSSpacing.sm)
     }
 }

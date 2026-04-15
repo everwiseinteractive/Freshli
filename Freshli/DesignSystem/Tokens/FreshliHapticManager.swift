@@ -73,6 +73,10 @@ final class FreshliHapticManager {
     static let softWiltDuration: TimeInterval = 0.50
     /// Duration of "The Community Heartbeat" pattern in seconds.
     static let communityHeartbeatDuration: TimeInterval = 0.36
+    /// Duration of "The Glass Tap" pattern in seconds.
+    static let glassTapDuration: TimeInterval = 0.22
+    /// Duration of "The Glass Morph" pattern in seconds.
+    static let glassMorphDuration: TimeInterval = 0.55
 
     // MARK: - Private
 
@@ -269,6 +273,275 @@ final class FreshliHapticManager {
         }
     }
 
+    // MARK: - Signature Pattern: The Glass Tap
+    // Viscous, weighty transient when tapping a Liquid Glass surface.
+    // A medium-sharp "thock" followed by a brief resonant hum — like
+    // tapping a thick glass slab. Synced with Metal glass card effects.
+
+    func glassTap() {
+        guard let engine = hapticEngine else {
+            PSHaptics.shared.lightTap()
+            return
+        }
+        do {
+            let events: [CHHapticEvent] = [
+                // Primary thock — medium sharpness, moderate intensity
+                CHHapticEvent(
+                    eventType: .hapticTransient,
+                    parameters: [
+                        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.7),
+                        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.55)
+                    ],
+                    relativeTime: 0.0
+                ),
+                // Resonant hum — low-frequency glass vibration
+                CHHapticEvent(
+                    eventType: .hapticContinuous,
+                    parameters: [
+                        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.35),
+                        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.25)
+                    ],
+                    relativeTime: 0.04,
+                    duration: 0.14
+                ),
+                // Subtle ring-off
+                CHHapticEvent(
+                    eventType: .hapticTransient,
+                    parameters: [
+                        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.15),
+                        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.65)
+                    ],
+                    relativeTime: 0.18
+                )
+            ]
+
+            let pattern = try CHHapticPattern(events: events, parameters: [])
+            let player = try engine.makePlayer(with: pattern)
+            try player.start(atTime: CHHapticTimeImmediate)
+        } catch {
+            logger.warning("glassTap haptic error: \(error.localizedDescription)")
+            PSHaptics.shared.lightTap()
+        }
+    }
+
+    // MARK: - Signature Pattern: The Glass Morph
+    // Slow viscous transformation haptic for glass elements that reshape.
+    // A gentle swell that rises, peaks, then resolves — matching the
+    // Liquid Glass SDF morph animations. Think of thick honey flowing
+    // through glass.
+
+    func glassMorph() {
+        guard let engine = hapticEngine else {
+            PSHaptics.shared.softBounce()
+            return
+        }
+        do {
+            let events: [CHHapticEvent] = [
+                // Subtle onset — the glass starts to move
+                CHHapticEvent(
+                    eventType: .hapticTransient,
+                    parameters: [
+                        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.25),
+                        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.3)
+                    ],
+                    relativeTime: 0.0
+                ),
+                // Rising swell — continuous viscous drag
+                CHHapticEvent(
+                    eventType: .hapticContinuous,
+                    parameters: [
+                        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.5),
+                        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.2)
+                    ],
+                    relativeTime: 0.06,
+                    duration: 0.32
+                ),
+                // Resolution snap — the glass settles into new shape
+                CHHapticEvent(
+                    eventType: .hapticTransient,
+                    parameters: [
+                        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.55),
+                        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.65)
+                    ],
+                    relativeTime: 0.40
+                ),
+                // Soft afterglow ring
+                CHHapticEvent(
+                    eventType: .hapticContinuous,
+                    parameters: [
+                        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.12),
+                        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.4)
+                    ],
+                    relativeTime: 0.44,
+                    duration: 0.11
+                )
+            ]
+
+            // Intensity curve — rise, peak, settle
+            let curve = CHHapticParameterCurve(
+                parameterID: .hapticIntensityControl,
+                controlPoints: [
+                    CHHapticParameterCurve.ControlPoint(relativeTime: 0.06, value: 0.25),
+                    CHHapticParameterCurve.ControlPoint(relativeTime: 0.22, value: 0.55),
+                    CHHapticParameterCurve.ControlPoint(relativeTime: 0.38, value: 0.35),
+                    CHHapticParameterCurve.ControlPoint(relativeTime: 0.55, value: 0.0)
+                ],
+                relativeTime: 0.0
+            )
+
+            let pattern = try CHHapticPattern(events: events, parameterCurves: [curve])
+            let player = try engine.makePlayer(with: pattern)
+            try player.start(atTime: CHHapticTimeImmediate)
+        } catch {
+            logger.warning("glassMorph haptic error: \(error.localizedDescription)")
+            PSHaptics.shared.softBounce()
+        }
+    }
+
+    // MARK: - Signature Pattern: Glass Ripple (Viscosity Track)
+    // Density-driven haptic that syncs with the Metal liquidGlassRipple
+    // distortion shader. Duration matches the 0.45s ripple animation.
+    //
+    // Mapping from FLMaterialDensity → haptic character:
+    //   low  (1.0)  — sharp, snappy click  (thin glass / air)
+    //   med  (1.33) — medium thock + warm resonance (water-like)
+    //   high (1.52) — heavy, thuddy impact + slow viscous swell (thick glass)
+    //
+    // The intensity curve tracks the ripple's radial expansion, peaking
+    // at ~40% progress then decaying to zero as the ripple fades out.
+
+    /// Duration of the Glass Ripple pattern in seconds.
+    static let glassRippleDuration: TimeInterval = 0.45
+
+    func glassRipple(density: FLMaterialDensity) {
+        guard let engine = hapticEngine else {
+            PSHaptics.shared.lightTap()
+            return
+        }
+
+        let initialIntensity: Float
+        let initialSharpness: Float
+        let swellIntensity: Float
+        let swellSharpness: Float
+        let swellDuration: TimeInterval
+        let decayTail: Bool
+
+        switch density {
+        case .low:
+            // Thin glass — sharp, quick click
+            initialIntensity = 0.55
+            initialSharpness = 0.85
+            swellIntensity = 0.15
+            swellSharpness = 0.6
+            swellDuration = 0.08
+            decayTail = false
+
+        case .med:
+            // Water-like — medium thock with warm resonance
+            initialIntensity = 0.7
+            initialSharpness = 0.55
+            swellIntensity = 0.4
+            swellSharpness = 0.3
+            swellDuration = 0.18
+            decayTail = true
+
+        case .high:
+            // Thick glass — heavy thud with slow viscous swell
+            initialIntensity = 0.85
+            initialSharpness = 0.3
+            swellIntensity = 0.55
+            swellSharpness = 0.15
+            swellDuration = 0.28
+            decayTail = true
+        }
+
+        do {
+            var events: [CHHapticEvent] = [
+                // Primary impact at touch point
+                CHHapticEvent(
+                    eventType: .hapticTransient,
+                    parameters: [
+                        CHHapticEventParameter(parameterID: .hapticIntensity, value: initialIntensity),
+                        CHHapticEventParameter(parameterID: .hapticSharpness, value: initialSharpness)
+                    ],
+                    relativeTime: 0.0
+                ),
+                // Viscous swell — tracks the expanding ripple wavefront
+                CHHapticEvent(
+                    eventType: .hapticContinuous,
+                    parameters: [
+                        CHHapticEventParameter(parameterID: .hapticIntensity, value: swellIntensity),
+                        CHHapticEventParameter(parameterID: .hapticSharpness, value: swellSharpness)
+                    ],
+                    relativeTime: 0.04,
+                    duration: swellDuration
+                )
+            ]
+
+            // High density gets an extra tail — the "glass settling" micro-vibration
+            if decayTail {
+                events.append(
+                    CHHapticEvent(
+                        eventType: .hapticContinuous,
+                        parameters: [
+                            CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.1),
+                            CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.4)
+                        ],
+                        relativeTime: 0.04 + swellDuration,
+                        duration: 0.10
+                    )
+                )
+            }
+
+            // Intensity curve synced to ripple expansion:
+            // Quick rise → peak at ~40% ripple → gradual decay
+            let peakTime = 0.04 + swellDuration * 0.4
+            let endTime = 0.04 + swellDuration + (decayTail ? 0.10 : 0.0)
+
+            let curve = CHHapticParameterCurve(
+                parameterID: .hapticIntensityControl,
+                controlPoints: [
+                    CHHapticParameterCurve.ControlPoint(relativeTime: 0.0, value: initialIntensity),
+                    CHHapticParameterCurve.ControlPoint(relativeTime: peakTime, value: swellIntensity * 1.1),
+                    CHHapticParameterCurve.ControlPoint(relativeTime: endTime, value: 0.0)
+                ],
+                relativeTime: 0.0
+            )
+
+            let pattern = try CHHapticPattern(events: events, parameterCurves: [curve])
+            let player = try engine.makePlayer(with: pattern)
+            try player.start(atTime: CHHapticTimeImmediate)
+        } catch {
+            logger.warning("glassRipple haptic error: \(error.localizedDescription)")
+            PSHaptics.shared.lightTap()
+        }
+    }
+
+    // MARK: - Glass Slide Haptic (Continuous)
+    // Played during drag gestures on glass surfaces.
+    // Creates a subtle "friction" feel that scales with velocity.
+
+    func glassSlide(intensity: Float) {
+        guard let engine = hapticEngine else { return }
+        let clampedIntensity = min(max(intensity, 0.0), 1.0)
+        do {
+            let event = CHHapticEvent(
+                eventType: .hapticContinuous,
+                parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: clampedIntensity * 0.4),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.15 + clampedIntensity * 0.3)
+                ],
+                relativeTime: 0.0,
+                duration: 0.08
+            )
+            let pattern = try CHHapticPattern(events: [event], parameters: [])
+            let player = try engine.makePlayer(with: pattern)
+            try player.start(atTime: CHHapticTimeImmediate)
+        } catch {
+            // Non-critical — swallow slide haptic errors
+        }
+    }
+
     // MARK: - Accessibility: Freshness Haptic
 
     /// Plays a single haptic pulse whose intensity and sharpness encode freshness.
@@ -401,6 +674,68 @@ final class FreshliHapticManager {
             try player.start(atTime: CHHapticTimeImmediate)
         } catch {
             // Non-critical — swallow animation sync errors silently
+        }
+    }
+
+    // MARK: - Melt Dissolve (Tab Transition Haptic)
+    /// Haptic accompaniment for the Metal melt-dissolve tab transition.
+    /// Phase 1: Medium-intensity rumble that decays as pixels dissolve.
+    /// Phase 2: Sharp crystallisation "click" when the new tab solidifies.
+    /// Phase 3: Settling resonance — the glass finding its shape.
+    func meltDissolve() {
+        guard let engine = hapticEngine else { return }
+        do {
+            var events: [CHHapticEvent] = []
+
+            // Phase 1 — dissolve rumble (decaying continuous)
+            events.append(CHHapticEvent(
+                eventType: .hapticContinuous,
+                parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.55),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.20)
+                ],
+                relativeTime: 0,
+                duration: 0.40
+            ))
+
+            // Phase 2 — crystallisation click (sharp transient)
+            events.append(CHHapticEvent(
+                eventType: .hapticTransient,
+                parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.75),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.85)
+                ],
+                relativeTime: 0.42
+            ))
+
+            // Phase 3 — settling resonance
+            events.append(CHHapticEvent(
+                eventType: .hapticContinuous,
+                parameters: [
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.15),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.50)
+                ],
+                relativeTime: 0.44,
+                duration: 0.08
+            ))
+
+            // Intensity decay curve for the dissolve rumble
+            let decay = CHHapticParameterCurve(
+                parameterID: .hapticIntensityControl,
+                controlPoints: [
+                    .init(relativeTime: 0,    value: 0.55),
+                    .init(relativeTime: 0.15, value: 0.40),
+                    .init(relativeTime: 0.30, value: 0.18),
+                    .init(relativeTime: 0.40, value: 0.0)
+                ],
+                relativeTime: 0
+            )
+
+            let pattern = try CHHapticPattern(events: events, parameterCurves: [decay])
+            let player = try engine.makePlayer(with: pattern)
+            try player.start(atTime: CHHapticTimeImmediate)
+        } catch {
+            // Non-critical — swallow melt haptic errors silently
         }
     }
 }

@@ -45,15 +45,15 @@ final class SmartShoppingService {
         var predictions: [WastePrediction] = []
 
         for (_, items) in grouped {
-            guard items.count >= 2 else { continue }
+            guard items.count >= 2,
+                  let sample = items.first else { continue }
             let total = items.count
+            guard total > 0 else { continue }
             let wasted = items.filter {
                 !$0.isConsumed && !$0.isShared && !$0.isDonated && $0.expiryDate < now
             }.count
             let wasteRate = Double(wasted) / Double(total)
             guard wasteRate >= 0.20 else { continue }
-
-            let sample = items.first!
             let suggestedQty = max(0.5, sample.quantity * (1.0 - wasteRate * 0.5))
             let estimatedSavings = Double(wasted) * 2.50
 

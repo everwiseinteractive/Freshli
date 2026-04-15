@@ -71,6 +71,11 @@ struct FreshliCelebrationView: View {
             )
             .ignoresSafeArea()
             .opacity(showContent ? 1 : 0)
+            // Metal celebration radiance — pulsing glow rings
+            .metalCelebrationRadiance(
+                color: type.iconBackgroundColor,
+                intensity: showContent ? 0.7 : 0
+            )
 
             // Top-to-bottom gradient for depth
             LinearGradient(
@@ -164,7 +169,7 @@ struct FreshliCelebrationView: View {
             Image(systemName: type.icon)
                 .font(.system(size: PSLayout.scaledFont(56), weight: .semibold))
                 .foregroundStyle(.white)
-                .shadow(color: .black.opacity(0.15), radius: 4, y: 2)
+                .elevation(.z1)
         }
         .scaleEffect(showContent ? 1 : 0.4)
         .opacity(showContent ? 1 : 0)
@@ -199,12 +204,7 @@ struct FreshliCelebrationView: View {
             }
         }
         .padding(PSLayout.cardPadding)
-        .background(.ultraThinMaterial)
-        .overlay(
-            RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
-                .strokeBorder(.white.opacity(0.5), lineWidth: 0.5)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
     }
 
     private func statRow(icon: String, value: String, label: String) -> some View {

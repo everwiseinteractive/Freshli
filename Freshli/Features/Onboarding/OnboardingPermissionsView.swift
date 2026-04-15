@@ -31,13 +31,8 @@ struct OnboardingPermissionsView: View {
                 permissionActions
             }
             .padding(PSSpacing.xxxl)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
-                    .strokeBorder(.white.opacity(0.2), lineWidth: 0.5)
-            )
-            .shadow(color: .black.opacity(0.08), radius: 24, y: 8)
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
+            .elevation(.z3)
             .padding(.horizontal, PSLayout.formHorizontalPadding)
             .scaleEffect(appeared ? 1 : 0.9)
             .opacity(appeared ? 1 : 0)
@@ -122,7 +117,7 @@ struct OnboardingPermissionsView: View {
                 .padding(PSSpacing.sm)
                 .background(.white)
                 .clipShape(Circle())
-                .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+                .elevation(.z1)
                 .offset(x: PSLayout.scaled(48), y: PSLayout.scaled(-30))
 
             // Mini food emoji
@@ -131,7 +126,7 @@ struct OnboardingPermissionsView: View {
                 .padding(PSSpacing.xxs)
                 .background(.white)
                 .clipShape(Circle())
-                .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
+                .elevation(.z1)
                 .offset(x: PSLayout.scaled(-50), y: PSLayout.scaled(25))
         }
     }
@@ -145,7 +140,7 @@ struct OnboardingPermissionsView: View {
                 .padding(PSSpacing.sm)
                 .background(.white)
                 .clipShape(Circle())
-                .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+                .elevation(.z1)
                 .offset(x: PSLayout.scaled(50), y: PSLayout.scaled(-28))
 
             // Map pin
@@ -155,7 +150,7 @@ struct OnboardingPermissionsView: View {
                 .padding(PSSpacing.xxs)
                 .background(.white)
                 .clipShape(Circle())
-                .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
+                .elevation(.z1)
                 .offset(x: PSLayout.scaled(-48), y: PSLayout.scaled(28))
         }
     }

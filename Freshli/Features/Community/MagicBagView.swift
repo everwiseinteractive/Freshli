@@ -356,7 +356,7 @@ struct MagicBagView: View {
         )
 
         Task {
-            let success = await communityService.createListing(input, userId: userId) ?? false
+            let success = await communityService.createListing(input, userId: userId)
             isSubmitting = false
 
             if success {

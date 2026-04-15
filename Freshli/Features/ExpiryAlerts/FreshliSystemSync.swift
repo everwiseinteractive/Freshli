@@ -10,7 +10,7 @@ import os
 // Bridges Freshli with Apple Calendar, Reminders, Shortcuts (App Intents),
 // and Time-Sensitive Notification Interruptions.
 
-private let logger = Logger(subsystem: "com.freshli.app", category: "SystemSync")
+private nonisolated let logger = Logger(subsystem: "com.freshli.app", category: "SystemSync")
 
 // MARK: - 1. Calendar Integration — EventActor
 
@@ -41,7 +41,7 @@ actor EventActor {
             // Skip items that already have a synced event (idempotent)
             let predicate = store.predicateForEvents(
                 withStart: Calendar.current.startOfDay(for: item.expiryDate),
-                end: Calendar.current.date(byAdding: .day, value: 1, to: item.expiryDate)!,
+                end: Calendar.current.date(byAdding: .day, value: 1, to: item.expiryDate) ?? item.expiryDate,
                 calendars: [calendar]
             )
             let existing = store.events(matching: predicate)
@@ -144,12 +144,14 @@ actor ReminderActor {
 /// Siri / Shortcuts intent: "What's for dinner?" queries Freshli's Recipe Rescue
 /// suggestions based on items expiring soonest.
 struct WhatsForDinnerIntent: AppIntent {
-    static var title: LocalizedStringResource = "What's for Dinner?"
-    static var description: IntentDescription = IntentDescription(
-        "Get a dinner suggestion from Freshli based on items expiring soon.",
-        categoryName: "Freshli Recipes"
-    )
-    static var openAppWhenRun: Bool = false
+    static var title: LocalizedStringResource { "What's for Dinner?" }
+    static var description: IntentDescription {
+        IntentDescription(
+            "Get a dinner suggestion from Freshli based on items expiring soon.",
+            categoryName: "Freshli Recipes"
+        )
+    }
+    static var openAppWhenRun: Bool { false }
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let session = try await AppSupabase.client.auth.session
@@ -193,7 +195,7 @@ struct FreshliTimeSensitiveNotifications {
         let center = UNUserNotificationCenter.current()
 
         // Request authorization including timeSensitive
-        let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge, .timeSensitive])
+        let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
         guard granted else {
             logger.warning("Notification authorization denied.")
             return

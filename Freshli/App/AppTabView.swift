@@ -36,14 +36,26 @@ enum AppTab: String, CaseIterable, Identifiable {
 // MARK: - App Tab View
 
 struct AppTabView: View {
-    @State private var selectedTab: AppTab = .home
+    @State private var selectedTab: AppTab = {
+        // Restore last-used tab from previous session for seamless state restoration
+        if let saved = UserDefaults.standard.string(forKey: "lastSelectedTab"),
+           let tab = AppTab(rawValue: saved) {
+            return tab
+        }
+        return .home
+    }()
     @State private var previousTab: AppTab = .home
     @State private var showAddItem = false
     @State private var tabBarVisibility = TabBarVisibilityService.shared
+    @State private var prefetchCoordinator = PrefetchCoordinator.shared
+    @State private var dataStore = FreshliDataStore.shared
     @Environment(\.modelContext) private var modelContext
     @Environment(CelebrationManager.self) private var celebrationManager
     @Environment(AuthManager.self) private var authManager
     @Environment(SyncService.self) private var syncService
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    @State private var intentPrediction = IntentPredictionService()
 
     @Namespace private var tabNamespace
 
@@ -63,41 +75,66 @@ struct AppTabView: View {
             case .home:
                 chromedTab {
                     NavigationStack {
-                        HomeView(showAddItem: $showAddItem, switchToTab: { switchTab(to: $0) })
+                        FLHomePage(showAddItem: $showAddItem, switchToTab: { switchTab(to: $0) })
                     }
+                    .measureTTI(for: .home)
                 }
             case .pantry:
                 chromedTab {
-                    NavigationStack { FreshliView(showAddItem: $showAddItem) }
+                    NavigationStack { FLPantryPage(showAddItem: $showAddItem) }
+                        .measureTTI(for: .pantry)
                 }
             case .recipes:
                 chromedTab {
-                    NavigationStack { RecipesView() }
+                    NavigationStack { FLRecipesPage() }
+                        .measureTTI(for: .recipes)
                 }
             case .community:
                 chromedTab {
-                    NavigationStack { CommunityView() }
+                    NavigationStack { FLCommunityPage() }
+                        .measureTTI(for: .community)
                 }
             case .profile:
                 chromedTab {
-                    NavigationStack { ProfileView() }
+                    NavigationStack { FLProfilePage() }
+                        .measureTTI(for: .profile)
                 }
             }
         }
-        .transition(FLMotion.tabSlideTransition(direction: slideDirection))
+        .transition(FLMotion.tabMeltTransition(reduceMotion: reduceMotion))
         .id(selectedTab)
         .ignoresSafeArea(.keyboard)
         .sensoryFeedback(.selection, trigger: selectedTab)
         .sheet(isPresented: $showAddItem) {
             NavigationStack { AddItemView() }
                 .presentationDragIndicator(.visible)
+                .sheetTransition()
         }
         .task {
+            // Configure the data store with the SwiftData model context
+            dataStore.configure(with: modelContext)
+
+            // Warm up all tab snapshots during the first render pass
+            // This ensures instant data access on first tab switch
+            prefetchCoordinator.warmUpAllTabs()
+
+            // Mark cold launch complete (first tab is now interactive)
+            ColdLaunchTracker.shared.markInteractive()
+
             seedDataIfNeeded()
             await celebrationManager.checkWeeklyRecap(modelContext: modelContext)
             if let userId = authManager.currentUserId {
                 await syncService.performFullSync(userId: userId, modelContext: modelContext)
+
+                // Rebuild snapshots after sync brings in remote data
+                dataStore.invalidateAndRebuild()
             }
+        }
+        .onChange(of: selectedTab) { oldTab, newTab in
+            // Persist selected tab for state restoration on next launch
+            UserDefaults.standard.set(newTab.rawValue, forKey: "lastSelectedTab")
+            // Notify prefetch coordinator of tab navigation for TTI tracking
+            prefetchCoordinator.onTabWillAppear(newTab)
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
             WidgetDataService.updateWidgetData(modelContext: modelContext)
@@ -109,10 +146,32 @@ struct AppTabView: View {
     private func switchTab(to tab: AppTab) {
         guard tab != selectedTab else { return }
         previousTab = selectedTab
+
+        // Speak tab slide through Motion Vocabulary for VoiceOver users
+        let allTabs = AppTab.allCases
+        let fromIdx = allTabs.firstIndex(of: selectedTab) ?? 0
+        let toIdx = allTabs.firstIndex(of: tab) ?? 0
+        MotionVocabularyService.shared.speakMotion(.tabSlide(direction: toIdx > fromIdx ? 1 : -1))
+
         // Every tab switch resets the bar to visible — users always land in
         // a fully-chromed state on the new tab.
         tabBarVisibility.resetImmediate()
+
+        // Start TTI measurement BEFORE the animation begins
+        let ttiToken = TTIService.shared.begin(.tabSwitch, context: tab.rawValue)
+
+        // Haptic viscosity: dissolve rumble → crystallisation click
+        if !reduceMotion {
+            FreshliHapticManager.shared.meltDissolve()
+        }
+
         withAnimation(FLMotion.tabTransition) { selectedTab = tab }
+
+        // Complete TTI after the animation settles (next frame)
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(16))
+            TTIService.shared.end(ttiToken, flow: .tabSwitch)
+        }
     }
 
     // MARK: - Chromed Tab Wrapper
@@ -214,7 +273,7 @@ struct AppTabView: View {
                             )
                     )
             }
-            .shadow(color: .black.opacity(0.28), radius: 16, x: 0, y: 6)
+            .elevation(.z3)
             .shadow(color: PSColors.primaryGreen.opacity(0.08), radius: 4, x: 0, y: 2)
         }
         .buttonStyle(PressableButtonStyle())
@@ -222,15 +281,35 @@ struct AppTabView: View {
         .padding(.bottom, 16)
     }
 
+    // MARK: - Intent Bloom Helpers
+
+    /// Maps the top predicted intent to the corresponding main tab.
+    private var predictedTab: AppTab? {
+        switch intentPrediction.topIntent {
+        case .rescueFood, .addItems, .managePantry: return .pantry
+        case .checkRecipes:                          return .recipes
+        case .shareFood:                             return .community
+        case .viewImpact:                            return .home
+        case .none:                                  return nil
+        }
+    }
+
+    /// Whether a given tab is the intent-predicted target (and not already selected).
+    private func isIntentBloom(for tab: AppTab) -> Bool {
+        guard let predicted = predictedTab else { return false }
+        return predicted == tab && selectedTab != tab
+    }
+
     // MARK: - Floating Tab Bar
     //
     // Design:  [  pill: home | pantry | recipes | community  ]  [● profile]
     //
-    // The pill uses a dark frosted-glass capsule so content bleeds through at
-    // its edges, giving the bar its "floating" feel.  The active tab expands
-    // to show an icon + label inside a green gradient capsule; inactive tabs
-    // display only their icon at reduced opacity.  The profile button is a
-    // separate circle that pulses green when active.
+    // The pill uses iOS 26 Liquid Glass (.glassEffect) so content refracts
+    // through its surface, giving the bar its "floating" feel. The active tab
+    // expands inside a green-tinted glass capsule; inactive tabs display only
+    // their icon at reduced opacity. When IntentPredictionService has a
+    // prediction, the predicted tab shows a subtle green glow pulse.
+    // The profile button is a separate glass circle.
 
     private var floatingTabBar: some View {
         HStack(alignment: .center, spacing: 10) {
@@ -243,7 +322,8 @@ struct AppTabView: View {
             }
             .padding(5)
             .background { pillBackground }
-            .shadow(color: .black.opacity(0.32), radius: 22, x: 0, y: 10)
+            .glassEffect(.regular.interactive(), in: Capsule())
+            .elevation(.z4)
             .shadow(color: PSColors.primaryGreen.opacity(0.10), radius: 6, x: 0, y: 2)
 
             // ── Profile circle ─────────────────────────────────────────────
@@ -261,6 +341,7 @@ struct AppTabView: View {
     @ViewBuilder
     private func pillTabItem(for tab: AppTab) -> some View {
         let active = selectedTab == tab
+        let bloom = isIntentBloom(for: tab)
 
         Button { switchTab(to: tab) } label: {
             HStack(spacing: active ? 6 : 0) {
@@ -269,7 +350,9 @@ struct AppTabView: View {
                         size: PSLayout.scaledFont(active ? 16 : 20),
                         weight: .semibold
                     ))
-                    .foregroundStyle(active ? .white : .white.opacity(0.38))
+                    .foregroundStyle(active ? .white : PSColors.primaryGreen.opacity(0.7))
+                    // Intent bloom: breathe effect on the predicted tab's icon
+                    .symbolEffect(.breathe, isActive: bloom && !reduceMotion)
                     // Fixed-width frame keeps inactive icons centred without layout jumping
                     .frame(width: active ? nil : PSLayout.scaled(44))
 
@@ -295,17 +378,23 @@ struct AppTabView: View {
             .padding(.horizontal, active ? PSSpacing.md : 0)
             .background {
                 if active {
-                    // Green gradient capsule slides between tabs via matchedGeometryEffect
+                    // Green-tinted Liquid Glass capsule slides between tabs
                     Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [PSColors.primaryGreen, Color(hex: 0x16A34A)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                        .fill(PSColors.primaryGreen)
+                        .glassEffect(
+                            reduceMotion
+                                ? .regular.tint(PSColors.primaryGreen)
+                                : .regular.tint(PSColors.primaryGreen).interactive(),
+                            in: Capsule()
                         )
                         .shadow(color: PSColors.primaryGreen.opacity(0.55), radius: 10, y: 4)
                         .matchedGeometryEffect(id: "activeTabCapsule", in: tabNamespace)
+                } else if bloom && !reduceMotion {
+                    // Intent bloom: subtle green glow circle behind the predicted tab
+                    Circle()
+                        .fill(PSColors.primaryGreen.opacity(0.15))
+                        .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
+                        .blur(radius: 6)
                 }
             }
         }
@@ -317,22 +406,14 @@ struct AppTabView: View {
 
     private var pillBackground: some View {
         Capsule()
-            // Dark frosted glass: ultraThinMaterial tinted dark-forest green
-            .fill(.ultraThinMaterial)
-            .environment(\.colorScheme, .dark)
-            .overlay(
-                Capsule()
-                    .fill(Color(hex: 0x0C1A10).opacity(0.90))
-            )
+            // Subtle fill ensures the pill is visible even when Liquid Glass
+            // doesn't render (Simulator, older devices). On real devices the
+            // .glassEffect on the parent overrides this with frosted glass.
+            .fill(Color(.systemBackground).opacity(0.85))
             .overlay(
                 Capsule()
                     .strokeBorder(
-                        // Subtle top-to-bottom gradient border gives depth
-                        LinearGradient(
-                            colors: [.white.opacity(0.16), .white.opacity(0.04)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
+                        PSColors.primaryGreen.opacity(0.15),
                         lineWidth: 1
                     )
             )
@@ -345,28 +426,15 @@ struct AppTabView: View {
 
         return Button { switchTab(to: .profile) } label: {
             ZStack {
-                // Background: green gradient when active, dark when inactive
+                // Liquid Glass circle — green-tinted when active, neutral when inactive
                 Circle()
-                    .fill(
-                        active
-                        ? LinearGradient(
-                            colors: [PSColors.primaryGreen, Color(hex: 0x059652)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                          )
-                        : LinearGradient(
-                            colors: [Color(hex: 0x1A2D1E), Color(hex: 0x111C14)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                          )
-                    )
-                    // Border: green glow when active, whisper-white when inactive
+                    .fill(active ? PSColors.primaryGreen.opacity(0.35) : Color(.systemBackground).opacity(0.85))
                     .overlay(
                         Circle()
                             .strokeBorder(
                                 active
                                     ? PSColors.primaryGreen.opacity(0.45)
-                                    : .white.opacity(0.09),
+                                    : PSColors.primaryGreen.opacity(0.15),
                                 lineWidth: 1.5
                             )
                     )
@@ -380,9 +448,15 @@ struct AppTabView: View {
 
                 Image(systemName: "person.fill")
                     .font(.system(size: PSLayout.scaledFont(20), weight: .semibold))
-                    .foregroundStyle(.white.opacity(active ? 1.0 : 0.58))
+                    .foregroundStyle(active ? .white : PSColors.primaryGreen.opacity(0.7))
             }
             .frame(width: PSLayout.scaled(56), height: PSLayout.scaled(56))
+            .glassEffect(
+                active
+                    ? .regular.tint(PSColors.primaryGreen)
+                    : .regular,
+                in: Circle()
+            )
             // Subtle scale-up gives a satisfying "press" feel when active
             .scaleEffect(active ? 1.07 : 1.0)
         }

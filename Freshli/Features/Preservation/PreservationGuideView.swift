@@ -50,14 +50,10 @@ struct PreservationGuideView: View {
 
     private var itemHeader: some View {
         HStack(spacing: PSSpacing.lg) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(PSColors.accentTeal.opacity(0.12))
-                    .frame(width: PSLayout.scaled(60), height: PSLayout.scaled(60))
-                Image(systemName: "snowflake")
-                    .font(.system(size: PSLayout.scaledFont(28)))
-                    .foregroundStyle(PSColors.accentTeal)
-            }
+            Image(systemName: "snowflake")
+                .font(.system(size: PSLayout.scaledFont(32)))
+                .foregroundStyle(PSColors.accentTeal)
+                .frame(width: PSLayout.scaled(60), height: PSLayout.scaled(60))
             VStack(alignment: .leading, spacing: PSSpacing.xxs) {
                 Text(item.name)
                     .font(.system(size: PSLayout.scaledFont(20), weight: .black))
@@ -146,11 +142,8 @@ struct PreservationGuideView: View {
             // Header
             HStack(spacing: PSSpacing.md) {
                 Image(systemName: method.type.icon)
-                    .font(.system(size: PSLayout.scaledFont(20)))
+                    .font(.system(size: PSLayout.scaledFont(22)))
                     .foregroundStyle(method.type.color)
-                    .padding(PSSpacing.sm)
-                    .background(method.type.color.opacity(0.12))
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 VStack(alignment: .leading, spacing: 1) {
                     Text("How to \(method.type.rawValue)")
                         .font(.system(size: PSLayout.scaledFont(17), weight: .bold))
@@ -165,14 +158,10 @@ struct PreservationGuideView: View {
             VStack(alignment: .leading, spacing: PSSpacing.sm) {
                 ForEach(Array(method.steps.enumerated()), id: \.offset) { idx, step in
                     HStack(alignment: .top, spacing: PSSpacing.md) {
-                        ZStack {
-                            Circle()
-                                .fill(method.type.color.opacity(0.15))
-                                .frame(width: PSLayout.scaled(28), height: PSLayout.scaled(28))
-                            Text("\(idx + 1)")
-                                .font(.system(size: PSLayout.scaledFont(12), weight: .black))
-                                .foregroundStyle(method.type.color)
-                        }
+                        Text("\(idx + 1)")
+                            .font(.system(size: PSLayout.scaledFont(14), weight: .black, design: .rounded))
+                            .foregroundStyle(method.type.color)
+                            .frame(width: PSLayout.scaled(28), height: PSLayout.scaled(28))
                         Text(step)
                             .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
                             .foregroundStyle(PSColors.textPrimary)

@@ -18,13 +18,8 @@ struct PendingTrayView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
-                .strokeBorder(.white.opacity(0.5), lineWidth: 0.5)
-        )
-        .shadow(color: .black.opacity(0.12), radius: 20, y: -4)
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
+        .elevation(.z3)
     }
 
     // MARK: - Header
@@ -160,7 +155,7 @@ struct PendingTrayView: View {
         .scaleEffect(hasAppeared ? 1 : 0.85)
         .onAppear {
             guard !hasAppeared else { return }
-            withAnimation(
+            _ = withAnimation(
                 PSMotion.springBouncy.delay(PSMotion.staggerDelay(index: index, base: 0.06))
             ) {
                 appearedItemIDs.insert(item.id)

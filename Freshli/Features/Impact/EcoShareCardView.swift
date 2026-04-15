@@ -38,7 +38,7 @@ struct EcoShareCard: View {
         }
         .frame(width: 1080 / 3, height: 1920 / 3) // 9:16 aspect ratio at 1/3 scale for preview
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .shadow(color: .black.opacity(0.15), radius: 16, x: 0, y: 8)
+        .elevation(.z3)
     }
 
     // MARK: - Background & Texture
@@ -60,7 +60,7 @@ struct EcoShareCard: View {
             for y in stride(from: 0, through: size.height, by: 4) {
                 for x in stride(from: 0, through: size.width, by: 4) {
                     let randomOpacity = Double.random(in: 0.01...0.04)
-                    var rect = CGRect(x: x, y: y, width: 2, height: 2)
+                    let rect = CGRect(x: x, y: y, width: 2, height: 2)
                     context.fill(
                         Path(ellipseIn: rect),
                         with: .color(.white.opacity(randomOpacity))

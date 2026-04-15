@@ -79,27 +79,16 @@ struct ImpactDashboardView: View {
         VStack(spacing: PSSpacing.xxl) {
             // Animated illustration
             VStack(spacing: PSSpacing.lg) {
-                ZStack {
-                    // Pulsing ring
-                    Circle()
-                        .stroke(PSColors.primaryGreen.opacity(0.15), lineWidth: 2)
-                        .frame(width: 180, height: 180)
-                        .scaleEffect(appeared ? 1.1 : 0.9)
-                        .opacity(appeared ? 0.6 : 0.0)
-                        .animation(
-                            .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
-                            value: appeared
-                        )
-
-                    Circle()
-                        .fill(PSColors.primaryGreen.opacity(0.06))
-                        .frame(width: 140, height: 140)
-
-                    Image(systemName: "chart.line.uptrend.xyaxis")
-                        .font(.system(size: 56, weight: .medium))
-                        .foregroundStyle(PSColors.primaryGreen.opacity(0.5))
-                        .symbolEffect(.pulse, isActive: appeared)
-                }
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .font(.system(size: 64, weight: .medium))
+                    .foregroundStyle(PSColors.primaryGreen)
+                    .symbolEffect(.pulse, isActive: appeared)
+                    .scaleEffect(appeared ? 1.0 : 0.9)
+                    .opacity(appeared ? 1.0 : 0.0)
+                    .animation(
+                        .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
+                        value: appeared
+                    )
 
                 VStack(spacing: PSSpacing.sm) {
                     Text(String(localized: "Your Impact Starts Here"))
@@ -158,19 +147,9 @@ struct ImpactDashboardView: View {
     private var heroSection: some View {
         VStack(spacing: PSSpacing.lg) {
             // Large eco icon
-            ZStack {
-                Circle()
-                    .fill(PSColors.primaryGreen.opacity(0.12))
-                    .frame(width: 120, height: 120)
-
-                Circle()
-                    .fill(PSColors.primaryGreen.opacity(0.08))
-                    .frame(width: 160, height: 160)
-
-                Image(systemName: "leaf.fill")
-                    .font(.system(size: 48, weight: .bold))
-                    .foregroundStyle(PSColors.primaryGreen)
-            }
+            Image(systemName: "leaf.fill")
+                .font(.system(size: 56, weight: .bold))
+                .foregroundStyle(PSColors.primaryGreen)
             .scaleEffect(appeared ? 1 : 0.5)
             .opacity(appeared ? 1 : 0)
 
@@ -292,7 +271,7 @@ struct ImpactDashboardView: View {
         .padding(PSSpacing.cardPadding)
         .background(PSColors.surfaceCard)
         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg))
-        .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
+        .elevation(.z1)
         .staggeredAppearance(index: 2)
     }
 
@@ -323,7 +302,7 @@ struct ImpactDashboardView: View {
         .padding(PSSpacing.cardPadding)
         .background(PSColors.surfaceCard)
         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg))
-        .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
+        .elevation(.z1)
     }
 
     // MARK: - Education
@@ -366,7 +345,7 @@ struct ImpactDashboardView: View {
         .padding(PSSpacing.cardPadding)
         .background(PSColors.surfaceCard)
         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg))
-        .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
+        .elevation(.z1)
         .staggeredAppearance(index: 5)
     }
 
@@ -417,8 +396,10 @@ private struct StatCard: View {
 
             Text(value)
                 .font(PSTypography.statMedium)
+                .monospacedDigit()
                 .foregroundStyle(PSColors.textPrimary)
                 .contentTransition(.numericText())
+                .compositingGroup()
 
             Text(label)
                 .font(PSTypography.caption1)

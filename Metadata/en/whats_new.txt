@@ -1,8 +1,25 @@
-Welcome to Freshli 1.0 — your food rescue companion.
+Welcome to Freshli 1.0 — the future of tactile nutrition.
 
-• Rescue Chef: on-device Apple Intelligence writes recipes for your exact pantry
-• Weekly Wrap: a cinematic story of your food rescue impact, shareable to Instagram
-• Live Rescue Wave: watch food being saved worldwide in real-time
-• Community marketplace: share surplus food with neighbours
-• Apple Watch complications, Live Activities, Siri shortcuts, and Control Center integration
-• Beautiful dark mode and full accessibility support
+This is not a food tracker. It is the first app that lets you physically feel your ingredients.
+
+LIQUID GLASS INTERFACE
+Every surface in Freshli is rendered live by a Metal 4 refractive shader — your pantry breathes, your cards float, and ambient light bends through the interface like glass in sunlight. No static backgrounds. No flat UI. A living kitchen.
+
+GAZE-ADAPTIVE RECIPES (Apple Intelligence)
+Hold your attention on any recipe card for 0.6 seconds. Freshli's on-device intelligence detects your intent and the card blooms — refraction density deepens, a specular highlight tracks your device tilt via gyroscope, and a luminous rim traces the card edge. The app responds before you tap.
+
+THE MELT TRANSITION
+Switch tabs and the current view dissolves through a Metal 4 noise-field — pixels liquefying from top to bottom along an organic frontier edged in green light. Your device vibrates in sync: a continuous rumble softens as the view dissolves, then a sharp crystalline click as the new screen solidifies. Navigation has never felt like this.
+
+HAPTIC VISCOSITY
+Every animation is paired with a Core Haptics pattern tuned to mimic physical material. Glass forming. Liquid dissolving. Food being rescued.
+
+RESCUE CHEF — ON DEVICE, ALWAYS PRIVATE
+Apple Intelligence writes recipes for your exact pantry. Zero server calls. Your food data never leaves your phone.
+
+BUILT FOR 2026
+• Metal 4 · MSL 3.2 · Ray-traced specular lighting
+• iOS 26 Foundation Models Framework
+• 120Hz ProMotion · locked frame budget
+• Swift 6 Strict Concurrency throughout
+• Full WCAG 2.2 AA accessibility · Reduce Motion supported

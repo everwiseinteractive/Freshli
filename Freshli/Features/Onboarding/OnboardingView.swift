@@ -87,7 +87,7 @@ struct OnboardingView: View {
                                 RoundedRectangle(cornerRadius: PSSpacing.radiusHero, style: .continuous)
                                     .strokeBorder(.white, lineWidth: 4)
                             )
-                            .shadow(color: .black.opacity(0.25), radius: 24, y: 12)
+                            .elevation(.z4)
                             .overlay {
                                 Image(systemName: step.icon)
                                     .font(.system(size: PSLayout.scaledFont(72), weight: .regular))
@@ -103,7 +103,7 @@ struct OnboardingView: View {
                             .background(step.color)
                             .clipShape(Circle())
                             .overlay(Circle().strokeBorder(.white, lineWidth: 2))
-                            .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
+                            .elevation(.z2)
                             .offset(x: PSLayout.scaled(-40), y: PSLayout.scaled(-20))
                     }
                     .padding(.bottom, PSLayout.scaled(48))
@@ -278,8 +278,10 @@ struct OnboardingView: View {
 
             Text(liveTickerMessage)
                 .font(.system(size: PSLayout.scaledFont(13), weight: .semibold, design: .rounded))
+                .monospacedDigit()
                 .foregroundStyle(PSColors.textSecondary)
                 .contentTransition(.numericText())
+                .compositingGroup()
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
         }

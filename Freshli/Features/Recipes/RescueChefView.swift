@@ -47,6 +47,7 @@ struct RescueChefView: View {
                     .padding(.vertical, PSSpacing.lg)
                 }
                 .refreshable {
+                    PSHaptics.shared.refreshSnap()
                     await refreshMissions()
                 }
             } else {
@@ -70,6 +71,7 @@ struct RescueChefView: View {
                 RescueMissionDetailView(mission: mission)
             }
             .presentationDragIndicator(.visible)
+            .sheetTransition()
         }
         .onAppear {
             withAnimation(PSMotion.springGentle.delay(0.1)) { appeared = true }
@@ -173,13 +175,17 @@ struct RescueChefView: View {
                         Text(rescueService.mostUrgentTimeRemaining)
                             .font(.system(size: PSLayout.scaledFont(14), weight: .bold))
                             .foregroundStyle(PSColors.textPrimary)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
                     }
                     Text(String(localized: "Most Urgent"))
                         .font(.system(size: PSLayout.scaledFont(12)))
                         .foregroundStyle(PSColors.textSecondary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
                 .padding(.vertical, PSSpacing.md)
-                .padding(.horizontal, PSSpacing.lg)
+                .padding(.horizontal, PSSpacing.sm)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(PSColors.surfaceCard)
                 .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
@@ -228,10 +234,9 @@ struct RescueChefView: View {
                         Task { await generateAIMissions() }
                     } label: {
                         Image(systemName: "arrow.clockwise")
-                            .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
+                            .font(.system(size: PSLayout.scaledFont(16), weight: .semibold))
                             .foregroundStyle(PSColors.textSecondary)
                             .padding(8)
-                            .background(Circle().fill(PSColors.backgroundSecondary))
                     }
                     .buttonStyle(PressableButtonStyle())
                     .accessibilityLabel(String(localized: "Regenerate AI rescue recipes"))
@@ -475,6 +480,7 @@ struct RescueChefView: View {
                             .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
                             .foregroundStyle(PSColors.textPrimary)
                             .lineLimit(2)
+                            .minimumScaleFactor(0.85)
                             .multilineTextAlignment(.leading)
 
                         HStack(spacing: PSSpacing.md) {
@@ -559,13 +565,17 @@ struct RescueChefView: View {
                 Text(number)
                     .font(.system(size: PSLayout.scaledFont(24), weight: .bold))
                     .foregroundStyle(PSColors.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
             }
             Text(label)
                 .font(.system(size: PSLayout.scaledFont(12)))
                 .foregroundStyle(PSColors.textSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
         .padding(.vertical, PSSpacing.md)
-        .padding(.horizontal, PSSpacing.lg)
+        .padding(.horizontal, PSSpacing.sm)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(PSColors.surfaceCard)
         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
@@ -613,12 +623,12 @@ struct RescueChefView: View {
 // MARK: - Preview
 
 #Preview {
-    let previewContainer = {
+    let previewContainer: ModelContainer? = {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try! ModelContainer(for: FreshliItem.self, configurations: config)
+        guard let container = try? ModelContainer(for: FreshliItem.self, configurations: config) else { return nil }
 
         // Add sample at-risk items
-        let tomorrowDate = Calendar.current.date(byAdding: .hour, value: 12, to: Date())!
+        let tomorrowDate = Calendar.current.date(byAdding: .hour, value: 12, to: Date()) ?? Date()
         let spinach = FreshliItem(
             name: "Fresh Spinach",
             category: .vegetables,
@@ -628,7 +638,7 @@ struct RescueChefView: View {
             expiryDate: tomorrowDate
         )
 
-        let tomorrowPlus24 = Calendar.current.date(byAdding: .hour, value: 36, to: Date())!
+        let tomorrowPlus24 = Calendar.current.date(byAdding: .hour, value: 36, to: Date()) ?? Date()
         let carrots = FreshliItem(
             name: "Carrots",
             category: .vegetables,
@@ -654,8 +664,12 @@ struct RescueChefView: View {
         return container
     }()
 
-    NavigationStack {
-        RescueChefView()
+    if let previewContainer {
+        NavigationStack {
+            RescueChefView()
+        }
+        .modelContainer(previewContainer)
+    } else {
+        Text("Preview unavailable")
     }
-    .modelContainer(previewContainer)
 }

@@ -1,12 +1,20 @@
 import SwiftUI
 import SwiftData
 
-struct ProfileView: View {
+// ══════════════════════════════════════════════════════════════════
+// MARK: - FLProfilePage (Page)
+// Profile and settings page — migrated to Atomic Design structure.
+// Preserves all backend logic: ImpactService, HeroTier, AuthManager,
+// SubscriptionService, Metal shimmer/glass effects. No icon background boxes.
+// ══════════════════════════════════════════════════════════════════
+
+struct FLProfilePage: View {
     @Query private var profiles: [UserProfile]
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(AuthManager.self) private var authManager
     @Environment(NetworkMonitor.self) private var networkMonitor
+    @Environment(SubscriptionService.self) private var subscriptionService
 
     @State private var showExpiryAlerts = false
     @State private var showAuthSheet = false
@@ -17,8 +25,10 @@ struct ProfileView: View {
     @State private var showDiscover = false
     @State private var householdSize: Int = 1
     @State private var profileAppeared = false
-    @Environment(SubscriptionService.self) private var subscriptionService
     @AppStorage("isDarkMode") private var isDarkMode = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    // MARK: - Derived
 
     private var profile: UserProfile {
         if let existing = profiles.first { return existing }
@@ -32,6 +42,8 @@ struct ProfileView: View {
     private var displayName: String {
         authManager.currentDisplayName ?? (profile.displayName.isEmpty ? String(localized: "Freshli User") : profile.displayName)
     }
+
+    // MARK: - Body
 
     var body: some View {
         ScrollView {
@@ -74,17 +86,21 @@ struct ProfileView: View {
                         .background(.white.opacity(0.2))
                         .clipShape(Circle())
                 }
+                .accessibilityLabel("Settings")
+                .accessibilityHint("Open app settings")
             }
         }
         .navigationDestination(isPresented: $showExpiryAlerts) { ExpiryAlertsView() }
         .navigationDestination(isPresented: $showDiscover) { DiscoverView() }
         .sheet(isPresented: $showAuthSheet) {
-            AuthView().presentationDragIndicator(.visible)
+            AuthView()
+                .presentationDragIndicator(.visible)
+                .sheetTransition()
         }
         .alert(String(localized: "Delete Account"), isPresented: $showDeleteConfirm) {
             Button(String(localized: "Cancel"), role: .cancel) {}
             Button(String(localized: "Delete"), role: .destructive) {
-                Task { try? await authManager.deleteAccount() }
+                Task { @MainActor in try? await authManager.deleteAccount() }
             }
         } message: {
             Text(String(localized: "This will permanently delete your account and all associated data. This action cannot be undone."))
@@ -93,9 +109,12 @@ struct ProfileView: View {
             NavigationStack { SettingsView() }
                 .presentationDragIndicator(.visible)
                 .presentationDetents([.large])
+                .sheetTransition()
         }
         .sheet(isPresented: $showHouseholdSettings) {
             householdSheet
+                .presentationDragIndicator(.visible)
+                .sheetTransition()
         }
         .alert(String(localized: "Language"), isPresented: $showLanguageSettings) {
             Button(String(localized: "Open Settings"), role: .cancel) {
@@ -138,9 +157,9 @@ struct ProfileView: View {
             // Offline banner
             if networkMonitor.isConnected == false {
                 HStack(spacing: PSSpacing.sm) {
-                    Image(systemName: "wifi.slash").font(.system(size: 12, weight: .semibold))
-                    Text(String(localized: "Offline"))
-                        .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
+                    Image(systemName: "wifi.slash")
+                        .font(.system(size: 12, weight: .semibold))
+                    FLText(localized: "Offline", .caption, color: .onDark)
                 }
                 .foregroundStyle(.white.opacity(0.9))
                 .padding(.horizontal, PSSpacing.md)
@@ -148,6 +167,7 @@ struct ProfileView: View {
                 .background(.black.opacity(0.2))
                 .clipShape(Capsule())
                 .padding(.bottom, PSLayout.scaled(48))
+                .accessibilityLabel("Offline mode active")
             }
         }
         .frame(height: PSLayout.scaled(180))
@@ -157,11 +177,12 @@ struct ProfileView: View {
 
     private var profileCard: some View {
         HStack(spacing: PSSpacing.xl) {
+            // Avatar circle (exception: this IS the avatar, keep the ZStack)
             ZStack {
                 Circle()
                     .fill(.white)
                     .frame(width: PSLayout.scaled(84), height: PSLayout.scaled(84))
-                    .shadow(color: .black.opacity(0.1), radius: 12, y: 4)
+                    .elevation(.z2)
                 Circle()
                     .strokeBorder(
                         LinearGradient(
@@ -176,6 +197,7 @@ struct ProfileView: View {
                     .font(.system(size: PSLayout.scaledFont(60)))
                     .foregroundStyle(PSColors.primaryGreen.opacity(0.5))
             }
+            .accessibilityLabel("Profile avatar")
 
             VStack(alignment: .leading, spacing: PSSpacing.xs) {
                 Text(displayName)
@@ -187,14 +209,14 @@ struct ProfileView: View {
                 HStack(spacing: PSSpacing.xs) {
                     Text(tier.emoji)
                         .font(.system(size: PSLayout.scaledFont(11)))
-                    Text(tier.title)
-                        .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
+                    FLText(tier.title, .subheadline, color: .custom(tier.color))
                 }
                 .foregroundStyle(tier.color)
                 .padding(.horizontal, PSSpacing.sm)
                 .padding(.vertical, PSSpacing.xxs)
                 .background(tier.color.opacity(0.12))
                 .clipShape(Capsule())
+                .accessibilityLabel("Hero tier: \(tier.title)")
 
                 let streak = RescueStreakService.shared.currentStreak
                 if streak > 0 {
@@ -202,16 +224,13 @@ struct ProfileView: View {
                         Image(systemName: "flame.fill")
                             .font(.system(size: PSLayout.scaledFont(11)))
                             .foregroundStyle(Color(hex: 0xF97316))
-                        Text(String(localized: "\(streak)-day rescue streak"))
-                            .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
-                            .foregroundStyle(PSColors.textSecondary)
+                        FLText(String(localized: "\(streak)-day rescue streak"), .caption, color: .secondary)
                     }
+                    .accessibilityLabel("\(streak) day rescue streak")
                 }
 
                 if isAuthenticated {
-                    Text(authManager.currentUserEmail ?? "")
-                        .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
-                        .foregroundStyle(PSColors.textTertiary)
+                    FLText(authManager.currentUserEmail ?? "", .caption, color: .tertiary)
                         .lineLimit(1)
                 }
             }
@@ -221,7 +240,8 @@ struct ProfileView: View {
         .adaptiveCardPadding()
         .background(PSColors.surfaceCard)
         .clipShape(RoundedRectangle(cornerRadius: PSLayout.profileCardRadius, style: .continuous))
-        .shadow(color: .black.opacity(0.08), radius: 20, y: 8)
+        .metalCardGlass(intensity: 0.5)
+        .elevation(.z3)
     }
 
     // MARK: - Stats Grid
@@ -249,7 +269,7 @@ struct ProfileView: View {
                 statCard(
                     icon: "wind",
                     value: stats.co2Display,
-                    label: String(localized: "CO₂ Avoided"),
+                    label: String(localized: "CO\u{2082} Avoided"),
                     isAccent: false,
                     iconColor: PSColors.accentTeal
                 )
@@ -264,9 +284,7 @@ struct ProfileView: View {
 
             NavigationLink(destination: ImpactDashboardView()) {
                 HStack(spacing: PSSpacing.xs) {
-                    Text(String(localized: "View Full Impact Report"))
-                        .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
-                        .foregroundStyle(PSColors.primaryGreen)
+                    FLText(localized: "View Full Impact Report", .callout, color: .green)
                     Image(systemName: "arrow.right")
                         .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
                         .foregroundStyle(PSColors.primaryGreen)
@@ -276,24 +294,28 @@ struct ProfileView: View {
                 .background(PSColors.primaryGreen.opacity(0.08))
                 .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
             }
+            .accessibilityLabel("View Full Impact Report")
+            .accessibilityHint("Opens the detailed impact dashboard")
         }
     }
 
     private func statCard(icon: String, value: String, label: String, isAccent: Bool, iconColor: Color = .white) -> some View {
         VStack(spacing: PSSpacing.sm) {
+            // Bare icon — no background box
             Image(systemName: icon)
                 .font(.system(size: PSLayout.scaledFont(22)))
                 .foregroundStyle(isAccent ? .white.opacity(0.9) : iconColor)
                 .symbolEffect(.bounce, value: profileAppeared)
+            // Value with numericText transition — keep raw Text for .contentTransition
             Text(value)
                 .font(.system(size: PSLayout.scaledFont(28), weight: .black))
+                .monospacedDigit()
                 .foregroundStyle(isAccent ? .white : PSColors.textPrimary)
                 .minimumScaleFactor(0.7)
                 .lineLimit(1)
                 .contentTransition(.numericText())
-            Text(label)
-                .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
-                .foregroundStyle(isAccent ? .white.opacity(0.75) : PSColors.textSecondary)
+                .compositingGroup()
+            FLText(label, .caption, color: isAccent ? .custom(.white.opacity(0.75)) : .secondary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, PSSpacing.xl)
@@ -312,6 +334,8 @@ struct ProfileView: View {
             radius: isAccent ? 16 : 8,
             y: isAccent ? 8 : 4
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 
     // MARK: - Hero Tier Card
@@ -325,19 +349,11 @@ struct ProfileView: View {
         return VStack(alignment: .leading, spacing: PSSpacing.lg) {
             // Header row
             HStack(spacing: PSSpacing.sm) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(tier.color.opacity(0.15))
-                        .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
-                    Text(tier.emoji)
-                        .font(.system(size: PSLayout.scaledFont(18)))
-                }
+                Text(tier.emoji)
+                    .font(.system(size: PSLayout.scaledFont(22)))
+                    .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(String(localized: "Hero Tier"))
-                        .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
-                        .foregroundStyle(PSColors.textSecondary)
-                        .textCase(.uppercase)
-                        .tracking(0.5)
+                    FLText(localized: "Hero Tier", .sectionLabel, color: .secondary)
                     Text(tier.title)
                         .font(.system(size: PSLayout.scaledFont(18), weight: .black))
                         .foregroundStyle(tier.color)
@@ -356,22 +372,21 @@ struct ProfileView: View {
                     .padding(.vertical, PSSpacing.xxs)
                     .background(Color(hex: 0xF97316).opacity(0.1))
                     .clipShape(Capsule())
+                    .accessibilityLabel("\(streak) day streak")
                 }
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Hero tier: \(tier.title)")
 
             // Description
-            Text(tier.description)
-                .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
-                .foregroundStyle(PSColors.textSecondary)
+            FLText(tier.description, .subheadline, color: .secondary)
                 .lineSpacing(2)
 
             // Progress to next tier
             if let next = tier.nextTier {
                 VStack(alignment: .leading, spacing: PSSpacing.xs) {
                     HStack {
-                        Text(String(localized: "Progress to \(next.emoji) \(next.title)"))
-                            .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
-                            .foregroundStyle(PSColors.textSecondary)
+                        FLText(String(localized: "Progress to \(next.emoji) \(next.title)"), .caption, color: .secondary)
                         Spacer()
                         Text(String(localized: "\(stats.itemsSaved)/\(next.minItems) items"))
                             .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
@@ -388,26 +403,30 @@ struct ProfileView: View {
                         }
                     }
                     .frame(height: PSLayout.scaled(8))
+                    .accessibilityLabel("Progress: \(Int(progress * 100)) percent to \(next.title)")
                 }
             } else {
                 HStack(spacing: PSSpacing.sm) {
                     Image(systemName: "crown.fill")
                         .font(.system(size: PSLayout.scaledFont(14)))
                         .foregroundStyle(tier.color)
-                    Text(String(localized: "You've reached the highest tier — Legend! 👑"))
-                        .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
-                        .foregroundStyle(tier.color)
+                    FLText(String(localized: "You've reached the highest tier \u{2014} Legend! \u{1F451}"), .subheadline, color: .custom(tier.color))
                 }
+                .accessibilityLabel("Maximum tier reached: Legend")
             }
         }
         .adaptiveCardPadding()
         .background(PSColors.surfaceCard)
         .clipShape(RoundedRectangle(cornerRadius: PSLayout.profileCardRadius, style: .continuous))
+        // Metal shimmer sweep — draws attention to achievement tier
+        .metalShimmer(duration: 2.0, pause: 4.0)
         .overlay(
             RoundedRectangle(cornerRadius: PSLayout.profileCardRadius, style: .continuous)
                 .strokeBorder(tier.color.opacity(0.2), lineWidth: 1)
         )
         .shadow(color: tier.color.opacity(0.08), radius: 16, y: 6)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Hero Tier Card")
     }
 
     // MARK: - Discover Hero Card
@@ -418,25 +437,18 @@ struct ProfileView: View {
             showDiscover = true
         } label: {
             HStack(spacing: PSSpacing.lg) {
-                ZStack {
-                    Circle()
-                        .fill(.white.opacity(0.18))
-                        .frame(width: PSLayout.scaled(56), height: PSLayout.scaled(56))
-                    Image(systemName: "sparkles")
-                        .font(.system(size: PSLayout.scaledFont(26)))
-                        .foregroundStyle(.white)
-                }
+                // Bare icon — no background circle
+                Image(systemName: "sparkles")
+                    .font(.system(size: PSLayout.scaledFont(26)))
+                    .foregroundStyle(.white)
+                    .frame(width: PSLayout.scaled(56), height: PSLayout.scaled(56))
+
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(String(localized: "DISCOVER"))
-                        .font(.system(size: PSLayout.scaledFont(10), weight: .black))
-                        .foregroundStyle(.white.opacity(0.75))
-                        .tracking(1.5)
+                    FLText(localized: "DISCOVER", .sectionLabel, color: .custom(.white.opacity(0.75)))
                     Text(String(localized: "Advanced Tools"))
                         .font(.system(size: PSLayout.scaledFont(19), weight: .black, design: .rounded))
                         .foregroundStyle(.white)
-                    Text(String(localized: "Smart shopping, pods, analytics & more"))
-                        .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.8))
+                    FLText(localized: "Smart shopping, pods, analytics & more", .caption, color: .custom(.white.opacity(0.8)))
                         .lineLimit(1)
                 }
                 Spacer()
@@ -456,6 +468,8 @@ struct ProfileView: View {
             .shadow(color: Color(hex: 0x8B5CF6).opacity(0.3), radius: 18, y: 8)
         }
         .buttonStyle(PressableButtonStyle())
+        .accessibilityLabel("Discover Advanced Tools")
+        .accessibilityHint("Opens smart shopping, pods, analytics, and more features")
     }
 
     // MARK: - Milestones Card
@@ -470,34 +484,30 @@ struct ProfileView: View {
         return VStack(alignment: .leading, spacing: PSSpacing.lg) {
             HStack {
                 HStack(spacing: PSSpacing.sm) {
+                    // Bare icon — no background box
                     Image(systemName: "trophy.fill")
                         .font(.system(size: PSLayout.scaledFont(18)))
                         .foregroundStyle(PSColors.secondaryAmber)
-                        .padding(PSSpacing.xs)
-                        .background(PSColors.secondaryAmber.opacity(0.12))
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    Text(String(localized: "Milestones"))
-                        .font(.system(size: PSLayout.scaledFont(17), weight: .bold))
-                        .foregroundStyle(PSColors.textPrimary)
+                        .frame(width: 28, height: 28)
+                    FLText(localized: "Milestones", .headline, color: .primary)
                 }
                 Spacer()
-                Text(String(localized: "\(unlockedCount)/\(allMilestones.count) unlocked"))
-                    .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
-                    .foregroundStyle(PSColors.primaryGreen)
+                FLText(String(localized: "\(unlockedCount)/\(allMilestones.count) unlocked"), .subheadline, color: .green)
                     .padding(.horizontal, PSSpacing.sm)
                     .padding(.vertical, PSSpacing.xxs)
                     .background(PSColors.primaryGreen.opacity(0.1))
                     .clipShape(Capsule())
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Milestones: \(unlockedCount) of \(allMilestones.count) unlocked")
 
             if nextMilestones.isEmpty {
                 HStack(spacing: PSSpacing.md) {
+                    // Bare icon — no background box
                     Image(systemName: "star.fill")
                         .font(.system(size: PSLayout.scaledFont(20)))
                         .foregroundStyle(PSColors.secondaryAmber)
-                    Text(String(localized: "All milestones unlocked! You're a true Waste Warrior."))
-                        .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
-                        .foregroundStyle(PSColors.textSecondary)
+                    FLText(localized: "All milestones unlocked! You're a true Waste Warrior.", .callout, color: .secondary)
                 }
                 .padding(PSSpacing.lg)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -518,7 +528,7 @@ struct ProfileView: View {
             RoundedRectangle(cornerRadius: PSLayout.profileCardRadius, style: .continuous)
                 .strokeBorder(PSColors.borderLight, lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.04), radius: 12, y: 6)
+        .elevation(.z2)
     }
 
     private func milestoneRow(milestone: ImpactService.Milestone) -> some View {
@@ -536,12 +546,8 @@ struct ProfileView: View {
             }
 
             VStack(alignment: .leading, spacing: PSSpacing.xxxs) {
-                Text(milestone.title)
-                    .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
-                    .foregroundStyle(PSColors.textPrimary)
-                Text(milestone.description)
-                    .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
-                    .foregroundStyle(PSColors.textSecondary)
+                FLText(milestone.title, .bodyMedium, color: .primary)
+                FLText(milestone.description, .subheadline, color: .secondary)
                     .lineLimit(1)
             }
 
@@ -552,41 +558,43 @@ struct ProfileView: View {
                 .foregroundStyle(milestone.progress >= 1.0 ? PSColors.primaryGreen : PSColors.textTertiary)
         }
         .padding(.vertical, PSSpacing.xs)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(milestone.title): \(Int(milestone.progress * 100)) percent complete. \(milestone.description)")
     }
 
     // MARK: - Settings Card
 
     private var settingsCard: some View {
         VStack(spacing: 0) {
-            settingsToggleRow(icon: "moon.fill", title: String(localized: "Dark Mode"), iconBg: Color(hex: 0x6366F1), isOn: $isDarkMode)
+            settingsToggleRow(icon: "moon.fill", title: String(localized: "Dark Mode"), iconColor: Color(hex: 0x6366F1), isOn: $isDarkMode)
             settingsDivider()
             settingsToggleRow(
                 icon: "bell.badge.fill",
                 title: String(localized: "Notifications"),
-                iconBg: PSColors.expiredRed,
+                iconColor: PSColors.expiredRed,
                 isOn: Binding(
                     get: { profile.notificationsEnabled },
                     set: { profile.notificationsEnabled = $0; try? modelContext.save() }
                 )
             )
             settingsDivider()
-            settingsNavRow(icon: "house.fill", iconBg: PSColors.accentTeal, title: String(localized: "Household Settings")) { showHouseholdSettings = true }
+            settingsNavRow(icon: "house.fill", iconColor: PSColors.accentTeal, title: String(localized: "Household Settings")) { showHouseholdSettings = true }
             settingsDivider()
-            settingsNavRow(icon: "clock.badge.exclamationmark", iconBg: PSColors.secondaryAmber, title: String(localized: "Expiry Alerts")) { showExpiryAlerts = true }
+            settingsNavRow(icon: "clock.badge.exclamationmark", iconColor: PSColors.secondaryAmber, title: String(localized: "Expiry Alerts")) { showExpiryAlerts = true }
             settingsDivider()
-            settingsNavRow(icon: "globe", iconBg: PSColors.infoBlue, title: String(localized: "Language")) { showLanguageSettings = true }
+            settingsNavRow(icon: "globe", iconColor: PSColors.infoBlue, title: String(localized: "Language")) { showLanguageSettings = true }
             settingsDivider()
 
             if isAuthenticated {
-                settingsActionRow(icon: "rectangle.portrait.and.arrow.right", iconBg: PSColors.expiredRed.opacity(0.8), title: String(localized: "Sign Out"), foreground: PSColors.expiredRed) {
-                    Task { await authManager.signOut() }
+                settingsActionRow(icon: "rectangle.portrait.and.arrow.right", iconColor: PSColors.expiredRed.opacity(0.8), title: String(localized: "Sign Out"), foreground: PSColors.expiredRed) {
+                    Task { @MainActor in await authManager.signOut() }
                 }
                 settingsDivider()
-                settingsActionRow(icon: "trash.fill", iconBg: PSColors.expiredRed.opacity(0.5), title: String(localized: "Delete Account"), foreground: PSColors.expiredRed.opacity(0.7)) {
+                settingsActionRow(icon: "trash.fill", iconColor: PSColors.expiredRed.opacity(0.5), title: String(localized: "Delete Account"), foreground: PSColors.expiredRed.opacity(0.7)) {
                     showDeleteConfirm = true
                 }
             } else {
-                settingsActionRow(icon: "person.badge.key.fill", iconBg: PSColors.primaryGreen, title: String(localized: "Sign In"), foreground: PSColors.primaryGreen) {
+                settingsActionRow(icon: "person.badge.key.fill", iconColor: PSColors.primaryGreen, title: String(localized: "Sign In"), foreground: PSColors.primaryGreen) {
                     showAuthSheet = true
                 }
             }
@@ -597,19 +605,21 @@ struct ProfileView: View {
             RoundedRectangle(cornerRadius: PSLayout.profileCardRadius, style: .continuous)
                 .strokeBorder(PSColors.borderLight, lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.04), radius: 12, y: 6)
+        .elevation(.z2)
     }
 
     private func settingsDivider() -> some View {
         Divider().padding(.leading, PSLayout.adaptiveHorizontalPadding + 28 + PSSpacing.md)
     }
 
-    private func settingsToggleRow(icon: String, title: String, iconBg: Color, isOn: Binding<Bool>) -> some View {
+    private func settingsToggleRow(icon: String, title: String, iconColor: Color, isOn: Binding<Bool>) -> some View {
         HStack(spacing: PSSpacing.md) {
-            iconContainer(icon: icon, bg: iconBg)
-            Text(title)
-                .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
-                .foregroundStyle(PSColors.textPrimary)
+            // Bare icon — no background box
+            Image(systemName: icon)
+                .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
+                .foregroundStyle(iconColor)
+                .frame(width: 28, height: 28)
+            FLText(title, .bodyMedium, color: .primary)
             Spacer()
             Toggle("", isOn: isOn)
                 .labelsHidden()
@@ -617,18 +627,23 @@ struct ProfileView: View {
         }
         .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
         .padding(.vertical, PSSpacing.md)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
+        .accessibilityHint("Double-tap to toggle")
     }
 
-    private func settingsNavRow(icon: String, iconBg: Color, title: String, action: @escaping () -> Void) -> some View {
+    private func settingsNavRow(icon: String, iconColor: Color, title: String, action: @escaping () -> Void) -> some View {
         Button {
             PSHaptics.shared.lightTap()
             action()
         } label: {
             HStack(spacing: PSSpacing.md) {
-                iconContainer(icon: icon, bg: iconBg)
-                Text(title)
-                    .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
-                    .foregroundStyle(PSColors.textPrimary)
+                // Bare icon — no background box
+                Image(systemName: icon)
+                    .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
+                    .foregroundStyle(iconColor)
+                    .frame(width: 28, height: 28)
+                FLText(title, .bodyMedium, color: .primary)
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
@@ -637,32 +652,29 @@ struct ProfileView: View {
             .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
             .padding(.vertical, PSSpacing.md)
         }
+        .accessibilityLabel(title)
+        .accessibilityHint("Opens \(title) settings")
     }
 
-    private func settingsActionRow(icon: String, iconBg: Color, title: String, foreground: Color, action: @escaping () -> Void) -> some View {
+    private func settingsActionRow(icon: String, iconColor: Color, title: String, foreground: Color, action: @escaping () -> Void) -> some View {
         Button {
             PSHaptics.shared.lightTap()
             action()
         } label: {
             HStack(spacing: PSSpacing.md) {
-                iconContainer(icon: icon, bg: iconBg)
-                Text(title)
-                    .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
-                    .foregroundStyle(foreground)
+                // Bare icon — no background box
+                Image(systemName: icon)
+                    .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
+                    .foregroundStyle(iconColor)
+                    .frame(width: 28, height: 28)
+                FLText(title, .bodyMedium, color: .custom(foreground))
                 Spacer()
             }
             .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
             .padding(.vertical, PSSpacing.md)
         }
-    }
-
-    private func iconContainer(icon: String, bg: Color) -> some View {
-        Image(systemName: icon)
-            .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(width: 28, height: 28)
-            .background(bg)
-            .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+        .accessibilityLabel(title)
+        .accessibilityHint("Tap to \(title.lowercased())")
     }
 
     // MARK: - Pro Card
@@ -680,21 +692,15 @@ struct ProfileView: View {
     // Already subscribed — show appreciation & manage link
     private var proMemberCard: some View {
         HStack(spacing: PSSpacing.lg) {
-            ZStack {
-                Circle()
-                    .fill(PSColors.primaryGreen.opacity(0.12))
-                    .frame(width: PSLayout.scaled(50), height: PSLayout.scaled(50))
-                Image(systemName: "crown.fill")
-                    .font(.system(size: PSLayout.scaledFont(22)))
-                    .foregroundStyle(PSColors.primaryGreen)
-            }
+            // Bare icon — no background circle
+            Image(systemName: "crown.fill")
+                .font(.system(size: PSLayout.scaledFont(22)))
+                .foregroundStyle(PSColors.primaryGreen)
+                .frame(width: PSLayout.scaled(50), height: PSLayout.scaled(50))
+
             VStack(alignment: .leading, spacing: 2) {
-                Text(String(localized: "Freshli+ Member"))
-                    .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
-                    .foregroundStyle(PSColors.textPrimary)
-                Text(String(localized: "Thank you for supporting zero waste 🌱"))
-                    .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
-                    .foregroundStyle(PSColors.textSecondary)
+                FLText(localized: "Freshli+ Member", .bodyMedium, color: .primary)
+                FLText(localized: "Thank you for supporting zero waste \u{1F331}", .subheadline, color: .secondary)
             }
             Spacer()
             Image(systemName: "checkmark.seal.fill")
@@ -708,6 +714,8 @@ struct ProfileView: View {
             RoundedRectangle(cornerRadius: PSLayout.profileCardRadius, style: .continuous)
                 .strokeBorder(PSColors.primaryGreen.opacity(0.2), lineWidth: 1)
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Freshli Plus Member. Thank you for supporting zero waste.")
     }
 
     // Free user — show compelling feature-preview upgrade card
@@ -720,9 +728,7 @@ struct ProfileView: View {
                         HStack(spacing: PSSpacing.xs) {
                             Image(systemName: "crown.fill")
                                 .font(.system(size: PSLayout.scaledFont(11), weight: .black))
-                            Text("FRESHLI+")
-                                .font(.system(size: PSLayout.scaledFont(11), weight: .black))
-                                .tracking(0.8)
+                            FLText("FRESHLI+", .sectionLabel, color: .amber)
                         }
                         .foregroundStyle(PSColors.secondaryAmber)
 
@@ -731,9 +737,7 @@ struct ProfileView: View {
                             .tracking(-0.3)
                             .foregroundStyle(PSColors.textPrimary)
 
-                        Text(String(localized: "14-day free trial — no commitment"))
-                            .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
-                            .foregroundStyle(PSColors.textSecondary)
+                        FLText(localized: "14-day free trial \u{2014} no commitment", .subheadline, color: .secondary)
                     }
                     Spacer()
                     Image(systemName: "chevron.right")
@@ -744,15 +748,15 @@ struct ProfileView: View {
 
                 // Feature tiles — 3 concrete benefits
                 HStack(spacing: PSSpacing.sm) {
-                    proFeatureTile(icon: "sparkles",            color: Color(hex: 0x8B5CF6), title: "AI Chef",    detail: "Recipes from\nexpiring food")
-                    proFeatureTile(icon: "chart.bar.fill",      color: PSColors.secondaryAmber, title: "Analytics", detail: "Savings &\nwaste trends")
-                    proFeatureTile(icon: "person.2.fill",       color: Color(hex: 0x3B82F6), title: "Family",     detail: "Share with\nup to 6")
+                    proFeatureTile(icon: "sparkles", color: Color(hex: 0x8B5CF6), title: "AI Chef", detail: "Recipes from\nexpiring food")
+                    proFeatureTile(icon: "chart.bar.fill", color: PSColors.secondaryAmber, title: "Analytics", detail: "Savings &\nwaste trends")
+                    proFeatureTile(icon: "person.2.fill", color: Color(hex: 0x3B82F6), title: "Family", detail: "Share with\nup to 6")
                 }
 
                 // CTA pill
                 HStack {
                     Spacer()
-                    Text(String(localized: "Start Free Trial  →"))
+                    Text(String(localized: "Start Free Trial  \u{2192}"))
                         .font(.system(size: PSLayout.scaledFont(14), weight: .black))
                         .foregroundStyle(.black)
                         .padding(.horizontal, PSSpacing.xxl)
@@ -785,24 +789,19 @@ struct ProfileView: View {
             .shadow(color: PSColors.secondaryAmber.opacity(0.12), radius: 16, y: 6)
         }
         .buttonStyle(PressableButtonStyle())
+        .accessibilityLabel("Upgrade to Freshli Plus")
+        .accessibilityHint("14-day free trial. Opens subscription details.")
     }
 
     private func proFeatureTile(icon: String, color: Color, title: String, detail: String) -> some View {
         VStack(spacing: PSSpacing.sm) {
-            ZStack {
-                RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
-                    .fill(color.opacity(0.12))
-                    .frame(width: PSLayout.scaled(40), height: PSLayout.scaled(40))
-                Image(systemName: icon)
-                    .font(.system(size: PSLayout.scaledFont(18), weight: .semibold))
-                    .foregroundStyle(color)
-            }
-            Text(title)
-                .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
-                .foregroundStyle(PSColors.textPrimary)
-            Text(detail)
-                .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
-                .foregroundStyle(PSColors.textSecondary)
+            // Bare icon — no background box
+            Image(systemName: icon)
+                .font(.system(size: PSLayout.scaledFont(18), weight: .semibold))
+                .foregroundStyle(color)
+                .frame(width: PSLayout.scaled(40), height: PSLayout.scaled(40))
+            FLText(title, .subheadline, color: .primary)
+            FLText(detail, .footnote, color: .secondary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(1)
                 .fixedSize(horizontal: false, vertical: true)
@@ -812,6 +811,8 @@ struct ProfileView: View {
         .padding(.horizontal, PSSpacing.xs)
         .background(PSColors.surfaceCard.opacity(0.7))
         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title): \(detail.replacingOccurrences(of: "\n", with: " "))")
     }
 
     // MARK: - Household Sheet
@@ -822,9 +823,7 @@ struct ProfileView: View {
                 Text(String(localized: "Household Size"))
                     .font(PSTypography.title3)
                     .foregroundStyle(PSColors.textPrimary)
-                Text(String(localized: "How many people share this pantry?"))
-                    .font(PSTypography.caption1)
-                    .foregroundStyle(PSColors.textSecondary)
+                FLText(localized: "How many people share this pantry?", .caption, color: .secondary)
             }
             Picker(String(localized: "Household Members"), selection: $householdSize) {
                 ForEach(1...10, id: \.self) { num in

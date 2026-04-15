@@ -88,11 +88,15 @@ struct PSGlassCard<Content: View>: View {
             .padding(padding)
             // Liquid Glass (iOS 26): real refractive blur instead of a flat material.
             .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
+            .highContrastGlass(cornerRadius: PSSpacing.radiusLg)
+            // Metal GPU caustic light — premium glass shimmer
+            .metalCardGlass(intensity: 0.5)
             .overlay(
                 RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
                     .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
             )
-            .shadow(color: PSColors.textPrimary.opacity(0.04), radius: 8, y: 2)
+            .elevation(.z1)
+            .hoverSpecular(intensity: 0.5, cornerRadius: PSSpacing.radiusLg)
     }
 }
 

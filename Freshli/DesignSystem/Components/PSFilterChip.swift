@@ -7,7 +7,10 @@ struct PSFilterChip: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
+        Button {
+            PSHaptics.shared.selection()
+            action()
+        } label: {
             HStack(spacing: PSSpacing.xxs) {
                 if let icon {
                     Image(systemName: icon)

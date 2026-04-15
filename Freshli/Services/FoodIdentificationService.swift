@@ -1,5 +1,5 @@
 import Foundation
-import Vision
+@preconcurrency import Vision
 import UIKit
 import os
 
@@ -120,7 +120,7 @@ final class FoodIdentificationService {
                 do {
                     try requestHandler.perform([request])
 
-                    guard let results = request.results as? [VNClassificationObservation] else {
+                    guard let results = request.results else {
                         continuation.resume(returning: [])
                         return
                     }
@@ -263,7 +263,6 @@ final class FoodIdentificationService {
             "cake": "cake",
             "cookie": "cookie",
             "cupcake": "cupcake",
-            "donut": "donut",
             "muffin": "muffin",
             "pastry": "pastry",
 
@@ -271,7 +270,6 @@ final class FoodIdentificationService {
             "beer": "beer",
             "coffee": "coffee",
             "juice": "juice",
-            "milk": "milk",
             "soda": "soda",
             "tea": "tea",
             "wine": "wine",
@@ -291,7 +289,6 @@ final class FoodIdentificationService {
             // Snacks & Desserts
             "chip": "chips",
             "chocolate": "chocolate",
-            "cookie": "cookie",
             "cracker": "cracker",
             "ice_cream": "ice cream",
             "popcorn": "popcorn",
@@ -306,7 +303,6 @@ final class FoodIdentificationService {
             // Frozen Foods
             "french_fries": "french fries",
             "pizza": "pizza",
-            "ice_cream": "ice cream",
 
             // Pasta & Grains
             "pasta": "pasta",

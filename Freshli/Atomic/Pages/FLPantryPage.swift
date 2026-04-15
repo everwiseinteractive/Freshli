@@ -3,8 +3,18 @@ import SwiftData
 import TipKit
 import os
 
-struct FreshliView: View {
+// ══════════════════════════════════════════════════════════════════
+// MARK: - FLPantryPage (Page)
+// The pantry management page — migrated to Atomic Design structure.
+// Preserves all backend logic: SwiftData queries, consume/share/
+// delete actions, celebrations, sync, bin log, auto-list prompts.
+// Uses FLText atoms and removes all icon background boxes.
+// ══════════════════════════════════════════════════════════════════
+
+struct FLPantryPage: View {
     @Binding var showAddItem: Bool
+
+    // MARK: - Data
 
     @Query(filter: #Predicate<FreshliItem> { !$0.isConsumed && !$0.isShared && !$0.isDonated },
            sort: [SortDescriptor(\FreshliItem.expiryDate)])
@@ -15,6 +25,10 @@ struct FreshliView: View {
     @Environment(AuthManager.self) private var authManager
     @Environment(SyncService.self) private var syncService
     @Environment(PSToastManager.self) private var toastManager
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    // MARK: - State
+
     @State private var searchText = ""
     @State private var selectedCategory: FoodCategory?
     @State private var selectedItem: FreshliItem?
@@ -28,12 +42,14 @@ struct FreshliView: View {
 
     private let addItemTip = AddItemTip()
     private let rescueChefTip = RescueChefTip()
+    private let logger = Logger(subsystem: "com.freshli.app", category: "FLPantryPage")
+
+    // MARK: - Derived
 
     private var autoListDismissedIds: Set<String> {
         Set(autoListDismissedIdsRaw.split(separator: ",").map(String.init))
     }
 
-    /// Items expiring within 24 h that haven't been shared/consumed and aren't dismissed.
     private var itemsNeedingAutoPrompt: [FreshliItem] {
         let deadline = Date().addingTimeInterval(86_400)
         return allItems.filter {
@@ -42,15 +58,6 @@ struct FreshliView: View {
             !autoListDismissedIds.contains($0.id.uuidString)
         }
     }
-
-    private func dismissAutoPrompt(_ item: FreshliItem) {
-        var ids = autoListDismissedIds
-        ids.insert(item.id.uuidString)
-        autoListDismissedIdsRaw = ids.joined(separator: ",")
-    }
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    private let logger = Logger(subsystem: "com.freshli.app", category: "FreshliView")
 
     private var filteredItems: [FreshliItem] {
         var items = allItems
@@ -63,31 +70,25 @@ struct FreshliView: View {
         return items
     }
 
-    // Status counts for the health strip
-    private var expiredCount: Int   { allItems.filter { $0.expiryStatus == .expired }.count }
-    private var urgentCount: Int    { allItems.filter { $0.expiryStatus == .expiringToday || $0.expiryStatus == .expiringSoon }.count }
-    private var freshCount: Int     { allItems.filter { $0.expiryStatus == .fresh }.count }
+    private var expiredCount: Int { allItems.filter { $0.expiryStatus == .expired }.count }
+    private var urgentCount: Int  { allItems.filter { $0.expiryStatus == .expiringToday || $0.expiryStatus == .expiringSoon }.count }
+    private var freshCount: Int   { allItems.filter { $0.expiryStatus == .fresh }.count }
 
     // MARK: - Actions
 
     private func consumeItem(_ item: FreshliItem) {
         HapticHarvestService.shared.harvestCelebration()
+        MotionVocabularyService.shared.speakMotion(.itemRescue)
         harvestIntensity = .standard
         showHarvestCelebration = true
         let itemName = item.name
 
-        // Mutate state and animate the removal — keep withAnimation lightweight.
         item.isConsumed = true
         withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) { }
 
-        // Heavy I/O runs AFTER the animation pass in a deferred task.
-        // WidgetDataService is intentionally omitted here — AppTabView already
-        // calls it on willResignActive, avoiding redundant main-thread work.
         Task { @MainActor in
             do {
                 try modelContext.save()
-                // Record into the collective wave BEFORE showing the toast so
-                // the rotating impact phrase picks up the fresh total count.
                 CollectiveImpactService.shared.recordRescue(itemName: itemName)
                 toastManager.show(.itemConsumed(itemName))
                 let streakResult = RescueStreakService.shared.recordActivity()
@@ -112,8 +113,6 @@ struct FreshliView: View {
 
     private func deleteItem(_ item: FreshliItem) {
         PSHaptics.shared.heavyTap()
-        // If the item is actively being wasted (still has expiry data) surface the bin log
-        // reason picker before destroying it.
         if item.expiryStatus != .fresh && !item.isConsumed && !item.isShared && !item.isDonated {
             binLogTarget = item
             return
@@ -124,10 +123,8 @@ struct FreshliView: View {
     private func performDelete(_ item: FreshliItem) {
         let itemName = item.name
         let itemId = item.id
-        // Delete the item object (lightweight — just marks it deleted in the context)
         modelContext.delete(item)
         withAnimation(FLMotion.adaptive(PSMotion.springDefault, reduceMotion: reduceMotion)) { }
-        // Defer save and sync off the animation pass
         Task { @MainActor in
             do {
                 try modelContext.save()
@@ -151,7 +148,6 @@ struct FreshliView: View {
                 try modelContext.save()
                 toastManager.show(.itemShared(itemName))
                 celebrationManager.fireShareCompleted(itemName: itemName, modelContext: modelContext)
-                // WidgetDataService deferred to willResignActive in AppTabView
                 if let userId = authManager.currentUserId {
                     Task {
                         await syncService.pushFreshliItem(item, userId: userId)
@@ -165,6 +161,14 @@ struct FreshliView: View {
         }
     }
 
+    private func dismissAutoPrompt(_ item: FreshliItem) {
+        var ids = autoListDismissedIds
+        ids.insert(item.id.uuidString)
+        autoListDismissedIdsRaw = ids.joined(separator: ",")
+    }
+
+    // MARK: - Body
+
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             VStack(spacing: 0) {
@@ -174,8 +178,7 @@ struct FreshliView: View {
             .background(PSColors.backgroundSecondary)
             .harvestCelebration(isActive: $showHarvestCelebration, intensity: harvestIntensity)
 
-            // FAB — padding is from the layout edge (which safeAreaInset already places
-            // above the tab bar), so just a comfortable gap from that edge.
+            // FAB
             Button { showAddItem = true } label: {
                 Image(systemName: "plus")
                     .font(.system(size: PSLayout.scaledFont(28), weight: .semibold))
@@ -196,25 +199,17 @@ struct FreshliView: View {
             .accessibilityLabel(String(localized: "Add Item"))
             .accessibilityHint(String(localized: "Double tap to add a new item to your pantry"))
             .padding(.trailing, PSLayout.adaptiveHorizontalPadding)
-            // Must clear the floating tab bar pill (~60pt) + home indicator
-            // gap (~14pt) + visual breathing room. 100pt puts the FAB
-            // comfortably above the profile circle on all device sizes.
             .padding(.bottom, PSLayout.scaled(100))
-            // First-run coach mark: appears above the FAB on an empty
-            // pantry, auto-dismisses as soon as the user adds an item.
             .popoverTip(addItemTip)
         }
         .navigationBarHidden(true)
         .onAppear {
-            logger.info("FreshliView appeared — \(allItems.count) items")
+            logger.info("FLPantryPage appeared — \(allItems.count) items")
             let atRisk = allItems.filter { ExpiryStatus.from(expiryDate: $0.expiryDate) != .fresh }.count
             AnalyticsService.shared.track(.pantryViewed, properties: .props([
                 "item_count":     allItems.count,
                 "at_risk_count":  atRisk
             ]))
-            // Update TipKit parameters so rules-based tips can evaluate
-            // on the current pantry state. Fire the `pantryViewed`
-            // event so the add-item tip's rule becomes satisfied.
             AddItemTip.pantryItemCount = allItems.count
             RescueChefTip.atRiskCount = atRisk
             Task { await AddItemTip.pantryViewed.donate() }
@@ -245,6 +240,7 @@ struct FreshliView: View {
             FoodScannerView()
                 .presentationDragIndicator(.visible)
                 .presentationDetents([.large])
+                .sheetTransition()
         }
         .sheet(item: $autoListTarget) { item in
             NavigationStack {
@@ -257,6 +253,7 @@ struct FreshliView: View {
                 )
             }
             .presentationDragIndicator(.visible)
+            .sheetTransition()
         }
         .sheet(item: $binLogTarget) { item in
             BinLogReasonSheet(item: item) { reason in
@@ -266,30 +263,37 @@ struct FreshliView: View {
                 performDelete(item)
                 binLogTarget = nil
             }
+            .sheetTransition()
         }
     }
 
-    // MARK: - Header
+    // ══════════════════════════════════════════════════════════════
+    // MARK: - Sticky Header
+    // ══════════════════════════════════════════════════════════════
 
     private var stickyHeader: some View {
         VStack(spacing: PSSpacing.lg) {
             // Title row
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(String(localized: "My Pantry"))
-                        .font(.system(size: PSLayout.scaledFont(30), weight: .bold))
+                    FLText("My Pantry", .displayMedium, color: .primary)
                         .tracking(-0.3)
-                        .foregroundStyle(PSColors.textPrimary)
                     if !allItems.isEmpty {
-                        Text(String(localized: "\(allItems.count) items"))
-                            .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
-                            .foregroundStyle(PSColors.textTertiary)
+                        FLText(String(localized: "\(allItems.count) items"), .subheadline, color: .tertiary)
                     }
                 }
                 Spacer()
                 HStack(spacing: PSSpacing.sm) {
                     NavigationLink(destination: DepletionInsightsView()) {
-                        PSIconButton(icon: "chart.bar.fill", size: PSLayout.scaled(36), tint: PSColors.primaryGreen) {}
+                        Image(systemName: "chart.bar.fill")
+                            .font(.system(size: PSLayout.scaledFont(15), weight: .medium))
+                            .foregroundStyle(PSColors.primaryGreen)
+                            .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
+                            .background(PSColors.backgroundSecondary)
+                            .clipShape(Circle())
+                            .overlay(
+                                Circle().stroke(Color.white.opacity(0.1), lineWidth: 0.5)
+                            )
                     }
                     PSIconButton(icon: "line.3.horizontal.decrease", size: PSLayout.scaled(36), tint: selectedCategory != nil ? PSColors.primaryGreen : PSColors.textSecondary) {
                         showFilterSheet = true
@@ -298,7 +302,7 @@ struct FreshliView: View {
                 }
             }
 
-            // Pantry health strip — only visible when items exist
+            // Health strip
             if !allItems.isEmpty {
                 pantryHealthStrip
             }
@@ -315,12 +319,18 @@ struct FreshliView: View {
                     NavigationLink(destination: SmartAddView()) {
                         quickActionChip(label: "Smart Add", icon: "camera.viewfinder", color: PSColors.primaryGreen)
                     }
+                    .buttonStyle(PressableButtonStyle())
+                    .simultaneousGesture(TapGesture().onEnded { PSHaptics.shared.lightTap() })
                     NavigationLink(destination: ReceiptScannerView()) {
                         quickActionChip(label: "Receipt", icon: "doc.text.viewfinder", color: PSColors.accentTeal)
                     }
+                    .buttonStyle(PressableButtonStyle())
+                    .simultaneousGesture(TapGesture().onEnded { PSHaptics.shared.lightTap() })
                     NavigationLink(destination: ReplenishView()) {
                         quickActionChip(label: "Replenish", icon: "cart.fill", color: PSColors.secondaryAmber)
                     }
+                    .buttonStyle(PressableButtonStyle())
+                    .simultaneousGesture(TapGesture().onEnded { PSHaptics.shared.lightTap() })
                 }
                 .padding(.horizontal, PSLayout.adaptiveHorizontalPadding)
             }
@@ -371,13 +381,14 @@ struct FreshliView: View {
         .padding(.top, PSSpacing.md)
         .padding(.bottom, PSSpacing.lg)
         .background(PSColors.surfaceCard)
-        .shadow(color: .black.opacity(0.04), radius: 2, y: 1)
+        .elevation(.z1)
         .overlay(alignment: .bottom) {
             Divider().opacity(0.5)
         }
     }
 
-    // Horizontal freshness bar showing expired/urgent/fresh breakdown
+    // MARK: - Health Strip
+
     private var pantryHealthStrip: some View {
         HStack(spacing: PSSpacing.md) {
             if expiredCount > 0 {
@@ -390,7 +401,6 @@ struct FreshliView: View {
                 healthPill(count: freshCount, label: "Fresh", color: PSColors.primaryGreen)
             }
             Spacer()
-            // Freshness bar
             GeometryReader { geo in
                 HStack(spacing: 2) {
                     if expiredCount > 0 {
@@ -460,7 +470,9 @@ struct FreshliView: View {
         .buttonStyle(PressableButtonStyle())
     }
 
+    // ══════════════════════════════════════════════════════════════
     // MARK: - Item List
+    // ══════════════════════════════════════════════════════════════
 
     private var itemList: some View {
         Group {
@@ -480,7 +492,6 @@ struct FreshliView: View {
             } else {
                 ScrollView {
                     LazyVStack(spacing: 10) {
-                        // Auto-list prompts — shown for items expiring in < 24 h
                         ForEach(itemsNeedingAutoPrompt) { item in
                             autoSharePromptCard(item)
                                 .transition(.asymmetric(
@@ -519,7 +530,6 @@ struct FreshliView: View {
                     .padding(.top, PSSpacing.lg)
                     .listChangeAnimation(filteredItems.map(\.id))
                 }
-                // Clears the FAB + floating tab bar in one go (~200pt total).
                 .contentMargins(.bottom, PSLayout.fabSize + PSLayout.scaled(150), for: .scrollContent)
                 .refreshable {
                     PSHaptics.shared.refreshSnap()
@@ -533,14 +543,9 @@ struct FreshliView: View {
 
     private func autoSharePromptCard(_ item: FreshliItem) -> some View {
         HStack(spacing: PSSpacing.md) {
-            // Icon
-            ZStack {
-                Circle()
-                    .fill(PSColors.secondaryAmber.opacity(0.15))
-                    .frame(width: PSLayout.scaled(44), height: PSLayout.scaled(44))
-                Text(item.category.emoji)
-                    .font(.system(size: PSLayout.scaledFont(22)))
-            }
+            Text(item.category.emoji)
+                .font(.system(size: PSLayout.scaledFont(22)))
+                .frame(width: PSLayout.scaled(44), height: PSLayout.scaled(44))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("You likely won't eat this **\(item.name)**")
@@ -548,14 +553,11 @@ struct FreshliView: View {
                     .foregroundStyle(PSColors.textPrimary)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
-                Text("Tap to list it free for neighbours 🏘️")
-                    .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
-                    .foregroundStyle(PSColors.secondaryAmber)
+                FLText(String(localized: "Tap to list it free for neighbours"), .caption, color: .amber)
             }
 
             Spacer()
 
-            // Actions
             HStack(spacing: PSSpacing.xs) {
                 Button {
                     PSHaptics.shared.lightTap()
@@ -593,11 +595,14 @@ struct FreshliView: View {
         )
     }
 
+    // ══════════════════════════════════════════════════════════════
     // MARK: - Item Card
+    // Atomic-consistent card with no background boxes on icons.
+    // ══════════════════════════════════════════════════════════════
 
     private func freshliItemCard(item: FreshliItem) -> some View {
         HStack(spacing: 0) {
-            // Colored left accent strip — color encodes urgency at a glance
+            // Urgency accent strip
             RoundedRectangle(cornerRadius: 2, style: .continuous)
                 .fill(PSColors.expiryColor(for: item.expiryStatus))
                 .frame(width: 3)
@@ -605,7 +610,6 @@ struct FreshliView: View {
                 .padding(.leading, 12)
 
             HStack(spacing: PSSpacing.lg) {
-                // Real food photograph — matched by item name
                 ZStack {
                     FoodItemImage(
                         name: item.name,
@@ -617,9 +621,8 @@ struct FreshliView: View {
                         RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
                             .strokeBorder(PSColors.categoryColor(for: item.category).opacity(0.2), lineWidth: 1)
                     )
-                    .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+                    .elevation(.z1)
 
-                    // Urgency dot
                     if item.expiryStatus != .fresh {
                         Circle()
                             .fill(PSColors.expiryColor(for: item.expiryStatus))
@@ -629,23 +632,23 @@ struct FreshliView: View {
                     }
                 }
 
-                // Name (full width) + badges row below
                 VStack(alignment: .leading, spacing: PSSpacing.xs) {
                     HStack(alignment: .firstTextBaseline, spacing: PSSpacing.xs) {
                         Text(item.name)
                             .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
                             .foregroundStyle(PSColors.textPrimary)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.85)
-                            .layoutPriority(2)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.75)
+                            .layoutPriority(1)
 
-                        Spacer(minLength: PSSpacing.sm)
+                        Spacer(minLength: PSSpacing.xs)
 
                         Text(item.expiryDate.expiryDisplayText)
                             .font(.system(size: PSLayout.scaledFont(11), weight: .bold))
                             .foregroundStyle(PSColors.expiryColor(for: item.expiryStatus))
                             .lineLimit(1)
-                            .fixedSize()
+                            .minimumScaleFactor(0.7)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
 
                     HStack(spacing: PSSpacing.xs) {
@@ -684,7 +687,14 @@ struct FreshliView: View {
                     lineWidth: 1
                 )
         )
-        .shadow(color: PSColors.textPrimary.opacity(0.04), radius: 4, y: 2)
-        .drawingGroup(opaque: false, colorMode: .nonLinear)
+        .elevation(.z1)
+        .freshnessMotionVocabulary(level: item.expiryStatus.freshnessLevel)
+        // Gaze-adaptive bloom: card subtly glows when user's gaze
+        // dwells on it, with liquidGlass refraction acceleration.
+        .gazeAdaptiveGlass(.low, enableHaptics: true)
+        .livingMenu()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(item.name), \(item.quantityDisplay), expires \(item.expiryDate.expiryDisplayText)")
+        .accessibilityHint("Double tap to view details. Swipe right for actions.")
     }
 }

@@ -37,8 +37,10 @@ struct KarmaCreditsView: View {
                     .foregroundStyle(.white.opacity(0.9))
                 Text("\(service.balance)")
                     .font(.system(size: PSLayout.scaledFont(64), weight: .black, design: .rounded))
+                    .monospacedDigit()
                     .foregroundStyle(.white)
                     .contentTransition(.numericText())
+                    .compositingGroup()
             }
 
             Text("credits available to request ingredients")
@@ -109,12 +111,10 @@ struct KarmaCreditsView: View {
 
     private func howItWorksRow(number: String, title: String, subtitle: String, color: Color) -> some View {
         HStack(spacing: PSSpacing.md) {
-            ZStack {
-                Circle().fill(color.opacity(0.12)).frame(width: PSLayout.scaled(32), height: PSLayout.scaled(32))
-                Text(number)
-                    .font(.system(size: PSLayout.scaledFont(14), weight: .black, design: .rounded))
-                    .foregroundStyle(color)
-            }
+            Text(number)
+                .font(.system(size: PSLayout.scaledFont(16), weight: .black, design: .rounded))
+                .foregroundStyle(color)
+                .frame(width: PSLayout.scaled(32), height: PSLayout.scaled(32))
             VStack(alignment: .leading, spacing: 1) {
                 Text(title)
                     .font(.system(size: PSLayout.scaledFont(14), weight: .bold))

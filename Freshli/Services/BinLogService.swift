@@ -109,8 +109,8 @@ final class BinLogService {
         let grouped = Dictionary(grouping: recent) { $0.itemName.lowercased() }
 
         return grouped.compactMap { (_, items) -> StopBuyingAlert? in
-            guard items.count >= 3 else { return nil }
-            let sample = items.first!
+            guard items.count >= 3,
+                  let sample = items.first else { return nil }
             let topReason = mostCommonReason(in: items)
             let cost = items.reduce(0.0) { $0 + $1.costEstimate }
             return StopBuyingAlert(

@@ -116,10 +116,12 @@ struct ReplenishView: View {
             .sheet(isPresented: $viewModel.showAddItemSheet) {
                 AddReplenishItemSheet(viewModel: viewModel)
                     .presentationDragIndicator(.visible)
+                    .sheetTransition()
             }
             .sheet(item: $viewModel.selectedItem) { item in
                 ReplenishDeliverySheet(item: item)
                     .presentationDragIndicator(.visible)
+                    .sheetTransition()
             }
             // Drop target for recipe ingredients
             .dropDestination(for: ReplenishIngredientTransfer.self) { ingredients, _ in
@@ -519,65 +521,47 @@ private struct AddReplenishItemSheet: View {
             ScrollView {
                 VStack(spacing: PSSpacing.lg) {
                     PSCard {
-                        VStack(spacing: PSSpacing.md) {
+                        VStack(spacing: PSSpacing.lg) {
                             // Name
-                            VStack(alignment: .leading, spacing: PSSpacing.sm) {
-                                Text("Item Name")
-                                    .font(PSTypography.callout)
-                                    .foregroundStyle(PSColors.textPrimary)
-
+                            freshliField(label: "Item Name") {
                                 TextField("e.g., Milk, Bread, Eggs", text: $name)
-                                    .textFieldStyle(.roundedBorder)
+                                    .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
                             }
 
                             // Quantity + Unit
                             HStack(spacing: PSSpacing.md) {
-                                VStack(alignment: .leading, spacing: PSSpacing.sm) {
-                                    Text("Quantity")
-                                        .font(PSTypography.callout)
-                                        .foregroundStyle(PSColors.textPrimary)
-
+                                freshliField(label: "Quantity") {
                                     TextField("1", text: $quantity)
-                                        .textFieldStyle(.roundedBorder)
+                                        .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
                                         .keyboardType(.decimalPad)
                                 }
 
-                                VStack(alignment: .leading, spacing: PSSpacing.sm) {
-                                    Text("Unit")
-                                        .font(PSTypography.callout)
-                                        .foregroundStyle(PSColors.textPrimary)
-
+                                freshliField(label: "Unit") {
                                     Picker("Unit", selection: $unit) {
                                         ForEach(units, id: \.self) { u in
                                             Text(u).tag(u)
                                         }
                                     }
                                     .pickerStyle(.menu)
+                                    .tint(PSColors.textPrimary)
                                 }
                             }
 
                             // Category
-                            VStack(alignment: .leading, spacing: PSSpacing.sm) {
-                                Text("Category")
-                                    .font(PSTypography.callout)
-                                    .foregroundStyle(PSColors.textPrimary)
-
+                            freshliField(label: "Category") {
                                 Picker("Category", selection: $category) {
                                     ForEach(categories) { cat in
                                         Text(cat.displayName).tag(cat.rawValue)
                                     }
                                 }
                                 .pickerStyle(.menu)
+                                .tint(PSColors.textPrimary)
                             }
 
                             // Estimated Price
-                            VStack(alignment: .leading, spacing: PSSpacing.sm) {
-                                Text("Estimated Price (optional)")
-                                    .font(PSTypography.callout)
-                                    .foregroundStyle(PSColors.textPrimary)
-
+                            freshliField(label: "Estimated Price (optional)") {
                                 TextField("$0.00", text: $estimatedPrice)
-                                    .textFieldStyle(.roundedBorder)
+                                    .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
                                     .keyboardType(.decimalPad)
                             }
                         }
@@ -616,6 +600,26 @@ private struct AddReplenishItemSheet: View {
                         .foregroundStyle(PSColors.textSecondary)
                 }
             }
+        }
+    }
+
+    /// Freshli-styled form field with label, matching the design system.
+    private func freshliField<Content: View>(label: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: PSSpacing.sm) {
+            Text(label)
+                .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
+                .foregroundStyle(PSColors.textSecondary)
+
+            content()
+                .padding(.horizontal, PSSpacing.lg)
+                .padding(.vertical, PSSpacing.md)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(PSColors.backgroundSecondary)
+                .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
+                        .strokeBorder(PSColors.borderLight, lineWidth: 1)
+                )
         }
     }
 }

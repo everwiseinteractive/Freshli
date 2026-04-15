@@ -11,6 +11,7 @@ struct FoodScannerView: View {
     @State private var foodScanner = FoodIdentificationService()
     @State private var selectedPhotoItem: PhotosPickerItem?
     @State private var showCamera = false
+    @State private var showPhotoPicker = false
     @State private var selectedResultIndices: Set<Int> = []
     @State private var expandedResultId: UUID?
     @State private var resultQuantityEdits: [UUID: Double] = [:]
@@ -52,8 +53,15 @@ struct FoodScannerView: View {
                     }
                 }
             }
+            .fullScreenCover(isPresented: $showCamera) {
+                FoodScannerCameraView { image in
+                    Task {
+                        await foodScanner.identifyFood(image)
+                    }
+                }
+            }
             .photosPicker(
-                isPresented: $showCamera,
+                isPresented: $showPhotoPicker,
                 selection: $selectedPhotoItem,
                 matching: .images,
                 photoLibrary: .shared()
@@ -148,9 +156,8 @@ struct FoodScannerView: View {
                     style: .secondary,
                     isFullWidth: true,
                     action: {
-                        // Trigger photos picker
                         selectedPhotoItem = nil
-                        showCamera = true
+                        showPhotoPicker = true
                     }
                 )
             }
@@ -256,7 +263,7 @@ struct FoodScannerView: View {
             HStack(spacing: FLSpacing.md) {
                 // Checkbox
                 Button(action: {
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    withAnimation(PSMotion.springQuick) {
                         if selectedResultIndices.contains(index) {
                             selectedResultIndices.remove(index)
                         } else {
@@ -304,7 +311,7 @@ struct FoodScannerView: View {
 
                 // Expand button
                 Button(action: {
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    withAnimation(PSMotion.springQuick) {
                         expandedResultId = expandedResultId == result.id ? nil : result.id
                     }
                 }) {
@@ -474,6 +481,43 @@ struct FoodScannerView: View {
             resultQuantityEdits.removeValue(forKey: result.id)
         } catch {
             toastManager.show(.error("Failed to add item: \(error.localizedDescription)"))
+        }
+    }
+}
+
+// MARK: - Camera Picker (UIKit wrapper — opens real camera, not photo library)
+
+private struct FoodScannerCameraView: UIViewControllerRepresentable {
+    @Environment(\.dismiss) private var dismiss
+    let onCapture: (UIImage) -> Void
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        let parent: FoodScannerCameraView
+        init(_ parent: FoodScannerCameraView) { self.parent = parent }
+
+        func imagePickerController(
+            _ picker: UIImagePickerController,
+            didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
+        ) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.onCapture(image)
+            }
+            parent.dismiss()
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
         }
     }
 }

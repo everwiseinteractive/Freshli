@@ -256,10 +256,12 @@ struct ShoppingListView: View {
             .sheet(isPresented: $viewModel.showAddItemSheet) {
                 AddShoppingItemSheet(viewModel: viewModel, isPresented: $viewModel.showAddItemSheet)
                     .presentationDragIndicator(.visible)
+                    .sheetTransition()
             }
             .sheet(item: $viewModel.selectedMissingIngredient) { item in
                 MissingIngredientSheet(item: item, viewModel: viewModel)
                     .presentationDragIndicator(.visible)
+                    .sheetTransition()
             }
         }
     }
@@ -388,7 +390,15 @@ struct AddShoppingItemSheet: View {
                                 .foregroundStyle(PSColors.textPrimary)
 
                             TextField("e.g., Milk", text: $itemName)
-                                .textFieldStyle(.roundedBorder)
+                                .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
+                                .padding(.horizontal, PSSpacing.lg)
+                                .padding(.vertical, PSSpacing.md)
+                                .background(PSColors.backgroundSecondary)
+                                .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
+                                        .strokeBorder(PSColors.borderLight, lineWidth: 1)
+                                )
                         }
 
                         HStack(spacing: PSSpacing.md) {
@@ -398,7 +408,15 @@ struct AddShoppingItemSheet: View {
                                     .foregroundStyle(PSColors.textPrimary)
 
                                 TextField("1", text: $quantity)
-                                    .textFieldStyle(.roundedBorder)
+                                    .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
+                                    .padding(.horizontal, PSSpacing.lg)
+                                    .padding(.vertical, PSSpacing.md)
+                                    .background(PSColors.backgroundSecondary)
+                                    .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
+                                            .strokeBorder(PSColors.borderLight, lineWidth: 1)
+                                    )
                                     .keyboardType(.decimalPad)
                             }
 

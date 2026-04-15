@@ -2,17 +2,14 @@ import SwiftUI
 import SwiftData
 import os
 
-// Figma: Community.tsx — bg-neutral-50, sticky white header
-// Title row: text-3xl font-bold text-neutral-900 tracking-tight + search button (p-2 bg-neutral-100 rounded-full)
-// Tabs: "Local Feed", "My Listings" — layoutId="communityTab", h-1 bg-green-500 rounded-t-full
-// Feed cards: bg-white rounded-3xl p-5 shadow-sm border border-neutral-100
-// Avatar: w-12 h-12 rounded-[1rem] with initials
-// Engagement bar: category emoji + claim CTA
-// FAB: bg-neutral-900 text-white px-6 py-4 rounded-[1.25rem] + Edit3 + "New Post"
-// BottomSheet: full CreateListingView form
-// SuccessCelebration: "Posted!" with Share2 icon
+// ══════════════════════════════════════════════════════════════════
+// MARK: - FLCommunityPage (Page)
+// Community feed page — migrated to Atomic Design structure.
+// Preserves all backend logic: CommunityService, listings,
+// Magic Bag, report system, milestone card. No icon background boxes.
+// ══════════════════════════════════════════════════════════════════
 
-struct CommunityView: View {
+struct FLCommunityPage: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(CelebrationManager.self) private var celebrationManager
     @Environment(AuthManager.self) private var authManager
@@ -36,7 +33,7 @@ struct CommunityView: View {
     @Namespace private var tabNamespace
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private let logger = Logger(subsystem: "com.freshli.app", category: "CommunityView")
+    private let logger = Logger(subsystem: "com.freshli.app", category: "FLCommunityPage")
 
     private let tabs = [
         String(localized: "Local Feed"),
@@ -53,14 +50,18 @@ struct CommunityView: View {
                     HStack(spacing: PSSpacing.sm) {
                         Image(systemName: "wifi.slash")
                             .font(.system(size: 14))
-                        Text(String(localized: "You're offline. Showing cached listings."))
-                            .font(PSTypography.caption1)
+                        FLText(
+                            localized: "You're offline. Showing cached listings.",
+                            .caption,
+                            color: .secondary
+                        )
                     }
                     .foregroundStyle(PSColors.textSecondary)
                     .padding(.horizontal, PSSpacing.screenHorizontal)
                     .padding(.vertical, PSSpacing.xs)
                     .frame(maxWidth: .infinity)
                     .background(PSColors.warningAmber.opacity(0.1))
+                    .accessibilityLabel(String(localized: "Offline mode. Showing cached listings."))
                 }
 
                 stickyHeader
@@ -68,7 +69,6 @@ struct CommunityView: View {
             }
             .background(PSColors.backgroundSecondary)
 
-            // Figma: FAB — bg-neutral-900 text-white px-6 py-4 rounded-[1.25rem]
             fabButton
         }
         .navigationBarHidden(true)
@@ -81,12 +81,12 @@ struct CommunityView: View {
                             try? await Task.sleep(for: .milliseconds(300))
                             showPostSuccess = true
                         }
-                        // Refresh feed
-                        Task { await refreshFeed() }
+                        Task { @MainActor in await refreshFeed() }
                     }
                 }
             }
             .presentationDragIndicator(.visible)
+            .sheetTransition()
         }
         .sheet(isPresented: $showMagicBag) {
             NavigationStack {
@@ -97,19 +97,21 @@ struct CommunityView: View {
                             try? await Task.sleep(for: .milliseconds(300))
                             showPostSuccess = true
                         }
-                        Task { await refreshFeed() }
+                        Task { @MainActor in await refreshFeed() }
                     }
                 }
             }
             .presentationDragIndicator(.visible)
+            .sheetTransition()
         }
         .sheet(item: $selectedListing) { listing in
             NavigationStack {
                 ListingDetailView(listing: listing) {
-                    Task { await refreshFeed() }
+                    Task { @MainActor in await refreshFeed() }
                 }
             }
             .presentationDragIndicator(.visible)
+            .sheetTransition()
         }
         .overlay {
             PSBottomSheet(isPresented: $showReportSheet, title: String(localized: "Report Listing")) {
@@ -126,35 +128,31 @@ struct CommunityView: View {
             )
         }
         .task {
-            logger.info("CommunityView appeared — tab: \(activeTab)")
+            logger.info("FLCommunityPage appeared — tab: \(activeTab)")
             await refreshFeed()
         }
     }
 
     // MARK: - Sticky Header
-    // Figma: bg-white px-6 pt-12 pb-2 sticky top-0 z-30 border-b border-neutral-100 shadow-sm
 
     private var stickyHeader: some View {
         VStack(spacing: 0) {
-            // Title row - adaptive layout for SE
+            // Title row
             HStack {
-                Text(String(localized: "Community"))
-                    .font(.system(size: PSLayout.scaledFont(30), weight: .bold))
-                    .tracking(-0.3)
-                    .foregroundStyle(PSColors.textPrimary)
+                FLText(localized: "Community", .displayLarge)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
-                    .psAccessibleHeader(String(localized: "Community"))
+                    .accessibilityAddTraits(.isHeader)
 
                 Spacer(minLength: PSSpacing.md)
 
                 HStack(spacing: PSSpacing.sm) {
-                    // Magic Bag shortcut
+                    // Magic Bag shortcut — bare icon, no background box
                     Button {
                         PSHaptics.shared.lightTap()
                         showMagicBag = true
                     } label: {
-                        Text("🎁")
+                        Text("\u{1F381}")
                             .font(.system(size: PSLayout.scaledFont(16)))
                             .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
                             .background(
@@ -167,27 +165,29 @@ struct CommunityView: View {
                             .clipShape(Circle())
                     }
                     .accessibilityLabel(String(localized: "Post Magic Bag"))
+                    .accessibilityHint(String(localized: "Double tap to create a Magic Bag listing"))
 
+                    // Circles — bare icon, no background box
                     NavigationLink(destination: CirclesView()) {
                         Image(systemName: "person.2.circle.fill")
                             .font(.system(size: PSLayout.scaledFont(18), weight: .medium))
                             .foregroundStyle(PSColors.primaryGreen)
                             .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
-                            .background(PSColors.primaryGreen.opacity(0.1))
-                            .clipShape(Circle())
                     }
                     .accessibilityLabel(String(localized: "View Circles"))
+                    .accessibilityHint(String(localized: "Double tap to open your community circles"))
 
+                    // Shopping list — bare icon, no background box
                     NavigationLink(destination: ShoppingListView()) {
                         Image(systemName: "cart.fill")
                             .font(.system(size: PSLayout.scaledFont(18), weight: .medium))
                             .foregroundStyle(PSColors.accentTeal)
                             .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
-                            .background(PSColors.accentTeal.opacity(0.1))
-                            .clipShape(Circle())
                     }
                     .accessibilityLabel(String(localized: "View Shopping List"))
+                    .accessibilityHint(String(localized: "Double tap to open your shopping list"))
 
+                    // Search — bare icon, no background box
                     Button {
                         withAnimation(FLMotion.adaptive(PSMotion.springQuick, reduceMotion: reduceMotion)) { showSearch.toggle() }
                     } label: {
@@ -195,11 +195,10 @@ struct CommunityView: View {
                             .font(.system(size: PSLayout.scaledFont(18), weight: .medium))
                             .foregroundStyle(PSColors.textSecondary)
                             .frame(width: PSLayout.scaled(36), height: PSLayout.scaled(36))
-                            .background(PSColors.backgroundSecondary)
-                            .clipShape(Circle())
                     }
                     .buttonStyle(PressableButtonStyle())
                     .accessibilityLabel(String(localized: "Search listings"))
+                    .accessibilityHint(String(localized: "Double tap to toggle the search bar"))
                 }
             }
             .adaptiveHPadding()
@@ -218,22 +217,23 @@ struct CommunityView: View {
                         .foregroundStyle(PSColors.textPrimary)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                        .onSubmit { Task { await searchFeed() } }
+                        .onSubmit { Task { @MainActor in await searchFeed() } }
                         .onChange(of: searchText) { _, newValue in
                             if newValue.isEmpty {
-                                Task { await refreshFeed() }
+                                Task { @MainActor in await refreshFeed() }
                             }
                         }
 
                     if !searchText.isEmpty {
                         Button {
                             searchText = ""
-                            Task { await refreshFeed() }
+                            Task { @MainActor in await refreshFeed() }
                         } label: {
                             Image(systemName: "xmark.circle.fill")
                                 .font(.system(size: PSLayout.scaledFont(16)))
                                 .foregroundStyle(PSColors.textTertiary)
                         }
+                        .accessibilityLabel(String(localized: "Clear search"))
                     }
                 }
                 .padding(.horizontal, PSSpacing.lg)
@@ -255,13 +255,15 @@ struct CommunityView: View {
                         }
                     } label: {
                         VStack(spacing: 0) {
-                            Text(tab)
-                                .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
-                                .tracking(-0.2)
-                                .foregroundStyle(activeTab == index ? PSColors.primaryGreen : PSColors.textSecondary)
-                                .padding(.horizontal, PSSpacing.sm)
-                                .padding(.bottom, PSSpacing.lg)
-                                .lineLimit(1)
+                            FLText(
+                                tab,
+                                .callout,
+                                color: activeTab == index ? .green : .secondary
+                            )
+                            .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
+                            .padding(.horizontal, PSSpacing.sm)
+                            .padding(.bottom, PSSpacing.lg)
+                            .lineLimit(1)
 
                             if activeTab == index {
                                 Capsule()
@@ -279,13 +281,14 @@ struct CommunityView: View {
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel(tab)
                     .accessibilityAddTraits(activeTab == index ? .isSelected : [])
+                    .accessibilityHint(String(localized: "Double tap to switch to \(tab)"))
                 }
                 Spacer()
             }
             .adaptiveHPadding()
         }
         .background(PSColors.surfaceCard)
-        .shadow(color: .black.opacity(0.04), radius: 2, y: 1)
+        .elevation(.z1)
         .overlay(alignment: .bottom) { Divider().opacity(0.5) }
     }
 
@@ -307,24 +310,20 @@ struct CommunityView: View {
             HStack(spacing: PSSpacing.sm) {
                 Image(systemName: "square.and.pencil")
                     .font(.system(size: PSLayout.scaledFont(20), weight: .semibold))
-                Text(String(localized: "New Post"))
+                FLText(localized: "New Post", .callout, color: .onDark)
                     .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
-                    .tracking(-0.2)
             }
             .foregroundStyle(.white)
             .padding(.horizontal, PSLayout.cardPadding)
             .padding(.vertical, PSSpacing.lg)
-            .background(PSColors.textPrimary)
+            .background(PSColors.primaryGreen)
             .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
-            .shadow(color: Color(hex: 0x171717).opacity(0.2), radius: 16, y: 8)
+            .elevation(.z3)
         }
         .buttonStyle(PressableButtonStyle())
         .accessibilityLabel(String(localized: "Create New Post"))
         .accessibilityHint(String(localized: "Double tap to create a new community listing"))
         .padding(.trailing, PSLayout.adaptiveHorizontalPadding)
-        // Must clear the floating tab bar pill (~60pt) + home indicator
-        // gap (~14pt) + visual breathing room. 100pt puts the FAB
-        // comfortably above the profile circle on all device sizes.
         .padding(.bottom, PSLayout.scaled(100))
     }
 
@@ -349,9 +348,11 @@ struct CommunityView: View {
                 VStack(spacing: PSSpacing.lg) {
                     ProgressView()
                         .tint(PSColors.primaryGreen)
-                    Text(String(localized: "Loading community feed..."))
-                        .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
-                        .foregroundStyle(PSColors.textSecondary)
+                    FLText(
+                        localized: "Loading community feed...",
+                        .callout,
+                        color: .secondary
+                    )
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let error = feedError ?? communityService.error, feedListings.isEmpty {
@@ -360,23 +361,22 @@ struct CommunityView: View {
                     Image(systemName: "wifi.exclamationmark")
                         .font(.system(size: PSLayout.scaledFont(40)))
                         .foregroundStyle(PSColors.textTertiary)
-                    Text(String(localized: "Couldn't load the feed"))
-                        .font(PSTypography.bodyMedium)
-                        .foregroundStyle(PSColors.textPrimary)
-                    Text(error)
-                        .font(PSTypography.caption1)
-                        .foregroundStyle(PSColors.textSecondary)
+                    FLText(
+                        localized: "Couldn't load the feed",
+                        .bodyMedium
+                    )
+                    FLText(error, .caption, color: .secondary)
                         .multilineTextAlignment(.center)
                     Button {
                         feedError = nil
                         communityService.error = nil
-                        Task { await refreshFeed() }
+                        Task { @MainActor in await refreshFeed() }
                     } label: {
                         HStack(spacing: PSSpacing.xs) {
                             Image(systemName: "arrow.clockwise")
-                            Text(String(localized: "Try Again"))
+                            FLText(localized: "Try Again", .body, color: .onDark)
+                                .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
                         }
-                        .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, PSSpacing.xxl)
                         .padding(.vertical, PSSpacing.md)
@@ -384,6 +384,8 @@ struct CommunityView: View {
                         .clipShape(Capsule())
                     }
                     .buttonStyle(PressableButtonStyle())
+                    .accessibilityLabel(String(localized: "Try Again"))
+                    .accessibilityHint(String(localized: "Double tap to retry loading the community feed"))
                 }
                 .padding(PSSpacing.screenHorizontal)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -422,7 +424,10 @@ struct CommunityView: View {
                     .listChangeAnimation(feedListings.map(\.id))
                 }
                 .contentMargins(.bottom, PSLayout.scaled(150), for: .scrollContent)
-                .refreshable { await refreshFeed() }
+                .refreshable {
+                    PSHaptics.shared.refreshSnap()
+                    await refreshFeed()
+                }
             }
         }
     }
@@ -454,6 +459,7 @@ struct CommunityView: View {
                 }
                 .contentMargins(.bottom, PSLayout.scaled(150), for: .scrollContent)
                 .refreshable {
+                    PSHaptics.shared.refreshSnap()
                     if let userId = authManager.currentUserId {
                         await communityService.fetchMyListings(userId: userId)
                     }
@@ -480,15 +486,16 @@ struct CommunityView: View {
             // Magic Bag header banner
             if isMagicBag {
                 HStack(spacing: PSSpacing.sm) {
-                    Text("🎁")
+                    Text("\u{1F381}")
                         .font(.system(size: PSLayout.scaledFont(14)))
-                    Text(String(localized: "Magic Bag — Pantry Clear-Out"))
-                        .font(.system(size: PSLayout.scaledFont(12), weight: .black))
-                        .foregroundStyle(Color(hex: 0x7C3AED))
+                    FLText(
+                        localized: "Magic Bag \u{2014} Pantry Clear-Out",
+                        .caption,
+                        color: .custom(Color(hex: 0x7C3AED))
+                    )
+                    .font(.system(size: PSLayout.scaledFont(12), weight: .black))
                     Spacer()
-                    Text(String(localized: "Peer to Peer"))
-                        .font(.system(size: PSLayout.scaledFont(10), weight: .bold))
-                        .foregroundStyle(.white)
+                    FLText(localized: "Peer to Peer", .sectionLabel, color: .onDark)
                         .padding(.horizontal, PSSpacing.sm)
                         .padding(.vertical, 3)
                         .background(
@@ -518,12 +525,11 @@ struct CommunityView: View {
                         RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
                             .strokeBorder(avatarColor(for: listing.displayName).opacity(0.3), lineWidth: 1.5)
                     )
-                    .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+                    .elevation(.z1)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(listing.displayName)
+                    FLText(listing.displayName, .callout)
                         .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
-                        .foregroundStyle(PSColors.textPrimary)
 
                     HStack(spacing: 4) {
                         if let area = listing.areaName {
@@ -532,7 +538,7 @@ struct CommunityView: View {
                             Text(area)
                         }
                         if listing.areaName != nil && !listing.timeAgo.isEmpty {
-                            Text("•")
+                            Text("\u{2022}")
                         }
                         Text(listing.timeAgo)
                     }
@@ -550,20 +556,20 @@ struct CommunityView: View {
                 )
             }
 
-            // Item name + category
-            HStack(spacing: 8) {
-                Text(listing.categoryEmoji)
-                    .font(.system(size: PSLayout.scaledFont(20)))
+            // Item name + photo thumbnail
+            HStack(spacing: PSSpacing.md) {
+                Image(listing.categoryImageAsset)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 40, height: 40)
+                    .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusSm, style: .continuous))
 
-                Text(listing.itemName)
+                FLText(listing.itemName, .headline)
                     .font(.system(size: PSLayout.scaledFont(18), weight: .bold))
                     .tracking(-0.2)
-                    .foregroundStyle(PSColors.textPrimary)
 
                 if let qty = listing.quantity, qty > 0 {
-                    Text("×\(qty)")
-                        .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
-                        .foregroundStyle(PSColors.textSecondary)
+                    FLText("\u{00D7}\(qty)", .callout, color: .secondary)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
                         .background(PSColors.backgroundSecondary)
@@ -573,9 +579,7 @@ struct CommunityView: View {
 
             // Description
             if let desc = listing.itemDescription, !desc.isEmpty {
-                Text(desc)
-                    .font(.system(size: PSLayout.scaledFont(15), weight: .medium))
-                    .foregroundStyle(PSColors.textSecondary)
+                FLText(desc, .bodyMedium, color: .secondary)
                     .lineSpacing(4)
                     .lineLimit(3)
             }
@@ -585,8 +589,11 @@ struct CommunityView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "location.fill")
                         .font(.system(size: 12))
-                    Text(String(localized: "Pickup location available"))
-                        .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
+                    FLText(
+                        localized: "Pickup location available",
+                        .subheadline,
+                        color: .green
+                    )
                 }
                 .foregroundStyle(PSColors.primaryGreen)
             }
@@ -599,8 +606,12 @@ struct CommunityView: View {
                 HStack(spacing: 4) {
                     Text(listing.categoryEmoji)
                         .font(.system(size: 12))
-                    Text(listing.foodCategory?.capitalized ?? String(localized: "Other"))
-                        .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                    FLText(
+                        listing.foodCategory?.capitalized ?? String(localized: "Other"),
+                        .caption,
+                        color: .secondary
+                    )
+                    .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
                 }
                 .foregroundStyle(PSColors.textSecondary)
                 .padding(.horizontal, 10)
@@ -623,8 +634,7 @@ struct CommunityView: View {
                         HStack(spacing: 4) {
                             Image(systemName: "hand.raised.fill")
                                 .font(.system(size: 14))
-                            Text(String(localized: "Claim"))
-                                .font(.system(size: PSLayout.scaledFont(14), weight: .bold))
+                            FLText(localized: "Claim", .callout, color: .onDark)
                         }
                         .foregroundStyle(.white)
                         .padding(.horizontal, 16)
@@ -634,6 +644,8 @@ struct CommunityView: View {
                     }
                     .buttonStyle(PressableButtonStyle())
                     .opacity(networkMonitor.isConnected == false ? 0.5 : 1)
+                    .accessibilityLabel(String(localized: "Claim \(listing.itemName)"))
+                    .accessibilityHint(String(localized: "Double tap to claim this listing"))
                 } else {
                     PSBadge(
                         text: listing.status.capitalized,
@@ -655,20 +667,22 @@ struct CommunityView: View {
                         .foregroundStyle(PSColors.textTertiary)
                         .frame(width: 32, height: 32)
                 }
+                .accessibilityLabel(String(localized: "More options"))
+                .accessibilityHint(String(localized: "Double tap to report this listing"))
             }
         }
         .padding(PSLayout.scaled(20))
-        .background(
-            listing.listingType == "magic_bag"
-                ? AnyView(
-                    LinearGradient(
-                        colors: [Color(hex: 0x7C3AED).opacity(0.07), Color(hex: 0xDB2777).opacity(0.05)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+        .background {
+            if listing.listingType == "magic_bag" {
+                LinearGradient(
+                    colors: [Color(hex: 0x7C3AED).opacity(0.07), Color(hex: 0xDB2777).opacity(0.05)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
                 )
-                : AnyView(PSColors.surfaceCard)
-        )
+            } else {
+                PSColors.surfaceCard
+            }
+        }
         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
@@ -690,17 +704,16 @@ struct CommunityView: View {
     private func myListingCard(listing: CommunityListingDTO) -> some View {
         VStack(alignment: .leading, spacing: PSSpacing.md) {
             HStack {
-                Text(listing.categoryEmoji)
-                    .font(.system(size: PSLayout.scaledFont(24)))
+                Image(listing.categoryImageAsset)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 48, height: 48)
+                    .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusSm, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(listing.itemName)
-                        .font(.system(size: PSLayout.scaledFont(17), weight: .bold))
-                        .foregroundStyle(PSColors.textPrimary)
+                    FLText(listing.itemName, .headline)
 
-                    Text(listing.timeAgo)
-                        .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
-                        .foregroundStyle(PSColors.textSecondary)
+                    FLText(listing.timeAgo, .subheadline, color: .secondary)
                 }
 
                 Spacer()
@@ -712,9 +725,7 @@ struct CommunityView: View {
             }
 
             if let desc = listing.itemDescription, !desc.isEmpty {
-                Text(desc)
-                    .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
-                    .foregroundStyle(PSColors.textSecondary)
+                FLText(desc, .callout, color: .secondary)
                     .lineLimit(2)
             }
 
@@ -722,18 +733,21 @@ struct CommunityView: View {
             if listing.status == "active" {
                 HStack(spacing: 12) {
                     Button {
-                        Task {
+                        Task { @MainActor in
                             let success = await communityService.updateListingStatus(
                                 listingId: listing.id, newStatus: "completed"
-                            ) ?? false
+                            )
                             if success { await refreshFeed() }
                         }
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.system(size: 14))
-                            Text(String(localized: "Mark Complete"))
-                                .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
+                            FLText(
+                                localized: "Mark Complete",
+                                .subheadline,
+                                color: .green
+                            )
                         }
                         .foregroundStyle(PSColors.primaryGreen)
                         .padding(.horizontal, 12)
@@ -742,18 +756,23 @@ struct CommunityView: View {
                         .clipShape(Capsule())
                     }
                     .buttonStyle(PressableButtonStyle())
+                    .accessibilityLabel(String(localized: "Mark Complete"))
+                    .accessibilityHint(String(localized: "Double tap to mark this listing as completed"))
 
                     Button {
-                        Task {
-                            let success = await communityService.deleteListing(listingId: listing.id) ?? false
+                        Task { @MainActor in
+                            let success = await communityService.deleteListing(listingId: listing.id)
                             if success { await refreshFeed() }
                         }
                     } label: {
                         HStack(spacing: 4) {
                             Image(systemName: "trash")
                                 .font(.system(size: 14))
-                            Text(String(localized: "Remove"))
-                                .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
+                            FLText(
+                                localized: "Remove",
+                                .subheadline,
+                                color: .red
+                            )
                         }
                         .foregroundStyle(PSColors.expiredRed)
                         .padding(.horizontal, 12)
@@ -762,6 +781,8 @@ struct CommunityView: View {
                         .clipShape(Capsule())
                     }
                     .buttonStyle(PressableButtonStyle())
+                    .accessibilityLabel(String(localized: "Remove listing"))
+                    .accessibilityHint(String(localized: "Double tap to delete this listing"))
 
                     Spacer()
                 }
@@ -769,8 +790,11 @@ struct CommunityView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "person.fill.checkmark")
                         .font(.system(size: 14))
-                    Text(String(localized: "Someone claimed this item"))
-                        .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
+                    FLText(
+                        localized: "Someone claimed this item",
+                        .subheadline,
+                        color: .blue
+                    )
                 }
                 .foregroundStyle(PSColors.infoBlue)
                 .padding(.horizontal, 12)
@@ -797,18 +821,14 @@ struct CommunityView: View {
         VStack(spacing: PSSpacing.lg) {
             // Reason picker
             VStack(alignment: .leading, spacing: PSSpacing.sm) {
-                Text(String(localized: "Reason"))
-                    .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
-                    .foregroundStyle(PSColors.textSecondary)
+                FLText(localized: "Reason", .callout, color: .secondary)
 
                 ForEach(reportReasons, id: \.self) { reason in
                     Button {
                         reportReason = reason
                     } label: {
                         HStack {
-                            Text(reason)
-                                .font(.system(size: PSLayout.scaledFont(15), weight: .medium))
-                                .foregroundStyle(PSColors.textPrimary)
+                            FLText(reason, .bodyMedium)
                             Spacer()
                             if reportReason == reason {
                                 Image(systemName: "checkmark.circle.fill")
@@ -817,14 +837,14 @@ struct CommunityView: View {
                         }
                         .padding(.vertical, 10)
                     }
+                    .accessibilityLabel(reason)
+                    .accessibilityAddTraits(reportReason == reason ? .isSelected : [])
                 }
             }
 
             // Details
             VStack(alignment: .leading, spacing: PSSpacing.sm) {
-                Text(String(localized: "Details (Optional)"))
-                    .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
-                    .foregroundStyle(PSColors.textSecondary)
+                FLText(localized: "Details (Optional)", .callout, color: .secondary)
 
                 TextField(String(localized: "Add more details..."), text: $reportDetails, axis: .vertical)
                     .font(.system(size: 15))
@@ -853,8 +873,7 @@ struct CommunityView: View {
         HStack(spacing: PSSpacing.sm) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 14))
-            Text(message)
-                .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
+            FLText(message, .callout, color: .amber)
             Spacer()
             Button {
                 communityService.error = nil
@@ -862,6 +881,7 @@ struct CommunityView: View {
                 Image(systemName: "xmark")
                     .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
             }
+            .accessibilityLabel(String(localized: "Dismiss error"))
         }
         .foregroundStyle(PSColors.warningAmber)
         .padding(12)
@@ -874,11 +894,7 @@ struct CommunityView: View {
     // MARK: - Helpers
 
     private var feedListings: [CommunityListingDTO] {
-        if !communityService.listings.isEmpty {
-            return communityService.listings
-        }
-        // Fallback: show seed data when unauthenticated or no results
-        return CommunityFeedData.cachedSeedListings
+        communityService.listings
     }
 
     private func refreshFeed() async {
@@ -901,7 +917,7 @@ struct CommunityView: View {
         guard let listing = reportTarget,
               let userId = authManager.currentUserId else { return }
 
-        Task {
+        Task { @MainActor in
             _ = await communityService.reportListing(
                 listingId: listing.id,
                 reporterId: userId,
@@ -962,101 +978,12 @@ struct CommunityView: View {
     ]
 }
 
-// MARK: - Seed Data (offline/unauthenticated fallback)
+// MARK: - Preview
 
-enum CommunityFeedData {
-    static let cachedSeedListings: [CommunityListingDTO] = [
-        CommunityListingDTO(
-            id: UUID(uuidString: "00000000-0000-0000-0000-000000000001")!,
-            userId: UUID(),
-            itemName: "Fresh Lemons",
-            itemDescription: "I bought too many lemons! Giving away a bag of 6 fresh organic lemons. Anyone interested?",
-            quantity: 6,
-            listingType: "share",
-            status: "active",
-            pickupAddress: nil,
-            pickupNotes: nil,
-            claimedBy: nil,
-            datePosted: Date().addingTimeInterval(-7200),
-            expiryDate: Date.daysFromNow(5),
-            completedAt: nil,
-            foodCategory: "fruits",
-            areaName: "Downtown",
-            imageUrls: nil,
-            reportCount: nil,
-            isFlagged: nil,
-            profiles: ListingProfileDTO(displayName: "Sarah Jenkins", avatarUrl: nil)
-        ),
-        CommunityListingDTO(
-            id: UUID(uuidString: "00000000-0000-0000-0000-000000000002")!,
-            userId: UUID(),
-            itemName: "Homemade Marinara",
-            itemDescription: "Made too much pasta sauce — have 2 large jars of homemade marinara. Fresh basil and tomatoes from my garden!",
-            quantity: 2,
-            listingType: "share",
-            status: "active",
-            pickupAddress: "123 Garden St",
-            pickupNotes: nil,
-            claimedBy: nil,
-            datePosted: Date().addingTimeInterval(-28800),
-            expiryDate: Date.daysFromNow(3),
-            completedAt: nil,
-            foodCategory: "canned",
-            areaName: "Westside",
-            imageUrls: nil,
-            reportCount: nil,
-            isFlagged: nil,
-            profiles: ListingProfileDTO(displayName: "Priya Sharma", avatarUrl: nil)
-        ),
-        CommunityListingDTO(
-            id: UUID(uuidString: "00000000-0000-0000-0000-000000000003")!,
-            userId: UUID(),
-            itemName: "Organic Chickpeas & Rice",
-            itemDescription: "Clearing out the pantry — have 4 cans of organic chickpeas and 2 bags of brown rice. All unopened.",
-            quantity: 6,
-            listingType: "donate",
-            status: "active",
-            pickupAddress: nil,
-            pickupNotes: nil,
-            claimedBy: nil,
-            datePosted: Date().addingTimeInterval(-86400),
-            expiryDate: Date.daysFromNow(30),
-            completedAt: nil,
-            foodCategory: "grains",
-            areaName: "Northside",
-            imageUrls: nil,
-            reportCount: nil,
-            isFlagged: nil,
-            profiles: ListingProfileDTO(displayName: "David Kim", avatarUrl: nil)
-        ),
-        CommunityListingDTO(
-            id: UUID(uuidString: "00000000-0000-0000-0000-000000000004")!,
-            userId: UUID(),
-            itemName: "Sourdough Bread",
-            itemDescription: "Baked too many loaves this weekend! Two fresh sourdough loaves available. Baked yesterday.",
-            quantity: 2,
-            listingType: "share",
-            status: "active",
-            pickupAddress: nil,
-            pickupNotes: "Ring the doorbell",
-            claimedBy: nil,
-            datePosted: Date().addingTimeInterval(-14400),
-            expiryDate: Date.daysFromNow(2),
-            completedAt: nil,
-            foodCategory: "bakery",
-            areaName: "Eastside",
-            imageUrls: nil,
-            reportCount: nil,
-            isFlagged: nil,
-            profiles: ListingProfileDTO(displayName: "Michael Chen", avatarUrl: nil)
-        ),
-    ]
+#Preview("FLCommunityPage - iPhone SE") {
+    FLCommunityPage()
 }
 
-#Preview("CommunityView - iPhone SE") {
-    CommunityView()
-}
-
-#Preview("CommunityView - iPhone 16 Pro Max") {
-    CommunityView()
+#Preview("FLCommunityPage - iPhone 16 Pro Max") {
+    FLCommunityPage()
 }

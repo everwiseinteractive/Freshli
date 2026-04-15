@@ -156,7 +156,7 @@ final class InventoryViewModel {
             try await pantryService.markAsConsumed(id: item.id, userId: userId)
             // Remove from local array after animation
             try? await Task.sleep(for: .milliseconds(600))
-            withAnimation(.easeInOut(duration: 0.35)) {
+            withAnimation(PSMotion.springDefault) {
                 items.removeAll { $0.id == item.id }
                 applyFilters()
             }
@@ -184,7 +184,7 @@ final class InventoryViewModel {
         do {
             try await pantryService.markAsShared(id: item.id, userId: userId)
             try? await Task.sleep(for: .milliseconds(800))
-            withAnimation(.easeInOut(duration: 0.35)) {
+            withAnimation(PSMotion.springDefault) {
                 items.removeAll { $0.id == item.id }
                 applyFilters()
             }

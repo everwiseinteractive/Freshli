@@ -19,7 +19,8 @@ struct RecipeCard: View {
                         Text(recipe.title)
                             .font(PSTypography.bodyMedium)
                             .foregroundStyle(PSColors.textPrimary)
-                            .lineLimit(1)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.85)
 
                         Text(recipe.summary)
                             .font(PSTypography.caption1)

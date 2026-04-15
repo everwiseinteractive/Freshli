@@ -103,11 +103,11 @@ final class LocalizationService {
     }
 
     var availableCurrencyCodes: [String] = {
-        Locale.isoCurrencyCodes
+        Locale.Currency.isoCurrencies.map(\.identifier)
     }()
 
     var currentCurrencyCode: String {
-        currentLocale.currencyCode ?? "USD"
+        currentLocale.currency?.identifier ?? "USD"
     }
 
     // MARK: - Initialization

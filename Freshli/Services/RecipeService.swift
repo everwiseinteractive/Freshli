@@ -8,7 +8,7 @@ final class RecipeService {
 
     // Singleton instance with cached recipe database
     static let shared = RecipeService()
-    private static let cachedRecipes = RecipeService.buildRecipeDatabase()
+    static let cachedRecipes = RecipeService.buildRecipeDatabase()
 
     private init() {
         loadRecipes()

@@ -52,7 +52,7 @@
 
     <h2>About Freshli</h2>
     <div class="boilerplate">
-      <p>Freshli is an iOS app that helps households rescue food from the bin using on-device Apple Intelligence. Users track their pantry, get AI-generated recipes for expiring ingredients (entirely on-device, with zero network calls), share surplus food with neighbours, and watch their environmental impact grow week by week. Built with Swift 6.2, SwiftUI, and SwiftData for iOS 26. For the people. For the planet.</p>
+      <p>Freshli is an iOS app that helps households rescue food from the bin using on-device Apple Intelligence. Users track their pantry, get AI-generated recipes for expiring ingredients (entirely on-device, with zero network calls), cook hands-free with voice-guided recipe steps, share surplus food with neighbours, and watch their environmental impact grow week by week. Built with Swift 6.2, SwiftUI, SwiftData, and Metal 4 for iOS 26. For the people. For the planet.</p>
     </div>
 
     <h2>Key Facts</h2>
@@ -61,7 +61,7 @@
       <div class="fact-card"><div class="number">6</div><div class="label">Languages supported</div></div>
       <div class="fact-card"><div class="number">100%</div><div class="label">On-device AI processing</div></div>
       <div class="fact-card"><div class="number">0</div><div class="label">Third-party trackers</div></div>
-      <div class="fact-card"><div class="number">&pound;700</div><div class="label">Average food waste/household/year</div></div>
+      <div class="fact-card"><div class="number" id="currency-fact" data-gb="&pound;700" data-us="$1,500" data-eu="&euro;900" data-au="A$2,000" data-ca="C$1,700">&pound;700</div><div class="label">Average food waste/household/year</div></div>
       <div class="fact-card"><div class="number">2.5 kg</div><div class="label">CO&#8322; avoided per item rescued</div></div>
     </div>
 
@@ -70,7 +70,9 @@
       <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 8px;"><strong>On-device AI:</strong> Rescue Chef uses iOS 26's FoundationModels framework — recipes are generated entirely on-device. No server, no API cost, no privacy compromise.</li>
       <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 8px;"><strong>Community-first:</strong> Share surplus food with neighbours, donate to community fridges, join local pods for hyper-local food sharing.</li>
       <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 8px;"><strong>Impact you can feel:</strong> Weekly Wrap — a cinematic, shareable story of your food rescue impact with animated MeshGradient backgrounds and a growing tree.</li>
-      <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 8px;"><strong>Deep platform integration:</strong> Apple Watch, Siri Shortcuts, Control Center widgets, Interactive Widgets, Live Activities, Dynamic Island, Handoff.</li>
+      <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 8px;"><strong>Hands-free cooking:</strong> Freshli reads every recipe step aloud so users never need to touch their phone while cooking. Eyes on the pan, not the screen.</li>
+      <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 8px;"><strong>Gaze tracking accessibility:</strong> ARKit face tracking enables hands-free browsing — UI elements subtly inflate toward the user's gaze. Full WCAG 2.2 AA compliance.</li>
+      <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 8px;"><strong>Deep platform integration:</strong> Apple Watch, Siri Shortcuts, Control Center widgets, Interactive Widgets, Live Activities, Dynamic Island, and ControlWidget quick actions.</li>
     </ul>
 
     <h2>iOS 26 Technologies Used</h2>
@@ -85,6 +87,11 @@
       <div class="tech-pill">App Intents <span class="dim">— Siri + Shortcuts</span></div>
       <div class="tech-pill">TipKit <span class="dim">— contextual coach marks</span></div>
       <div class="tech-pill">ActivityKit <span class="dim">— 4 Live Activities</span></div>
+      <div class="tech-pill">Metal 4 <span class="dim">— custom MSL 3.2 shaders</span></div>
+      <div class="tech-pill">StoreKit 2 <span class="dim">— subscription management</span></div>
+      <div class="tech-pill">ControlWidget <span class="dim">— Control Center actions</span></div>
+      <div class="tech-pill">ARKit <span class="dim">— gaze tracking accessibility</span></div>
+      <div class="tech-pill">Privacy Manifest <span class="dim">— full nutrition labels</span></div>
     </div>
 
     <h2>Brand Assets</h2>
@@ -111,6 +118,24 @@
     <p><strong>Website:</strong> <a href="https://freshli.app">freshli.app</a></p>
     <p><strong>App Store:</strong> Available on the App Store (iOS 26+)</p>
   </div>
+
+  <script>
+    (() => {
+      const el = document.getElementById('currency-fact');
+      if (!el) return;
+      const lang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      let region = 'gb';
+      if (lang.includes('en-us') || tz.startsWith('America/') && !tz.includes('Toronto')) region = 'us';
+      else if (lang.includes('en-ca') || tz.includes('Toronto') || tz.includes('Vancouver')) region = 'ca';
+      else if (lang.includes('en-au') || tz.startsWith('Australia/')) region = 'au';
+      else if (lang.includes('en-gb') || tz.startsWith('Europe/London')) region = 'gb';
+      else if (tz.startsWith('Europe/')) region = 'eu';
+      else if (lang.startsWith('en')) region = 'us';
+      const val = el.getAttribute('data-' + region);
+      if (val) el.textContent = val;
+    })();
+  </script>
 
   <footer>
     <a href="/">Home</a> <a href="about.html">Our Story</a> <a href="partners.html">Partners</a> <a href="social.html">Social</a> <a href="privacy.html">Privacy</a> <a href="terms.html">Terms</a> <a href="support.html">Support</a> <a href="press.html">Press</a> <a href="mailto:support@freshli.app">Contact</a>

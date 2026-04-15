@@ -84,12 +84,9 @@ struct PerksView: View {
                         .foregroundStyle(.white.opacity(0.6))
                 }
                 Spacer()
-                ZStack {
-                    Circle().fill(.white.opacity(0.12)).frame(width: PSLayout.scaled(64), height: PSLayout.scaled(64))
-                    Image(systemName: "leaf.circle.fill")
-                        .font(.system(size: PSLayout.scaledFont(36)))
-                        .foregroundStyle(.white.opacity(0.9))
-                }
+                Image(systemName: "leaf.circle.fill")
+                    .font(.system(size: PSLayout.scaledFont(40)))
+                    .foregroundStyle(.white.opacity(0.9))
             }
 
             // Earn rate note
@@ -149,14 +146,10 @@ struct PerksView: View {
 
     private func employerPerkRow(_ perk: EmployerPerk, isUnlocked: Bool) -> some View {
         HStack(spacing: PSSpacing.md) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(isUnlocked ? perk.color.opacity(0.15) : PSColors.borderLight.opacity(0.5))
-                    .frame(width: PSLayout.scaled(44), height: PSLayout.scaled(44))
-                Image(systemName: isUnlocked ? perk.icon : "lock.fill")
-                    .font(.system(size: PSLayout.scaledFont(18)))
-                    .foregroundStyle(isUnlocked ? perk.color : PSColors.textTertiary)
-            }
+            Image(systemName: isUnlocked ? perk.icon : "lock.fill")
+                .font(.system(size: PSLayout.scaledFont(22)))
+                .foregroundStyle(isUnlocked ? perk.color : PSColors.textTertiary)
+                .frame(width: PSLayout.scaled(44), height: PSLayout.scaled(44))
             VStack(alignment: .leading, spacing: 2) {
                 Text(perk.title)
                     .font(.system(size: PSLayout.scaledFont(14), weight: .bold))

@@ -113,8 +113,9 @@ final class ImpactWrapDataService {
             weekStart: startDate
         )
 
-        // Format date range
+        // Format date range (explicit locale avoids region-dependent formatting)
         let formatter = DateFormatter()
+        formatter.locale = Locale.autoupdatingCurrent
         formatter.dateFormat = "MMM d"
         let weekDisplay = "\(formatter.string(from: startDate)) - \(formatter.string(from: endDate))"
 
@@ -246,8 +247,8 @@ final class ImpactWrapDataService {
         var streak = 0
         var currentDate = today
 
-        // Count backwards from today
-        while true {
+        // Count backwards from today (capped at 365 to prevent runaway loop)
+        for _ in 0..<365 {
             let itemsOnDay = allItems.filter { item in
                 calendar.isDate(item.dateAdded, inSameDayAs: currentDate) && item.isConsumed
             }
@@ -257,7 +258,8 @@ final class ImpactWrapDataService {
             }
 
             streak += 1
-            currentDate = calendar.date(byAdding: .day, value: -1, to: currentDate) ?? Date()
+            guard let previousDay = calendar.date(byAdding: .day, value: -1, to: currentDate) else { break }
+            currentDate = previousDay
         }
 
         let label: String

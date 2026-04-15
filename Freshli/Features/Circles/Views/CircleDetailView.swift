@@ -53,6 +53,8 @@ struct CircleDetailView: View {
         }
         .sheet(isPresented: $showAddListing) {
             AddCircleListingView(circle: circle, viewModel: viewModel)
+                .presentationDragIndicator(.visible)
+                .sheetTransition()
         }
         .alert("Invite Code", isPresented: $showInviteCode) {
             Button("Copy") {

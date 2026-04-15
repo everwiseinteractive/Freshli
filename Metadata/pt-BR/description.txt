@@ -1,0 +1,41 @@
+Pare de jogar comida fora. Comece a resgatá-la.
+
+A família média desperdiça R$ 4.000 de comida por ano. O Freshli muda isso — acompanhe cada item da sua geladeira, receba sugestões de receitas com IA antes que vençam, e compartilhe o excedente com vizinhos que precisam.
+
+RESCUE CHEF — MOVIDO POR APPLE INTELLIGENCE
+Toque um botão e a IA no dispositivo do Freshli cria receitas para sua despensa exata. Sem internet. Seus dados alimentares nunca saem do seu celular. Culinária privada, instantânea e inteligente.
+
+ACOMPANHE TUDO
+• Escaneie códigos de barras, recibos ou digite itens manualmente
+• Alertas inteligentes de validade dizem o que usar primeiro
+• Indicadores de frescor com código de cores num relance
+• Fotografias de alimentos para cada item
+
+COMPARTILHE COM SUA COMUNIDADE
+• Publique comida excedente para retirada gratuita por vizinhos
+• Encontre e doe para geladeiras comunitárias próximas
+• Entre em grupos locais para compartilhamento hiperlocal
+• Ganhe créditos de karma pela sua generosidade
+
+VEJA SEU IMPACTO
+• Weekly Wrap — um resumo cinematográfico da sua história de resgate
+• Acompanhe CO₂ evitado, dinheiro economizado e refeições compartilhadas
+• Assista à Onda de Resgate Global em tempo real
+• Suba de nível de Semente a Campeão
+
+FUNCIONA EM TODA SUA VIDA
+• Complicações do Apple Watch mostram o que está vencendo
+• Live Activities rastreiam timers de cozinha na sua tela
+• Atalhos da Siri: "E aí Siri, resgate minha despensa"
+• Widget da Central de Controle para registro instantâneo
+• Widgets interativos com consumo em um toque
+
+FEITO PARA TODOS
+• Suporte completo VoiceOver com dicas contextuais
+• Indicadores de validade seguros para daltônicos
+• Dynamic Type em todos os tamanhos
+• Reduzir Movimento respeitado em todo o app
+
+Construído com Swift 6.2, SwiftUI e SwiftData. Movido por Apple Intelligence. Projetado para o planeta.
+
+Para as pessoas. Para o planeta.

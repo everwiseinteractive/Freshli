@@ -702,6 +702,16 @@
           <h3>"Hey Siri, Rescue My Pantry"</h3>
           <p>Voice-activated AI recipes from Siri, Shortcuts, Spotlight, or Control Center. Zero taps needed.</p>
         </div>
+        <div class="feature-card fade-in">
+          <div class="feature-icon" style="background: #FEF9C3;">🙌</div>
+          <h3>Hands-Free Cooking</h3>
+          <p>Freshli reads every recipe step aloud so you never touch your phone while cooking. Eyes on the pan, not the screen.</p>
+        </div>
+        <div class="feature-card fade-in">
+          <div class="feature-icon" style="background: #CCFBF1;">🌊</div>
+          <h3>Live Wave</h3>
+          <p>See real-time global impact — how many people are rescuing food right now, total CO&#8322; avoided, and meals shared worldwide.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -757,7 +767,7 @@
           <div class="stat-label">Families Fed</div>
         </div>
         <div class="stat-card fade-in">
-          <div class="stat-number">£700</div>
+          <div class="stat-number" id="currency-stat" data-gb="£700" data-us="$1,500" data-eu="€900" data-au="A$2,000" data-ca="C$1,700">£700</div>
           <div class="stat-label">Saved Per Household/Year</div>
         </div>
       </div>
@@ -817,6 +827,7 @@
         <span class="badge">iOS 26+</span>
         <span class="badge">Apple Watch</span>
         <span class="badge">Siri Shortcuts</span>
+        <span class="badge">Live Activities</span>
         <span class="badge">Dark Mode</span>
       </div>
     </div>
@@ -850,6 +861,23 @@
     }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
 
     document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+    // Locale-based currency display
+    (() => {
+      const el = document.getElementById('currency-stat');
+      if (!el) return;
+      const lang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      let region = 'gb';
+      if (lang.includes('en-us') || tz.startsWith('America/') && !tz.includes('Toronto')) region = 'us';
+      else if (lang.includes('en-ca') || tz.includes('Toronto') || tz.includes('Vancouver')) region = 'ca';
+      else if (lang.includes('en-au') || tz.startsWith('Australia/')) region = 'au';
+      else if (lang.includes('en-gb') || tz.startsWith('Europe/London')) region = 'gb';
+      else if (tz.startsWith('Europe/')) region = 'eu';
+      else if (lang.startsWith('en')) region = 'us';
+      const val = el.getAttribute('data-' + region);
+      if (val) el.textContent = val;
+    })();
   </script>
 
 </body>

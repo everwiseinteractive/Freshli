@@ -27,7 +27,7 @@ struct CelebrationOverlay: View {
                         .allowsHitTesting(false)
                         .onAppear {
                             if !reduceMotion {
-                                withAnimation(.easeInOut(duration: 0.5)) {
+                                withAnimation(FLMotion.freshliCurve) {
                                     blurIntensity = 1.0
                                 }
                             } else {
@@ -113,12 +113,16 @@ struct CelebrationOverlay: View {
         case .small:
             return .asymmetric(
                 insertion: .move(edge: .bottom).combined(with: .opacity),
-                removal: .opacity.combined(with: .scale(scale: 0.9))
+                removal: .move(edge: .bottom)
+                    .combined(with: .opacity)
+                    .combined(with: .scale(scale: 0.85))
             )
         case .medium, .hero:
             return .asymmetric(
-                insertion: .opacity.combined(with: .scale(scale: 0.9)),
-                removal: .opacity.combined(with: .scale(scale: 1.05))
+                insertion: .opacity.combined(with: .scale(scale: 0.85)),
+                removal: .opacity
+                    .combined(with: .scale(scale: 1.12))
+                    .combined(with: .offset(y: -30))
             )
         }
     }

@@ -183,7 +183,7 @@ extension ReplenishIngredientTransfer: Transferable {
     }
 }
 
-extension UTType {
+nonisolated extension UTType {
     static let freshliIngredient = UTType(
         exportedAs: "com.freshli.ingredient",
         conformingTo: .json
@@ -199,7 +199,7 @@ extension ReplenishItem: Transferable {
     }
 }
 
-extension UTType {
+nonisolated extension UTType {
     static let freshliReplenishItem = UTType(
         exportedAs: "com.freshli.replenish-item",
         conformingTo: .json

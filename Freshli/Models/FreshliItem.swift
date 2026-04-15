@@ -40,7 +40,7 @@ final class FreshliItem {
         let formatted = quantity.truncatingRemainder(dividingBy: 1) == 0
             ? String(format: "%.0f", quantity)
             : String(format: "%.1f", quantity)
-        return "\(formatted) \(unit.displayName)"
+        return "\(formatted) \(unit.displayName(for: quantity))"
     }
 
     var isActive: Bool {

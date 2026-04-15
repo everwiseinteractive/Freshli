@@ -36,14 +36,19 @@ struct CirclesView: View {
                 await viewModel.loadCircles(userId: userId)
             }
             .refreshable {
+                PSHaptics.shared.refreshSnap()
                 guard let userId = authManager.currentUserId else { return }
                 await viewModel.loadCircles(userId: userId)
             }
             .sheet(isPresented: $showCreateSheet) {
                 CreateCircleView(viewModel: viewModel)
+                    .presentationDragIndicator(.visible)
+                    .sheetTransition()
             }
             .sheet(isPresented: $showJoinSheet) {
                 JoinCircleView(viewModel: viewModel)
+                    .presentationDragIndicator(.visible)
+                    .sheetTransition()
             }
         }
     }

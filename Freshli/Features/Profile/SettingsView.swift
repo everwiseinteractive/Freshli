@@ -40,6 +40,9 @@ struct SettingsView: View {
                 Text(String(localized: "Appearance"))
             }
 
+            // MARK: - Apple Intelligence
+            GazeTrackingToggle()
+
             // MARK: - Notifications
             Section {
                 if notificationAuthStatus == .denied {
@@ -306,8 +309,10 @@ struct SettingsView: View {
         }
     }
 
+    @ViewBuilder
     private func settingsLink(icon: String, title: String, url: String) -> some View {
-        Link(destination: URL(string: url)!) {
+        if let destination = URL(string: url) {
+        Link(destination: destination) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: PSLayout.scaledFont(16)))
@@ -323,6 +328,7 @@ struct SettingsView: View {
                     .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
                     .foregroundStyle(PSColors.textTertiary)
             }
+        }
         }
     }
 }

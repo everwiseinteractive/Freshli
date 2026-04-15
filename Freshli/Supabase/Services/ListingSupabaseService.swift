@@ -145,7 +145,7 @@ final class ListingSupabaseService: Sendable {
             .from("shared_listings")
             .select()
             .eq("user_id", value: userId)
-            .in("status", value: ["pending", "claimed"])
+            .in("status", values: ["pending", "claimed"])
             .order("updated_at", ascending: false)
             .execute()
             .value

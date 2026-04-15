@@ -155,15 +155,15 @@ final class ProfileService: Sendable {
 
         var updates: [String: AnyJSON] = [:]
 
-        if let moneySaved {
+        if moneySaved != nil {
             updates["total_money_saved"] = .double(newMoneySaved)
         }
 
-        if let co2Avoided {
+        if co2Avoided != nil {
             updates["total_co2_avoided"] = .double(newCo2Avoided)
         }
 
-        if let mealsShared {
+        if mealsShared != nil {
             updates["meals_shared"] = .double(Double(newMealsShared))
         }
 

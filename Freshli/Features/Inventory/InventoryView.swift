@@ -65,7 +65,7 @@ struct InventoryView: View {
                     namespace: inventoryNamespace,
                     onDismiss: { viewModel.dismissDetail() }
                 )
-                .transition(.opacity)
+                .transition(.opacity.combined(with: .scale(scale: 0.97)))
                 .zIndex(100)
             }
         }
@@ -76,6 +76,7 @@ struct InventoryView: View {
         .sheet(isPresented: $showAddItem) {
             Text("Add Item")
                 .presentationDragIndicator(.visible)
+                .sheetTransition()
         }
     }
 
@@ -146,6 +147,7 @@ struct InventoryView: View {
                     color: midColor.opacity(0.06)
                 )
             }
+            .drawingGroup()
         }
     }
 
@@ -203,8 +205,7 @@ struct InventoryView: View {
                         .font(.system(size: PSLayout.scaledFont(22), weight: .medium))
                         .foregroundStyle(PSColors.textSecondary)
                         .frame(width: 44, height: 44)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Circle())
+                        .glassEffect(.regular, in: Circle())
                 }
 
                 // Freshness score pill
@@ -236,12 +237,7 @@ struct InventoryView: View {
             }
             .padding(.horizontal, PSSpacing.md)
             .padding(.vertical, PSSpacing.sm)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
-                    .stroke(Color.white.opacity(0.15), lineWidth: 0.5)
-            )
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
         }
         .padding(.horizontal, PSSpacing.screenHorizontal)
         .padding(.top, PSSpacing.lg)
@@ -311,12 +307,11 @@ struct InventoryView: View {
             .padding(.horizontal, PSSpacing.md)
             .padding(.vertical, PSSpacing.sm)
             .background(isSelected ? PSColors.primaryGreen.opacity(0.15) : Color.white.opacity(0.001))
-            .background(.ultraThinMaterial)
             .foregroundStyle(isSelected ? PSColors.primaryGreen : PSColors.textSecondary)
-            .clipShape(Capsule())
+            .glassEffect(.regular, in: Capsule())
             .overlay(
                 Capsule()
-                    .stroke(isSelected ? PSColors.primaryGreen.opacity(0.4) : Color.white.opacity(0.15), lineWidth: 0.5)
+                    .stroke(isSelected ? PSColors.primaryGreen.opacity(0.4) : Color.clear, lineWidth: 0.5)
             )
         }
         .buttonStyle(.plain)
@@ -353,6 +348,7 @@ struct InventoryView: View {
             .padding(.bottom, 100) // Room for FAB
         }
         .refreshable {
+            PSHaptics.shared.refreshSnap()
             await viewModel.refresh()
         }
     }
@@ -527,7 +523,7 @@ struct InventoryDetailOverlay: View {
                 detailCell(
                     icon: "number",
                     label: String(localized: "Quantity"),
-                    value: "\(String(format: "%.0f", item.quantity)) \(MeasurementUnit(rawValue: item.unit)?.displayName ?? item.unit)"
+                    value: "\(String(format: "%.0f", item.quantity)) \(MeasurementUnit(rawValue: item.unit)?.displayName(for: item.quantity) ?? item.unit)"
                 )
 
                 detailCell(

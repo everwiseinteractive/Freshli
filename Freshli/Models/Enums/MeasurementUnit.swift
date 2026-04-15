@@ -18,7 +18,7 @@ enum MeasurementUnit: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var displayName: String {
+    nonisolated var displayName: String {
         switch self {
         case .pieces: return String(localized: "pcs")
         case .grams: return String(localized: "g")
@@ -37,7 +37,32 @@ enum MeasurementUnit: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    var fullName: String {
+    /// Returns the correctly pluralized display name for a given quantity.
+    /// Abbreviated units (g, kg, ml, etc.) are invariant; countable units
+    /// (bags, packs, bottles, cans, cups) use singular form when quantity == 1.
+    nonisolated func displayName(for quantity: Double) -> String {
+        let isSingular = quantity == 1
+        switch self {
+        // Abbreviated units — no plural change
+        case .pieces:      return String(localized: "pcs")
+        case .grams:       return String(localized: "g")
+        case .kilograms:   return String(localized: "kg")
+        case .milliliters: return String(localized: "ml")
+        case .liters:      return String(localized: "L")
+        case .tablespoons: return String(localized: "tbsp")
+        case .teaspoons:   return String(localized: "tsp")
+        case .ounces:      return String(localized: "oz")
+        case .pounds:      return String(localized: "lbs")
+        // Countable units — singular/plural
+        case .cups:    return isSingular ? String(localized: "cup")    : String(localized: "cups")
+        case .packs:   return isSingular ? String(localized: "pack")   : String(localized: "packs")
+        case .bottles: return isSingular ? String(localized: "bottle") : String(localized: "bottles")
+        case .cans:    return isSingular ? String(localized: "can")    : String(localized: "cans")
+        case .bags:    return isSingular ? String(localized: "bag")    : String(localized: "bags")
+        }
+    }
+
+    nonisolated var fullName: String {
         switch self {
         case .pieces: return String(localized: "Pieces")
         case .grams: return String(localized: "Grams")

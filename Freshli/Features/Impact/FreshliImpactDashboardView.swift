@@ -56,88 +56,53 @@ struct FreshliImpactDashboardView: View {
 
     // MARK: - Background with Mesh Gradient
 
+    @State private var dashboardStartDate = Date.now
+
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.shaderQuality) private var quality
+
     @ViewBuilder
     private var backgroundLayer: some View {
-        if #available(iOS 18, *) {
-            TimelineView(.animation(minimumInterval: 0.05, paused: reduceMotion)) { context in
-                let time = context.date.timeIntervalSince1970
-                let phase = time.truncatingRemainder(dividingBy: 8.0) / 8.0
+        if reduceTransparency || !ShaderWarmUpService.shadersAvailable {
+            // High Contrast Material mode — vibrant mesh gradient replaces
+            // glass/plasma shaders for WCAG AAA compliance while keeping
+            // the "living" feel through gentle mesh animation.
+            Rectangle()
+                .fill(PSColors.backgroundPrimary)
+                .highContrastBackground(.impact)
+                .ignoresSafeArea()
+        } else {
+            // Metal GPU-powered plasma background — organic multi-frequency
+            // color movement. Runs at adaptive framerate for efficiency.
+            TimelineView(.animation(minimumInterval: quality.frameInterval, paused: reduceMotion)) { timeline in
+                let time = Float(timeline.date.timeIntervalSince(dashboardStartDate))
+                let impactIntensity = Float((viewModel.weeklyStats?.co2Avoided ?? 0) / 100.0)
 
-                meshGradientBackground(phase: phase)
+                let capturedParticleDensity = quality.particleDensity
+                Rectangle()
+                    .fill(PSColors.backgroundPrimary)
+                    .visualEffect { view, proxy in
+                        view
+                            .colorEffect(
+                                ShaderLibrary.impactPlasma(
+                                    .float2(proxy.size),
+                                    .float(time),
+                                    .float(min(impactIntensity, 1.0) * 0.5 + 0.2)
+                                )
+                            )
+                            .colorEffect(
+                                ShaderLibrary.ambientParticles(
+                                    .float2(proxy.size),
+                                    .float(time),
+                                    .float(1.5 * capturedParticleDensity),
+                                    .float(0.3)
+                                )
+                            )
+                    }
+                    .drawingGroup()
                     .ignoresSafeArea()
             }
-        } else {
-            // Fallback for iOS 17 and earlier
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    PSColors.primaryGreen.opacity(0.1),
-                    PSColors.accentTeal.opacity(0.08),
-                    PSColors.backgroundPrimary
-                ]),
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
         }
-    }
-
-    /// Mesh gradient with animated points (iOS 18+)
-    @available(iOS 18, *)
-    @ViewBuilder
-    private func meshGradientBackground(phase: CGFloat) -> some View {
-        let pointCount: Int = 9 // 3x3 grid
-        let cols = 3
-        let rows = 3
-
-        // Dynamic color selection based on impact
-        let impactIntensity = (viewModel.weeklyStats?.co2Avoided ?? 0) / 100.0
-        let isHighImpact = impactIntensity > 0.5
-
-        let baseColors: [Color] = isHighImpact
-            ? [
-                PSColors.primaryGreen,
-                PSColors.accentTeal,
-                PSColors.primaryGreenDark.opacity(0.8),
-                PSColors.primaryGreen.opacity(0.7),
-                PSColors.backgroundPrimary,
-                PSColors.accentTeal.opacity(0.6),
-                PSColors.primaryGreenDark,
-                PSColors.primaryGreen.opacity(0.5),
-                PSColors.accentTeal.opacity(0.4)
-            ]
-            : [
-                Color(hex: 0xE0E7FF),
-                Color(hex: 0xF0F9FF),
-                Color(hex: 0xECFDF5),
-                Color(hex: 0xF8FAFC),
-                PSColors.backgroundPrimary,
-                Color(hex: 0xF0FDFA),
-                Color(hex: 0xDEF7F9),
-                Color(hex: 0xF0FDF4),
-                Color(hex: 0xFAF5FF)
-            ]
-
-        let points: [SIMD2<Float>] = (0..<pointCount).map { i in
-            let col = i % cols
-            let row = i / cols
-            let x = Float(col) / Float(cols - 1)
-            let y = Float(row) / Float(rows - 1)
-
-            // Subtle animation: slight oscillation
-            let p = Float(phase)
-            let animationOffset = sin(p * .pi * 2 + Float(i)) * Float(0.05)
-            return SIMD2(
-                x: x + animationOffset,
-                y: y + animationOffset
-            )
-        }
-
-        MeshGradient(
-            width: cols,
-            height: rows,
-            points: points,
-            colors: baseColors
-        )
     }
 
     // MARK: - Impact Cards Section
@@ -225,8 +190,10 @@ struct FreshliImpactDashboardView: View {
             VStack(alignment: .leading, spacing: PSSpacing.xs) {
                 Text(value)
                     .font(PSTypography.statLarge)
+                    .monospacedDigit()
                     .foregroundStyle(PSColors.textPrimary)
                     .contentTransition(.numericText())
+                    .compositingGroup()
 
                 HStack(spacing: PSSpacing.xxs) {
                     Text(title)
@@ -253,6 +220,12 @@ struct FreshliImpactDashboardView: View {
         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl))
         .shadow(color: PSColors.primaryGreen.opacity(0.1), radius: 12, y: 4)
         .impactShimmer()
+        .scrollTransition(.animated(.spring(response: 0.4))) { content, phase in
+            content
+                .opacity(phase.isIdentity ? 1 : 0.6)
+                .scaleEffect(phase.isIdentity ? 1 : 0.92)
+                .blur(radius: phase.isIdentity ? 0 : 2)
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title): \(value) \(unit)".trimmingCharacters(in: .whitespaces))
     }
@@ -294,8 +267,7 @@ struct FreshliImpactDashboardView: View {
             .chartLegend(position: .bottomLeading, alignment: .leading)
             .frame(height: 220)
             .padding(PSSpacing.lg)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
             .accessibilityLabel("Weekly freshness trend chart")
             .accessibilityHint("Shows percentage of items saved vs wasted each day")
         }
@@ -325,20 +297,19 @@ struct FreshliImpactDashboardView: View {
                 .padding(PSSpacing.xxxl)
             } else {
                 VStack(spacing: PSSpacing.sm) {
-                    ForEach(viewModel.recentEvents, id: \.id) { event in
-                        activityRow(for: event)
+                    ForEach(Array(viewModel.recentEvents.enumerated()), id: \.element.id) { index, event in
+                        activityRow(for: event, index: index)
                     }
                 }
                 .padding(PSSpacing.lg)
-                .background(.ultraThinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
             }
         }
     }
 
-    /// Individual activity row
+    /// Individual activity row with staggered entrance
     @ViewBuilder
-    private func activityRow(for event: SupabaseImpactEvent) -> some View {
+    private func activityRow(for event: SupabaseImpactEvent, index: Int = 0) -> some View {
         HStack(spacing: PSSpacing.md) {
             // Event icon
             Image(systemName: iconForEventType(event.eventType))
@@ -383,6 +354,7 @@ struct FreshliImpactDashboardView: View {
                 .foregroundStyle(PSColors.textTertiary)
         }
         .padding(.vertical, PSSpacing.sm)
+        .dashboardEntrance(index: index)
     }
 
     // MARK: - Milestone Overlay

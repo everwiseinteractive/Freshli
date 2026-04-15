@@ -18,6 +18,7 @@ struct PSStatTile: View {
                 .background(tint.opacity(0.12))
                 .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusSm, style: .continuous))
                 .scaleEffect(appeared ? 1 : 0.5)
+                .symbolEffect(.bounce, value: appeared)
 
             Text(value)
                 .font(PSTypography.statMedium)

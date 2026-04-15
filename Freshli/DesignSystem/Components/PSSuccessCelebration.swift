@@ -50,7 +50,7 @@ struct PSSuccessCelebration: View {
                         RoundedRectangle(cornerRadius: PSSpacing.radiusHero, style: .continuous)
                             .fill(PSColors.green400)
                             .adaptiveFrame(width: 128, height: 128)
-                            .shadow(color: .black.opacity(0.25), radius: 25, y: 12)
+                            .elevation(.z5)
 
                         Image(systemName: icon)
                             .font(.system(size: 64, weight: .regular))

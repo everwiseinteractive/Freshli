@@ -36,16 +36,9 @@ struct CouncilImpactReportView: View {
 
     private var hero: some View {
         VStack(spacing: PSSpacing.md) {
-            ZStack {
-                Circle()
-                    .fill(LinearGradient(
-                        colors: [Color(hex: 0x3B82F6).opacity(0.15), Color(hex: 0x06B6D4).opacity(0.1)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: PSLayout.scaled(80), height: PSLayout.scaled(80))
-                Image(systemName: "building.columns.fill")
-                    .font(.system(size: PSLayout.scaledFont(34)))
-                    .foregroundStyle(Color(hex: 0x3B82F6))
-            }
+            Image(systemName: "building.columns.fill")
+                .font(.system(size: PSLayout.scaledFont(40)))
+                .foregroundStyle(Color(hex: 0x3B82F6))
             VStack(spacing: PSSpacing.xs) {
                 Text("Council Impact Report")
                     .font(.system(size: PSLayout.scaledFont(20), weight: .black, design: .rounded))
@@ -72,7 +65,7 @@ struct CouncilImpactReportView: View {
                 Spacer()
                 Image(systemName: "chart.bar.doc.horizontal.fill")
                     .font(.system(size: PSLayout.scaledFont(32)))
-                    .foregroundStyle(.white.opacity(0.25))
+                    .foregroundStyle(.white.opacity(0.5))
             }
 
             HStack(alignment: .firstTextBaseline, spacing: PSSpacing.xs) {

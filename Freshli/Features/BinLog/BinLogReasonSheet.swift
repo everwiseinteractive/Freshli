@@ -147,7 +147,7 @@ struct BinLogDashboardView: View {
     private var summaryCard: some View {
         let cost = service.totalWastedCost(days: 30)
         let count = service.entries.filter {
-            $0.date >= Calendar.current.date(byAdding: .day, value: -30, to: Date())!
+            $0.date >= (Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date())
         }.count
         return VStack(alignment: .leading, spacing: PSSpacing.md) {
             Text("LAST 30 DAYS")

@@ -176,22 +176,21 @@ final class NeutralSpotService {
                 let search = MKLocalSearch(request: request)
                 let response = try await search.start()
 
-                for item in response.mapItems.prefix(3) {
-                    guard let mapItemLocation = item.placemark.location else { continue }
+                for mapItem in response.mapItems.prefix(3) {
+                    // iOS 26+: MKMapItem.location is non-optional,
+                    // replacing the deprecated .placemark property.
+                    let mapItemLocation = mapItem.location
 
                     let distance = CLLocation(
                         latitude: coordinate.latitude,
                         longitude: coordinate.longitude
                     )
-                    .distance(from: CLLocation(
-                        latitude: mapItemLocation.coordinate.latitude,
-                        longitude: mapItemLocation.coordinate.longitude
-                    ))
+                    .distance(from: mapItemLocation)
 
                     if distance <= radius {
-                        let address = formatAddress(item.placemark)
+                        let address = formatMapItemAddress(mapItem)
                         let spot = NeutralSpot(
-                            name: item.name ?? searchTerm,
+                            name: mapItem.name ?? searchTerm,
                             address: address,
                             coordinate: mapItemLocation.coordinate,
                             category: category,
@@ -208,16 +207,19 @@ final class NeutralSpotService {
         return categorySpots
     }
 
-    private func formatAddress(_ placemark: CLPlacemark) -> String {
-        var addressParts: [String] = []
-
-        if let street = placemark.thoroughfare {
-            addressParts.append(street)
+    /// Formats a map item's address using the iOS 26+ `.address` property.
+    private func formatMapItemAddress(_ mapItem: MKMapItem) -> String {
+        // iOS 26+: MKAddress provides shortAddress and fullAddress
+        if let addr = mapItem.address {
+            if let short = addr.shortAddress, !short.isEmpty {
+                return short
+            }
+            if !addr.fullAddress.isEmpty {
+                return addr.fullAddress
+            }
         }
-        if let city = placemark.locality {
-            addressParts.append(city)
-        }
 
-        return addressParts.joined(separator: ", ")
+        // Fallback: use the map item's name if address is unavailable
+        return mapItem.name ?? ""
     }
 }

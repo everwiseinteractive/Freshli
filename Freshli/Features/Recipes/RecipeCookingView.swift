@@ -69,6 +69,7 @@ struct RecipeCookingView: View {
             )
             .presentationDetents([.medium])
             .presentationDragIndicator(.visible)
+            .sheetTransition()
         }
     }
 
@@ -105,7 +106,7 @@ struct RecipeCookingView: View {
         .adaptiveHPadding()
         .padding(.vertical, PSSpacing.md)
         .background(PSColors.surfaceCard)
-        .shadow(color: .black.opacity(0.04), radius: 2, y: 1)
+        .elevation(.z1)
     }
 
     // MARK: - Progress

@@ -9,7 +9,7 @@ import os
 // to Supabase and pulls remote changes on demand.
 
 @Observable @MainActor
-final class SyncService: @unchecked Sendable {
+final class SyncService {
     var isSyncing = false
     var lastSyncDate: Date?
     var syncError: String?

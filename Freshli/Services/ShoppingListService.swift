@@ -6,7 +6,7 @@ import SwiftUI
 
 // MARK: - Models
 
-struct ShoppingItem: Identifiable, Codable, @preconcurrency Sendable {
+struct ShoppingItem: Identifiable, Codable, Sendable {
     let id: UUID
     var name: String
     var quantity: Double
@@ -32,7 +32,7 @@ struct ShoppingItem: Identifiable, Codable, @preconcurrency Sendable {
     }
 }
 
-struct ShoppingList: Identifiable, Codable, @preconcurrency Sendable {
+struct ShoppingList: Identifiable, Codable, Sendable {
     let id: UUID
     var name: String
     var items: [ShoppingItem]
@@ -144,7 +144,7 @@ final class ShoppingListService {
         let status = EKEventStore.authorizationStatus(for: .reminder)
 
         switch status {
-        case .authorized:
+        case .authorized, .fullAccess:
             authorizationStatus = .authorized
             isAuthorized = true
             logger.debug("EventKit already authorized")
@@ -163,6 +163,11 @@ final class ShoppingListService {
             authorizationStatus = .restricted
             isAuthorized = false
             logger.warning("EventKit access restricted")
+
+        case .writeOnly:
+            authorizationStatus = .denied
+            isAuthorized = false
+            logger.warning("EventKit write-only access is insufficient for Freshli")
 
         @unknown default:
             logger.error("Unknown EventKit authorization status")
@@ -307,7 +312,7 @@ final class ShoppingListService {
             // Sync unpurchased items to reminders
             let unsynced = currentList.items.filter { $0.reminderIdentifier == nil && !$0.isPurchased }
 
-            for var item in unsynced {
+            for item in unsynced {
                 if let reminder = await createReminder(for: item) {
                     if let index = currentList.items.firstIndex(where: { $0.id == item.id }) {
                         currentList.items[index].reminderIdentifier = reminder.calendarItemIdentifier

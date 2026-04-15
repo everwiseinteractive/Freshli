@@ -3,13 +3,13 @@ import SwiftUI
 // MARK: - Adaptive Color Helper
 
 extension Color {
-    init(light: Color, dark: Color) {
+    nonisolated init(light: Color, dark: Color) {
         self.init(uiColor: UIColor { traits in
             traits.userInterfaceStyle == .dark ? UIColor(dark) : UIColor(light)
         })
     }
 
-    init(hex: UInt, opacity: Double = 1.0) {
+    nonisolated init(hex: UInt, opacity: Double = 1.0) {
         self.init(
             red: Double((hex >> 16) & 0xFF) / 255.0,
             green: Double((hex >> 8) & 0xFF) / 255.0,
@@ -24,59 +24,59 @@ enum FLColors {
     // green-500=#22C55E, green-600=#16A34A, green-700=#15803D
     // green-100=#DCFCE7, green-50=#F0FDF4
 
-    static let primaryGreen = Color(light: Color(hex: 0x22C55E), dark: Color(hex: 0x4ADE80))
-    static let primaryGreenDark = Color(light: Color(hex: 0x15803D), dark: Color(hex: 0x22C55E))
-    static let green100 = Color(light: Color(hex: 0xDCFCE7), dark: Color(hex: 0x14532D).opacity(0.3))
-    static let green50 = Color(light: Color(hex: 0xF0FDF4), dark: Color(hex: 0x14532D).opacity(0.15))
-    static let secondaryAmber = Color(light: Color(hex: 0xF59E0B), dark: Color(hex: 0xFBBF24))
-    static let accentTeal = Color(light: Color(hex: 0x14B8A6), dark: Color(hex: 0x2DD4BF))
+    nonisolated static let primaryGreen = Color(light: Color(hex: 0x22C55E), dark: Color(hex: 0x4ADE80))
+    nonisolated static let primaryGreenDark = Color(light: Color(hex: 0x15803D), dark: Color(hex: 0x22C55E))
+    nonisolated static let green100 = Color(light: Color(hex: 0xDCFCE7), dark: Color(hex: 0x14532D).opacity(0.3))
+    nonisolated static let green50 = Color(light: Color(hex: 0xF0FDF4), dark: Color(hex: 0x14532D).opacity(0.15))
+    nonisolated static let secondaryAmber = Color(light: Color(hex: 0xF59E0B), dark: Color(hex: 0xFBBF24))
+    nonisolated static let accentTeal = Color(light: Color(hex: 0x14B8A6), dark: Color(hex: 0x2DD4BF))
 
     // Figma: Home header bg-green-600/rounded-b-[40px]
-    static let headerGreen = Color(light: Color(hex: 0x16A34A), dark: Color(hex: 0x15803D))
-    static let headerGreenLight = Color(light: Color(hex: 0x22C55E), dark: Color(hex: 0x16A34A))
+    nonisolated static let headerGreen = Color(light: Color(hex: 0x16A34A), dark: Color(hex: 0x15803D))
+    nonisolated static let headerGreenLight = Color(light: Color(hex: 0x22C55E), dark: Color(hex: 0x16A34A))
     // Figma: green-400 for success celebration icon container
-    static let green400 = Color(light: Color(hex: 0x4ADE80), dark: Color(hex: 0x22C55E))
+    nonisolated static let green400 = Color(light: Color(hex: 0x4ADE80), dark: Color(hex: 0x22C55E))
     // Figma: Profile/Add emerald palette (pages/ versions use emerald)
-    static let emeraldSurface = Color(light: Color(hex: 0xECFDF5), dark: Color(hex: 0x064E3B).opacity(0.2))
-    static let emeraldLight = Color(light: Color(hex: 0xD1FAE5), dark: Color(hex: 0x065F46))
-    static let emeraldMuted = Color(light: Color(hex: 0xA7F3D0), dark: Color(hex: 0x047857))
-    static let emerald600 = Color(light: Color(hex: 0x059669), dark: Color(hex: 0x10B981))
+    nonisolated static let emeraldSurface = Color(light: Color(hex: 0xECFDF5), dark: Color(hex: 0x064E3B).opacity(0.2))
+    nonisolated static let emeraldLight = Color(light: Color(hex: 0xD1FAE5), dark: Color(hex: 0x065F46))
+    nonisolated static let emeraldMuted = Color(light: Color(hex: 0xA7F3D0), dark: Color(hex: 0x047857))
+    nonisolated static let emerald600 = Color(light: Color(hex: 0x059669), dark: Color(hex: 0x10B981))
 
     // MARK: - Semantic
 
-    static let freshGreen = Color(light: Color(hex: 0x22C55E), dark: Color(hex: 0x4ADE80))
-    static let warningAmber = Color(light: Color(hex: 0xF59E0B), dark: Color(hex: 0xFBBF24))
-    static let expiredRed = Color(light: Color(hex: 0xD4183D), dark: Color(hex: 0xF87171))
-    static let infoBlue = Color(light: Color(hex: 0x3B82F6), dark: Color(hex: 0x60A5FA))
+    nonisolated static let freshGreen = Color(light: Color(hex: 0x22C55E), dark: Color(hex: 0x4ADE80))
+    nonisolated static let warningAmber = Color(light: Color(hex: 0xF59E0B), dark: Color(hex: 0xFBBF24))
+    nonisolated static let expiredRed = Color(light: Color(hex: 0xD4183D), dark: Color(hex: 0xF87171))
+    nonisolated static let infoBlue = Color(light: Color(hex: 0x3B82F6), dark: Color(hex: 0x60A5FA))
 
     // MARK: - Surfaces
 
-    static let backgroundPrimary = Color(light: .white, dark: Color(hex: 0x0A0A0A))
-    static let backgroundSecondary = Color(light: Color(hex: 0xF3F3F5), dark: Color(hex: 0x1C1C1E))
-    static let backgroundTertiary = Color(light: Color(hex: 0xECECF0), dark: Color(hex: 0x2C2C2E))
-    static let surfaceCard = Color(light: .white, dark: Color(hex: 0x1C1C1E))
-    static let surfaceElevated = Color(light: .white, dark: Color(hex: 0x2C2C2E))
+    nonisolated static let backgroundPrimary = Color(light: .white, dark: Color(hex: 0x0A0A0A))
+    nonisolated static let backgroundSecondary = Color(light: Color(hex: 0xF3F3F5), dark: Color(hex: 0x1C1C1E))
+    nonisolated static let backgroundTertiary = Color(light: Color(hex: 0xECECF0), dark: Color(hex: 0x2C2C2E))
+    nonisolated static let surfaceCard = Color(light: .white, dark: Color(hex: 0x1C1C1E))
+    nonisolated static let surfaceElevated = Color(light: .white, dark: Color(hex: 0x2C2C2E))
 
     // MARK: - Text
 
-    static let textPrimary = Color(light: Color(hex: 0x030213), dark: Color(hex: 0xFAFAFA))
-    static let textSecondary = Color(light: Color(hex: 0x717182), dark: Color(hex: 0x98989F))
-    static let textTertiary = Color(light: Color(hex: 0xAEAEB2), dark: Color(hex: 0x636366))
-    static let textOnPrimary = Color.white
-    static let textOnDark = Color.white
+    nonisolated static let textPrimary = Color(light: Color(hex: 0x030213), dark: Color(hex: 0xFAFAFA))
+    nonisolated static let textSecondary = Color(light: Color(hex: 0x717182), dark: Color(hex: 0x98989F))
+    nonisolated static let textTertiary = Color(light: Color(hex: 0xAEAEB2), dark: Color(hex: 0x636366))
+    nonisolated static let textOnPrimary = Color.white
+    nonisolated static let textOnDark = Color.white
 
     // MARK: - Borders
 
     // Figma: --border: rgba(0,0,0,0.1)
-    static let border = Color(light: Color.black.opacity(0.1), dark: Color.white.opacity(0.1))
+    nonisolated static let border = Color(light: Color.black.opacity(0.1), dark: Color.white.opacity(0.1))
     // Figma: neutral-100=#F5F5F5, neutral-200=#E5E5E5
-    static let borderLight = Color(light: Color(hex: 0xF5F5F5), dark: Color(hex: 0x262626))
-    static let neutral200 = Color(light: Color(hex: 0xE5E5E5), dark: Color(hex: 0x404040))
-    static let divider = Color(light: Color.black.opacity(0.05), dark: Color.white.opacity(0.08))
+    nonisolated static let borderLight = Color(light: Color(hex: 0xF5F5F5), dark: Color(hex: 0x262626))
+    nonisolated static let neutral200 = Color(light: Color(hex: 0xE5E5E5), dark: Color(hex: 0x404040))
+    nonisolated static let divider = Color(light: Color.black.opacity(0.05), dark: Color.white.opacity(0.08))
 
     // MARK: - Category Colors
 
-    static func categoryColor(for category: FoodCategory) -> Color {
+    nonisolated static func categoryColor(for category: FoodCategory) -> Color {
         switch category {
         case .fruits: return Color(hex: 0xF5923E)
         case .vegetables: return Color(hex: 0x4CAF50)
@@ -96,7 +96,7 @@ enum FLColors {
 
     // MARK: - Expiry Colors
 
-    static func expiryColor(for status: ExpiryStatus) -> Color {
+    nonisolated static func expiryColor(for status: ExpiryStatus) -> Color {
         switch status {
         case .fresh: return freshGreen
         case .expiringSoon: return warningAmber
@@ -105,7 +105,7 @@ enum FLColors {
         }
     }
 
-    static func expiryBackground(for status: ExpiryStatus) -> Color {
+    nonisolated static func expiryBackground(for status: ExpiryStatus) -> Color {
         expiryColor(for: status).opacity(0.12)
     }
 }

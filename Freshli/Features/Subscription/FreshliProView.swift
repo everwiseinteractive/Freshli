@@ -142,7 +142,7 @@ struct FreshliProView: View {
                             Circle()
                                 .strokeBorder(PSColors.backgroundPrimary, lineWidth: 2.5)
                         )
-                        .shadow(color: .black.opacity(0.08), radius: 2, y: 1)
+                        .elevation(.z1)
                 }
             }
 
@@ -233,6 +233,8 @@ struct FreshliProView: View {
                     .font(.system(size: PSLayout.scaledFont(40), weight: .bold))
                     .foregroundStyle(.white)
             }
+            // Metal shimmer sweep over the crown — premium Pro feel
+            .metalShimmer(duration: 2.0, pause: 3.0)
 
             VStack(spacing: PSSpacing.sm) {
                 Text("Freshli+")
@@ -613,13 +615,9 @@ struct FreshliProView: View {
             if subscriptionService.isProUser {
                 // Already subscribed state
                 VStack(spacing: PSSpacing.md) {
-                    ZStack {
-                        Circle().fill(PSColors.primaryGreen.opacity(0.12))
-                            .frame(width: 64, height: 64)
-                        Image(systemName: "checkmark.seal.fill")
-                            .font(.system(size: 30))
-                            .foregroundStyle(PSColors.primaryGreen)
-                    }
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 36))
+                        .foregroundStyle(PSColors.primaryGreen)
                     Text("You're a Freshli+ Member!")
                         .font(.system(size: PSLayout.scaledFont(20), weight: .black))
                         .foregroundStyle(PSColors.textPrimary)
@@ -765,20 +763,24 @@ struct FreshliProView: View {
 
             // ToS & Privacy links
             HStack(spacing: PSSpacing.sm) {
-                Link(destination: URL(string: "https://freshliapp.com/terms")!) {
-                    Text("Terms of Use")
-                        .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
-                        .foregroundStyle(PSColors.primaryGreen)
+                if let termsURL = URL(string: "https://freshli.app/terms-of-use") {
+                    Link(destination: termsURL) {
+                        Text("Terms of Use")
+                            .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                            .foregroundStyle(PSColors.primaryGreen)
+                    }
                 }
 
                 Text("·")
                     .foregroundStyle(PSColors.textTertiary)
                     .font(.system(size: PSLayout.scaledFont(12)))
 
-                Link(destination: URL(string: "https://freshliapp.com/privacy")!) {
-                    Text("Privacy Policy")
-                        .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
-                        .foregroundStyle(PSColors.primaryGreen)
+                if let privacyURL = URL(string: "https://freshli.app/privacy-policy") {
+                    Link(destination: privacyURL) {
+                        Text("Privacy Policy")
+                            .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
+                            .foregroundStyle(PSColors.primaryGreen)
+                    }
                 }
 
                 Spacer()

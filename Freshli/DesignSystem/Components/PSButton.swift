@@ -59,15 +59,24 @@ struct PSButton: View {
 
     @State private var tapTrigger = false
 
+    /// Material density for the refraction ripple — primary/destructive
+    /// use `.high` for a thick, viscous glass feel; secondary `.med`;
+    /// tertiary `.low` for a subtle air-like ripple.
+    private var rippleDensity: FLMaterialDensity {
+        switch style {
+        case .primary, .destructive: return .high
+        case .secondary: return .med
+        case .tertiary: return .low
+        }
+    }
+
     var body: some View {
         Button {
-            // Haptic feedback based on button style
-            switch style {
-            case .primary, .secondary, .tertiary:
-                PSHaptics.shared.lightTap()
-            case .destructive:
+            // Destructive buttons keep their heavy tap override
+            if style == .destructive {
                 PSHaptics.shared.heavyTap()
             }
+            // Other haptics handled by LiquidGlassPressStyle (glassRipple)
             tapTrigger.toggle()
             action()
         } label: {
@@ -92,10 +101,12 @@ struct PSButton: View {
             .foregroundStyle(foregroundColor)
             .background(backgroundColor)
             .clipShape(RoundedRectangle(cornerRadius: size.cornerRadius, style: .continuous))
-            // Figma: shadow-lg = 0 10px 15px -3px rgb(0 0 0 / 0.1)
-            .shadow(color: shadowColor, radius: 10, x: 0, y: 10)
+            // Dynamic shadow — direction + intensity adapt to ambient light.
+            // Dark rooms: warm OLED glow; bright rooms: faint washed shadow.
+            .dynamicElevation(buttonElevation, color: shadowColor)
         }
-        .buttonStyle(PressableButtonStyle())
+        .buttonStyle(PressableButtonStyle(density: rippleDensity))
+        .hoverSpecular(intensity: 0.4, cornerRadius: size.cornerRadius)
         .sensoryFeedback(.impact(weight: .light), trigger: tapTrigger)
         .accessibilityLabel(isLoading ? String(localized: "Loading") : title)
         .accessibilityAddTraits([.isButton])
@@ -129,6 +140,16 @@ struct PSButton: View {
         default: return .clear
         }
     }
+
+    /// Elevation level for ambient-adaptive shadow casting.
+    /// Primary/destructive buttons float higher for more dramatic shadows.
+    private var buttonElevation: FLElevation {
+        switch style {
+        case .primary, .destructive: return .z3
+        case .secondary: return .z2
+        case .tertiary: return .z0
+        }
+    }
 }
 
 // Figma: icon variant — bg-white border border-neutral-200 shadow-sm rounded-full w-12 h-12
@@ -155,7 +176,7 @@ struct PSIconButton: View {
                         .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
                 )
         }
-        .buttonStyle(PressableButtonStyle())
+        .buttonStyle(PressableButtonStyle(density: .low))
         .accessibilityLabel(icon)
         .accessibilityAddTraits(.isButton)
         .psMinTouchTarget()

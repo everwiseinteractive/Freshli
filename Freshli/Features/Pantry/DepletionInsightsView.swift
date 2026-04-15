@@ -311,6 +311,7 @@ struct DepletionInsightsView: View {
         .background(PSColors.backgroundPrimary)
         .presentationDetents([.medium])
         .presentationDragIndicator(.visible)
+        .sheetTransition()
     }
 
     // MARK: - Empty State

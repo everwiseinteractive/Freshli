@@ -1,14 +1,17 @@
 import SwiftUI
 
 // MARK: - Shimmer Loading Effect
-// Premium shimmer placeholder for loading states.
+// Premium Metal GPU-powered shimmer placeholder for loading states.
+// The diagonal light sweep runs entirely on the GPU via FreshliShaders.metal,
+// eliminating main-thread layout work from the old LinearGradient overlay.
 
 struct PSShimmerView: View {
     let width: CGFloat?
     let height: CGFloat
     let cornerRadius: CGFloat
 
-    @State private var phase: CGFloat = -1
+    @State private var phase: CGFloat = -0.3
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init(width: CGFloat? = nil, height: CGFloat = 20, cornerRadius: CGFloat = 8) {
         self.width = width
@@ -17,32 +20,44 @@ struct PSShimmerView: View {
     }
 
     var body: some View {
+        let capturedPhase = phase
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             .fill(PSColors.backgroundSecondary)
             .frame(maxWidth: width ?? .infinity)
             .frame(height: height)
-            .overlay {
-                GeometryReader { proxy in
-                    let w = proxy.size.width
-                    LinearGradient(
-                        colors: [
-                            .clear,
-                            PSColors.surfaceCard.opacity(0.7),
-                            .clear
-                        ],
-                        startPoint: .leading,
-                        endPoint: .trailing
+            .modifier(ShimmerShaderModifier(phase: capturedPhase))
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .task {
+                guard !reduceMotion && ShaderWarmUpService.shadersAvailable else { return }
+                while !Task.isCancelled {
+                    phase = -0.3
+                    withAnimation(.easeInOut(duration: 1.4)) {
+                        phase = 1.3
+                    }
+                    try? await Task.sleep(for: .seconds(2.0))
+                }
+            }
+    }
+}
+
+/// Conditionally applies the GPU shimmer shader or a static fallback.
+private struct ShimmerShaderModifier: ViewModifier {
+    let phase: CGFloat
+
+    func body(content: Content) -> some View {
+        if ShaderWarmUpService.shadersAvailable {
+            content
+                .visualEffect { view, proxy in
+                    view.colorEffect(
+                        ShaderLibrary.gpuShimmer(
+                            .float2(proxy.size),
+                            .float(Float(phase))
+                        )
                     )
-                    .frame(width: w * 0.6)
-                    .offset(x: phase * w * 1.6 - w * 0.3)
                 }
-                .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-            }
-            .onAppear {
-                withAnimation(.linear(duration: 1.4).repeatForever(autoreverses: false)) {
-                    phase = 1
-                }
-            }
+        } else {
+            content
+        }
     }
 }
 

@@ -79,4 +79,14 @@ enum ExpiryStatus: String, Codable, CaseIterable, Identifiable {
         if days <= 3 { return .expiringSoon }
         return .fresh
     }
+
+    /// Bridge to Motion Vocabulary's `FreshnessLevel` for haptic encoding.
+    nonisolated var freshnessLevel: FreshnessLevel {
+        switch self {
+        case .expired:      return .expired
+        case .expiringToday: return .critical
+        case .expiringSoon: return .wilting
+        case .fresh:        return .fresh
+        }
+    }
 }

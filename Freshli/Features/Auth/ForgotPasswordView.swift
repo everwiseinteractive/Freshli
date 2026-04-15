@@ -30,7 +30,7 @@ struct ForgotPasswordView: View {
                                 RoundedRectangle(cornerRadius: PSSpacing.radiusHero, style: .continuous)
                                     .strokeBorder(.white, lineWidth: 3)
                             )
-                            .shadow(color: .black.opacity(0.15), radius: 20, y: 8)
+                            .elevation(.z3)
                             .overlay {
                                 Image(systemName: "envelope.badge.shield.half.filled")
                                     .font(.system(size: PSLayout.scaledFont(44), weight: .regular))

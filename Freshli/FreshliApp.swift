@@ -52,6 +52,11 @@ struct FreshliApp: App {
     @State private var subscriptionService = SubscriptionService()
     @State private var familySyncService = FamilySyncService()
     @State private var shoppingListService = ShoppingListService()
+    @State private var renderPerformance = RenderPerformanceService.shared
+    @State private var shaderResolution = DynamicShaderResolutionService.shared
+    @State private var dataStore = FreshliDataStore.shared
+    @State private var prefetchCoordinator = PrefetchCoordinator.shared
+    @State private var ambientLight = AmbientLightService.shared
 
     // MARK: - Splash → Dashboard Transition State
     @Namespace private var splashNamespace
@@ -91,7 +96,7 @@ struct FreshliApp: App {
                             checkAndTransition()
                         }
                     )
-                    .transition(.opacity)
+                    .transition(.opacity.combined(with: .scale(scale: 1.03)))
                 } else {
                     // Step 3: Main app content
                     mainAppContent
@@ -113,7 +118,7 @@ struct FreshliApp: App {
             // Dark splash background applied to the root Group so the window
             // is never black while services and SwiftData initialise.
             // FreshliSplashView overlays its own animated content on top of this.
-            .background(Color(hex: 0x051A0D).ignoresSafeArea())
+            .background(Color.black.ignoresSafeArea())
             .celebrationOverlay(manager: celebrationManager)
             .toastOverlay(manager: toastManager)
             .environment(celebrationManager)
@@ -126,7 +131,29 @@ struct FreshliApp: App {
             .environment(subscriptionService)
             .environment(familySyncService)
             .environment(shoppingListService)
+            .environment(\.shaderQuality, renderPerformance.currentTier)
+            .environment(\.shaderResolution, shaderResolution.scaleFactor)
+            .environment(\.ambientBrightness, ambientLight.ambientBrightness)
+            .environment(\.ambientGlowMode, ambientLight.glowMode)
+            .environment(\.lightDirection, ambientLight.lightDirection)
+            .overlay(alignment: .topLeading) {
+                if renderPerformance.showPerformanceHUD {
+                    MetalPerformanceHUD(service: renderPerformance)
+                        .padding(.top, 60)
+                        .padding(.leading, 8)
+                }
+            }
             .preferredColorScheme(isDarkMode ? .dark : nil)
+            .onContinueUserActivity("com.freshli.viewItem") { activity in
+                // Restore Handoff: if user was viewing a pantry item on
+                // another device, navigate directly to it on this device.
+                if let itemIdString = activity.userInfo?["itemId"] as? String {
+                    logger.info("Handoff: Restoring item \(itemIdString, privacy: .public)")
+                    // Store for downstream consumption by AppTabView / FreshliView
+                    UserDefaults.standard.set(itemIdString, forKey: "handoffItemId")
+                    UserDefaults.standard.set("pantry", forKey: "lastSelectedTab")
+                }
+            }
             .task {
                 // Configure TipKit once per cold launch so the
                 // contextual tips on the pantry + home tabs can evaluate
@@ -143,9 +170,21 @@ struct FreshliApp: App {
                     logger.error("TipKit configure failed: \(error.localizedDescription, privacy: .public)")
                 }
 
-                // Start diagnostics and network monitoring
+                // Start diagnostics, network monitoring, ambient light, gaze tracking, and shader warm-up
                 diagnosticsService.start()
                 networkMonitor.start()
+                ambientLight.startMonitoring()
+
+                // Start gaze tracking if user has previously enabled it.
+                // The service is a no-op on devices without TrueDepth camera.
+                if GazeTrackingService.shared.isEnabled {
+                    GazeTrackingService.shared.startTracking()
+                }
+
+                // Pre-compile all Metal shader PSOs during splash so there are
+                // zero compilation hitches when the user reaches the dashboard.
+                // This is the SwiftUI equivalent of Metal 4 Async PSO Compilation.
+                ShaderWarmUpService.warmUpAll()
 
                 logger.info("FreshliApp: Restoring session...")
                 splashProgress = 0.2
@@ -202,6 +241,14 @@ struct FreshliApp: App {
                         await offlineSyncQueue.processQueue(using: syncService)
                     }
                 }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
+                // Pause ARKit gaze tracking to save battery when backgrounded
+                GazeTrackingService.shared.pause()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+                // Resume gaze tracking when the app returns to foreground
+                GazeTrackingService.shared.resume()
             }
         }
         .modelContainer(Self.modelContainer)

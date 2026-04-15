@@ -72,8 +72,12 @@ final class AppleSignInCoordinator: NSObject, ASAuthorizationControllerDelegate 
         precondition(length > 0)
         var randomBytes = [UInt8](repeating: 0, count: length)
         let errorCode = SecRandomCopyBytes(kSecRandomDefault, randomBytes.count, &randomBytes)
-        if errorCode != errSecSuccess {
-            fatalError("Unable to generate nonce: \(errorCode)")
+        guard errorCode == errSecSuccess else {
+            // Fallback: use UUID-based randomness instead of crashing
+            let fallback = (0..<length).map { _ in
+                String(format: "%02x", UInt8.random(in: 0...255))
+            }.joined()
+            return String(fallback.prefix(length))
         }
 
         let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")

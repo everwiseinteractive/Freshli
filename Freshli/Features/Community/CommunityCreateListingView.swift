@@ -113,7 +113,7 @@ struct CommunityCreateListingView: View {
                 if listingType == type {
                     RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
                         .fill(PSColors.surfaceCard)
-                        .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
+                        .elevation(.z1)
                 }
             }
         }
@@ -205,9 +205,11 @@ struct CommunityCreateListingView: View {
 
                     Text("\(quantity)")
                         .font(.system(size: 20, weight: .bold))
+                        .monospacedDigit()
                         .foregroundStyle(PSColors.textPrimary)
                         .frame(width: 48)
                         .contentTransition(.numericText())
+                        .compositingGroup()
 
                     Button {
                         if quantity < 99 { withAnimation { quantity += 1 } }
@@ -385,13 +387,13 @@ struct CommunityCreateListingView: View {
         )
 
         Task {
-            let success = await communityService.createListing(input, userId: userId) ?? false
+            let success = await communityService.createListing(input, userId: userId)
             isSubmitting = false
 
             if success {
                 AnalyticsService.shared.track(.listingCreated, properties: .props([
                     "listing_type":  listingType,
-                    "food_category": foodCategory ?? "unknown",
+                    "food_category": foodCategory,
                     "has_address":   !pickupAddress.isEmpty
                 ]))
                 // Also create local SwiftData listing

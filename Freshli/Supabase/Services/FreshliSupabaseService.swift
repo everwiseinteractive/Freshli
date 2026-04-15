@@ -89,7 +89,10 @@ final class FreshliSupabaseService: Sendable {
     func fetchExpiringItems(for userId: UUID, within days: Int) async throws -> [SupabaseFreshliItem] {
         debugLog("FreshliSupabaseService: Fetching items expiring within \(days) days for user \(userId)")
 
-        let futureDate = Calendar.current.date(byAdding: .day, value: days, to: Date())!
+        guard let futureDate = Calendar.current.date(byAdding: .day, value: days, to: Date()) else {
+            debugLog("FreshliSupabaseService: Failed to compute future date")
+            return []
+        }
         let formatter = ISO8601DateFormatter()
         let dateString = formatter.string(from: futureDate)
 

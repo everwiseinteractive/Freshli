@@ -29,25 +29,19 @@ struct CollectiveWaveView: View {
 
     private var heroHeader: some View {
         VStack(spacing: PSSpacing.lg) {
-            ZStack {
-                Circle()
-                    .fill(LinearGradient(
-                        colors: [FreshliBrand.missionAccentLight.opacity(0.2), FreshliBrand.planetBlue.opacity(0.15)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .frame(width: PSLayout.scaled(100), height: PSLayout.scaled(100))
-                    .blur(radius: 8)
-                Image(systemName: "globe.europe.africa.fill")
-                    .font(.system(size: PSLayout.scaledFont(52)))
-                    .foregroundStyle(FreshliBrand.missionAccent)
-                    .symbolEffect(.pulse, options: .repeat(.periodic(delay: 3.0)))
-            }
+            Image(systemName: "globe.europe.africa.fill")
+                .font(.system(size: PSLayout.scaledFont(56)))
+                .foregroundStyle(FreshliBrand.missionAccent)
+                .symbolEffect(.pulse, options: .repeat(.periodic(delay: 3.0)))
 
             VStack(spacing: PSSpacing.xs) {
                 HStack(alignment: .firstTextBaseline, spacing: PSSpacing.sm) {
                     Text(service.rescueCountDisplay)
                         .font(.system(size: PSLayout.scaledFont(64), weight: .black, design: .rounded))
+                        .monospacedDigit()
                         .foregroundStyle(FreshliBrand.missionAccent)
                         .contentTransition(.numericText())
+                        .compositingGroup()
                 }
                 Text(String(localized: "people rescued food in the last hour"))
                     .font(.system(size: PSLayout.scaledFont(15), weight: .semibold))
@@ -108,8 +102,10 @@ struct CollectiveWaveView: View {
                 .foregroundStyle(color)
             Text(value)
                 .font(.system(size: PSLayout.scaledFont(20), weight: .black, design: .rounded))
+                .monospacedDigit()
                 .foregroundStyle(PSColors.textPrimary)
                 .contentTransition(.numericText())
+                .compositingGroup()
                 .minimumScaleFactor(0.7)
                 .lineLimit(1)
             Text(label)

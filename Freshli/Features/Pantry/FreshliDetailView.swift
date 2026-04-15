@@ -63,6 +63,8 @@ struct FreshliDetailView: View {
         }
         .sheet(isPresented: $showPreservationGuide) {
             PreservationGuideView(item: item)
+                .presentationDragIndicator(.visible)
+                .sheetTransition()
         }
         // Handoff: donate NSUserActivity so the user can resume
         // viewing this item on another Apple device (iPad, Mac).
@@ -110,7 +112,7 @@ struct FreshliDetailView: View {
                 RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
                     .strokeBorder(PSColors.categoryColor(for: item.category).opacity(0.22), lineWidth: 1)
             )
-            .shadow(color: .black.opacity(0.08), radius: 6, y: 3)
+            .elevation(.z1)
 
             VStack(alignment: .leading, spacing: PSSpacing.xxs) {
                 Text(item.name)
@@ -224,6 +226,7 @@ struct FreshliDetailView: View {
                 isFullWidth: true
             ) {
                 PSHaptics.shared.success()
+                MotionVocabularyService.shared.speakMotion(.itemRescue)
                 let itemName = item.name
                 AnalyticsService.shared.track(.itemConsumed, properties: .props([
                     "category": item.category.rawValue,
@@ -270,6 +273,7 @@ struct FreshliDetailView: View {
                     isFullWidth: true
                 ) {
                     PSHaptics.shared.success()
+                    MotionVocabularyService.shared.speakMotion(.itemRescue)
                     let itemName = item.name
                     AnalyticsService.shared.track(.itemShared, properties: .props([
                         "category": item.category.rawValue
@@ -302,6 +306,7 @@ struct FreshliDetailView: View {
                     isFullWidth: true
                 ) {
                     PSHaptics.shared.success()
+                    MotionVocabularyService.shared.speakMotion(.itemRescue)
                     let itemName = item.name
                     AnalyticsService.shared.track(.itemDonated, properties: .props([
                         "category": item.category.rawValue
@@ -374,7 +379,7 @@ struct FreshliDetailView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.ultraThinMaterial)
-        .transition(.opacity)
+        .transition(.opacity.combined(with: .scale(scale: 0.96)))
     }
 
     private func startEditing() {

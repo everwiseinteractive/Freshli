@@ -34,6 +34,8 @@ struct ProUpgradeNudge: View {
                 }
                 .sheet(isPresented: $showProSheet) {
                     FreshliProView()
+                        .presentationDragIndicator(.visible)
+                        .sheetTransition()
                 }
         }
     }

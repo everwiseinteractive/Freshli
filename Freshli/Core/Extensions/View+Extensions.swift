@@ -8,13 +8,21 @@ extension View {
     func cardStyle() -> some View {
         background(PSColors.surfaceCard)
             .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
-            .shadow(color: PSColors.textPrimary.opacity(0.06), radius: 8, x: 0, y: 2)
+            // Metal GPU caustic light — subtle glass refraction on every card
+            .metalCardGlass(intensity: 0.3)
+            .elevation(.z1)
+            // Hover specular — follows pointer/pencil/touch proximity
+            .hoverSpecular(intensity: 0.4, cornerRadius: PSSpacing.radiusLg)
     }
 
     func elevatedCardStyle() -> some View {
         background(PSColors.surfaceElevated)
             .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
-            .shadow(color: PSColors.textPrimary.opacity(0.08), radius: 12, x: 0, y: 4)
+            // Metal GPU caustic light — stronger for elevated cards
+            .metalCardGlass(intensity: 0.5)
+            .elevation(.z2)
+            // Hover specular — follows pointer/pencil/touch proximity
+            .hoverSpecular(intensity: 0.5, cornerRadius: PSSpacing.radiusLg)
     }
 
     // MARK: - Liquid Glass (iOS 26)
@@ -53,7 +61,7 @@ extension View {
                 RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous)
                     .strokeBorder(PSColors.emeraldSurface, lineWidth: 1)
             )
-            .shadow(color: PSColors.primaryGreen.opacity(0.03), radius: 8, y: 4)
+            .elevation(.z1, color: PSColors.primaryGreen)
     }
 
     @ViewBuilder
@@ -83,23 +91,24 @@ extension View {
         self.symbolEffect(.pulse, isActive: active)
     }
 
-    /// Glass card style using system material
+    /// Glass card style using Liquid Glass + Metal caustic overlay
     func glassCardStyle() -> some View {
         self
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
+            .metalCardGlass(intensity: 0.6)
             .overlay(
                 RoundedRectangle(cornerRadius: PSSpacing.radiusLg)
                     .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
             )
-            .shadow(color: PSColors.textPrimary.opacity(0.04), radius: 8, y: 2)
+            .highContrastGlass(cornerRadius: PSSpacing.radiusLg)
+            .elevation(.z1)
+            .hoverSpecular(intensity: 0.5, cornerRadius: PSSpacing.radiusLg)
     }
 
     /// Subtle glass background for floating elements
     func glassBackground() -> some View {
         self
-            .background(.thinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
     }
 
     // MARK: - Accessibility Modifiers

@@ -360,7 +360,7 @@ final class FamilySyncService {
             let zoneID = CKRecordZone.ID(zoneName: familyZoneName, ownerName: CKCurrentUserDefaultName)
             let zone = CKRecordZone(zoneID: zoneID)
 
-            try await withRetry(maxAttempts: 3) {
+            _ = try await withRetry(maxAttempts: 3) {
                 try await self.privateDatabase.save(zone)
             }
             logger.info("Created CloudKit zone: \(zoneID)")
@@ -371,8 +371,8 @@ final class FamilySyncService {
             familyRecord["name"] = trimmedName as CKRecordValue
             familyRecord["createdDate"] = family.createdDate as CKRecordValue
             familyRecord["sharedPantryEnabled"] = (family.sharedPantryEnabled ? 1 : 0) as CKRecordValue
-            
-            try await withRetry(maxAttempts: 3) {
+
+            _ = try await withRetry(maxAttempts: 3) {
                 try await self.privateDatabase.save(familyRecord)
             }
             logger.info("Created family root record")
@@ -383,7 +383,7 @@ final class FamilySyncService {
             shareRecord.publicPermission = .none // Security: require explicit invite acceptance
             shareRecord[CKShare.SystemFieldKey.shareType] = "com.freshli.family" as CKRecordValue
 
-            let (savedFamilyRecord, savedShare) = try await withRetry(maxAttempts: 3) {
+            let (saveResults, _) = try await withRetry(maxAttempts: 3) {
                 try await self.privateDatabase.modifyRecords(
                     saving: [familyRecord, shareRecord],
                     deleting: [],
@@ -394,7 +394,9 @@ final class FamilySyncService {
             logger.info("Created CKShare for family: \(family.id)")
 
             // Generate invite URL with safety
-            guard let share = savedShare.first as? CKShare,
+            guard let shareResult = saveResults[shareRecord.recordID],
+                  case .success(let savedShareRecord) = shareResult,
+                  let share = savedShareRecord as? CKShare,
                   let shareURL = share.url else {
                 throw FamilySyncError.operationFailed("Failed to generate share URL")
             }

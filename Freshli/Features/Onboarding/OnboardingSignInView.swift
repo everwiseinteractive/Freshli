@@ -144,7 +144,7 @@ struct OnboardingSignInView: View {
                                 )
                         }
                     )
-                    .shadow(color: .black.opacity(0.3), radius: 16, y: 8)
+                    .elevation(.z3)
                     .shadow(color: PSColors.primaryGreen.opacity(buttonGlow ? 0.2 : 0), radius: 20, y: 0)
                     .overlay {
                         if isSigningIn {

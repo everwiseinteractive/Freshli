@@ -114,6 +114,7 @@ struct ReceiptImportView: View {
                 if let receipt = viewModel.currentReceipt {
                     ReceiptReviewSheet(receipt: receipt, viewModel: viewModel)
                         .presentationDragIndicator(.visible)
+                        .sheetTransition()
                 }
             }
         }
@@ -179,7 +180,15 @@ struct ManualEntryTabView: View {
                             .foregroundStyle(PSColors.textPrimary)
 
                         TextField("e.g., Whole Foods", text: $storeName)
-                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
+                            .padding(.horizontal, PSSpacing.lg)
+                            .padding(.vertical, PSSpacing.md)
+                            .background(PSColors.backgroundSecondary)
+                            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
+                                    .strokeBorder(PSColors.borderLight, lineWidth: 1)
+                            )
                     }
 
                     VStack(alignment: .leading, spacing: PSSpacing.sm) {

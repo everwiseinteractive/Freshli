@@ -3,9 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>NSCameraUsageDescription</key>
-	<string>Freshli uses your camera to scan barcodes and receipts for quick item entry.</string>
+	<string>Freshli uses your camera to scan barcodes, receipts, and identify fresh ingredients with Freshli Vision so you can track your food and reduce waste effortlessly.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Freshli accesses your photos to add images to pantry items and community listings.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Freshli saves shared recipe images and impact cards to your photo library.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Freshli uses your location to show nearby community food listings and set pickup locations.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>

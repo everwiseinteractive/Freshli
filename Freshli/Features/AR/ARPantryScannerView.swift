@@ -82,7 +82,6 @@ struct ARPantryScannerView: View {
 
     private func position(for index: Int, in size: CGSize) -> CGPoint {
         let cols = 3
-        let rows = 3
         let col = index % cols
         let row = index / cols
         let x = size.width * (0.2 + Double(col) * 0.3)
@@ -151,8 +150,7 @@ struct ARPantryScannerView: View {
                         .font(.system(size: 17, weight: .bold))
                         .foregroundStyle(.white)
                         .frame(width: 40, height: 40)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Circle())
+                        .glassEffect(.regular, in: Circle())
                 }
                 Spacer()
                 HStack(spacing: 6) {
@@ -164,8 +162,7 @@ struct ARPantryScannerView: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(.ultraThinMaterial)
-                .clipShape(Capsule())
+                .glassEffect(.regular, in: Capsule())
             }
             .padding(.horizontal, 20)
             .padding(.top, 60)
@@ -190,8 +187,7 @@ struct ARPantryScannerView: View {
                     .foregroundStyle(.white.opacity(0.7))
             }
             .padding(20)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .padding(.bottom, 60)
         }
     }
@@ -230,8 +226,7 @@ struct ARPantryScannerView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
             .padding(20)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .padding(.horizontal, 20)
             .padding(.bottom, 60)
         }

@@ -29,6 +29,7 @@ struct CelebrationCountUpText: View {
                 .foregroundStyle(color)
                 .contentTransition(.numericText(value: animatedValue))
                 .monospacedDigit()
+                .compositingGroup()
 
             if !suffix.isEmpty {
                 Text(suffix)

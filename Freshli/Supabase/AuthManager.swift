@@ -52,7 +52,7 @@ enum AuthError: LocalizedError {
 // MARK: - AuthManager
 
 @Observable @MainActor
-final class AuthManager: @unchecked Sendable {
+final class AuthManager {
     var authState: AuthState = .loading
     var currentUserId: UUID?
     var currentUserEmail: String?

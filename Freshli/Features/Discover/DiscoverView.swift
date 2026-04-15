@@ -31,6 +31,8 @@ struct DiscoverView: View {
         }
         .sheet(isPresented: $showIngredientPing) {
             IngredientPingView()
+                .presentationDragIndicator(.visible)
+                .sheetTransition()
         }
     }
 
@@ -246,14 +248,10 @@ struct DiscoverView: View {
     private func section<Content: View>(title: String, subtitle: String, icon: String, color: Color, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: PSSpacing.md) {
             HStack(spacing: PSSpacing.sm) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 9, style: .continuous)
-                        .fill(color.opacity(0.12))
-                        .frame(width: PSLayout.scaled(34), height: PSLayout.scaled(34))
-                    Image(systemName: icon)
-                        .font(.system(size: PSLayout.scaledFont(15)))
-                        .foregroundStyle(color)
-                }
+                Image(systemName: icon)
+                    .font(.system(size: PSLayout.scaledFont(18)))
+                    .foregroundStyle(color)
+                    .frame(width: PSLayout.scaled(34), height: PSLayout.scaled(34))
                 VStack(alignment: .leading, spacing: 1) {
                     Text(title)
                         .font(.system(size: PSLayout.scaledFont(16), weight: .black))

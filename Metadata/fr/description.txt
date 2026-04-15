@@ -1,0 +1,41 @@
+Arrêtez de jeter la nourriture. Commencez à la sauver.
+
+Le foyer moyen gaspille 700 € de nourriture chaque année. Freshli change cela — suivez chaque article de votre frigo, recevez des suggestions de recettes IA avant expiration, et partagez les surplus avec les voisins qui en ont besoin.
+
+RESCUE CHEF — PROPULSÉ PAR APPLE INTELLIGENCE
+Appuyez sur un bouton et l'IA embarquée de Freshli crée des recettes pour votre garde-manger exact. Sans internet. Vos données alimentaires ne quittent jamais votre téléphone. Cuisine privée, instantanée et intelligente.
+
+SUIVEZ TOUT
+• Scannez codes-barres, tickets ou saisissez manuellement
+• Alertes intelligentes d'expiration pour prioriser vos aliments
+• Badges de fraîcheur colorés en un coup d'œil
+• Photographie alimentaire pour chaque article
+
+PARTAGEZ AVEC VOTRE COMMUNAUTÉ
+• Publiez la nourriture en surplus pour collecte gratuite par les voisins
+• Trouvez et donnez aux frigos communautaires à proximité
+• Rejoignez des groupes locaux pour le partage hyperlocal
+• Gagnez des crédits karma pour votre générosité
+
+VOYEZ VOTRE IMPACT
+• Weekly Wrap — un récapitulatif cinématographique de votre histoire de sauvetage
+• Suivez le CO₂ évité, l'argent économisé et les repas partagés
+• Regardez la Vague de Sauvetage Mondiale en temps réel
+• Montez de niveau de Graine à Champion
+
+FONCTIONNE DANS TOUTE VOTRE VIE
+• Complications Apple Watch montrent ce qui expire
+• Live Activities suivent les minuteries de cuisine sur votre écran
+• Raccourcis Siri : « Dis Siri, sauve mon garde-manger »
+• Widget Centre de Contrôle pour un suivi instantané
+• Widgets interactifs avec consommation en un toucher
+
+CONÇU POUR TOUS
+• Support VoiceOver complet avec indices contextuels
+• Badges d'expiration sûrs pour les daltoniens
+• Dynamic Type à toutes les tailles
+• Réduire le mouvement respecté dans toute l'app
+
+Construit avec Swift 6.2, SwiftUI et SwiftData. Propulsé par Apple Intelligence. Conçu pour la planète.
+
+Pour les gens. Pour la planète.

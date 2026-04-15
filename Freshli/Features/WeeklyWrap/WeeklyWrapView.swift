@@ -166,6 +166,7 @@ struct WeeklyWrapView: View {
                         ],
                         colors: colors
                     )
+                    .drawingGroup()
                 }
             }
 
@@ -178,6 +179,10 @@ struct WeeklyWrapView: View {
             )
         }
         .ignoresSafeArea()
+        // Metal ambient particles — floating firefly spores over the MeshGradient
+        .metalAmbientParticles(density: 2.5, brightness: 0.5)
+        // Metal film grain — tactile depth on the dark story surface
+        .metalNoise(intensity: 0.35)
         .animation(PSMotion.springDefault, value: currentSlide)
     }
 
@@ -270,8 +275,10 @@ struct WeeklyWrapView: View {
 
     private func startAutoAdvance() {
         stopAutoAdvance()
-        autoAdvanceTimer = Timer.scheduledTimer(withTimeInterval: 6.0, repeats: false) { _ in
-            advanceToNext()
+        autoAdvanceTimer = Timer.scheduledTimer(withTimeInterval: 6.0, repeats: false) { [self] _ in
+            Task { @MainActor in
+                self.advanceToNext()
+            }
         }
     }
 
@@ -318,8 +325,10 @@ struct WeeklyWrapView: View {
 
 #Preview {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(for: FreshliItem.self, configurations: config)
-
-    WeeklyWrapView()
-        .modelContainer(container)
+    if let container = try? ModelContainer(for: FreshliItem.self, configurations: config) {
+        WeeklyWrapView()
+            .modelContainer(container)
+    } else {
+        Text("Preview unavailable")
+    }
 }

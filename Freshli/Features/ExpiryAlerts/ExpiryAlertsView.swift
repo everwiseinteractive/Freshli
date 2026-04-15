@@ -160,15 +160,10 @@ struct ExpiryAlertsView: View {
             .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXxl, style: .continuous))
 
             HStack(spacing: PSSpacing.lg) {
-                ZStack {
-                    Circle()
-                        .fill(.white.opacity(0.15))
-                        .frame(width: PSLayout.scaled(50), height: PSLayout.scaled(50))
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: PSLayout.scaledFont(22), weight: .bold))
-                        .foregroundStyle(.white)
-                        .symbolEffect(.pulse)
-                }
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: PSLayout.scaledFont(26), weight: .bold))
+                    .foregroundStyle(.white)
+                    .symbolEffect(.pulse)
 
                 VStack(alignment: .leading, spacing: PSSpacing.xxs) {
                     Text(String(localized: "\(totalUrgentCount) item\(totalUrgentCount == 1 ? "" : "s") need attention"))
@@ -195,14 +190,10 @@ struct ExpiryAlertsView: View {
         VStack(alignment: .leading, spacing: PSSpacing.md) {
             // Section header pill
             HStack(spacing: PSSpacing.sm) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: PSSpacing.radiusSm, style: .continuous)
-                        .fill(color.opacity(0.12))
-                        .frame(width: PSLayout.scaled(30), height: PSLayout.scaled(30))
-                    Image(systemName: icon)
-                        .font(.system(size: PSLayout.scaledFont(14), weight: .bold))
-                        .foregroundStyle(color)
-                }
+                Image(systemName: icon)
+                    .font(.system(size: PSLayout.scaledFont(18), weight: .bold))
+                    .foregroundStyle(color)
+                    .frame(width: PSLayout.scaled(30), height: PSLayout.scaled(30))
                 Text(title)
                     .font(.system(size: PSLayout.scaledFont(17), weight: .black))
                     .foregroundStyle(PSColors.textPrimary)
@@ -400,7 +391,7 @@ struct ExpiryAlertCard: View {
                 .strokeBorder(urgencyColor.opacity(0.15), lineWidth: 1)
         )
         .shadow(color: urgencyColor.opacity(0.08), radius: 12, x: 0, y: 4)
-        .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
+        .elevation(.z1)
     }
 }
 
@@ -419,6 +410,8 @@ struct ExpiryActionChip: View {
                     .font(.system(size: PSLayout.scaledFont(11), weight: .bold))
                 Text(title)
                     .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
             .padding(.horizontal, PSSpacing.md)
             .padding(.vertical, PSSpacing.sm)

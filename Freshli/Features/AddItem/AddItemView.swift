@@ -130,6 +130,8 @@ struct AddItemView: View {
             BarcodeScannerView { scannedCode in
                 handleScannedBarcode(scannedCode)
             }
+            .presentationDragIndicator(.visible)
+            .sheetTransition()
         }
         .alert(String(localized: "Receipt Scanning"), isPresented: $showReceiptInfo) {
             Button(String(localized: "OK"), role: .cancel) {}
@@ -335,7 +337,7 @@ struct AddItemView: View {
                 Image(systemName: "checkmark.circle")
                     .font(.system(size: PSLayout.scaledFont(80), weight: .regular))
                     .foregroundStyle(.white)
-                    .shadow(color: .black.opacity(0.1), radius: 8, y: 4)
+                    .elevation(.z2)
 
                 Text(String(localized: "Added to Pantry!"))
                     .font(.system(size: PSLayout.scaledFont(30), weight: .bold))
@@ -386,7 +388,7 @@ struct AddItemView: View {
             // Update widget data
             WidgetDataService.updateWidgetData(modelContext: modelContext)
 
-            let isOnline = networkMonitor.isConnected ?? true
+            let isOnline = networkMonitor.isConnected
 
             // Sync to Supabase if authenticated and online
             if let userId = authManager.currentUserId {

@@ -38,6 +38,8 @@ struct FamilySharingView: View {
             .background(PSColors.backgroundPrimary)
             .sheet(isPresented: $showJoinSheet) {
                 joinFamilySheet
+                    .presentationDragIndicator(.visible)
+                    .sheetTransition()
             }
         }
     }
@@ -71,7 +73,7 @@ struct FamilySharingView: View {
             case .error(let message):
                 Image(systemName: "exclamationmark.circle.fill")
                     .foregroundStyle(PSColors.expiredRed)
-                Text(message)
+                Text(message.userMessage)
                     .font(PSTypography.caption1)
                     .foregroundStyle(PSColors.expiredRed)
             }
@@ -420,6 +422,8 @@ struct FamilySharingView: View {
         }
         .sheet(isPresented: $showInviteSheet) {
             createFamilySheet
+                .presentationDragIndicator(.visible)
+                .sheetTransition()
         }
     }
 
