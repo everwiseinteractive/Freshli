@@ -406,70 +406,32 @@ struct SuccessSensoryFeedbackModifier: ViewModifier {
     }
 }
 
-// MARK: - Metal Tab Melt Transition
-// GPU-powered noise-dissolve for tab switches — content melts
-// away with a luminous green edge glow instead of a flat slide.
-// Falls back to simple opacity when Reduce Motion is enabled.
-
-struct TabMeltModifier: ViewModifier, Animatable {
-    var progress: CGFloat
-
-    var animatableData: CGFloat {
-        get { progress }
-        set { progress = newValue }
-    }
-
-    func body(content: Content) -> some View {
-        // ────────────────────────────────────────────────────────────
-        // CRITICAL: The view structure must be IDENTICAL on every
-        // animation frame. The previous implementation had 4 branches
-        // (identity / hidden / shader / opacity) gated by `progress`.
-        // During the insertion transition (progress 1→0), SwiftUI
-        // interpolates through all branches, causing the view tree to
-        // mutate mid-animation. Each branch change destroys and
-        // recreates the NavigationStack inside, producing a rendering
-        // failure (the "error sign") on device.
-        //
-        // Fix: a single branch on `shadersAvailable` (constant for
-        // the app lifetime). The Metal shader already handles the
-        // extremes (progress < 0.001 → passthrough, > 0.999 → alpha 0).
-        //
-        // Do NOT use .drawingGroup() — NavigationStack is UIKit-backed
-        // and cannot be rasterized into a Metal texture.
-        // ────────────────────────────────────────────────────────────
-        if ShaderWarmUpService.shadersAvailable {
-            content
-                .compositingGroup()
-                .visualEffect { view, proxy in
-                    view.colorEffect(
-                        ShaderLibrary.tabMeltDissolve(
-                            .float2(proxy.safeShaderSize),
-                            .float(Float(progress))
-                        )
-                    )
-                }
-        } else {
-            content
-                .opacity(Double(1 - progress))
-        }
-    }
-}
+// MARK: - Tab Transition
+//
+// ⚠️  DEVICE SAFETY: Do NOT use Metal .colorEffect() for tab transitions.
+//
+// The tab content is a NavigationStack (UIKit-backed UINavigationController).
+// Applying .colorEffect() / .layerEffect() / .distortionEffect() to a view
+// that CONTAINS a NavigationStack triggers iOS 26's rendering prohibition
+// indicator (yellow screen + red ⛔ sign) on device. This happens because:
+//
+//   1. .drawingGroup() cannot rasterize UIKit-backed views.
+//   2. .compositingGroup() + .colorEffect() on NavigationStack silently
+//      fails the compositor pipeline — SwiftUI shows the prohibition sign
+//      instead of the view content.
+//   3. Both the identity AND active states of .transition(active:identity:)
+//      are applied to ALL tab content at ALL times. If the identity state
+//      includes a shader, ALL tabs permanently show the prohibition sign.
+//
+// The Metal tabMeltDissolve shader works correctly on non-NavigationStack
+// content (cards, headers, small views) but CANNOT be used on the tab
+// content wrapper. Use SwiftUI's built-in .opacity transition instead.
 
 extension FLMotion {
-    /// Metal-backed melt transition for tab switches.
-    /// When reduceMotion is true, gracefully degrades to a simple fade.
+    /// Safe tab transition — always uses opacity to avoid rendering
+    /// prohibition on NavigationStack content.
     static func tabMeltTransition(reduceMotion: Bool) -> AnyTransition {
-        // On Simulator, Metal shaders are unavailable and the custom
-        // TabMeltModifier's Animatable interpolation can fail to complete,
-        // leaving inserted views stuck at opacity 0. Use a plain .opacity
-        // transition as the safe fallback for both reduceMotion AND Simulator.
-        if reduceMotion || !ShaderWarmUpService.shadersAvailable {
-            return .opacity
-        }
-        return .modifier(
-            active: TabMeltModifier(progress: 1),
-            identity: TabMeltModifier(progress: 0)
-        )
+        .opacity
     }
 }
 

@@ -58,10 +58,13 @@ enum ShaderWarmUpService {
 
         let names = Set(library.functionNames)
 
-        // Validate a representative shader from EACH .metal file
+        // Validate a representative shader from EACH .metal file.
+        // NOTE: tabMeltDissolve is intentionally excluded — applying
+        // .colorEffect() to NavigationStack causes iOS 26's rendering
+        // prohibition indicator on device. Tab transitions use .opacity.
         let required = [
             "heroGradient",       // FreshliShaders.metal
-            "tabMeltDissolve",    // FreshliShaders.metal
+            "cardGlass",          // FreshliShaders.metal (used on card surfaces)
             "liquidGlass",        // LiquidGlass.metal
             "liquidGlassAurora"   // SplashShaders.metal
         ]
