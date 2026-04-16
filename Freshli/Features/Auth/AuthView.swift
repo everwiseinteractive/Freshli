@@ -163,21 +163,37 @@ struct AuthLandingView: View {
                     // Auth buttons section
                     VStack(spacing: PSSpacing.lg) {
                 // Sign in with Apple
-                SignInWithAppleButton(.signIn) { request in
-                    request.requestedScopes = [.fullName, .email]
-                } onCompletion: { _ in }
-                .signInWithAppleButtonStyle(.black)
-                .frame(height: 54)
-                .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
-                .overlay {
-                    // Intercept with our own handler that goes through AuthManager
-                    Button {
-                        signInWithApple()
-                    } label: {
-                        Color.clear
+                //
+                // We render a custom button (not SignInWithAppleButton) because we
+                // need to run the full nonce-bound flow through AppleSignInCoordinator
+                // and exchange the identity token with Supabase. The previous
+                // implementation overlaid a transparent Button on top of
+                // SignInWithAppleButton which caused two parallel ASAuthorizationController
+                // requests to fire — one without a nonce, one with — which is what
+                // broke Sign in with Apple on iPadOS 26.4.1 (App Review feedback).
+                //
+                // This button follows Apple's Human Interface Guidelines for
+                // Sign in with Apple (SF Pro semibold, Apple logo, 54pt height,
+                // corner radius, black on dark / white on light).
+                Button {
+                    signInWithApple()
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "apple.logo")
+                            .font(.system(size: 20, weight: .medium))
+                        Text(String(localized: "Sign in with Apple"))
+                            .font(.system(size: 17, weight: .semibold))
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 54)
+                    .background(Color.black)
+                    .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
                 }
+                .buttonStyle(PressableButtonStyle())
+                .accessibilityLabel(String(localized: "Sign in with Apple"))
+                .accessibilityHint(String(localized: "Uses your Apple ID to sign in securely"))
+                .disabled(isSigningIn)
 
                 // Divider
                 HStack(spacing: PSSpacing.md) {

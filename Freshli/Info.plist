@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSCameraUsageDescription</key>
-	<string>Freshli uses your camera to scan barcodes, receipts, and identify fresh ingredients with Freshli Vision so you can track your food and reduce waste effortlessly.</string>
+	<string>Freshli uses your camera to scan barcodes, scan receipts, and identify fresh ingredients with Freshli Vision. If you enable the optional Gaze-Adaptive UI accessibility feature in Settings, Freshli also uses the TrueDepth camera via ARKit face tracking purely on-device to compute where you are looking on screen — no face data is ever stored, transmitted, or shared.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Freshli accesses your photos to add images to pantry items and community listings.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

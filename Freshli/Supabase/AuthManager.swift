@@ -136,8 +136,22 @@ final class AuthManager {
             authState = .authenticated
             PSLogger.auth.info("User signed in successfully: \(email)")
         } catch {
-            // Don't expose raw error details to user; use a generic message
-            let message = "Sign in failed. Check your email and password."
+            // Surface a message that's actionable for the user *and* informative
+            // for App Review on first-run/test-account scenarios, without leaking
+            // the raw stack trace. We map common failure modes to human copy.
+            let raw = error.localizedDescription.lowercased()
+            let message: String
+            if raw.contains("invalid login credentials") || raw.contains("invalid email or password") {
+                message = String(localized: "Incorrect email or password. Please try again or tap \"Forgot?\"")
+            } else if raw.contains("email not confirmed") {
+                message = String(localized: "Please confirm your email address first. Check your inbox for the confirmation link.")
+            } else if raw.contains("network") || raw.contains("offline") || raw.contains("connection") || raw.contains("timed out") {
+                message = String(localized: "Can't reach the server. Check your internet connection and try again.")
+            } else if raw.contains("rate") {
+                message = String(localized: "Too many attempts. Please wait a moment and try again.")
+            } else {
+                message = String(localized: "Sign in failed. Please try again or tap \"Continue without account\" to explore Freshli.")
+            }
             errorMessage = message
             PSLogger.auth.error("SignIn failed for \(email): \(error.localizedDescription)")
             throw AuthError.signInFailed(message)
@@ -243,8 +257,20 @@ final class AuthManager {
             PSLogger.auth.debug("Apple Sign-In cancelled by user")
             return
         } catch {
-            // Don't expose raw error details to user; use a generic message
-            let message = "Sign in with Apple failed. Please try again."
+            // Map common failure modes to actionable copy. Keep it short — this
+            // is surfaced in an alert on the auth landing screen.
+            let raw = error.localizedDescription.lowercased()
+            let message: String
+            if raw.contains("network") || raw.contains("offline") || raw.contains("connection") || raw.contains("timed out") {
+                message = String(localized: "Can't reach the server. Check your internet connection and try again.")
+            } else if raw.contains("not handled") || raw.contains("no window") {
+                // ASAuthorizationController couldn't find a presentation anchor.
+                // Should not happen now that AppleSignInCoordinator provides one,
+                // but kept as a defensive message.
+                message = String(localized: "Sign in with Apple couldn't open. Please try again or use email sign in.")
+            } else {
+                message = String(localized: "Sign in with Apple failed. Please try again or use email sign in.")
+            }
             errorMessage = message
             PSLogger.auth.error("SignInWithApple failed: \(error.localizedDescription)")
             throw AuthError.signInFailed(message)

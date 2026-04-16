@@ -1,11 +1,20 @@
 import AuthenticationServices
 import CryptoKit
 import Foundation
+import UIKit
 
 // MARK: - Apple Sign In Coordinator
 // Manages the ASAuthorizationController flow and nonce generation for Sign in with Apple.
+//
+// iPadOS 26 note:
+//   ASAuthorizationController REQUIRES a presentationContextProvider on iPadOS
+//   (and on iOS when running inside a multi-window scene) so it can decide which
+//   UIWindow to present the system sheet in. Without it, performRequests()
+//   resolves with an error on iPad and the sheet never appears — which is the
+//   failure mode flagged by App Review on iPad Air 11-inch (M3), iPadOS 26.4.1.
 
-final class AppleSignInCoordinator: NSObject, ASAuthorizationControllerDelegate {
+@MainActor
+final class AppleSignInCoordinator: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     private var continuation: CheckedContinuation<AppleSignInResult, Error>?
     private var currentNonce: String?
 
@@ -21,11 +30,30 @@ final class AppleSignInCoordinator: NSObject, ASAuthorizationControllerDelegate 
 
         let controller = ASAuthorizationController(authorizationRequests: [request])
         controller.delegate = self
+        controller.presentationContextProvider = self
 
         return try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
             controller.performRequests()
         }
+    }
+
+    // MARK: - ASAuthorizationControllerPresentationContextProviding
+
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        // Find the foreground-active key window across all connected scenes.
+        // This handles iPadOS multi-window, Split View, Slide Over, and Stage Manager.
+        let scenes = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+
+        let keyWindow = scenes
+            .first(where: { $0.activationState == .foregroundActive })?
+            .windows
+            .first(where: { $0.isKeyWindow })
+            ?? scenes.first?.windows.first(where: { $0.isKeyWindow })
+            ?? scenes.first?.windows.first
+
+        return keyWindow ?? ASPresentationAnchor()
     }
 
     // MARK: - ASAuthorizationControllerDelegate

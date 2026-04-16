@@ -761,26 +761,29 @@ struct FreshliProView: View {
                 .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
             }
 
-            // ToS & Privacy links
+            // ToS & Privacy links — required by App Review Guideline 3.1.2(c).
+            // These URLs must resolve to live pages on freshli.app.
             HStack(spacing: PSSpacing.sm) {
-                if let termsURL = URL(string: "https://freshli.app/terms-of-use") {
+                if let termsURL = URL(string: "https://freshli.app/terms.html") {
                     Link(destination: termsURL) {
-                        Text("Terms of Use")
+                        Text("Terms of Use (EULA)")
                             .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
                             .foregroundStyle(PSColors.primaryGreen)
                     }
+                    .accessibilityLabel("Terms of Use — End User License Agreement")
                 }
 
                 Text("·")
                     .foregroundStyle(PSColors.textTertiary)
                     .font(.system(size: PSLayout.scaledFont(12)))
 
-                if let privacyURL = URL(string: "https://freshli.app/privacy-policy") {
+                if let privacyURL = URL(string: "https://freshli.app/privacy.html") {
                     Link(destination: privacyURL) {
                         Text("Privacy Policy")
                             .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
                             .foregroundStyle(PSColors.primaryGreen)
                     }
+                    .accessibilityLabel("Privacy Policy")
                 }
 
                 Spacer()

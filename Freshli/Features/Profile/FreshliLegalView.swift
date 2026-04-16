@@ -210,7 +210,7 @@ struct FreshliPrivacyPolicyView: View {
                 ),
                 LegalSection(
                     heading: "Contact Us",
-                    body: "Questions about privacy? We're human and we're happy to help.\n\nEmail: privacy@freshli.app\nWebsite: freshli.app/privacy"
+                    body: "Questions about privacy? We're human and we're happy to help.\n\nEmail: privacy@freshli.app\nWebsite: freshli.app/privacy.html"
                 ),
             ]
         )
@@ -273,7 +273,7 @@ struct FreshliTermsView: View {
                 ),
                 LegalSection(
                     heading: "Contact",
-                    body: "Legal questions: legal@freshli.app\nWebsite: freshli.app/terms"
+                    body: "Legal questions: legal@freshli.app\nWebsite: freshli.app/terms.html"
                 ),
             ]
         )
