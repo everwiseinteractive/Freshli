@@ -36,6 +36,10 @@ enum AppTab: String, CaseIterable, Identifiable {
 // MARK: - App Tab View
 
 struct AppTabView: View {
+    /// Called once after the essential tab warm-up completes.
+    /// FreshliApp uses this to gate the splash screen exit.
+    var onReady: (() -> Void)? = nil
+
     @State private var selectedTab: AppTab = {
         // Restore last-used tab from previous session for seamless state restoration
         if let saved = UserDefaults.standard.string(forKey: "lastSelectedTab"),
@@ -128,6 +132,13 @@ struct AppTabView: View {
             ColdLaunchTracker.shared.markInteractive()
 
             seedDataIfNeeded()
+
+            // ── Signal readiness to FreshliApp ──
+            // The splash screen waits for this before dissolving, ensuring
+            // every tab is warm and the home screen is fully rendered.
+            onReady?()
+
+            // Non-critical post-ready work (runs after splash dismisses)
             await celebrationManager.checkWeeklyRecap(modelContext: modelContext)
             if let userId = authManager.currentUserId {
                 await syncService.performFullSync(userId: userId, modelContext: modelContext)

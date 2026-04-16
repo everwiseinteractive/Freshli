@@ -1,68 +1,76 @@
 import SwiftUI
 import CoreHaptics
-import os
 
-// MARK: - Freshli Liquid Glass Launch Experience
-// ═══════════════════════════════════════════════════════════════
+// MARK: - Freshli Splash Screen
+// ════════════════════════════════════════════════════════════════
 // Apple Design Award — Visuals & Graphics · Innovation · Inclusivity
 //
-// Architecture:
-//   Layer 1  liquidGlassAurora  Single-pass SDF refraction + aurora
-//   Layer 2  liquidGlassRing    Chromatic glass ring with Fresnel
-//   Layer 3  Content            Icon + wordmark + tagline + dots
-//   Shader   liquidShimmer      Premium sweep on icon
+// Architecture (ZStack overlay model):
+//   The main app renders BEHIND this view from launch. When all
+//   loading gates pass the splash dissolves to reveal the already-
+//   interactive home screen — zero view swaps, zero jarring cuts.
 //
-// Technical:
-//   - 120 Hz ProMotion timeline (8.3 ms GPU budget)
-//   - [[ stitchable ]] shaders merged into single GPU pass
-//   - Core Haptics choreographed to glass "viscosity"
-//   - MeshGradient fallback for Reduce Motion (Inclusivity)
-//   - Matched geometry effects for splash → dashboard transition
-// ═══════════════════════════════════════════════════════════════
+// Visual layers:
+//   1. Living ambient gradient (breathing emerald on near-black)
+//   2. Luminous halo that breathes behind the icon
+//   3. Freshli icon crystallising from soft blur
+//   4. Orbital progress ring (fills as services initialise)
+//   5. "Freshli" wordmark + tagline
+//
+// Exit:
+//   Progress ring completes → brief settle → icon exhales outward
+//   while the entire splash fades to transparent, lifting a veil
+//   off the home screen that was loading underneath all along.
+//
+// Accessibility:
+//   - Reduce Motion: static MeshGradient, no animations, instant
+//   - VoiceOver: "Freshli is loading" announcement
+//   - Dynamic Type: all text uses PSLayout.scaledFont
+//   - Haptic-visual sync for every entrance phase
+// ════════════════════════════════════════════════════════════════
 
 @MainActor
 struct FreshliSplashView: View {
 
     // MARK: - API
 
-    let splashNamespace: Namespace.ID
-    let onSessionValidated: () -> Void
-    let onDataPrefetched: () -> Void
+    /// Loading progress (0…1) driven by FreshliApp's pipeline.
+    let progress: CGFloat
 
-    // MARK: - Time Driver
+    /// When true, begins the exit dissolve animation.
+    let shouldExit: Bool
+
+    /// Fires after the exit animation completes; FreshliApp removes the splash.
+    let onExitComplete: () -> Void
+
+    // MARK: - Entrance Animation State
 
     @State private var startDate = Date.now
+    @State private var showBackground  = false
+    @State private var showIcon        = false
+    @State private var iconBlur: CGFloat = 24
+    @State private var showRing        = false
+    @State private var showWordmark    = false
+    @State private var showTagline     = false
 
-    // MARK: - Animation State
+    // MARK: - Exit Animation State
 
-    @State private var appeared = false
+    @State private var exitActive      = false
+    @State private var exitScale: CGFloat  = 1.0
+    @State private var exitOpacity: CGFloat = 1.0
 
-    // Glass materialisation (0 → 1)
-    @State private var glassIntensity: CGFloat = 0
+    // MARK: - Continuous Animations
 
-    // Icon
-    @State private var iconScale: CGFloat = 0.3
-    @State private var iconOpacity: CGFloat = 0
-    @State private var iconBlur: CGFloat = 20
+    @State private var shimmerPhase: CGFloat = -0.3
+    @State private var haloBreathScale: CGFloat = 1.0
 
-    // Ring
-    @State private var ringScale: CGFloat = 0.5
-    @State private var ringOpacity: CGFloat = 0
+    // MARK: - Progress Display
 
-    // Shimmer (0 → 1.3)
-    @State private var shimmerProgress: CGFloat = -0.3
+    /// Smoothed value — only moves forward, never snaps backward.
+    @State private var displayProgress: CGFloat = 0
 
-    // Wordmark
-    @State private var wordmarkOffset: CGFloat = 28
-    @State private var wordmarkOpacity: CGFloat = 0
+    // MARK: - Haptics
 
-    // Tagline
-    @State private var taglineOpacity: CGFloat = 0
-
-    // Loading dots
-    @State private var dotPhase: Int = 0
-
-    // Core Haptics
     @State private var hapticEngine: CHHapticEngine?
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -70,202 +78,98 @@ struct FreshliSplashView: View {
     // MARK: - Body
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 120.0, paused: reduceMotion)) { timeline in
-            let time = Float(timeline.date.timeIntervalSince(startDate))
+        GeometryReader { geo in
+            ZStack {
+                // Layer 1: Ambient gradient
+                if reduceMotion {
+                    reducedMotionBackground
+                        .ignoresSafeArea()
+                } else {
+                    ambientBackground
+                        .ignoresSafeArea()
+                        .opacity(showBackground ? 1 : 0)
+                }
 
-            GeometryReader { geo in
-                ZStack {
-                    if reduceMotion {
-                        // ── Reduced Motion: High-Contrast Static Mesh Gradient ──
-                        reducedMotionBackground
-                            .ignoresSafeArea()
-                    } else {
-                        // ── Layer 1: Liquid Glass Aurora (single-pass SDF) ──
-                        liquidGlassBackground(time: time)
-                            .ignoresSafeArea()
+                // Layer 2: Content stack
+                VStack(spacing: 0) {
+                    Spacer()
+                    Spacer()
 
-                        // ── Layer 2: Glass Chromatic Ring ──
-                        if appeared {
-                            glassRingLayer(time: time)
-                                .opacity(ringOpacity)
-                                .scaleEffect(ringScale)
-                                .allowsHitTesting(false)
-                        }
-                    }
+                    iconCluster(screenSize: geo.size)
 
-                    // ── Layer 3: Content ──
-                    VStack(spacing: 0) {
-                        Spacer()
-                        Spacer()
+                    Spacer().frame(height: PSLayout.scaled(32))
 
-                        iconSection(time: time)
-                            .matchedGeometryEffect(id: "freshliLogo", in: splashNamespace)
+                    wordmarkLabel
 
-                        Spacer()
-                            .frame(height: PSLayout.scaled(36))
+                    Spacer()
+                    Spacer()
 
-                        wordmarkSection
-                            .matchedGeometryEffect(id: "freshliTitle", in: splashNamespace)
-
-                        Spacer()
-                        Spacer()
-
-                        loadingIndicator
-                            .padding(.bottom, PSLayout.scaled(80))
-                    }
+                    taglineLabel
+                        .padding(.bottom, PSLayout.scaled(64))
                 }
             }
         }
+        .ignoresSafeArea()
         .environment(\.colorScheme, .dark)
+        .opacity(exitOpacity)
+        .scaleEffect(exitScale)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text("Freshli is loading"))
         .onAppear {
             prepareHaptics()
             if reduceMotion {
-                setFinalState()
+                setInstantState()
             } else {
-                appeared = true
-                startAnimationSequence()
+                startEntranceSequence()
             }
+        }
+        .onChange(of: progress) { _, newValue in
+            withAnimation(.easeInOut(duration: 0.4)) {
+                displayProgress = max(displayProgress, newValue)
+            }
+        }
+        .onChange(of: shouldExit) { _, exit in
+            guard exit, !exitActive else { return }
+            beginExitSequence()
         }
     }
 
-    // MARK: - Liquid Glass Background (Single GPU Pass)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // MARK: - Ambient Background
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    @ViewBuilder
-    private func liquidGlassBackground(time: Float) -> some View {
-        // Animated aurora-like gradient — pure SwiftUI replacement for Metal liquidGlassAurora
-        let breathe = Double(sin(Double(time) * 0.3)) * 0.5 + 0.5
-        let gi = Double(glassIntensity)
-        LinearGradient(
-            colors: [
-                Color(red: 0.01, green: 0.04 + breathe * 0.02, blue: 0.03),
-                Color(red: 0.03 + breathe * 0.02, green: 0.15 * gi, blue: 0.10 * gi),
-                Color(red: 0.05, green: 0.22 * gi, blue: 0.16 * gi)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
+    private var ambientBackground: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 60.0)) { timeline in
+            let t = timeline.date.timeIntervalSince(startDate)
+            let breathe = sin(t * 0.4) * 0.5 + 0.5
 
-    // MARK: - Glass Chromatic Ring
-
-    @ViewBuilder
-    private func glassRingLayer(time: Float) -> some View {
-        let ringSize = PSLayout.scaled(220)
-        let breathe = CGFloat(sin(Double(time) * 1.5)) * 0.15 + 0.85
-        // Animated ring using SwiftUI — replaces Metal liquidGlassRing
-        Circle()
-            .stroke(
-                AngularGradient(
-                    colors: [
-                        Color(red: 0.30, green: 0.88, blue: 0.42).opacity(0.6 * breathe),
-                        Color(red: 0.20, green: 0.75, blue: 0.55).opacity(0.4 * breathe),
-                        Color(red: 0.30, green: 0.88, blue: 0.42).opacity(0.6 * breathe)
+            ZStack {
+                // Near-black with emerald undertones
+                LinearGradient(
+                    stops: [
+                        .init(color: Color(red: 0.02, green: 0.04, blue: 0.03), location: 0),
+                        .init(color: Color(red: 0.03, green: 0.08 + breathe * 0.02, blue: 0.06), location: 0.5),
+                        .init(color: Color(red: 0.01, green: 0.03, blue: 0.02), location: 1.0)
                     ],
-                    center: .center
-                ),
-                lineWidth: PSLayout.scaled(4.0)
-            )
-            .frame(width: ringSize, height: ringSize)
-    }
-
-    // MARK: - Icon Section
-
-    private func iconSection(time: Float) -> some View {
-        let breathe = CGFloat(sin(Double(time) * 1.2)) * 0.5 + 0.5
-
-        return ZStack {
-            // Soft glow halo behind icon
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            Color(hex: 0x22C55E).opacity(0.22 + breathe * 0.10),
-                            Color(hex: 0x22C55E).opacity(0.05),
-                            .clear
-                        ],
-                        center: .center,
-                        startRadius: PSLayout.scaled(28),
-                        endRadius: PSLayout.scaled(125 + breathe * 12)
-                    )
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
                 )
-                .frame(width: PSLayout.scaled(250), height: PSLayout.scaled(250))
-                .scaleEffect(1.0 + breathe * 0.04)
-                .opacity(iconOpacity)
 
-            // App icon with liquid shimmer
-            Image("FreshliIcon")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: PSLayout.scaled(128), height: PSLayout.scaled(128))
-                .clipShape(RoundedRectangle(cornerRadius: PSLayout.scaled(30), style: .continuous))
-                .modifier(SplashShimmerModifier(reduceMotion: reduceMotion, shimmerProgress: shimmerProgress))
-                .shadow(color: Color(hex: 0x22C55E).opacity(0.40), radius: 50, y: 0)
-                .elevation(.z5)
-                .scaleEffect(iconScale)
-                .opacity(iconOpacity)
-                .blur(radius: iconBlur)
-        }
-    }
-
-    // MARK: - Wordmark + Tagline
-
-    private var wordmarkSection: some View {
-        VStack(spacing: PSSpacing.sm) {
-            Text("Freshli")
-                .font(.system(size: PSLayout.scaledFont(42), weight: .bold, design: .rounded))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.white, Color(hex: 0xBBF7D0)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
+                // Subtle centre glow — makes the background feel alive
+                RadialGradient(
+                    colors: [
+                        PSColors.primaryGreen.opacity(0.06 + breathe * 0.03),
+                        .clear
+                    ],
+                    center: .center,
+                    startRadius: 0,
+                    endRadius: 400
                 )
-                .opacity(wordmarkOpacity)
-                .offset(y: wordmarkOffset)
-
-            Text("Rescue food. Save the planet.")
-                .font(.system(size: PSLayout.scaledFont(14), weight: .medium, design: .rounded))
-                .foregroundStyle(.white.opacity(0.55))
-                .opacity(taglineOpacity)
-        }
-    }
-
-    // MARK: - Loading Indicator
-
-    private var loadingIndicator: some View {
-        HStack(spacing: 8) {
-            ForEach(0..<3, id: \.self) { index in
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color(hex: 0x4ADE80), Color(hex: 0x22C55E)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .frame(width: 7, height: 7)
-                    .scaleEffect(dotPhase == index ? 1.5 : 0.6)
-                    .opacity(dotPhase == index ? 1.0 : 0.25)
-                    .shadow(
-                        color: Color(hex: 0x4ADE80).opacity(dotPhase == index ? 0.6 : 0),
-                        radius: 6
-                    )
-                    .animation(.easeInOut(duration: 0.35), value: dotPhase)
-            }
-        }
-        .task {
-            guard !reduceMotion else { return }
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .milliseconds(350))
-                dotPhase = (dotPhase + 1) % 3
             }
         }
     }
 
-    // MARK: - Reduced Motion Fallback (Inclusivity)
-    // High-contrast static MeshGradient preserving the brand aesthetic
-    // without any motion — elegant enough to win Inclusivity on its own.
-
+    /// Reduce Motion: high-contrast static MeshGradient (Inclusivity).
     private var reducedMotionBackground: some View {
         MeshGradient(
             width: 3, height: 3,
@@ -275,86 +179,233 @@ struct FreshliSplashView: View {
                 .init(0.0, 1.0), .init(0.5, 1.0), .init(1.0, 1.0)
             ],
             colors: [
-                .black,               Color(hex: 0x071510), .black,
-                Color(hex: 0x071510), Color(hex: 0x0E2B1A), Color(hex: 0x071510),
-                .black,               Color(hex: 0x071510), .black
+                .black,               Color(red: 0.04, green: 0.08, blue: 0.05), .black,
+                Color(red: 0.04, green: 0.08, blue: 0.05), Color(red: 0.06, green: 0.14, blue: 0.08), Color(red: 0.04, green: 0.08, blue: 0.05),
+                .black,               Color(red: 0.04, green: 0.08, blue: 0.05), .black
             ]
         )
     }
 
-    // MARK: - Animation Choreography
-    // Each phase is synced to a Core Haptics event matching
-    // the "viscosity" of the glass material.
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // MARK: - Icon Cluster (Halo + Ring + Icon)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-    private func startAnimationSequence() {
+    private func iconCluster(screenSize: CGSize) -> some View {
+        let iconSize  = PSLayout.scaled(120)
+        let ringSize  = iconSize + PSLayout.scaled(48)
 
-        // Phase 0: Glass SDF materialises (0 → 0.8s)
-        withAnimation(.easeInOut(duration: 0.8).delay(0.05)) {
-            glassIntensity = 1.0
-        }
+        return ZStack {
+            // ── Glow halo ──
+            if showIcon {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                PSColors.primaryGreen.opacity(0.18),
+                                PSColors.primaryGreen.opacity(0.05),
+                                .clear
+                            ],
+                            center: .center,
+                            startRadius: iconSize * 0.3,
+                            endRadius: iconSize * 1.2
+                        )
+                    )
+                    .frame(width: iconSize * 2.4, height: iconSize * 2.4)
+                    .scaleEffect(haloBreathScale)
+            }
 
-        // Phase 1: Icon crystallises from blur (0.18 → 0.9s)
-        withAnimation(.spring(response: 0.85, dampingFraction: 0.58).delay(0.18)) {
-            iconScale = 1.0
-            iconOpacity = 1.0
-        }
-        withAnimation(.easeOut(duration: 1.0).delay(0.18)) {
-            iconBlur = 0
-        }
+            // ── Progress ring ──
+            if showRing {
+                progressRingLayers(ringSize: ringSize)
+            }
 
-        // Phase 2: Glass ring blooms outward (0.38s)
-        withAnimation(.spring(response: 0.75, dampingFraction: 0.65).delay(0.38)) {
-            ringScale = 1.0
-            ringOpacity = 1.0
-        }
-
-        // Phase 3: Shimmer sweeps diagonally across icon (0.65 → 1.7s)
-        withAnimation(.easeInOut(duration: 1.05).delay(0.65)) {
-            shimmerProgress = 1.3
-        }
-
-        // Phase 4: Wordmark floats up (0.58s)
-        withAnimation(.spring(response: 0.55, dampingFraction: 0.72).delay(0.58)) {
-            wordmarkOffset = 0
-            wordmarkOpacity = 1.0
-        }
-
-        // Phase 5: Tagline fades in (1.0s)
-        withAnimation(.easeInOut(duration: 0.50).delay(1.0)) {
-            taglineOpacity = 1.0
-        }
-
-        // Fire haptic pattern (synced to visual phases)
-        playSplashHaptics()
-
-        // Continuous shimmer loop after initial sweep
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(2.8))
-            while !Task.isCancelled {
-                shimmerProgress = -0.3
-                withAnimation(.easeInOut(duration: 1.2)) {
-                    shimmerProgress = 1.3
-                }
-                try? await Task.sleep(for: .seconds(3.5))
+            // ── App icon ──
+            if showIcon {
+                Image("FreshliIcon")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: iconSize, height: iconSize)
+                    .clipShape(RoundedRectangle(cornerRadius: iconSize * 0.22, style: .continuous))
+                    .shadow(color: PSColors.primaryGreen.opacity(0.35), radius: 40, y: 0)
+                    .blur(radius: iconBlur)
+                    .modifier(SplashShimmerModifier(reduceMotion: reduceMotion, shimmerProgress: shimmerPhase))
             }
         }
     }
 
-    private func setFinalState() {
-        appeared = true
-        glassIntensity = 1.0
-        iconScale = 1.0
-        iconOpacity = 1.0
-        iconBlur = 0
-        ringScale = 1.0
-        ringOpacity = 1.0
-        wordmarkOffset = 0
-        wordmarkOpacity = 1.0
-        taglineOpacity = 1.0
-        shimmerProgress = 1.3
+    @ViewBuilder
+    private func progressRingLayers(ringSize: CGFloat) -> some View {
+        ZStack {
+            // Track (dim)
+            Circle()
+                .stroke(
+                    .white.opacity(0.06),
+                    style: StrokeStyle(lineWidth: PSLayout.scaled(3), lineCap: .round)
+                )
+                .frame(width: ringSize, height: ringSize)
+
+            // Fill arc
+            Circle()
+                .trim(from: 0, to: displayProgress)
+                .stroke(
+                    AngularGradient(
+                        colors: [
+                            PSColors.primaryGreen.opacity(0.9),
+                            PSColors.accentTeal.opacity(0.7),
+                            PSColors.primaryGreen.opacity(0.9)
+                        ],
+                        center: .center,
+                        startAngle: .degrees(-90),
+                        endAngle: .degrees(270)
+                    ),
+                    style: StrokeStyle(lineWidth: PSLayout.scaled(3), lineCap: .round)
+                )
+                .frame(width: ringSize, height: ringSize)
+                .rotationEffect(.degrees(-90))
+
+            // Glowing dot at the tip of the arc
+            if displayProgress > 0.05 {
+                Circle()
+                    .fill(PSColors.primaryGreen)
+                    .frame(width: PSLayout.scaled(7), height: PSLayout.scaled(7))
+                    .shadow(color: PSColors.primaryGreen.opacity(0.6), radius: 8)
+                    .offset(y: -ringSize / 2)
+                    .rotationEffect(.degrees(360 * displayProgress - 90))
+            }
+        }
     }
 
-    // MARK: - Core Haptics Engine
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // MARK: - Typography
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    private var wordmarkLabel: some View {
+        Text("Freshli")
+            .font(.system(size: PSLayout.scaledFont(38), weight: .bold, design: .rounded))
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [.white, Color(red: 0.73, green: 0.97, blue: 0.83)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .opacity(showWordmark ? 1 : 0)
+            .offset(y: showWordmark ? 0 : 20)
+    }
+
+    private var taglineLabel: some View {
+        Text(String(localized: "Rescue food. Save the planet."))
+            .font(.system(size: PSLayout.scaledFont(13), weight: .medium, design: .rounded))
+            .foregroundStyle(.white.opacity(0.4))
+            .opacity(showTagline ? 1 : 0)
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // MARK: - Entrance Choreography
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    private func startEntranceSequence() {
+        // Phase 0: Background sweeps in
+        withAnimation(.easeOut(duration: 0.5)) {
+            showBackground = true
+        }
+
+        // Phase 1: Icon crystallises from blur (0.15 s)
+        withAnimation(.spring(duration: 0.8, bounce: 0.15).delay(0.15)) {
+            showIcon = true
+        }
+        withAnimation(.easeOut(duration: 0.9).delay(0.15)) {
+            iconBlur = 0
+        }
+
+        // Phase 2: Progress ring appears (0.4 s)
+        withAnimation(.spring(duration: 0.5, bounce: 0.2).delay(0.4)) {
+            showRing = true
+        }
+
+        // Phase 3: Wordmark slides up (0.5 s)
+        withAnimation(.spring(duration: 0.55, bounce: 0.18).delay(0.5)) {
+            showWordmark = true
+        }
+
+        // Phase 4: Tagline fades in (0.8 s)
+        withAnimation(.easeInOut(duration: 0.4).delay(0.8)) {
+            showTagline = true
+        }
+
+        // Continuous: halo breathing
+        withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
+            haloBreathScale = 1.06
+        }
+
+        // Continuous: shimmer sweep loop
+        startShimmerLoop()
+
+        // Choreographed haptics
+        playSplashHaptics()
+    }
+
+    private func startShimmerLoop() {
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(0.6))
+            while !Task.isCancelled && !exitActive {
+                shimmerPhase = -0.3
+                withAnimation(.easeInOut(duration: 1.0)) {
+                    shimmerPhase = 1.3
+                }
+                try? await Task.sleep(for: .seconds(3.0))
+            }
+        }
+    }
+
+    /// Reduce Motion: everything at final state instantly.
+    private func setInstantState() {
+        showBackground = true
+        showIcon       = true
+        iconBlur       = 0
+        showRing       = true
+        showWordmark   = true
+        showTagline    = true
+        shimmerPhase   = 1.3
+        displayProgress = progress
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // MARK: - Exit Sequence (Veil-Lift Dissolve)
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    private func beginExitSequence() {
+        exitActive = true
+
+        // Completion haptic
+        PSHaptics.shared.lightTap()
+
+        // Fill the ring to 100 % first
+        withAnimation(.easeInOut(duration: 0.25)) {
+            displayProgress = 1.0
+        }
+
+        Task { @MainActor in
+            // Brief settle so the "complete" state registers visually
+            try? await Task.sleep(for: .milliseconds(reduceMotion ? 50 : 300))
+
+            if reduceMotion {
+                onExitComplete()
+            } else {
+                // Icon exhales outward as the whole splash dissolves
+                withAnimation(.spring(duration: 0.65, bounce: 0.0)) {
+                    exitScale   = 1.08
+                    exitOpacity = 0
+                }
+                try? await Task.sleep(for: .milliseconds(650))
+                onExitComplete()
+            }
+        }
+    }
+
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // MARK: - Core Haptics
+    // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     private func prepareHaptics() {
         guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
@@ -362,70 +413,82 @@ struct FreshliSplashView: View {
             let engine = try CHHapticEngine()
             try engine.start()
             hapticEngine = engine
-        } catch {
-            // Haptics unavailable — graceful degradation
-        }
+        } catch { /* graceful degradation */ }
     }
-
-    // MARK: - Splash Haptic Pattern
-    // Choreographed to match the "viscosity" of the glass animations:
-    //   Glass crystallisation (soft ascending) → Ring expansion (smooth pulse)
-    //   → Shimmer sweep (light continuous) → Wordmark snap (crisp transient)
-    //   → Tagline (gentle fade)
 
     private func playSplashHaptics() {
         guard let engine = hapticEngine else { return }
 
         do {
             let pattern = try CHHapticPattern(events: [
-
-                // ── Glass crystallisation: ascending transients ──
+                // Icon crystallisation — soft ascending transients
                 CHHapticEvent(eventType: .hapticTransient, parameters: [
                     CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.25),
                     CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.15)
-                ], relativeTime: 0.18),
+                ], relativeTime: 0.15),
 
                 CHHapticEvent(eventType: .hapticTransient, parameters: [
                     CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.40),
                     CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.30)
-                ], relativeTime: 0.30),
+                ], relativeTime: 0.28),
 
-                // ── Ring expansion: smooth continuous pulse ──
+                // Ring bloom — smooth continuous pulse
                 CHHapticEvent(eventType: .hapticContinuous, parameters: [
-                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.35),
-                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.55)
-                ], relativeTime: 0.38, duration: 0.28),
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.30),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.50)
+                ], relativeTime: 0.40, duration: 0.20),
 
-                // ── Wordmark snap: crisp transient ──
+                // Wordmark snap — crisp transient
                 CHHapticEvent(eventType: .hapticTransient, parameters: [
-                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.60),
-                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.85)
-                ], relativeTime: 0.58),
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.55),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.80)
+                ], relativeTime: 0.50),
 
-                // ── Shimmer sweep: light continuous ──
-                CHHapticEvent(eventType: .hapticContinuous, parameters: [
-                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.20),
-                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.75)
-                ], relativeTime: 0.65, duration: 0.45),
-
-                // ── Tagline: gentle fade ──
+                // Tagline — gentle fade
                 CHHapticEvent(eventType: .hapticTransient, parameters: [
-                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.18),
-                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.25)
-                ], relativeTime: 1.0),
-
+                    CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.15),
+                    CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.20)
+                ], relativeTime: 0.80),
             ], parameters: [])
 
             let player = try engine.makePlayer(with: pattern)
             try player.start(atTime: CHHapticTimeImmediate)
-        } catch {
-            // Haptic playback failed — silent degradation
+        } catch { /* silent degradation */ }
+    }
+}
+
+
+// MARK: - Splash Shimmer Modifier
+// Diagonal light sweep across the icon — gated on Reduce Motion.
+
+private struct SplashShimmerModifier: ViewModifier {
+    let reduceMotion: Bool
+    let shimmerProgress: Double
+
+    func body(content: Content) -> some View {
+        if reduceMotion {
+            content
+        } else {
+            content
+                .overlay {
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: max(0, shimmerProgress - 0.15)),
+                            .init(color: .white.opacity(0.18), location: shimmerProgress),
+                            .init(color: .clear, location: min(1, shimmerProgress + 0.15))
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .blendMode(.overlay)
+                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                }
         }
     }
 }
 
 
-// MARK: - Freshli Leaf Shape
+// MARK: - Freshli Leaf Shape (Retained for Compatibility)
 
 struct FreshliLeafShape: Shape {
     func path(in rect: CGRect) -> Path {
@@ -474,61 +537,5 @@ struct FreshliLeafShape: Shape {
         )
 
         return path
-    }
-}
-
-
-// MARK: - Splash Transition Modifier
-
-struct SplashTransitionModifier: ViewModifier {
-    let isTransitioning: Bool
-    let splashNamespace: Namespace.ID
-
-    func body(content: Content) -> some View {
-        content
-            .scaleEffect(isTransitioning ? 0.93 : 1.0)
-            .opacity(isTransitioning ? 0 : 1)
-            .animation(
-                .spring(Spring(mass: 1.0, stiffness: 120, damping: 20)),
-                value: isTransitioning
-            )
-    }
-}
-
-// MARK: - Splash Shimmer Modifier (Reduce Motion Guard)
-// Extracts the liquidShimmer shader into a ViewModifier so it can
-// be cleanly gated on reduceMotion. When motion is reduced, the icon
-// renders without shimmer — still gorgeous, just static.
-
-private struct SplashShimmerModifier: ViewModifier {
-    let reduceMotion: Bool
-    let shimmerProgress: Double
-
-    func body(content: Content) -> some View {
-        if reduceMotion {
-            // Static path — no shader animation, just the clean icon
-            content
-        } else {
-            content
-                .overlay {
-                    LinearGradient(
-                        stops: [
-                            .init(color: .clear, location: max(0, shimmerProgress - 0.15)),
-                            .init(color: .white.opacity(0.2), location: shimmerProgress),
-                            .init(color: .clear, location: min(1, shimmerProgress + 0.15))
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                    .blendMode(.overlay)
-                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                }
-        }
-    }
-}
-
-extension View {
-    func splashTransition(isTransitioning: Bool, namespace: Namespace.ID) -> some View {
-        modifier(SplashTransitionModifier(isTransitioning: isTransitioning, splashNamespace: namespace))
     }
 }

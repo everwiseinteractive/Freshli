@@ -18,11 +18,6 @@ struct FreshliApp: App {
                 configurations: config
             )
         } catch {
-            // Persistent store is unreadable — almost always a stale schema on an
-            // upgrade or a corrupt sqlite file in the sandbox. Log the details and
-            // fall back to an in-memory store so the app still launches, so the user
-            // can navigate to Settings → Reset Data instead of being stuck at a black
-            // crash screen. A crash here is the worst UX possible on launch.
             Logger(subsystem: "com.freshli.app", category: "AppLifecycle")
                 .error("SwiftData ModelContainer failed, falling back to in-memory: \(error.localizedDescription, privacy: .public)")
             let memoryConfig = ModelConfiguration(isStoredInMemoryOnly: true)
@@ -32,13 +27,11 @@ struct FreshliApp: App {
                     configurations: memoryConfig
                 )
             } catch {
-                // If even the in-memory store cannot be created, the SwiftData runtime
-                // is broken — surface the error to the system so TestFlight/analytics
-                // can capture it. This is genuinely unrecoverable.
                 fatalError("SwiftData ModelContainer unrecoverable: \(error)")
             }
         }
     }()
+
     @State private var hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
     @AppStorage("isDarkMode") private var isDarkMode = false
     @State private var celebrationManager = CelebrationManager()
@@ -58,66 +51,67 @@ struct FreshliApp: App {
     @State private var prefetchCoordinator = PrefetchCoordinator.shared
     @State private var ambientLight = AmbientLightService.shared
 
-    // MARK: - Splash → Dashboard Transition State
-    @Namespace private var splashNamespace
+    // MARK: - Splash State Machine
+
+    /// True while the splash overlay is visible.
     @State private var showSplash = true
-    @State private var splashTransitioning = false
-    @State private var dataPrefetched = false
-    @State private var sessionValidated = false
+
+    /// Drives the splash progress ring (0…1).
     @State private var splashProgress: CGFloat = 0
-    /// Enforces a minimum splash display time so the branded loading screen
-    /// is always visible even when auth resolves instantly (e.g. no saved session).
+
+    /// Set to true when the splash should begin its exit dissolve.
+    @State private var shouldExitSplash = false
+
+    // Gate flags — all must be true before the splash exits.
     @State private var splashMinimumTimeMet = false
+    @State private var authResolved = false
+    @State private var dataPrefetched = false
+    @State private var appContentReady = false
 
     private let logger = Logger(subsystem: "com.freshli.app", category: "AppLifecycle")
+
+    // MARK: - Body
 
     var body: some Scene {
         WindowGroup {
             Group {
                 if !hasCompletedOnboarding {
-                    // Step 1: Onboarding (first launch only)
+                    // ── Step 1: Onboarding (first launch only) ──
                     OnboardingView {
                         UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
                         withAnimation(FLMotion.springDefault) {
                             hasCompletedOnboarding = true
                         }
                     }
-                } else if showSplash {
-                    // Step 2: Freshli Signature Loading Experience
-                    // Shown until BOTH auth resolves AND the minimum time has elapsed.
-                    FreshliSplashView(
-                        splashNamespace: splashNamespace,
-                        onSessionValidated: {
-                            sessionValidated = true
-                            checkAndTransition()
-                        },
-                        onDataPrefetched: {
-                            dataPrefetched = true
-                            checkAndTransition()
-                        }
-                    )
-                    .transition(.opacity.combined(with: .scale(scale: 1.03)))
                 } else {
-                    // Step 3: Main app content
-                    mainAppContent
-                        // Solid background prevents any white flash during the
-                        // fade-in transition from the splash screen.
-                        .background(PSColors.backgroundPrimary.ignoresSafeArea())
-                        .splashTransition(
-                            isTransitioning: splashTransitioning,
-                            namespace: splashNamespace
-                        )
-                        .transition(
-                            .asymmetric(
-                                insertion: .scale(scale: 0.92).combined(with: .opacity),
-                                removal: .opacity
+                    // ── Step 2+3: Splash OVER main content ──
+                    // The main app renders from the very first frame so it can
+                    // warm up tabs, configure data stores, and reach an interactive
+                    // state while the splash is still visible. When all loading
+                    // gates pass, the splash dissolves to reveal what is already
+                    // rendered underneath — zero view swaps, zero jarring cuts.
+                    ZStack {
+                        // Bottom layer: main app (loads immediately)
+                        mainAppContent
+                            .background(PSColors.backgroundPrimary.ignoresSafeArea())
+
+                        // Top layer: splash (dissolves when ready)
+                        if showSplash {
+                            FreshliSplashView(
+                                progress: splashProgress,
+                                shouldExit: shouldExitSplash,
+                                onExitComplete: {
+                                    withAnimation(.easeOut(duration: 0.1)) {
+                                        showSplash = false
+                                    }
+                                }
                             )
-                        )
+                            .zIndex(100)
+                            .allowsHitTesting(true)
+                        }
+                    }
                 }
             }
-            // Dark splash background applied to the root Group so the window
-            // is never black while services and SwiftData initialise.
-            // FreshliSplashView overlays its own animated content on top of this.
             .background(Color.black.ignoresSafeArea())
             .celebrationOverlay(manager: celebrationManager)
             .toastOverlay(manager: toastManager)
@@ -145,22 +139,14 @@ struct FreshliApp: App {
             }
             .preferredColorScheme(isDarkMode ? .dark : nil)
             .onContinueUserActivity("com.freshli.viewItem") { activity in
-                // Restore Handoff: if user was viewing a pantry item on
-                // another device, navigate directly to it on this device.
                 if let itemIdString = activity.userInfo?["itemId"] as? String {
                     logger.info("Handoff: Restoring item \(itemIdString, privacy: .public)")
-                    // Store for downstream consumption by AppTabView / FreshliView
                     UserDefaults.standard.set(itemIdString, forKey: "handoffItemId")
                     UserDefaults.standard.set("pantry", forKey: "lastSelectedTab")
                 }
             }
             .task {
-                // Configure TipKit once per cold launch so the
-                // contextual tips on the pantry + home tabs can evaluate
-                // their rules. Uses the default datastore in the app's
-                // Documents/.tips folder; survives app updates but
-                // resets on reinstall (which is what we want — new
-                // installs should see the tips again).
+                // ── Services that start during splash ──
                 do {
                     try Tips.configure([
                         .displayFrequency(.immediate),
@@ -170,72 +156,55 @@ struct FreshliApp: App {
                     logger.error("TipKit configure failed: \(error.localizedDescription, privacy: .public)")
                 }
 
-                // Start diagnostics, network monitoring, ambient light, gaze tracking, and shader warm-up
                 diagnosticsService.start()
                 networkMonitor.start()
                 ambientLight.startMonitoring()
 
-                // Start gaze tracking if user has previously enabled it.
-                // The service is a no-op on devices without TrueDepth camera.
                 if GazeTrackingService.shared.isEnabled {
                     GazeTrackingService.shared.startTracking()
                 }
 
-                // Pre-compile all Metal shader PSOs during splash so there are
-                // zero compilation hitches when the user reaches the dashboard.
-                // This is the SwiftUI equivalent of Metal 4 Async PSO Compilation.
                 ShaderWarmUpService.warmUpAll()
 
-                logger.info("FreshliApp: Restoring session...")
-                splashProgress = 0.2
-
-                // Enforce minimum splash display time (2.5 s) in parallel with auth restore.
+                // ── Minimum display time (2.0 s) — runs in parallel ──
                 Task { @MainActor in
-                    try? await Task.sleep(for: .seconds(2.5))
+                    try? await Task.sleep(for: .seconds(2.0))
                     splashMinimumTimeMet = true
-                    checkAndTransition()
+                    checkAllGates()
                 }
 
-                // Restore auth session
+                // ── Auth restore ──
+                logger.info("FreshliApp: Restoring session...")
+                splashProgress = 0.15
+
                 await authManager.restoreSession()
 
                 logger.info("FreshliApp: Session restored, state = \(String(describing: authManager.authState))")
-                splashProgress = 0.6
-                sessionValidated = true
+                authResolved = true
+                splashProgress = 0.50
+                checkAllGates()
 
-                // Pre-fetch data during splash if authenticated
-                if authManager.authState == .authenticated {
-                    logger.info("FreshliApp: Pre-fetching pantry data...")
-                    splashProgress = 0.75
-                    // Pre-fetch happens in AppTabView.task, but signal readiness
-                    splashProgress = 0.95
-                }
-
-                // Set up notifications
+                // ── Notifications ──
                 let notificationService = NotificationService()
                 notificationService.registerCategories()
                 await notificationService.requestAuthorization()
 
-                splashProgress = 1.0
                 dataPrefetched = true
-
-                // Trigger transition (only fires if minimum time is also met)
-                checkAndTransition()
+                splashProgress = 0.75
+                checkAllGates()
             }
             .task(id: authManager.authState) {
-                // Listen for auth changes when authenticated
                 if authManager.authState == .authenticated {
                     await authManager.listenForAuthChanges()
                 }
 
-                // Re-check transition whenever auth state changes —
-                // checkAndTransition also guards on splashMinimumTimeMet so it is safe.
+                // Auth state change can resolve a pending gate
                 if authManager.authState != .loading && showSplash {
-                    checkAndTransition()
+                    authResolved = true
+                    checkAllGates()
                 }
             }
             .onChange(of: networkMonitor.isConnected) { oldValue, newValue in
-                // When connectivity is restored, process offline queue
                 if !oldValue && newValue {
                     Task {
                         await offlineSyncQueue.processQueue(using: syncService)
@@ -247,69 +216,59 @@ struct FreshliApp: App {
                 GazeTrackingService.shared.pause()
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-                // Resume gaze tracking when the app returns to foreground
                 GazeTrackingService.shared.resume()
             }
         }
         .modelContainer(Self.modelContainer)
     }
 
-    // MARK: - Main App Content (post-splash)
+    // MARK: - Main App Content
 
     @ViewBuilder
     private var mainAppContent: some View {
         switch authManager.authState {
         case .loading:
-            // Fallback if splash dismissed early
-            ProgressView()
-                .tint(FLColors.primaryGreen)
+            // Brief fallback while auth resolves — hidden behind splash anyway
+            Color.clear
         case .unauthenticated:
             if authManager.hasDeclinedAuth {
-                // User previously tapped "Continue without account"
-                AppTabView()
+                AppTabView(onReady: handleAppReady)
             } else {
-                // First time after onboarding — offer sign in/up
                 AuthView()
+                    .onAppear { handleAppReady() }
             }
         case .authenticated:
-            // Authenticated — full app with cloud sync
-            AppTabView()
+            AppTabView(onReady: handleAppReady)
         }
     }
 
-    // MARK: - Splash → Dashboard Transition
+    // MARK: - Gate Logic
 
-    private func checkAndTransition() {
-        // Transition only when auth resolved, minimum time elapsed, AND all data/notifications ready
-        guard authManager.authState != .loading else { return }
-        guard splashMinimumTimeMet else { return }
-        guard dataPrefetched else { return }
+    /// Called by AppTabView (or AuthView) once essential warm-up completes.
+    private func handleAppReady() {
+        guard !appContentReady else { return }
+        appContentReady = true
+        splashProgress = 1.0
+        checkAllGates()
+    }
+
+    /// Checks ALL four gates and triggers the splash exit when they pass.
+    private func checkAllGates() {
         guard showSplash else { return }
+        guard splashMinimumTimeMet else { return }
+        guard authResolved else { return }
+        guard dataPrefetched else { return }
 
-        logger.info("FreshliApp: Transitioning from splash → main content")
+        // AppTabView readiness gate — only required when showing AppTabView.
+        // AuthView doesn't need tab warm-up so skip this gate for it.
+        let needsTabReady = authManager.authState == .authenticated ||
+            (authManager.authState == .unauthenticated && authManager.hasDeclinedAuth)
 
-        // Spring unfold animation (stiffness: 120, damping: 20)
-        withAnimation(
-            .spring(
-                Spring(mass: 1.0, stiffness: 120, damping: 20)
-            )
-        ) {
-            splashTransitioning = true
+        if needsTabReady {
+            guard appContentReady else { return }
         }
 
-        // After a brief moment, swap views
-        withAnimation(
-            .spring(
-                Spring(mass: 1.0, stiffness: 120, damping: 20)
-            ).delay(0.15)
-        ) {
-            showSplash = false
-        }
-
-        // Reset transitioning state
-        Task { @MainActor in
-            try? await Task.sleep(for: .milliseconds(500))
-            splashTransitioning = false
-        }
+        logger.info("FreshliApp: All gates passed — triggering splash exit")
+        shouldExitSplash = true
     }
 }
