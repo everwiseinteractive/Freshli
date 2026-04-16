@@ -366,7 +366,7 @@ struct ShimmerModifier: ViewModifier {
                 .visualEffect { view, proxy in
                     view.colorEffect(
                         ShaderLibrary.gpuShimmer(
-                            .float2(proxy.size),
+                            .float2(proxy.safeShaderSize),
                             .float(Float(capturedPhase))
                         )
                     )
@@ -420,37 +420,35 @@ struct TabMeltModifier: ViewModifier, Animatable {
     }
 
     func body(content: Content) -> some View {
-        if progress < 0.001 {
-            // Identity state (at rest) — NO shader, NO drawingGroup.
-            // Critical: .transition(active:identity:) applies the identity
-            // modifier to ALL content at ALL times. Wrapping all tabs in a
-            // shader pipeline causes prohibition if the shader fails.
-            content
-        } else if progress > 0.999 {
-            // Fully dissolved — just hide
-            content.opacity(0)
-        } else if ShaderWarmUpService.shadersAvailable {
-            // Active transition — Metal noise-field dissolve.
-            // IMPORTANT: Do NOT use .drawingGroup() here. The content
-            // contains NavigationStack (UIKit-backed UINavigationController)
-            // which cannot be rasterized into a Metal texture.
-            // .drawingGroup() would cause hundreds of
-            // "Unable to render flattened version of
-            //  PlatformViewControllerRepresentableAdaptor<NavigationStackRepresentable>"
-            // errors. SwiftUI handles rasterization internally when
-            // .colorEffect() is applied via .visualEffect.
+        // ────────────────────────────────────────────────────────────
+        // CRITICAL: The view structure must be IDENTICAL on every
+        // animation frame. The previous implementation had 4 branches
+        // (identity / hidden / shader / opacity) gated by `progress`.
+        // During the insertion transition (progress 1→0), SwiftUI
+        // interpolates through all branches, causing the view tree to
+        // mutate mid-animation. Each branch change destroys and
+        // recreates the NavigationStack inside, producing a rendering
+        // failure (the "error sign") on device.
+        //
+        // Fix: a single branch on `shadersAvailable` (constant for
+        // the app lifetime). The Metal shader already handles the
+        // extremes (progress < 0.001 → passthrough, > 0.999 → alpha 0).
+        //
+        // Do NOT use .drawingGroup() — NavigationStack is UIKit-backed
+        // and cannot be rasterized into a Metal texture.
+        // ────────────────────────────────────────────────────────────
+        if ShaderWarmUpService.shadersAvailable {
             content
                 .compositingGroup()
                 .visualEffect { view, proxy in
                     view.colorEffect(
                         ShaderLibrary.tabMeltDissolve(
-                            .float2(proxy.size),
+                            .float2(proxy.safeShaderSize),
                             .float(Float(progress))
                         )
                     )
                 }
         } else {
-            // Fallback — simple opacity fade
             content
                 .opacity(Double(1 - progress))
         }

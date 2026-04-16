@@ -50,7 +50,7 @@ private struct ShimmerShaderModifier: ViewModifier {
                 .visualEffect { view, proxy in
                     view.colorEffect(
                         ShaderLibrary.gpuShimmer(
-                            .float2(proxy.size),
+                            .float2(proxy.safeShaderSize),
                             .float(Float(phase))
                         )
                     )

@@ -151,10 +151,13 @@ struct LivingMenuModifier: ViewModifier {
                 let sparkle = phase.sparkleIntensity
                 view
                     .scaleEffect(1.0 + phase.scaleBoost)
+                    // Do NOT use .drawingGroup() — child content may have
+                    // .glassEffect() which is a compositor-level effect that
+                    // cannot be rasterized into a Metal texture.
                     .visualEffect { v, proxy in
                         v.colorEffect(
                             ShaderLibrary.specularSparkle(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(Float(roll)),
                                 .float(Float(pitch)),
                                 .float(sparkle)

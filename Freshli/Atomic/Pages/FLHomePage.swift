@@ -875,26 +875,26 @@ private struct HeroShaderModifier: ViewModifier {
                     view
                         .colorEffect(
                             ShaderLibrary.heroGradient(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(time)
                             )
                         )
                         .colorEffect(
                             ShaderLibrary.freshliAura(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(time)
                             )
                         )
                         .colorEffect(
                             ShaderLibrary.subtleNoise(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(time),
                                 .float(0.3)
                             )
                         )
                         .colorEffect(
                             ShaderLibrary.liquidGlass(
-                                .float4(0, 0, proxy.size.width, proxy.size.height),
+                                .float4(0, 0, proxy.safeShaderSize.width, proxy.safeShaderSize.height),
                                 .float(0.03),
                                 .float(time * 0.5)
                             )

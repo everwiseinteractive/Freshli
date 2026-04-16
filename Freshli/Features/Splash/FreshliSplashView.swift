@@ -140,7 +140,7 @@ struct FreshliSplashView: View {
                     view
                         .colorEffect(
                             ShaderLibrary.liquidGlassAurora(
-                                .float2(Float(proxy.size.width), Float(proxy.size.height)),
+                                .float2(Float(proxy.safeShaderSize.width), Float(proxy.safeShaderSize.height)),
                                 .float(time),
                                 .float(gi)
                             )

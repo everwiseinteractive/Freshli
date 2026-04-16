@@ -306,7 +306,7 @@ struct CookingScreenView: View {
                         view
                             .colorEffect(
                                 ShaderLibrary.subtleNoise(
-                                    .float2(proxy.size),
+                                    .float2(proxy.safeShaderSize),
                                     .float(time),
                                     .float(0.15)
                                 )

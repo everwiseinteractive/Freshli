@@ -25,6 +25,7 @@ using namespace metal;
 
 [[ stitchable ]]
 half4 gpuShimmer(float2 position, half4 color, float2 size, float phase) {
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 uv = position / size;
 
     // Diagonal band position (rotated ~30°)
@@ -61,6 +62,7 @@ half4 gpuShimmer(float2 position, half4 color, float2 size, float phase) {
 half4 freshnessGlow(float2 position, half4 color, float2 size,
                      float progress, float time,
                      float glowR, float glowG, float glowB) {
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 center = size * 0.5;
     float2 delta = position - center;
     float dist = length(delta);
@@ -106,6 +108,7 @@ half4 freshnessGlow(float2 position, half4 color, float2 size,
 [[ stitchable ]]
 half4 expiryPulse(float2 position, half4 color, float2 size, float time,
                    float pulseR, float pulseG, float pulseB) {
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 uv = position / size;
     float2 center = float2(0.5, 0.5);
     float dist = length(uv - center);
@@ -132,6 +135,7 @@ half4 expiryPulse(float2 position, half4 color, float2 size, float time,
 
 [[ stitchable ]]
 half4 heroGradient(float2 position, half4 color, float2 size, float time) {
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 uv = position / size;
 
     // Slow organic wave layers
@@ -186,6 +190,7 @@ half4 heroGradient(float2 position, half4 color, float2 size, float time) {
 
 [[ stitchable ]]
 half4 cardGlass(float2 position, half4 color, float2 size, float time, float intensity) {
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 uv = position / size;
 
     // Soft moving caustic pattern
@@ -217,6 +222,7 @@ half4 cardGlass(float2 position, half4 color, float2 size, float time, float int
 
 [[ stitchable ]]
 half4 impactPlasma(float2 position, half4 color, float2 size, float time, float intensityMix) {
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 uv = position / size;
     float2 p = (uv - 0.5) * 2.0;
 
@@ -272,6 +278,7 @@ half4 impactPlasma(float2 position, half4 color, float2 size, float time, float 
 half4 celebrationRadiance(float2 position, half4 color, float2 size, float time,
                            float intensity,
                            float glowR, float glowG, float glowB) {
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 center = size * 0.5;
     float2 delta = position - center;
     float dist = length(delta) / min(size.x, size.y);
@@ -303,6 +310,7 @@ half4 celebrationRadiance(float2 position, half4 color, float2 size, float time,
 [[ stitchable ]]
 half4 streakFlameGlow(float2 position, half4 color, float2 size, float time,
                        float streakDays) {
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 uv = position / size;
     float2 center = float2(0.5, 0.45); // Slightly above center (flame rises)
     float2 delta = uv - center;
@@ -346,6 +354,7 @@ half4 streakFlameGlow(float2 position, half4 color, float2 size, float time,
 [[ stitchable ]]
 half4 ambientParticles(float2 position, half4 color, float2 size, float time,
                         float density, float brightness) {
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 uv = position / size;
 
     float totalGlow = 0.0;
@@ -394,6 +403,7 @@ half4 ambientParticles(float2 position, half4 color, float2 size, float time,
 
 [[ stitchable ]]
 half4 buttonRipple(float2 position, half4 color, float2 size, float progress) {
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 center = size * 0.5;
     float2 delta = position - center;
     float dist = length(delta) / max(size.x, size.y);
@@ -437,6 +447,7 @@ half4 buttonRipple(float2 position, half4 color, float2 size, float progress) {
 float2 liquidGlassRipple(float2 position, float2 size,
                           float progress, float refractiveIndex,
                           float centerX, float centerY) {
+    if (size.x < 1.0 || size.y < 1.0) return position;
     // ── Normalized coordinates ──
     float2 center = float2(centerX, centerY) * size;
     float2 delta = position - center;
@@ -497,6 +508,7 @@ float2 liquidGlassRipple(float2 position, float2 size,
 half4 liquidGlassRippleColor(float2 position, half4 color, float2 size,
                               float progress, float refractiveIndex,
                               float centerX, float centerY) {
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 center = float2(centerX, centerY) * size;
     float2 delta = position - center;
     float dist = length(delta);
@@ -539,6 +551,7 @@ half4 weeklyWrapBg(float2 position, half4 color, float2 size, float time,
                     float c1R, float c1G, float c1B,
                     float c2R, float c2G, float c2B,
                     float c3R, float c3G, float c3B) {
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 uv = position / size;
     float2 p = (uv - 0.5) * 2.0;
 
@@ -606,6 +619,7 @@ half4 subtleNoise(float2 position, half4 color, float2 size, float time,
 [[ stitchable ]]
 half4 chefSilhouette(float2 position, half4 color, float2 size, float time,
                       float opacity) {
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 uv = position / size;
 
     // ─── Phase cycling (14s total) ───
@@ -743,6 +757,7 @@ half4 chefSilhouette(float2 position, half4 color, float2 size, float time,
 
 [[ stitchable ]]
 half4 freshliAura(float2 position, half4 color, float2 size, float time) {
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 uv = position / size;
     float totalGlow = 0.0;
 
@@ -822,6 +837,7 @@ half4 freshliAura(float2 position, half4 color, float2 size, float time) {
 [[ stitchable ]]
 half4 intentGlow(float2 position, half4 color, float2 size, float time,
                   float intensity, float glowR, float glowG, float glowB) {
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 uv = position / size;
     float2 center = float2(0.5, 0.5);
     float2 delta  = uv - center;
@@ -924,6 +940,7 @@ half4 liquidGlassSurface(float2 position, half4 color, float2 size,
 [[ stitchable ]]
 half4 predictiveSurface(float2 position, half4 color, float2 size, float time,
                          float confidence, float glowR, float glowG, float glowB) {
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 uv = position / size;
     float2 center = float2(0.5, 0.5);
     float2 delta = uv - center;
@@ -1007,6 +1024,7 @@ half4 predictiveSurface(float2 position, half4 color, float2 size, float time,
     float shadowB,
     float time
 ) {
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 uv = position / size;
 
     // ── 1. Shadow offset from light direction + elevation ──
@@ -1116,6 +1134,7 @@ half4 predictiveSurface(float2 position, half4 color, float2 size, float time,
     float tintG,
     float tintB
 ) {
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 uv = position / size;
 
     // Edge distance for rim effects
@@ -1192,6 +1211,7 @@ half4 tabMeltDissolve(float2 position, half4 color, float2 size, float progress)
     if (progress < 0.001) return color;
     if (progress > 0.999) return half4(color.rgb, 0.0h);
 
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 uv = position / size;
 
     // ── 2D value noise (hash-based, smoothstep interpolated) ──
@@ -1245,6 +1265,7 @@ half4 specularSparkle(float2 position, half4 color, float2 size,
                        float lightX, float lightY, float intensity) {
     if (intensity < 0.001) return color;
 
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 uv = position / size;
 
     // Specular hotspot follows device tilt

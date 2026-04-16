@@ -4,6 +4,7 @@ using namespace metal;
 
 [[ stitchable ]]
 half4 liquidGlass(float2 position, half4 color, float4 bounds, float density, float power) {
+    if (bounds.z < 1.0 || bounds.w < 1.0) return color;
     // Normalize coordinates
     float2 uv = position / bounds.zw;
 
@@ -50,6 +51,7 @@ half4 gazeBloom(float2 position, half4 color, float4 bounds,
                 float2 gazeUV, float bloomIntensity, float power, float density) {
     // Skip if no bloom
     if (bloomIntensity < 0.01) return color;
+    if (bounds.z < 1.0 || bounds.w < 1.0) return color;
 
     float2 uv = position / bounds.zw;
 

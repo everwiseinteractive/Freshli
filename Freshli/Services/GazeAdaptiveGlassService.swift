@@ -220,10 +220,10 @@ struct GazeAdaptiveGlassModifier: ViewModifier {
                         view.colorEffect(
                             ShaderLibrary.gazeBloom(
                                 .float4(
-                                    Float(proxy.size.width),
-                                    Float(proxy.size.height),
-                                    Float(proxy.size.width),
-                                    Float(proxy.size.height)
+                                    Float(proxy.safeShaderSize.width),
+                                    Float(proxy.safeShaderSize.height),
+                                    Float(proxy.safeShaderSize.width),
+                                    Float(proxy.safeShaderSize.height)
                                 ),
                                 .float2(gazeUVX, gazeUVY),
                                 .float(intensity),

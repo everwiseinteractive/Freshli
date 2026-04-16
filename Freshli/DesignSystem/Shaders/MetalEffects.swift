@@ -1,5 +1,17 @@
 import SwiftUI
 
+// MARK: - Safe Shader Geometry
+
+extension GeometryProxy {
+    /// Size guaranteed to have non-zero dimensions, preventing division-by-zero
+    /// in Metal shaders that normalise coordinates via `position / size`.
+    /// Without this guard, views that haven't completed layout pass (0, 0) to
+    /// the GPU, producing NaN/Inf which causes SwiftUI rendering failures.
+    nonisolated var safeShaderSize: CGSize {
+        CGSize(width: max(size.width, 1), height: max(size.height, 1))
+    }
+}
+
 // ──────────────────────────────────────────────────────────
 // Freshli — Metal Effect View Modifiers (MSL 3.2+)
 // SwiftUI wrappers around the GPU shaders in FreshliShaders.metal.
@@ -41,7 +53,7 @@ struct MetalShimmerModifier: ViewModifier {
                 .visualEffect { view, proxy in
                     view.colorEffect(
                         ShaderLibrary.gpuShimmer(
-                            .float2(proxy.size),
+                            .float2(proxy.safeShaderSize),
                             .float(Float(capturedPhase))
                         )
                     )
@@ -81,10 +93,15 @@ struct MetalCardGlassModifier: ViewModifier {
             TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: false)) { timeline in
                 let time = Float(timeline.date.timeIntervalSince(startDate))
                 content
+                    // Do NOT use .drawingGroup() here — callers like
+                    // .glassCardStyle() apply .glassEffect() before this
+                    // modifier. .drawingGroup() would try to flatten the
+                    // compositor-level glass into a Metal texture, which
+                    // fails and produces a blank/broken view on device.
                     .visualEffect { view, proxy in
                         view.colorEffect(
                             ShaderLibrary.cardGlass(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(time),
                                 .float(intensity)
                             )
@@ -112,7 +129,7 @@ struct MetalImpactShimmerModifier: ViewModifier {
                 .visualEffect { view, proxy in
                     view.colorEffect(
                         ShaderLibrary.gpuShimmer(
-                            .float2(proxy.size),
+                            .float2(proxy.safeShaderSize),
                             .float(Float(capturedPhase))
                         )
                     )
@@ -150,7 +167,7 @@ struct MetalExpiryPulseModifier: ViewModifier {
                     .visualEffect { view, proxy in
                         view.colorEffect(
                             ShaderLibrary.expiryPulse(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(time),
                                 .float(resolved.r),
                                 .float(resolved.g),
@@ -190,7 +207,7 @@ struct MetalCelebrationRadianceModifier: ViewModifier {
                     .visualEffect { view, proxy in
                         view.colorEffect(
                             ShaderLibrary.celebrationRadiance(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(time),
                                 .float(intensity),
                                 .float(resolved.r),
@@ -224,7 +241,7 @@ struct MetalStreakFlameModifier: ViewModifier {
                     .visualEffect { view, proxy in
                         view.colorEffect(
                             ShaderLibrary.streakFlameGlow(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(time),
                                 .float(Float(streakDays))
                             )
@@ -265,7 +282,7 @@ struct MetalAmbientParticlesModifier: ViewModifier {
                     .visualEffect { view, proxy in
                         view.colorEffect(
                             ShaderLibrary.ambientParticles(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(time),
                                 .float(capturedDensity),
                                 .float(brightness)
@@ -292,7 +309,7 @@ struct MetalButtonRippleModifier: ViewModifier {
                 .visualEffect { view, proxy in
                     view.colorEffect(
                         ShaderLibrary.buttonRipple(
-                            .float2(proxy.size),
+                            .float2(proxy.safeShaderSize),
                             .float(Float(capturedRippleProgress))
                         )
                     )
@@ -333,7 +350,7 @@ struct MetalNoiseModifier: ViewModifier {
                     .visualEffect { view, proxy in
                         view.colorEffect(
                             ShaderLibrary.subtleNoise(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(time),
                                 .float(intensity)
                             )
@@ -362,7 +379,7 @@ struct MetalHeroGradientModifier: ViewModifier {
                     .visualEffect { view, proxy in
                         view.colorEffect(
                             ShaderLibrary.heroGradient(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(time)
                             )
                         )
@@ -395,7 +412,7 @@ struct MetalImpactPlasmaModifier: ViewModifier {
                     .visualEffect { view, proxy in
                         view.colorEffect(
                             ShaderLibrary.impactPlasma(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(time),
                                 .float(intensityMix)
                             )
@@ -431,7 +448,7 @@ struct MetalChefSilhouetteModifier: ViewModifier {
                     .visualEffect { view, proxy in
                         view.colorEffect(
                             ShaderLibrary.chefSilhouette(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(time),
                                 .float(opacity)
                             )
@@ -461,7 +478,7 @@ struct MetalFreshliAuraModifier: ViewModifier {
                     .visualEffect { view, proxy in
                         view.colorEffect(
                             ShaderLibrary.freshliAura(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(time)
                             )
                         )
@@ -499,7 +516,7 @@ struct MetalIntentGlowModifier: ViewModifier {
                     .visualEffect { view, proxy in
                         view.colorEffect(
                             ShaderLibrary.intentGlow(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(time),
                                 .float(intensity),
                                 .float(resolved.r),
@@ -539,7 +556,7 @@ struct MetalLiquidGlassSurfaceModifier: ViewModifier {
                     .visualEffect { view, proxy in
                         view.colorEffect(
                             ShaderLibrary.liquidGlassSurface(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(time),
                                 .float(intensity)
                             )
@@ -582,7 +599,7 @@ struct MetalPredictiveSurfaceModifier: ViewModifier {
                     .visualEffect { view, proxy in
                         view.colorEffect(
                             ShaderLibrary.predictiveSurface(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(time),
                                 .float(confidence),
                                 .float(resolved.r),
@@ -641,7 +658,7 @@ struct MetalLiquidGlassRippleModifier: ViewModifier {
                 .visualEffect { view, proxy in
                     view.distortionEffect(
                         ShaderLibrary.liquidGlassRipple(
-                            .float2(proxy.size),
+                            .float2(proxy.safeShaderSize),
                             .float(Float(capturedRippleProgress)),
                             .float(capturedRefractiveIndex),
                             .float(Float(capturedTouchCenter.x)),
@@ -657,7 +674,7 @@ struct MetalLiquidGlassRippleModifier: ViewModifier {
                 .visualEffect { view, proxy in
                     view.colorEffect(
                         ShaderLibrary.liquidGlassRippleColor(
-                            .float2(proxy.size),
+                            .float2(proxy.safeShaderSize),
                             .float(Float(capturedRippleProgress)),
                             .float(capturedRefractiveIndex),
                             .float(Float(capturedTouchCenter.x)),

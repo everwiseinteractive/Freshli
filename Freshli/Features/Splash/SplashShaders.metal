@@ -149,6 +149,7 @@ inline float3 computeAurora(float2 uv, float time, float aspect) {
 half4 liquidGlassAurora(float2 position, half4 color, float2 size,
                          float time, float glassIntensity) {
 
+    if (size.x < 1.0 || size.y < 1.0) return color;
     float2 uv = position / size;
     float2 centered = uv - 0.5;
     float aspect = size.x / size.y;
@@ -299,6 +300,7 @@ half4 liquidGlassRing(float2 position, half4 color, float2 size,
 half4 liquidShimmer(float2 position, half4 existingColor, float2 size,
                      float progress) {
 
+    if (size.x < 1.0 || size.y < 1.0) return existingColor;
     float2 uv = position / size;
 
     // Curved diagonal for premium feel

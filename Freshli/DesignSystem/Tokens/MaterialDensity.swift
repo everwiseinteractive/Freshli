@@ -140,10 +140,10 @@ struct LiquidGlassModifier: ViewModifier {
                         view.colorEffect(
                             ShaderLibrary.liquidGlass(
                                 .float4(
-                                    Float(proxy.size.width),
-                                    Float(proxy.size.height),
-                                    Float(proxy.size.width),
-                                    Float(proxy.size.height)
+                                    Float(proxy.safeShaderSize.width),
+                                    Float(proxy.safeShaderSize.height),
+                                    Float(proxy.safeShaderSize.width),
+                                    Float(proxy.safeShaderSize.height)
                                 ),
                                 .float(density.refractionIndex),
                                 .float(time)

@@ -57,7 +57,7 @@ struct RayTracedShadowModifier: ViewModifier {
                     .visualEffect { view, proxy in
                         view.colorEffect(
                             ShaderLibrary.rayTracedShadow(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(capturedLightDirection.x),
                                 .float(capturedLightDirection.y),
                                 .float(Float(elevation.rawValue)),
@@ -104,7 +104,7 @@ struct AmbientAdaptiveGlassModifier: ViewModifier {
                     .visualEffect { view, proxy in
                         view.colorEffect(
                             ShaderLibrary.ambientAdaptiveGlass(
-                                .float2(proxy.size),
+                                .float2(proxy.safeShaderSize),
                                 .float(capturedAmbientBrightness),
                                 .float(time),
                                 .float(resolved.r),

@@ -85,14 +85,14 @@ struct FreshliImpactDashboardView: View {
                         view
                             .colorEffect(
                                 ShaderLibrary.impactPlasma(
-                                    .float2(proxy.size),
+                                    .float2(proxy.safeShaderSize),
                                     .float(time),
                                     .float(min(impactIntensity, 1.0) * 0.5 + 0.2)
                                 )
                             )
                             .colorEffect(
                                 ShaderLibrary.ambientParticles(
-                                    .float2(proxy.size),
+                                    .float2(proxy.safeShaderSize),
                                     .float(time),
                                     .float(1.5 * capturedParticleDensity),
                                     .float(0.3)
