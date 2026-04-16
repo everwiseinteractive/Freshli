@@ -604,10 +604,11 @@
     <div class="inner">
       <a href="#" class="logo"><img src="icon.png" alt="Freshli icon" /> Freshli</a>
       <div class="nav-links">
-        <a href="#features" class="nav-link">Features</a>
-        <a href="#impact" class="nav-link">Impact</a>
-        <a href="support.html" class="nav-link">Support</a>
-        <a href="#download" class="cta-nav">Download Free</a>
+        <a href="#features" class="nav-link" data-i18n="nav.features">Features</a>
+        <a href="#impact" class="nav-link" data-i18n="nav.impact">Impact</a>
+        <a href="support.html" class="nav-link" data-i18n="nav.support">Support</a>
+        <a href="#download" class="cta-nav" data-i18n="nav.downloadFree">Download Free</a>
+        <div data-lang-picker></div>
       </div>
     </div>
   </nav>
@@ -616,19 +617,19 @@
   <section class="hero">
     <div class="hero-inner">
       <div class="hero-text">
-        <h1>Your food.<br>Your <span class="green">impact.</span></h1>
-        <p class="subtitle">Freshli uses on-device Apple Intelligence to rescue your expiring food — private, instant, no internet needed. For the people. For the planet.</p>
+        <h1 data-i18n="hero.title">Your food.<br>Your <span class="green">impact.</span></h1>
+        <p class="subtitle" data-i18n="hero.subtitle">Freshli uses on-device Apple Intelligence to rescue your expiring food — private, instant, no internet needed. For the people. For the planet.</p>
         <div class="hero-ctas">
           <a href="#download" class="btn-primary">
             <svg width="20" height="24" viewBox="0 0 20 24" fill="currentColor"><path d="M14.94 5.19A4.38 4.38 0 0 0 16 2a4.44 4.44 0 0 0-3 1.52 4.17 4.17 0 0 0-1 3 3.69 3.69 0 0 0 2.94-1.33zm2.52 7.44a4.51 4.51 0 0 1 2.16-3.81 4.66 4.66 0 0 0-3.66-2c-1.56-.16-3.05.92-3.84.92s-2-.9-3.3-.87a4.92 4.92 0 0 0-4.14 2.53C2.93 12.45 4.24 17 5.7 19.47c.73 1.2 1.6 2.54 2.75 2.49 1.1-.05 1.52-.72 2.85-.72s1.71.72 2.88.7c1.19-.03 1.93-1.22 2.65-2.42a9.37 9.37 0 0 0 1.2-2.46 4.36 4.36 0 0 1-2.57-4.43z"/></svg>
-            Download on App Store
+            <span data-i18n="hero.ctaDownload">Download on App Store</span>
           </a>
-          <a href="#features" class="btn-secondary">See Features ↓</a>
+          <a href="#features" class="btn-secondary" data-i18n="hero.ctaFeatures">See Features ↓</a>
         </div>
         <div class="badge-row">
-          <span class="badge">🤖 Apple Intelligence</span>
-          <span class="badge">🔒 100% On-Device</span>
-          <span class="badge">🌍 6 Languages</span>
+          <span class="badge" data-i18n="hero.badgeAI">🤖 Apple Intelligence</span>
+          <span class="badge" data-i18n="hero.badgeOnDevice">🔒 100% On-Device</span>
+          <span class="badge" data-i18n="hero.badgeLanguages">🌍 10 Languages</span>
         </div>
       </div>
       <div class="hero-visual">
@@ -642,23 +643,23 @@
   <!-- HOW IT WORKS -->
   <section style="padding: 80px 24px 0; background: #fff;">
     <div style="max-width: 900px; margin: 0 auto; text-align: center;">
-      <div class="section-label">🚀 How It Works</div>
-      <h2 class="section-title" style="margin-bottom: 48px;">Three steps to<br>zero food waste.</h2>
+      <div class="section-label" data-i18n="how.label">🚀 How It Works</div>
+      <h2 class="section-title" style="margin-bottom: 48px;" data-i18n="how.title">Three steps to<br>zero food waste.</h2>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 32px; text-align: center;">
         <div class="fade-in">
           <div style="width: 64px; height: 64px; margin: 0 auto 16px; background: var(--green-50); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px;">1️⃣</div>
-          <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px;">Add your food</h3>
-          <p style="font-size: 14px; color: var(--neutral-600); line-height: 1.6;">Scan a barcode, snap a receipt, or type manually. Takes 5 seconds.</p>
+          <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px;" data-i18n="how.step1Title">Add your food</h3>
+          <p style="font-size: 14px; color: var(--neutral-600); line-height: 1.6;" data-i18n="how.step1Text">Scan a barcode, snap a receipt, or type manually. Takes 5 seconds.</p>
         </div>
         <div class="fade-in">
           <div style="width: 64px; height: 64px; margin: 0 auto 16px; background: #FEF3C7; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px;">2️⃣</div>
-          <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px;">Get smart alerts</h3>
-          <p style="font-size: 14px; color: var(--neutral-600); line-height: 1.6;">Freshli tells you what's expiring and suggests AI recipes to use it up.</p>
+          <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px;" data-i18n="how.step2Title">Get smart alerts</h3>
+          <p style="font-size: 14px; color: var(--neutral-600); line-height: 1.6;" data-i18n="how.step2Text">Freshli tells you what's expiring and suggests AI recipes to use it up.</p>
         </div>
         <div class="fade-in">
           <div style="width: 64px; height: 64px; margin: 0 auto 16px; background: #DBEAFE; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px;">3️⃣</div>
-          <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px;">Rescue or share</h3>
-          <p style="font-size: 14px; color: var(--neutral-600); line-height: 1.6;">Cook it, share with neighbours, or donate to a community fridge.</p>
+          <h3 style="font-size: 18px; font-weight: 800; margin-bottom: 8px;" data-i18n="how.step3Title">Rescue or share</h3>
+          <p style="font-size: 14px; color: var(--neutral-600); line-height: 1.6;" data-i18n="how.step3Text">Cook it, share with neighbours, or donate to a community fridge.</p>
         </div>
       </div>
     </div>
@@ -667,50 +668,50 @@
   <!-- FEATURES -->
   <section class="features" id="features">
     <div class="inner">
-      <div class="section-label">✨ Features</div>
-      <h2 class="section-title">Everything you need to<br>stop wasting food.</h2>
-      <p class="section-subtitle">Track, rescue, share, and celebrate — all from one beautiful app designed for people who care about the planet.</p>
+      <div class="section-label" data-i18n="features.label">✨ Features</div>
+      <h2 class="section-title" data-i18n="features.title">Everything you need to<br>stop wasting food.</h2>
+      <p class="section-subtitle" data-i18n="features.subtitle">Track, rescue, share, and celebrate — all from one beautiful app designed for people who care about the planet.</p>
 
       <div class="feature-grid">
         <div class="feature-card fade-in">
           <div class="feature-icon" style="background: var(--green-50);">🧑‍🍳</div>
-          <h3>Rescue Chef AI</h3>
-          <p>Tap one button and Apple Intelligence writes recipes for your exact pantry. On-device, private, no internet needed.</p>
+          <h3 data-i18n="features.rescueChef.title">Rescue Chef AI</h3>
+          <p data-i18n="features.rescueChef.text">Tap one button and Apple Intelligence writes recipes for your exact pantry. On-device, private, no internet needed.</p>
         </div>
         <div class="feature-card fade-in">
           <div class="feature-icon" style="background: #FEF3C7;">⏰</div>
-          <h3>Smart Expiry Tracking</h3>
-          <p>Scan barcodes, receipts, or type manually. Color-coded badges tell you what needs using first — at a glance.</p>
+          <h3 data-i18n="features.expiry.title">Smart Expiry Tracking</h3>
+          <p data-i18n="features.expiry.text">Scan barcodes, receipts, or type manually. Color-coded badges tell you what needs using first — at a glance.</p>
         </div>
         <div class="feature-card fade-in">
           <div class="feature-icon" style="background: #DBEAFE;">🤝</div>
-          <h3>Community Sharing</h3>
-          <p>List surplus food for free collection by neighbours. Find community fridges. Join local pods for hyper-local sharing.</p>
+          <h3 data-i18n="features.community.title">Community Sharing</h3>
+          <p data-i18n="features.community.text">List surplus food for free collection by neighbours. Find community fridges. Join local pods for hyper-local sharing.</p>
         </div>
         <div class="feature-card fade-in">
           <div class="feature-icon" style="background: #FCE7F3;">📊</div>
-          <h3>Weekly Wrap</h3>
-          <p>A cinematic recap of your food rescue story — items saved, CO₂ avoided, money kept. Shareable to Instagram Stories.</p>
+          <h3 data-i18n="features.wrap.title">Weekly Wrap</h3>
+          <p data-i18n="features.wrap.text">A cinematic recap of your food rescue story — items saved, CO₂ avoided, money kept. Shareable to Instagram Stories.</p>
         </div>
         <div class="feature-card fade-in">
           <div class="feature-icon" style="background: #E0E7FF;">⌚</div>
-          <h3>Apple Watch + Widgets</h3>
-          <p>Glanceable expiry alerts on your wrist. Interactive widgets with one-tap consume. Live Activities on your Lock Screen.</p>
+          <h3 data-i18n="features.watch.title">Apple Watch + Widgets</h3>
+          <p data-i18n="features.watch.text">Glanceable expiry alerts on your wrist. Interactive widgets with one-tap consume. Live Activities on your Lock Screen.</p>
         </div>
         <div class="feature-card fade-in">
           <div class="feature-icon" style="background: var(--green-50);">🗣️</div>
-          <h3>"Hey Siri, Rescue My Pantry"</h3>
-          <p>Voice-activated AI recipes from Siri, Shortcuts, Spotlight, or Control Center. Zero taps needed.</p>
+          <h3 data-i18n="features.siri.title">"Hey Siri, Rescue My Pantry"</h3>
+          <p data-i18n="features.siri.text">Voice-activated AI recipes from Siri, Shortcuts, Spotlight, or Control Center. Zero taps needed.</p>
         </div>
         <div class="feature-card fade-in">
           <div class="feature-icon" style="background: #FEF9C3;">🙌</div>
-          <h3>Hands-Free Cooking</h3>
-          <p>Freshli reads every recipe step aloud so you never touch your phone while cooking. Eyes on the pan, not the screen.</p>
+          <h3 data-i18n="features.handsfree.title">Hands-Free Cooking</h3>
+          <p data-i18n="features.handsfree.text">Freshli reads every recipe step aloud so you never touch your phone while cooking. Eyes on the pan, not the screen.</p>
         </div>
         <div class="feature-card fade-in">
           <div class="feature-icon" style="background: #CCFBF1;">🌊</div>
-          <h3>Live Wave</h3>
-          <p>See real-time global impact — how many people are rescuing food right now, total CO&#8322; avoided, and meals shared worldwide.</p>
+          <h3 data-i18n="features.wave.title">Live Wave</h3>
+          <p data-i18n="features.wave.text">See real-time global impact — how many people are rescuing food right now, total CO&#8322; avoided, and meals shared worldwide.</p>
         </div>
       </div>
     </div>
@@ -720,10 +721,10 @@
   <section style="padding: 80px 24px; background: var(--neutral-50);">
     <div style="max-width: 700px; margin: 0 auto; text-align: center;">
       <div style="font-size: 48px; margin-bottom: 16px;">💬</div>
-      <blockquote style="font-size: 22px; font-weight: 600; line-height: 1.5; color: var(--neutral-800); font-style: italic; margin: 0 0 20px;">
+      <blockquote style="font-size: 22px; font-weight: 600; line-height: 1.5; color: var(--neutral-800); font-style: italic; margin: 0 0 20px;" data-i18n="testimonial.quote">
         "I used to throw away at least £15 of food a week. With Freshli, I haven't binned a single item in three weeks. The AI recipes are genuinely helpful."
       </blockquote>
-      <p style="font-size: 15px; color: var(--neutral-600); font-weight: 600;">— Sarah K., London</p>
+      <p style="font-size: 15px; color: var(--neutral-600); font-weight: 600;" data-i18n="testimonial.author">— Sarah K., London</p>
       <div style="display: flex; gap: 4px; justify-content: center; margin-top: 12px;">
         <span style="color: #FBBF24; font-size: 18px;">★★★★★</span>
       </div>
@@ -733,9 +734,9 @@
   <!-- AI SECTION -->
   <section class="ai-section">
     <div class="inner">
-      <div class="section-label">🧠 Apple Intelligence</div>
-      <h2 class="section-title">Your pantry data never<br>leaves your phone.</h2>
-      <p class="section-subtitle">Freshli's Rescue Chef runs entirely on-device using iOS 26's FoundationModels framework. No servers, no API costs, no privacy trade-offs. Your fridge is your business.</p>
+      <div class="section-label" data-i18n="ai.label">🧠 Apple Intelligence</div>
+      <h2 class="section-title" data-i18n="ai.title">Your pantry data never<br>leaves your phone.</h2>
+      <p class="section-subtitle" data-i18n="ai.subtitle">Freshli's Rescue Chef runs entirely on-device using iOS 26's FoundationModels framework. No servers, no API costs, no privacy trade-offs. Your fridge is your business.</p>
       <div class="ai-pills">
         <span class="ai-pill">On-Device LLM</span>
         <span class="ai-pill">Zero Network Calls</span>
@@ -749,26 +750,26 @@
   <!-- IMPACT -->
   <section class="impact" id="impact">
     <div class="inner">
-      <div class="section-label">🌍 Global Impact</div>
-      <h2 class="section-title">Together, we're building<br>a zero-waste world.</h2>
-      <p class="section-subtitle" style="margin: 0 auto 60px;">Every item you rescue joins a global wave of people fighting food waste.</p>
+      <div class="section-label" data-i18n="impact.label">🌍 Global Impact</div>
+      <h2 class="section-title" data-i18n="impact.title">Together, we're building<br>a zero-waste world.</h2>
+      <p class="section-subtitle" style="margin: 0 auto 60px;" data-i18n="impact.subtitle">Every item you rescue joins a global wave of people fighting food waste.</p>
 
       <div class="stats-grid">
         <div class="stat-card fade-in">
           <div class="stat-number">51k+</div>
-          <div class="stat-label">Items Rescued</div>
+          <div class="stat-label" data-i18n="impact.itemsRescued">Items Rescued</div>
         </div>
         <div class="stat-card fade-in">
           <div class="stat-number">17t</div>
-          <div class="stat-label">Food Saved</div>
+          <div class="stat-label" data-i18n="impact.foodSaved">Food Saved</div>
         </div>
         <div class="stat-card fade-in">
           <div class="stat-number">13k</div>
-          <div class="stat-label">Families Fed</div>
+          <div class="stat-label" data-i18n="impact.familiesFed">Families Fed</div>
         </div>
         <div class="stat-card fade-in">
           <div class="stat-number" id="currency-stat" data-gb="£700" data-us="$1,500" data-eu="€900" data-au="A$2,000" data-ca="C$1,700">£700</div>
-          <div class="stat-label">Saved Per Household/Year</div>
+          <div class="stat-label" data-i18n="impact.savedPerHousehold">Saved Per Household/Year</div>
         </div>
       </div>
     </div>
@@ -778,57 +779,57 @@
   <section style="padding: 80px 24px; background: #fff;">
     <div style="max-width: 700px; margin: 0 auto;">
       <div style="text-align: center; margin-bottom: 48px;">
-        <div class="section-label">❓ FAQ</div>
-        <h2 class="section-title">Common questions.</h2>
+        <div class="section-label" data-i18n="faq.label">❓ FAQ</div>
+        <h2 class="section-title" data-i18n="faq.title">Common questions.</h2>
       </div>
       <div id="faq-list">
         <div class="faq-item-home" onclick="this.classList.toggle('open')">
           <div style="padding: 20px 0; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; border-bottom: 1px solid var(--neutral-100);">
-            Is Freshli really free?
+            <span data-i18n="faq.q1">Is Freshli really free?</span>
             <span style="font-size: 20px; font-weight: 300; color: var(--neutral-600); transition: transform 0.2s;" class="faq-toggle">+</span>
           </div>
           <div style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;" class="faq-answer">
-            <p style="padding: 12px 0; font-size: 15px; color: var(--neutral-600); line-height: 1.6;">Yes. Core features — pantry tracking, expiry alerts, community sharing, and the AI Rescue Chef — are completely free. Freshli Pro is an optional subscription for power users.</p>
+            <p style="padding: 12px 0; font-size: 15px; color: var(--neutral-600); line-height: 1.6;" data-i18n="faq.a1">Yes. Core features — pantry tracking, expiry alerts, community sharing, and the AI Rescue Chef — are completely free. Freshli Pro is an optional subscription for power users.</p>
           </div>
         </div>
         <div class="faq-item-home" onclick="this.classList.toggle('open')">
           <div style="padding: 20px 0; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; border-bottom: 1px solid var(--neutral-100);">
-            Does the AI need the internet?
+            <span data-i18n="faq.q2">Does the AI need the internet?</span>
             <span style="font-size: 20px; font-weight: 300; color: var(--neutral-600);" class="faq-toggle">+</span>
           </div>
           <div style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;" class="faq-answer">
-            <p style="padding: 12px 0; font-size: 15px; color: var(--neutral-600); line-height: 1.6;">No. Rescue Chef runs entirely on your device using Apple Intelligence. No server calls, no API costs, no data leaving your phone. Works completely offline.</p>
+            <p style="padding: 12px 0; font-size: 15px; color: var(--neutral-600); line-height: 1.6;" data-i18n="faq.a2">No. Rescue Chef runs entirely on your device using Apple Intelligence. No server calls, no API costs, no data leaving your phone. Works completely offline.</p>
           </div>
         </div>
         <div class="faq-item-home" onclick="this.classList.toggle('open')">
           <div style="padding: 20px 0; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; justify-content: space-between; border-bottom: 1px solid var(--neutral-100);">
-            What devices are supported?
+            <span data-i18n="faq.q3">What devices are supported?</span>
             <span style="font-size: 20px; font-weight: 300; color: var(--neutral-600);" class="faq-toggle">+</span>
           </div>
           <div style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;" class="faq-answer">
-            <p style="padding: 12px 0; font-size: 15px; color: var(--neutral-600); line-height: 1.6;">Freshli requires iOS 26 or later. AI Rescue Chef needs Apple Intelligence (iPhone 16+). Apple Watch complications need watchOS 26.</p>
+            <p style="padding: 12px 0; font-size: 15px; color: var(--neutral-600); line-height: 1.6;" data-i18n="faq.a3">Freshli requires iOS 26 or later. AI Rescue Chef needs Apple Intelligence (iPhone 16+). Apple Watch complications need watchOS 26.</p>
           </div>
         </div>
       </div>
-      <p style="text-align: center; margin-top: 24px;"><a href="support.html" style="color: var(--green-700); font-weight: 600; text-decoration: none;">More questions? Visit Support →</a></p>
+      <p style="text-align: center; margin-top: 24px;"><a href="support.html" style="color: var(--green-700); font-weight: 600; text-decoration: none;" data-i18n="faq.moreQuestions">More questions? Visit Support →</a></p>
     </div>
   </section>
 
   <!-- CTA -->
   <section class="cta-section" id="download">
     <div class="inner">
-      <h2>Start rescuing<br>food today.</h2>
-      <p>Free to download. No account required to start. Your pantry, your privacy, your planet.</p>
+      <h2 data-i18n="cta.title">Start rescuing<br>food today.</h2>
+      <p data-i18n="cta.subtitle">Free to download. No account required to start. Your pantry, your privacy, your planet.</p>
       <a href="#" class="btn-primary" style="font-size: 19px; padding: 18px 40px;">
         <svg width="22" height="26" viewBox="0 0 20 24" fill="currentColor"><path d="M14.94 5.19A4.38 4.38 0 0 0 16 2a4.44 4.44 0 0 0-3 1.52 4.17 4.17 0 0 0-1 3 3.69 3.69 0 0 0 2.94-1.33zm2.52 7.44a4.51 4.51 0 0 1 2.16-3.81 4.66 4.66 0 0 0-3.66-2c-1.56-.16-3.05.92-3.84.92s-2-.9-3.3-.87a4.92 4.92 0 0 0-4.14 2.53C2.93 12.45 4.24 17 5.7 19.47c.73 1.2 1.6 2.54 2.75 2.49 1.1-.05 1.52-.72 2.85-.72s1.71.72 2.88.7c1.19-.03 1.93-1.22 2.65-2.42a9.37 9.37 0 0 0 1.2-2.46 4.36 4.36 0 0 1-2.57-4.43z"/></svg>
-        Download Freshli Free
+        <span data-i18n="cta.button">Download Freshli Free</span>
       </a>
       <div class="badge-row" style="justify-content: center; margin-top: 24px;">
-        <span class="badge">iOS 26+</span>
-        <span class="badge">Apple Watch</span>
-        <span class="badge">Siri Shortcuts</span>
-        <span class="badge">Live Activities</span>
-        <span class="badge">Dark Mode</span>
+        <span class="badge" data-i18n="cta.badge1">iOS 26+</span>
+        <span class="badge" data-i18n="cta.badge2">Apple Watch</span>
+        <span class="badge" data-i18n="cta.badge3">Siri Shortcuts</span>
+        <span class="badge" data-i18n="cta.badge4">Live Activities</span>
+        <span class="badge" data-i18n="cta.badge5">Dark Mode</span>
       </div>
     </div>
   </section>
@@ -836,19 +837,23 @@
   <!-- FOOTER -->
   <footer>
     <div class="logo-footer"><img src="icon.png" alt="Freshli" style="width: 28px; height: 28px; border-radius: 7px; vertical-align: middle; margin-right: 6px;" />Freshli</div>
-    <p>For the people. For the planet.</p>
+    <p data-i18n="footer.tagline">For the people. For the planet.</p>
     <div class="links">
-      <a href="about.html">Our Story</a>
-      <a href="partners.html">Partners</a>
-      <a href="social.html">Social</a>
-      <a href="privacy.html">Privacy Policy</a>
-      <a href="terms.html">Terms of Service</a>
-      <a href="support.html">Support</a>
-      <a href="press.html">Press Kit</a>
-      <a href="mailto:support@freshli.app">Contact</a>
+      <a href="about.html" data-i18n="footer.ourStory">Our Story</a>
+      <a href="partners.html" data-i18n="footer.partners">Partners</a>
+      <a href="social.html" data-i18n="footer.social">Social</a>
+      <a href="privacy.html" data-i18n="footer.privacy">Privacy Policy</a>
+      <a href="terms.html" data-i18n="footer.terms">Terms of Service</a>
+      <a href="support.html" data-i18n="footer.support">Support</a>
+      <a href="press.html" data-i18n="footer.press">Press Kit</a>
+      <a href="mailto:support@freshli.app" data-i18n="footer.contact">Contact</a>
     </div>
-    <p style="margin-top: 24px; font-size: 12px;">&copy; 2026 Freshli. All rights reserved.</p>
+    <p style="margin-top: 24px; font-size: 12px;" data-i18n="footer.rights">&copy; 2026 Freshli. All rights reserved.</p>
   </footer>
+
+  <!-- I18N (English source + engine) -->
+  <script src="i18n/en.js"></script>
+  <script src="i18n.js" defer></script>
 
   <!-- SCROLL ANIMATIONS -->
   <script>

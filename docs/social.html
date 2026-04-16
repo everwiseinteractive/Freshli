@@ -78,12 +78,12 @@
   </style>
 </head>
 <body>
-  <nav><div class="inner"><a href="/" class="logo"><img src="icon.png" alt="Freshli" /> Freshli</a><a href="/" class="back-link">&larr; Back to home</a></div></nav>
+  <nav><div class="inner"><a href="/" class="logo"><img src="icon.png" alt="Freshli" /> Freshli</a><a href="/" class="back-link" data-i18n="nav.backHome">&larr; Back to home</a><div data-lang-picker></div></div></nav>
 
   <div class="hero">
     <div class="inner">
-      <h1>Follow the rescue wave.</h1>
-      <p>Live updates, food rescue tips, community stories, and behind-the-scenes from the Freshli team.</p>
+      <h1 data-i18n="social.title">Follow the rescue wave.</h1>
+      <p data-i18n="social.subtitle">Live updates, food rescue tips, community stories, and behind-the-scenes from the Freshli team.</p>
     </div>
   </div>
 
@@ -117,8 +117,8 @@
 
   <!-- Live Feed -->
   <div class="feed-section">
-    <h2><span class="live-dot"></span>Live from Freshli</h2>
-    <p>See what we're sharing across our channels — tap a platform to view the latest.</p>
+    <h2><span class="live-dot"></span><span data-i18n="social.liveFrom">Live from Freshli</span></h2>
+    <p data-i18n="social.liveFromText">See what we're sharing across our channels — tap a platform to view the latest.</p>
 
     <div class="feed-tabs">
       <button class="feed-tab active" onclick="showFeed('x')">𝕏 X / Twitter</button>
@@ -147,9 +147,9 @@
       <div class="feed-panel" id="feed-instagram">
         <div class="feed-placeholder">
           <div class="icon">📷</div>
-          <h3>Follow us on Instagram</h3>
-          <p>Behind-the-scenes, food rescue tips, and Weekly Wrap highlights. Follow @freshliapp for daily inspiration.</p>
-          <a href="https://www.instagram.com/freshliapp" target="_blank" rel="noopener">Open Instagram →</a>
+          <h3 data-i18n="social.followInstagram">Follow us on Instagram</h3>
+          <p data-i18n="social.followInstagramText">Behind-the-scenes, food rescue tips, and Weekly Wrap highlights. Follow @freshliapp for daily inspiration.</p>
+          <a href="https://www.instagram.com/freshliapp" target="_blank" rel="noopener" data-i18n="social.openInstagram">Open Instagram →</a>
         </div>
       </div>
 
@@ -157,26 +157,26 @@
       <div class="feed-panel" id="feed-producthunt">
         <div class="feed-placeholder">
           <div class="icon">🚀</div>
-          <h3>Freshli on Product Hunt</h3>
-          <p>Upvote Freshli when we launch, leave a review, and help us reach the front page. Every upvote counts.</p>
-          <a href="https://www.producthunt.com/@everwise" target="_blank" rel="noopener">View on Product Hunt →</a>
+          <h3 data-i18n="social.phTitle">Freshli on Product Hunt</h3>
+          <p data-i18n="social.phText">Upvote Freshli when we launch, leave a review, and help us reach the front page. Every upvote counts.</p>
+          <a href="https://www.producthunt.com/@everwise" target="_blank" rel="noopener" data-i18n="social.phLink">View on Product Hunt →</a>
         </div>
       </div>
     </div>
 
     <!-- Newsletter CTA -->
     <div class="newsletter">
-      <h3>Don't miss the launch.</h3>
-      <p>Follow us on your favourite platform to be the first to know when Freshli hits the App Store.</p>
-      <a href="https://x.com/everwiseapps" target="_blank" rel="noopener" class="btn">Follow @everwiseapps on X →</a>
+      <h3 data-i18n="social.newsletterTitle">Don't miss the launch.</h3>
+      <p data-i18n="social.newsletterText">Follow us on your favourite platform to be the first to know when Freshli hits the App Store.</p>
+      <a href="https://x.com/everwiseapps" target="_blank" rel="noopener" class="btn" data-i18n="social.newsletterCta">Follow @everwiseapps on X →</a>
     </div>
   </div>
 
   <div class="spacer"></div>
 
   <footer>
-    <a href="/">Home</a> <a href="about.html">Our Story</a> <a href="partners.html">Partners</a> <a href="social.html">Social</a> <a href="privacy.html">Privacy</a> <a href="terms.html">Terms</a> <a href="support.html">Support</a> <a href="press.html">Press</a> <a href="mailto:support@freshli.app">Contact</a>
-    <p style="margin-top: 16px;">&copy; 2026 Freshli. All rights reserved.</p>
+    <a href="/" data-i18n="footer.home">Home</a> <a href="about.html" data-i18n="footer.ourStory">Our Story</a> <a href="partners.html" data-i18n="footer.partners">Partners</a> <a href="social.html" data-i18n="footer.social">Social</a> <a href="privacy.html" data-i18n="footer.privacy">Privacy</a> <a href="terms.html" data-i18n="footer.terms">Terms</a> <a href="support.html" data-i18n="footer.support">Support</a> <a href="press.html" data-i18n="footer.press">Press</a> <a href="mailto:support@freshli.app" data-i18n="footer.contact">Contact</a>
+    <p style="margin-top: 16px;" data-i18n="footer.rights">&copy; 2026 Freshli. All rights reserved.</p>
   </footer>
 
   <script>
@@ -187,5 +187,7 @@
       event.target.classList.add('active');
     }
   </script>
+  <script src="i18n/en.js"></script>
+  <script src="i18n.js" defer></script>
 </body>
 </html>

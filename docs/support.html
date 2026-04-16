@@ -50,91 +50,93 @@
   </style>
 </head>
 <body>
-  <nav><div class="inner"><a href="/" class="logo"><img src="icon.png" alt="Freshli" style="width:28px;height:28px;border-radius:7px;" /> Freshli</a><a href="/" class="back-link">&larr; Back to home</a></div></nav>
+  <nav><div class="inner"><a href="/" class="logo"><img src="icon.png" alt="Freshli" style="width:28px;height:28px;border-radius:7px;" /> Freshli</a><a href="/" class="back-link" data-i18n="nav.backHome">&larr; Back to home</a><div data-lang-picker></div></div></nav>
 
   <div class="support">
-    <h1>Support</h1>
-    <p class="intro">We're here to help. Find answers below or reach out directly — we typically respond within 24 hours.</p>
+    <h1 data-i18n="support.title">Support</h1>
+    <p class="intro" data-i18n="support.intro">We're here to help. Find answers below or reach out directly — we typically respond within 24 hours.</p>
 
     <div class="contact-card">
-      <h3>Need help? We've got you.</h3>
-      <p>Our support team is available Monday to Friday, 9am — 6pm GMT.</p>
+      <h3 data-i18n="support.needHelp">Need help? We've got you.</h3>
+      <p data-i18n="support.hours">Our support team is available Monday to Friday, 9am — 6pm GMT.</p>
       <a href="mailto:support@freshli.app">✉️ support@freshli.app</a>
     </div>
 
-    <h2>Quick Help</h2>
+    <h2 data-i18n="support.quickHelp">Quick Help</h2>
     <div class="help-grid">
       <div class="help-card">
         <div class="icon">📱</div>
-        <h4>Getting Started</h4>
-        <p>Download Freshli from the App Store, sign in with Apple, and add your first pantry item.</p>
+        <h4 data-i18n="support.gettingStarted">Getting Started</h4>
+        <p data-i18n="support.gettingStartedText">Download Freshli from the App Store, sign in with Apple, and add your first pantry item.</p>
       </div>
       <div class="help-card">
         <div class="icon">🔔</div>
-        <h4>Notifications</h4>
-        <p>Enable expiry reminders in Settings to get alerts before your food goes off.</p>
+        <h4 data-i18n="support.notifications">Notifications</h4>
+        <p data-i18n="support.notificationsText">Enable expiry reminders in Settings to get alerts before your food goes off.</p>
       </div>
       <div class="help-card">
         <div class="icon">🤖</div>
-        <h4>Rescue Chef AI</h4>
-        <p>Requires Apple Intelligence (iPhone 16+). Tap "Ask Freshli" in the Rescue Chef screen.</p>
+        <h4 data-i18n="support.rescueChef">Rescue Chef AI</h4>
+        <p data-i18n="support.rescueChefText">Requires Apple Intelligence (iPhone 16+). Tap "Ask Freshli" in the Rescue Chef screen.</p>
       </div>
       <div class="help-card">
         <div class="icon">🔒</div>
-        <h4>Account & Privacy</h4>
-        <p>Delete your account anytime in Settings. All data is removed within 30 days.</p>
+        <h4 data-i18n="support.accountPrivacy">Account & Privacy</h4>
+        <p data-i18n="support.accountPrivacyText">Delete your account anytime in Settings. All data is removed within 30 days.</p>
       </div>
     </div>
 
-    <h2>Frequently Asked Questions</h2>
+    <h2 data-i18n="support.faqTitle">Frequently Asked Questions</h2>
     <div class="faq">
       <div class="faq-item">
-        <div class="faq-q">Is Freshli free?</div>
-        <div class="faq-a"><p>Yes. Freshli is free to download and use. Freshli Pro offers optional premium features via a subscription, but the core pantry tracking, expiry alerts, and community sharing are completely free.</p></div>
+        <div class="faq-q" data-i18n="support.faq1q">Is Freshli free?</div>
+        <div class="faq-a"><p data-i18n="support.faq1a">Yes. Freshli is free to download and use. Freshli Pro offers optional premium features via a subscription, but the core pantry tracking, expiry alerts, and community sharing are completely free.</p></div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">Does the AI need internet?</div>
-        <div class="faq-a"><p>No. Rescue Chef uses Apple's on-device FoundationModels framework. Your pantry data is processed entirely on your iPhone — nothing is sent to any server. It works offline.</p></div>
+        <div class="faq-q" data-i18n="support.faq2q">Does the AI need internet?</div>
+        <div class="faq-a"><p data-i18n="support.faq2a">No. Rescue Chef uses Apple's on-device FoundationModels framework. Your pantry data is processed entirely on your iPhone — nothing is sent to any server. It works offline.</p></div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">Which devices are supported?</div>
-        <div class="faq-a"><p>Freshli requires iOS 26 or later. The AI Rescue Chef feature requires Apple Intelligence (iPhone 16 and later). Apple Watch complications require watchOS 26.</p></div>
+        <div class="faq-q" data-i18n="support.faq3q">Which devices are supported?</div>
+        <div class="faq-a"><p data-i18n="support.faq3a">Freshli requires iOS 26 or later. The AI Rescue Chef feature requires Apple Intelligence (iPhone 16 and later). Apple Watch complications require watchOS 26.</p></div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">How do I delete my account?</div>
-        <div class="faq-a"><p>Open Freshli → Profile → Settings → scroll to the bottom → Delete Account. All your personal data will be permanently removed from our servers within 30 days.</p></div>
+        <div class="faq-q" data-i18n="support.faq4q">How do I delete my account?</div>
+        <div class="faq-a"><p data-i18n="support.faq4a">Open Freshli → Profile → Settings → scroll to the bottom → Delete Account. All your personal data will be permanently removed from our servers within 30 days.</p></div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">Is my data safe?</div>
-        <div class="faq-a"><p>Yes. Your data is encrypted in transit (TLS 1.3) and at rest (AES-256). We use Row Level Security so only you can access your data. We never sell your data or use third-party trackers. See our <a href="privacy.html">Privacy Policy</a> for full details.</p></div>
+        <div class="faq-q" data-i18n="support.faq5q">Is my data safe?</div>
+        <div class="faq-a"><p data-i18n="support.faq5a">Yes. Your data is encrypted in transit (TLS 1.3) and at rest (AES-256). We use Row Level Security so only you can access your data. We never sell your data or use third-party trackers. See our <a href="privacy.html">Privacy Policy</a> for full details.</p></div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">How do I cancel my subscription?</div>
-        <div class="faq-a"><p>Open your iPhone Settings → tap your name → Subscriptions → Freshli Pro → Cancel Subscription. You'll retain access until the end of the current billing period.</p></div>
+        <div class="faq-q" data-i18n="support.faq6q">How do I cancel my subscription?</div>
+        <div class="faq-a"><p data-i18n="support.faq6a">Open your iPhone Settings → tap your name → Subscriptions → Freshli Pro → Cancel Subscription. You'll retain access until the end of the current billing period.</p></div>
       </div>
       <div class="faq-item">
-        <div class="faq-q">Can I share food with neighbours?</div>
-        <div class="faq-a"><p>Yes! Go to the Community tab and tap "New Post" to list surplus food for free collection. You can also browse what neighbours are sharing and claim items near you.</p></div>
+        <div class="faq-q" data-i18n="support.faq7q">Can I share food with neighbours?</div>
+        <div class="faq-a"><p data-i18n="support.faq7a">Yes! Go to the Community tab and tap "New Post" to list surplus food for free collection. You can also browse what neighbours are sharing and claim items near you.</p></div>
       </div>
     </div>
 
-    <h2>Still need help?</h2>
-    <p>If your question isn't answered above, email us at <a href="mailto:support@freshli.app">support@freshli.app</a> with a description of your issue. Include your device model and iOS version so we can help faster.</p>
+    <h2 data-i18n="support.stillNeedHelp">Still need help?</h2>
+    <p data-i18n="support.stillNeedHelpText">If your question isn't answered above, email us at support@freshli.app with a description of your issue. Include your device model and iOS version so we can help faster.</p>
 
-    <h2>Report a Bug</h2>
-    <p>Found something that doesn't look right? Email <a href="mailto:support@freshli.app">support@freshli.app</a> with the subject line "Bug Report" and include:</p>
+    <h2 data-i18n="support.reportBug">Report a Bug</h2>
+    <p data-i18n="support.reportBugText">Found something that doesn't look right? Email support@freshli.app with the subject line "Bug Report" and include:</p>
     <ul style="padding-left: 24px; margin: 12px 0;">
-      <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 6px;">What you were doing when the issue occurred</li>
-      <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 6px;">What you expected to happen vs what actually happened</li>
-      <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 6px;">A screenshot if possible</li>
-      <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 6px;">Your iPhone model and iOS version</li>
+      <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 6px;" data-i18n="support.bugItem1">What you were doing when the issue occurred</li>
+      <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 6px;" data-i18n="support.bugItem2">What you expected to happen vs what actually happened</li>
+      <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 6px;" data-i18n="support.bugItem3">A screenshot if possible</li>
+      <li style="font-size: 15px; line-height: 1.7; color: var(--neutral-600); margin-bottom: 6px;" data-i18n="support.bugItem4">Your iPhone model and iOS version</li>
     </ul>
   </div>
 
   <footer>
-    <a href="/">Home</a> <a href="about.html">Our Story</a> <a href="partners.html">Partners</a> <a href="social.html">Social</a> <a href="privacy.html">Privacy</a> <a href="terms.html">Terms</a> <a href="press.html">Press</a> <a href="support.html">Support</a> <a href="mailto:support@freshli.app">Contact</a>
-    <p style="margin-top: 16px;">&copy; 2026 Freshli. All rights reserved.</p>
+    <a href="/" data-i18n="footer.home">Home</a> <a href="about.html" data-i18n="footer.ourStory">Our Story</a> <a href="partners.html" data-i18n="footer.partners">Partners</a> <a href="social.html" data-i18n="footer.social">Social</a> <a href="privacy.html" data-i18n="footer.privacy">Privacy</a> <a href="terms.html" data-i18n="footer.terms">Terms</a> <a href="press.html" data-i18n="footer.press">Press</a> <a href="support.html" data-i18n="footer.support">Support</a> <a href="mailto:support@freshli.app" data-i18n="footer.contact">Contact</a>
+    <p style="margin-top: 16px;" data-i18n="footer.rights">&copy; 2026 Freshli. All rights reserved.</p>
   </footer>
+  <script src="i18n/en.js"></script>
+  <script src="i18n.js" defer></script>
 
   <script>
     document.querySelectorAll('.faq-q').forEach(q => {
