@@ -11,7 +11,6 @@ struct PSProgressRing: View {
     let size: CGFloat
 
     @State private var animatedProgress: Double = 0
-    @State private var startDate = Date.now
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     init(progress: Double, lineWidth: CGFloat = 6, color: Color = PSColors.primaryGreen, size: CGFloat = 48) {
@@ -22,35 +21,30 @@ struct PSProgressRing: View {
     }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: reduceMotion)) { timeline in
-            let time = Float(timeline.date.timeIntervalSince(startDate))
-            let resolved = resolveRingColor()
+        let resolved = resolveRingColor()
+        ZStack {
+            // Track
+            Circle()
+                .stroke(color.opacity(0.15), lineWidth: lineWidth)
 
-            ZStack {
-                // Track
-                Circle()
-                    .stroke(color.opacity(0.15), lineWidth: lineWidth)
-
-                // Fill
-                Circle()
-                    .trim(from: 0, to: animatedProgress)
-                    .stroke(
-                        color,
-                        style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
-            }
-            .frame(width: size, height: size)
-            .modifier(ProgressGlowShaderModifier(
-                size: size,
-                progress: animatedProgress,
-                time: time,
-                r: resolved.r,
-                g: resolved.g,
-                b: resolved.b
-            ))
+            // Fill
+            Circle()
+                .trim(from: 0, to: animatedProgress)
+                .stroke(
+                    color,
+                    style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
         }
         .frame(width: size, height: size)
+        .modifier(ProgressGlowShaderModifier(
+            size: size,
+            progress: animatedProgress,
+            time: 0,
+            r: resolved.r,
+            g: resolved.g,
+            b: resolved.b
+        ))
         .accessibilityElement(children: .ignore)
         .accessibilityValue("\(Int(animatedProgress * 100))%")
         .onAppear {
@@ -124,21 +118,14 @@ private struct ProgressGlowShaderModifier: ViewModifier {
     let b: Float
 
     func body(content: Content) -> some View {
-        if ShaderWarmUpService.shadersAvailable {
-            content
-                .colorEffect(
-                    ShaderLibrary.freshnessGlow(
-                        .float2(Float(size), Float(size)),
-                        .float(Float(progress)),
-                        .float(time),
-                        .float(r),
-                        .float(g),
-                        .float(b)
-                    )
-                )
-                .drawingGroup()
-        } else {
-            content
-        }
+        content
+            .shadow(
+                color: Color(
+                    red: Double(r),
+                    green: Double(g),
+                    blue: Double(b)
+                ).opacity(0.4 * progress),
+                radius: 6 * progress
+            )
     }
 }

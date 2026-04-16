@@ -35,8 +35,6 @@ struct FLHomePage: View {
     @State private var gapFillSuggestions: [GapFillSuggestion] = []
     @State private var collectiveImpact = CollectiveImpactService.shared
     @State private var intentPrediction = IntentPredictionService()
-    @State private var headerStartDate = Date.now
-
     private let weeklyWrapTip = WeeklyWrapTip()
     private let logger = Logger(subsystem: "com.freshli.app", category: "FLHomePage")
 
@@ -162,21 +160,16 @@ struct FLHomePage: View {
 
     private var heroHeader: some View {
         ZStack(alignment: .top) {
-            TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: reduceMotion)) { timeline in
-                let time = Float(timeline.date.timeIntervalSince(headerStartDate))
-
-                UnevenRoundedRectangle(bottomLeadingRadius: PSSpacing.radiusHero, bottomTrailingRadius: PSSpacing.radiusHero)
-                    .fill(
-                        LinearGradient(
-                            colors: [PSColors.headerGreen, PSColors.primaryGreenDark],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+            UnevenRoundedRectangle(bottomLeadingRadius: PSSpacing.radiusHero, bottomTrailingRadius: PSSpacing.radiusHero)
+                .fill(
+                    LinearGradient(
+                        colors: [PSColors.headerGreen, PSColors.primaryGreenDark],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
-                    .frame(height: PSLayout.headerHeight)
-                    .modifier(HeroShaderModifier(time: time))
-                    .drawingGroup()
-            }
+                )
+                .frame(height: PSLayout.headerHeight)
+                .modifier(HeroShaderModifier())
 
             // Soft decorative circles
             Circle()
@@ -866,44 +859,35 @@ struct FLHomePage: View {
 // ══════════════════════════════════════════════════════════════════
 
 private struct HeroShaderModifier: ViewModifier {
-    let time: Float
+    @State private var phase: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func body(content: Content) -> some View {
-        if ShaderWarmUpService.shadersAvailable {
+        if reduceMotion {
             content
-                .visualEffect { view, proxy in
-                    view
-                        .colorEffect(
-                            ShaderLibrary.heroGradient(
-                                .float2(proxy.safeShaderSize),
-                                .float(time)
-                            )
-                        )
-                        .colorEffect(
-                            ShaderLibrary.freshliAura(
-                                .float2(proxy.safeShaderSize),
-                                .float(time)
-                            )
-                        )
-                        .colorEffect(
-                            ShaderLibrary.subtleNoise(
-                                .float2(proxy.safeShaderSize),
-                                .float(time),
-                                .float(0.3)
-                            )
-                        )
-                        .colorEffect(
-                            ShaderLibrary.liquidGlass(
-                                .float4(0, 0, proxy.safeShaderSize.width, proxy.safeShaderSize.height),
-                                .float(0.03),
-                                .float(time * 0.5)
-                            )
-                        )
-                }
         } else {
-            // Graceful fallback: static glass material
             content
-                .overlay(.ultraThinMaterial.opacity(0.3))
+                .overlay {
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.08, green: 0.55, blue: 0.28).opacity(0.12 + phase * 0.06),
+                            Color(red: 0.13, green: 0.77, blue: 0.37).opacity(0.08 + phase * 0.04),
+                            Color(red: 0.08, green: 0.62, blue: 0.42).opacity(0.10 + (1 - phase) * 0.05)
+                        ],
+                        startPoint: UnitPoint(x: phase * 0.3, y: 0),
+                        endPoint: UnitPoint(x: 0.7 + phase * 0.3, y: 1)
+                    )
+                    .blendMode(.overlay)
+                    .allowsHitTesting(false)
+                }
+                .task {
+                    while !Task.isCancelled {
+                        withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
+                            phase = 1.0
+                        }
+                        try? await Task.sleep(for: .seconds(8.0))
+                    }
+                }
         }
     }
 }

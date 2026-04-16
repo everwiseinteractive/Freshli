@@ -27,51 +27,14 @@ struct RayTracedShadowModifier: ViewModifier {
     let elevation: FLElevation
     let shadowColor: Color
 
-    @Environment(\.ambientBrightness) private var ambientBrightness
-    @Environment(\.lightDirection) private var lightDirection
-    @Environment(\.shaderQuality) private var quality
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.colorSchemeContrast) private var schemeContrast
-    @Environment(\.colorScheme) private var colorScheme
-
-    @State private var startDate = Date.now
-
     func body(content: Content) -> some View {
-        if quality < .medium || reduceMotion || !ShaderWarmUpService.shadersAvailable || schemeContrast == .increased {
-            // Fallback: static shadow for low-quality tiers / reduce motion / no shaders
-            content
-                .shadow(
-                    color: shadowColor.opacity(elevation.opacity),
-                    radius: elevation.blur,
-                    x: 0,
-                    y: elevation.offsetY
-                )
-        } else {
-            TimelineView(.animation(minimumInterval: quality.frameInterval)) { timeline in
-                let time = Float(timeline.date.timeIntervalSince(startDate))
-                let resolved = resolveColor(shadowColor)
-
-                let capturedLightDirection = lightDirection
-                let capturedAmbientBrightness = ambientBrightness
-                content
-                    .visualEffect { view, proxy in
-                        view.colorEffect(
-                            ShaderLibrary.rayTracedShadow(
-                                .float2(proxy.safeShaderSize),
-                                .float(capturedLightDirection.x),
-                                .float(capturedLightDirection.y),
-                                .float(Float(elevation.rawValue)),
-                                .float(capturedAmbientBrightness),
-                                .float(resolved.r),
-                                .float(resolved.g),
-                                .float(resolved.b),
-                                .float(time)
-                            )
-                        )
-                    }
-                    .drawingGroup()
-            }
-        }
+        content
+            .shadow(
+                color: shadowColor.opacity(elevation.opacity),
+                radius: elevation.blur,
+                x: 0,
+                y: elevation.offsetY
+            )
     }
 }
 
@@ -82,51 +45,20 @@ struct RayTracedShadowModifier: ViewModifier {
 struct AmbientAdaptiveGlassModifier: ViewModifier {
     let tintColor: Color
 
-    @Environment(\.ambientBrightness) private var ambientBrightness
-    @Environment(\.shaderQuality) private var quality
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.colorSchemeContrast) private var schemeContrast
     @Environment(\.ambientGlowMode) private var glowMode
 
-    @State private var startDate = Date.now
-    @State private var previousGlowMode: AmbientGlowMode?
-
     func body(content: Content) -> some View {
-        if quality < .medium || reduceMotion || !ShaderWarmUpService.shadersAvailable || schemeContrast == .increased {
-            content
-        } else {
-            TimelineView(.animation(minimumInterval: quality.frameInterval)) { timeline in
-                let time = Float(timeline.date.timeIntervalSince(startDate))
-                let resolved = resolveColor(tintColor)
-
-                let capturedAmbientBrightness = ambientBrightness
-                content
-                    .visualEffect { view, proxy in
-                        view.colorEffect(
-                            ShaderLibrary.ambientAdaptiveGlass(
-                                .float2(proxy.safeShaderSize),
-                                .float(capturedAmbientBrightness),
-                                .float(time),
-                                .float(resolved.r),
-                                .float(resolved.g),
-                                .float(resolved.b)
-                            )
-                        )
-                    }
-                    .drawingGroup()
-            }
+        content
             .onChange(of: glowMode) { oldMode, newMode in
-                // Speak ambient light transitions through Motion Vocabulary
                 switch newMode {
                 case .oledBlack:
                     MotionVocabularyService.shared.speakMotion(.oledGlow(intensity: 0.8))
                 case .highKey:
                     MotionVocabularyService.shared.speakMotion(.specularFlash(intensity: 0.7))
                 case .neutral:
-                    break // No haptic for neutral transitions
+                    break
                 }
             }
-        }
     }
 }
 
@@ -244,13 +176,3 @@ extension View {
     }
 }
 
-// MARK: - Color Resolution Helper
-
-/// Resolves a SwiftUI Color to RGB Float components for shader parameters.
-/// Handles Color → UIColor → sRGB conversion.
-private func resolveColor(_ color: Color) -> (r: Float, g: Float, b: Float) {
-    let uiColor = UIColor(color)
-    var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-    uiColor.getRed(&r, green: &g, blue: &b, alpha: &a)
-    return (Float(r), Float(g), Float(b))
-}

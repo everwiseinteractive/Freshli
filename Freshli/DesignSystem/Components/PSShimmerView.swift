@@ -28,7 +28,7 @@ struct PSShimmerView: View {
             .modifier(ShimmerShaderModifier(phase: capturedPhase))
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
             .task {
-                guard !reduceMotion && ShaderWarmUpService.shadersAvailable else { return }
+                guard !reduceMotion else { return }
                 while !Task.isCancelled {
                     phase = -0.3
                     withAnimation(.easeInOut(duration: 1.4)) {
@@ -40,24 +40,26 @@ struct PSShimmerView: View {
     }
 }
 
-/// Conditionally applies the GPU shimmer shader or a static fallback.
+/// Pure SwiftUI shimmer overlay — no Metal shader dependency.
 private struct ShimmerShaderModifier: ViewModifier {
     let phase: CGFloat
 
     func body(content: Content) -> some View {
-        if ShaderWarmUpService.shadersAvailable {
-            content
-                .visualEffect { view, proxy in
-                    view.colorEffect(
-                        ShaderLibrary.gpuShimmer(
-                            .float2(proxy.safeShaderSize),
-                            .float(Float(phase))
-                        )
-                    )
-                }
-        } else {
-            content
-        }
+        content
+            .overlay {
+                LinearGradient(
+                    stops: [
+                        .init(color: .clear, location: max(0, phase - 0.15)),
+                        .init(color: .white.opacity(0.15), location: phase),
+                        .init(color: .clear, location: min(1, phase + 0.15))
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .blendMode(.overlay)
+                .allowsHitTesting(false)
+            }
+            .clipped()
     }
 }
 

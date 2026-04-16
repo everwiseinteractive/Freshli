@@ -95,9 +95,6 @@ struct LiquidGlassModifier: ViewModifier {
     let density: MaterialDensity
     let cornerRadius: CGFloat
 
-    @State private var startDate = Date.now
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
     // MARK: - Initialiser
 
     init(
@@ -111,67 +108,21 @@ struct LiquidGlassModifier: ViewModifier {
     // MARK: - Body
 
     func body(content: Content) -> some View {
-        if reduceMotion || !ShaderWarmUpService.shadersAvailable {
-            // Static path — no shader, just glass + border + shadow
-            content
-                .glassEffect(
-                    .regular,
-                    in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .stroke(Color.primary.opacity(density.borderOpacity), lineWidth: 0.5)
-                )
-                .shadow(
-                    color: Color.primary.opacity(density.shadowOpacity),
-                    radius: density.shadowRadius,
-                    y: 4
-                )
-        } else {
-            // Animated path — LiquidGlass Metal shader driven by TimelineView
-            TimelineView(.animation(minimumInterval: 1.0 / 60.0, paused: false)) { timeline in
-                let time = Float(timeline.date.timeIntervalSince(startDate))
-                content
-                    .glassEffect(
-                        .regular,
-                        in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    )
-                    .visualEffect { view, proxy in
-                        view.colorEffect(
-                            ShaderLibrary.liquidGlass(
-                                .float4(
-                                    Float(proxy.safeShaderSize.width),
-                                    Float(proxy.safeShaderSize.height),
-                                    Float(proxy.safeShaderSize.width),
-                                    Float(proxy.safeShaderSize.height)
-                                ),
-                                .float(density.refractionIndex),
-                                .float(time)
-                            )
-                        )
-                    }
-                    .overlay(
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .stroke(Color.primary.opacity(density.borderOpacity), lineWidth: 0.5)
-                    )
-                    .shadow(
-                        color: Color.primary.opacity(density.shadowOpacity),
-                        radius: density.shadowRadius,
-                        y: 4
-                    )
-                    // ── Flatten render tree ──────────────────────────────
-                    // drawingGroup() composites the glass + shader + border +
-                    // shadow into a single offscreen pass before compositing,
-                    // preventing SwiftUI from re-rendering the full child tree
-                    // on every 60Hz TimelineView tick.
-                    .drawingGroup()
-                    // ── Gaze-Adaptive Bloom ─────────────────────────────
-                    // Automatically layers the gazeBloom shader when the
-                    // user's gaze falls on this glass surface. No-ops when
-                    // gaze tracking is inactive or quality tier is too low.
-                    .gazeAdaptiveGlass(density)
-            }
-        }
+        // Pure SwiftUI path — glassEffect + border + shadow (no Metal shader)
+        content
+            .glassEffect(
+                .regular,
+                in: RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .stroke(Color.primary.opacity(density.borderOpacity), lineWidth: 0.5)
+            )
+            .shadow(
+                color: Color.primary.opacity(density.shadowOpacity),
+                radius: density.shadowRadius,
+                y: 4
+            )
     }
 }
 

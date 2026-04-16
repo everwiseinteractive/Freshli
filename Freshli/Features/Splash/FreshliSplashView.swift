@@ -132,30 +132,18 @@ struct FreshliSplashView: View {
 
     @ViewBuilder
     private func liquidGlassBackground(time: Float) -> some View {
-        let gi = Float(glassIntensity)
-        if ShaderWarmUpService.shadersAvailable {
-            Rectangle()
-                .fill(.black)
-                .visualEffect { view, proxy in
-                    view
-                        .colorEffect(
-                            ShaderLibrary.liquidGlassAurora(
-                                .float2(Float(proxy.safeShaderSize.width), Float(proxy.safeShaderSize.height)),
-                                .float(time),
-                                .float(gi)
-                            )
-                        )
-                }
-                .drawingGroup()
-        } else {
-            // Fallback: static dark green gradient
-            LinearGradient(
-                colors: [Color(red: 0.01, green: 0.04, blue: 0.03),
-                         Color(red: 0.05, green: 0.22, blue: 0.16)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        }
+        // Animated aurora-like gradient — pure SwiftUI replacement for Metal liquidGlassAurora
+        let breathe = Double(sin(Double(time) * 0.3)) * 0.5 + 0.5
+        let gi = Double(glassIntensity)
+        LinearGradient(
+            colors: [
+                Color(red: 0.01, green: 0.04 + breathe * 0.02, blue: 0.03),
+                Color(red: 0.03 + breathe * 0.02, green: 0.15 * gi, blue: 0.10 * gi),
+                Color(red: 0.05, green: 0.22 * gi, blue: 0.16 * gi)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 
     // MARK: - Glass Chromatic Ring
@@ -163,26 +151,21 @@ struct FreshliSplashView: View {
     @ViewBuilder
     private func glassRingLayer(time: Float) -> some View {
         let ringSize = PSLayout.scaled(220)
-        if ShaderWarmUpService.shadersAvailable {
-            let ringRadius = Float(PSLayout.scaled(88))
-            let ringThickness = Float(PSLayout.scaled(4.0))
-            Rectangle()
-                .fill(.clear)
-                .frame(width: ringSize, height: ringSize)
-                .colorEffect(
-                    ShaderLibrary.liquidGlassRing(
-                        .float2(Float(ringSize), Float(ringSize)),
-                        .float(time),
-                        .float(ringRadius),
-                        .float(ringThickness)
-                    )
-                )
-        } else {
-            // Fallback: static ring using SwiftUI
-            Circle()
-                .stroke(Color(red: 0.30, green: 0.88, blue: 0.42).opacity(0.6), lineWidth: PSLayout.scaled(4.0))
-                .frame(width: ringSize, height: ringSize)
-        }
+        let breathe = CGFloat(sin(Double(time) * 1.5)) * 0.15 + 0.85
+        // Animated ring using SwiftUI — replaces Metal liquidGlassRing
+        Circle()
+            .stroke(
+                AngularGradient(
+                    colors: [
+                        Color(red: 0.30, green: 0.88, blue: 0.42).opacity(0.6 * breathe),
+                        Color(red: 0.20, green: 0.75, blue: 0.55).opacity(0.4 * breathe),
+                        Color(red: 0.30, green: 0.88, blue: 0.42).opacity(0.6 * breathe)
+                    ],
+                    center: .center
+                ),
+                lineWidth: PSLayout.scaled(4.0)
+            )
+            .frame(width: ringSize, height: ringSize)
     }
 
     // MARK: - Icon Section
@@ -522,18 +505,24 @@ private struct SplashShimmerModifier: ViewModifier {
     let shimmerProgress: Double
 
     func body(content: Content) -> some View {
-        if reduceMotion || !ShaderWarmUpService.shadersAvailable {
+        if reduceMotion {
             // Static path — no shader animation, just the clean icon
             content
         } else {
             content
-                .colorEffect(
-                    ShaderLibrary.liquidShimmer(
-                        .float2(Float(PSLayout.scaled(128)), Float(PSLayout.scaled(128))),
-                        .float(Float(shimmerProgress))
+                .overlay {
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: max(0, shimmerProgress - 0.15)),
+                            .init(color: .white.opacity(0.2), location: shimmerProgress),
+                            .init(color: .clear, location: min(1, shimmerProgress + 0.15))
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
-                )
-                .drawingGroup()
+                    .blendMode(.overlay)
+                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                }
         }
     }
 }

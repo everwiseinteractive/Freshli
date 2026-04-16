@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 import CoreHaptics
 import os
 
@@ -181,8 +182,6 @@ struct GazeAdaptiveGlassModifier: ViewModifier {
     let enableHaptics: Bool
 
     @State private var bloomState = GazeBloomState()
-    @State private var startDate = Date.now
-    @State private var lastFrameTime: Date?
     @State private var hasTriggeredDwellHaptic = false
     @State private var viewFrame: CGRect = .zero
 
@@ -202,63 +201,43 @@ struct GazeAdaptiveGlassModifier: ViewModifier {
             // Graceful fallback: no gaze tracking, no bloom
             content
         } else {
-            TimelineView(.animation(
-                minimumInterval: quality.frameInterval,
-                paused: !gazeService.isTracking
-            )) { timeline in
-                let time = Float(timeline.date.timeIntervalSince(startDate))
-                let deltaTime = lastFrameTimeDelta(timeline.date)
-
-                let gazeUVX = bloomState.localGazeUV.x
-                let gazeUVY = bloomState.localGazeUV.y
-                let intensity = bloomState.bloomIntensity
-                let refrIdx = density.refractionIndex
-
-                content
-                    // ── Layer 1: Gaze Bloom shader ──────────────────────
-                    .visualEffect { view, proxy in
-                        view.colorEffect(
-                            ShaderLibrary.gazeBloom(
-                                .float4(
-                                    Float(proxy.safeShaderSize.width),
-                                    Float(proxy.safeShaderSize.height),
-                                    Float(proxy.safeShaderSize.width),
-                                    Float(proxy.safeShaderSize.height)
-                                ),
-                                .float2(gazeUVX, gazeUVY),
-                                .float(intensity),
-                                .float(time),
-                                .float(refrIdx)
-                            )
-                        )
+            content
+                .scaleEffect(1.0 + CGFloat(bloomState.bloomIntensity) * 0.025)
+                .shadow(
+                    color: Color(red: 0.13, green: 0.77, blue: 0.37)
+                        .opacity(Double(bloomState.bloomIntensity) * 0.25),
+                    radius: CGFloat(bloomState.bloomIntensity) * 10
+                )
+                .animation(.interactiveSpring(response: 0.2, dampingFraction: 0.75), value: bloomState.isDwelling)
+                .overlay {
+                    GeometryReader { proxy in
+                        Color.clear
+                            .onAppear { viewFrame = proxy.frame(in: .global) }
+                            .onChange(of: proxy.frame(in: .global)) { _, newFrame in
+                                viewFrame = newFrame
+                            }
                     }
-                    // ── Flatten: composite shader + scale in one pass ───
-                    .drawingGroup()
-                    // ── Layer 2: Subtle scale-up for depth ──────────────
-                    .scaleEffect(1.0 + CGFloat(intensity) * 0.025)
-                    .animation(.interactiveSpring(response: 0.2, dampingFraction: 0.75), value: bloomState.isDwelling)
-                    // ── Layer 3: Track view frame for hit-testing ────────
-                    .overlay {
-                        GeometryReader { proxy in
-                            Color.clear
-                                .onAppear {
-                                    viewFrame = proxy.frame(in: .global)
-                                }
-                                .onChange(of: proxy.frame(in: .global)) { _, newFrame in
-                                    viewFrame = newFrame
-                                }
-                        }
-                    }
-                    // ── Frame tick: update bloom state ───────────────────
-                    .onChange(of: timeline.date) { _, newDate in
-                        updateBloomState(deltaTime: deltaTime)
-                        updateHaptics()
-                    }
-            }
-            .onDisappear {
-                bloomState.reset()
-                hasTriggeredDwellHaptic = false
-            }
+                }
+                // Use a lighter-weight timer for bloom updates without Metal shader
+                .onReceive(Timer.publish(every: 1.0 / 30.0, on: .main, in: .common).autoconnect()) { _ in
+                    guard gazeService.isTracking else { return }
+                    let screenSize = viewFrame.isEmpty
+                        ? CGSize(width: 393, height: 852)
+                        : UIApplication.shared.connectedScenes
+                            .compactMap { $0 as? UIWindowScene }
+                            .first?.screen.bounds.size ?? viewFrame.size
+                    bloomState.update(
+                        gazePoint: gazeService.gazePoint,
+                        viewFrame: viewFrame,
+                        screenSize: screenSize,
+                        deltaTime: 1.0 / 30.0
+                    )
+                    updateHaptics()
+                }
+                .onDisappear {
+                    bloomState.reset()
+                    hasTriggeredDwellHaptic = false
+                }
         }
     }
 
@@ -268,37 +247,9 @@ struct GazeAdaptiveGlassModifier: ViewModifier {
     /// Disabled when: reduce motion, low shader quality, or gaze not tracking.
     private var shouldActivate: Bool {
         !reduceMotion &&
-        ShaderWarmUpService.shadersAvailable &&
         quality >= .high &&
         gazeService.isTracking &&
         gazeService.isSupported
-    }
-
-    // MARK: - Frame Timing
-
-    /// Calculates delta time between frames for smooth animation.
-    private func lastFrameTimeDelta(_ current: Date) -> TimeInterval {
-        let delta = lastFrameTime.map { current.timeIntervalSince($0) } ?? quality.frameInterval
-        Task { @MainActor in
-            lastFrameTime = current
-        }
-        return min(delta, 0.1) // Cap at 100ms to prevent jumps
-    }
-
-    // MARK: - Bloom Update
-
-    private func updateBloomState(deltaTime: TimeInterval) {
-        let screenSize = viewFrame.isEmpty
-            ? CGSize(width: 393, height: 852)  // iPhone 17 Pro default
-            : UIApplication.shared.connectedScenes
-                .compactMap { $0 as? UIWindowScene }
-                .first?.screen.bounds.size ?? viewFrame.size
-        bloomState.update(
-            gazePoint: gazeService.gazePoint,
-            viewFrame: viewFrame,
-            screenSize: screenSize,
-            deltaTime: deltaTime
-        )
     }
 
     // MARK: - Haptic Feedback

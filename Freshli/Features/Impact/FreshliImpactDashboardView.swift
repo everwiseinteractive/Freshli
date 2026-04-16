@@ -56,53 +56,27 @@ struct FreshliImpactDashboardView: View {
 
     // MARK: - Background with Mesh Gradient
 
-    @State private var dashboardStartDate = Date.now
-
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
-    @Environment(\.shaderQuality) private var quality
 
     @ViewBuilder
     private var backgroundLayer: some View {
-        if reduceTransparency || !ShaderWarmUpService.shadersAvailable {
-            // High Contrast Material mode — vibrant mesh gradient replaces
-            // glass/plasma shaders for WCAG AAA compliance while keeping
-            // the "living" feel through gentle mesh animation.
-            Rectangle()
-                .fill(PSColors.backgroundPrimary)
-                .highContrastBackground(.impact)
-                .ignoresSafeArea()
-        } else {
-            // Metal GPU-powered plasma background — organic multi-frequency
-            // color movement. Runs at adaptive framerate for efficiency.
-            TimelineView(.animation(minimumInterval: quality.frameInterval, paused: reduceMotion)) { timeline in
-                let time = Float(timeline.date.timeIntervalSince(dashboardStartDate))
-                let impactIntensity = Float((viewModel.weeklyStats?.co2Avoided ?? 0) / 100.0)
-
-                let capturedParticleDensity = quality.particleDensity
-                Rectangle()
-                    .fill(PSColors.backgroundPrimary)
-                    .visualEffect { view, proxy in
-                        view
-                            .colorEffect(
-                                ShaderLibrary.impactPlasma(
-                                    .float2(proxy.safeShaderSize),
-                                    .float(time),
-                                    .float(min(impactIntensity, 1.0) * 0.5 + 0.2)
-                                )
-                            )
-                            .colorEffect(
-                                ShaderLibrary.ambientParticles(
-                                    .float2(proxy.safeShaderSize),
-                                    .float(time),
-                                    .float(1.5 * capturedParticleDensity),
-                                    .float(0.3)
-                                )
-                            )
-                    }
-                    .drawingGroup()
-                    .ignoresSafeArea()
+        // Animated organic background — pure SwiftUI
+        Rectangle()
+            .fill(PSColors.backgroundPrimary)
+            .overlay {
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.05, green: 0.25, blue: 0.15).opacity(0.3),
+                        Color(red: 0.1, green: 0.45, blue: 0.25).opacity(0.2),
+                        Color(red: 0.02, green: 0.18, blue: 0.12).opacity(0.25)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .blendMode(.overlay)
+                .allowsHitTesting(false)
             }
-        }
+            .ignoresSafeArea()
     }
 
     // MARK: - Impact Cards Section

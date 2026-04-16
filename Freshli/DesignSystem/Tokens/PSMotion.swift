@@ -106,8 +106,17 @@ private struct PressableContent: View {
     var body: some View {
         configuration.label
             .scaleEffect(configuration.isPressed && !reduceMotion ? 0.93 : 1.0)
+            .opacity(configuration.isPressed ? 0.85 : 1.0)
             .animation(reduceMotion ? .none : FLMotion.springQuick, value: configuration.isPressed)
-            .metalLiquidGlassRipple(isPressed: $isPressed, density: density)
+            .overlay {
+                if !reduceMotion && isPressed {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color.white.opacity(0.08))
+                        .scaleEffect(1.02)
+                        .transition(.opacity)
+                }
+            }
+            .animation(.easeOut(duration: 0.3), value: isPressed)
             .onChange(of: configuration.isPressed) { _, pressed in
                 if pressed {
                     isPressed = true
@@ -150,8 +159,17 @@ private struct BounceContent: View {
     var body: some View {
         configuration.label
             .scaleEffect(configuration.isPressed && !reduceMotion ? 0.93 : 1.0)
+            .opacity(configuration.isPressed ? 0.85 : 1.0)
             .animation(reduceMotion ? .none : FLMotion.springBouncy, value: configuration.isPressed)
-            .metalLiquidGlassRipple(isPressed: $isPressed, density: density)
+            .overlay {
+                if !reduceMotion && isPressed {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color.white.opacity(0.08))
+                        .scaleEffect(1.02)
+                        .transition(.opacity)
+                }
+            }
+            .animation(.easeOut(duration: 0.3), value: isPressed)
             .onChange(of: configuration.isPressed) { _, pressed in
                 if pressed {
                     isPressed = true
@@ -358,19 +376,25 @@ struct ShimmerModifier: ViewModifier {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func body(content: Content) -> some View {
-        if reduceMotion || !ShaderWarmUpService.shadersAvailable {
+        if reduceMotion {
             content
         } else {
             let capturedPhase = phase
             content
-                .visualEffect { view, proxy in
-                    view.colorEffect(
-                        ShaderLibrary.gpuShimmer(
-                            .float2(proxy.safeShaderSize),
-                            .float(Float(capturedPhase))
-                        )
+                .overlay {
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear, location: max(0, capturedPhase - 0.15)),
+                            .init(color: .white.opacity(0.12), location: capturedPhase),
+                            .init(color: .clear, location: min(1, capturedPhase + 0.15))
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
+                    .blendMode(.overlay)
+                    .allowsHitTesting(false)
                 }
+                .clipped()
                 .task {
                     // Initial delay so shimmer doesn't fire instantly on scroll
                     try? await Task.sleep(for: .seconds(1.0))

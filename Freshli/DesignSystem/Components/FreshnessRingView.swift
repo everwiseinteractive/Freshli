@@ -25,45 +25,38 @@ struct FreshnessRingView<Content: View>: View {
         self.content = content
     }
 
-    @State private var startDate = Date.now
-
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: reduceMotion)) { timeline in
-            let time = Float(timeline.date.timeIntervalSince(startDate))
+        ZStack {
+            // Background track
+            Circle()
+                .stroke(PSColors.primaryGreen.opacity(0.15), lineWidth: ringThickness)
 
-            ZStack {
-                // Background track
-                Circle()
-                    .stroke(PSColors.primaryGreen.opacity(0.15), lineWidth: ringThickness)
+            // Gradient fill ring
+            Circle()
+                .trim(from: 0, to: animatedProgress)
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            PSColors.accentTeal,
+                            PSColors.primaryGreen
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    style: StrokeStyle(lineWidth: ringThickness, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
+                .animation(PSMotion.springDefault, value: animatedProgress)
 
-                // Gradient fill ring
-                Circle()
-                    .trim(from: 0, to: animatedProgress)
-                    .stroke(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                PSColors.accentTeal,
-                                PSColors.primaryGreen
-                            ]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        style: StrokeStyle(lineWidth: ringThickness, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
-                    .animation(PSMotion.springDefault, value: animatedProgress)
-
-                // Inner content
-                content()
-            }
-            .frame(width: size, height: size)
-            .modifier(FreshnessGlowShaderModifier(
-                size: size,
-                progress: animatedProgress,
-                time: time
-            ))
+            // Inner content
+            content()
         }
         .frame(width: size, height: size)
+        .modifier(FreshnessGlowShaderModifier(
+            size: size,
+            progress: animatedProgress,
+            time: 0
+        ))
         .onAppear {
             animatedProgress = min(progress, 1.0)
         }
@@ -183,21 +176,11 @@ private struct FreshnessGlowShaderModifier: ViewModifier {
     let time: Float
 
     func body(content: Content) -> some View {
-        if ShaderWarmUpService.shadersAvailable {
-            content
-                .colorEffect(
-                    ShaderLibrary.freshnessGlow(
-                        .float2(Float(size), Float(size)),
-                        .float(Float(progress)),
-                        .float(time),
-                        .float(0.13),
-                        .float(0.77),
-                        .float(0.37)
-                    )
-                )
-                .drawingGroup()
-        } else {
-            content
-        }
+        content
+            .shadow(
+                color: Color(red: 0.13, green: 0.77, blue: 0.37)
+                    .opacity(0.4 * Double(progress)),
+                radius: 6 * Double(progress)
+            )
     }
 }

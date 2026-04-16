@@ -285,11 +285,9 @@ struct CookingScreenView: View {
 
     // MARK: - Background
 
-    @State private var bgStartDate = Date.now
-
     @ViewBuilder
     private var backgroundGradient: some View {
-        let gradient = LinearGradient(
+        LinearGradient(
             stops: [
                 .init(color: Color(hex: 0x060F0A), location: 0),
                 .init(color: Color(hex: 0x0A1A10), location: 0.5),
@@ -298,25 +296,6 @@ struct CookingScreenView: View {
             startPoint: .top,
             endPoint: .bottom
         )
-        if ShaderWarmUpService.shadersAvailable {
-            TimelineView(.animation(minimumInterval: 1.0 / 15.0, paused: reduceMotion)) { timeline in
-                let time = Float(timeline.date.timeIntervalSince(bgStartDate))
-                gradient
-                    .visualEffect { view, proxy in
-                        view
-                            .colorEffect(
-                                ShaderLibrary.subtleNoise(
-                                    .float2(proxy.safeShaderSize),
-                                    .float(time),
-                                    .float(0.15)
-                                )
-                            )
-                    }
-                    .drawingGroup()
-            }
-        } else {
-            gradient
-        }
     }
 
     // MARK: - Top Bar

@@ -125,7 +125,7 @@ struct LivingMenuModifier: ViewModifier {
     private let dwellThreshold: TimeInterval = 0.6
 
     func body(content: Content) -> some View {
-        if reduceMotion || !ShaderWarmUpService.shadersAvailable {
+        if reduceMotion {
             content
         } else {
             livingContent(content)
@@ -146,23 +146,13 @@ struct LivingMenuModifier: ViewModifier {
                 isDwelling ? [DwellPhase.idle, .bloom, .settle] : [.idle],
                 trigger: isDwelling
             ) { view, phase in
-                let roll = DeviceMotionService.shared.normalizedRoll
-                let pitch = DeviceMotionService.shared.normalizedPitch
-                let sparkle = phase.sparkleIntensity
                 view
                     .scaleEffect(1.0 + phase.scaleBoost)
-                    // Do NOT use .drawingGroup() — child content may have
-                    // .glassEffect() which is a compositor-level effect that
-                    // cannot be rasterized into a Metal texture.
-                    .visualEffect { v, proxy in
-                        v.colorEffect(
-                            ShaderLibrary.specularSparkle(
-                                .float2(proxy.safeShaderSize),
-                                .float(Float(roll)),
-                                .float(Float(pitch)),
-                                .float(sparkle)
-                            )
-                        )
+                    .brightness(Double(phase.sparkleIntensity) * 0.1)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(Color.white.opacity(Double(phase.sparkleIntensity) * 0.08))
+                            .allowsHitTesting(false)
                     }
             } animation: { phase in
                 switch phase {
