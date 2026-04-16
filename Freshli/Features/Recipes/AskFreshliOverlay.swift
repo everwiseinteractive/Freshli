@@ -97,7 +97,9 @@ struct AskFreshliOverlay: View {
                         .transition(.offset(y: 80).combined(with: .opacity))
                 }
 
-                Spacer().frame(height: 50)
+                // Enough clearance for the home indicator + safe area
+                // so the CTA button is never obscured by tab bar or home indicator.
+                Spacer().frame(height: 100)
             }
 
             // Layer 4: "Powered by" badge at top
@@ -123,6 +125,9 @@ struct AskFreshliOverlay: View {
             value: hasError
         )
         .onAppear {
+            // Hide the floating tab bar so it doesn't overlap the CTA button
+            TabBarVisibilityService.shared.hide()
+
             if reduceMotion {
                 showBackground = true
                 showHeader = true
@@ -138,6 +143,8 @@ struct AskFreshliOverlay: View {
         }
         .onDisappear {
             typewriterTask?.cancel()
+            // Restore the floating tab bar when the overlay is dismissed
+            TabBarVisibilityService.shared.show()
         }
         .onChange(of: aiService.isGenerating) { _, newValue in
             if !newValue {

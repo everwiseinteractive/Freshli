@@ -140,10 +140,15 @@ private struct DuolingoCelebrationView: View {
                         .transition(.offset(y: 60).combined(with: .opacity))
                 }
 
-                Spacer().frame(height: 60)
+                // Enough clearance for the home indicator + safe area
+                // so the CTA button is never obscured.
+                Spacer().frame(height: 100)
             }
         }
         .onAppear {
+            // Hide the floating tab bar so it doesn't overlap the CTA button
+            TabBarVisibilityService.shared.hide()
+
             if reduceMotion {
                 showBackground = true
                 showIcon = true
@@ -156,6 +161,10 @@ private struct DuolingoCelebrationView: View {
             }
             // Haptic
             PSHaptics.shared.success()
+        }
+        .onDisappear {
+            // Restore the floating tab bar when the celebration is dismissed
+            TabBarVisibilityService.shared.show()
         }
     }
 
