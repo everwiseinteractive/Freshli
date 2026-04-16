@@ -16,8 +16,11 @@ struct RescueChefView: View {
 
     /// True once the user has tapped "Ask Freshli" for this session. Before
     /// that we show a teaser card inviting them to try it; after, we show
-    /// the generated missions (or the loading state while they stream in).
+    /// the generated missions inline above the rule-based list.
     @State private var hasTriggeredAI = false
+
+    /// Controls the fullscreen ADA-style AI overlay presentation.
+    @State private var showAskFreshli = false
 
     private var filteredMissions: [UsageMission] {
         if activeFilter == .critical {
@@ -66,6 +69,14 @@ struct RescueChefView: View {
         }
         .background(PSColors.backgroundSecondary)
         .navigationBarHidden(true)
+        .askFreshliOverlay(
+            isPresented: $showAskFreshli,
+            aiService: aiRescueService,
+            atRiskItems: pantryItems,
+            onSelectMission: { mission in
+                selectedMission = mission
+            }
+        )
         .sheet(item: $selectedMission) { mission in
             NavigationStack {
                 RescueMissionDetailView(mission: mission)
@@ -231,7 +242,7 @@ struct RescueChefView: View {
                 if hasTriggeredAI && !aiRescueService.missions.isEmpty {
                     Button {
                         PSHaptics.shared.lightTap()
-                        Task { await generateAIMissions() }
+                        showAskFreshli = true
                     } label: {
                         Image(systemName: "arrow.clockwise")
                             .font(.system(size: PSLayout.scaledFont(16), weight: .semibold))
@@ -246,12 +257,38 @@ struct RescueChefView: View {
 
             if !hasTriggeredAI {
                 aiTeaserCard
-            } else if aiRescueService.isGenerating {
-                aiLoadingCard
-            } else if let errorMessage = aiRescueService.lastError {
-                aiErrorCard(errorMessage)
-            } else if !aiRescueService.missions.isEmpty {
+            } else if !aiRescueService.missions.isEmpty && !showAskFreshli {
+                // Show inline results only after overlay is dismissed
                 aiMissionsList
+            } else if !showAskFreshli {
+                // Teaser to re-open the overlay if no results yet
+                Button {
+                    PSHaptics.shared.mediumTap()
+                    showAskFreshli = true
+                } label: {
+                    HStack(spacing: PSSpacing.md) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: PSLayout.scaledFont(20)))
+                            .foregroundStyle(PSColors.primaryGreen)
+                            .symbolEffect(.pulse, options: .repeat(.periodic(delay: 2.0)))
+                        Text(String(localized: "Open Ask Freshli"))
+                            .font(.system(size: PSLayout.scaledFont(14), weight: .bold, design: .rounded))
+                            .foregroundStyle(PSColors.textPrimary)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
+                            .foregroundStyle(PSColors.textSecondary)
+                    }
+                    .padding(PSSpacing.lg)
+                    .background(PSColors.surfaceCard)
+                    .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous)
+                            .strokeBorder(PSColors.borderLight, lineWidth: 1)
+                    )
+                }
+                .buttonStyle(PressableButtonStyle())
+                .adaptiveHPadding()
             }
         }
     }
@@ -260,7 +297,7 @@ struct RescueChefView: View {
         Button {
             PSHaptics.shared.mediumTap()
             hasTriggeredAI = true
-            Task { await generateAIMissions() }
+            showAskFreshli = true
         } label: {
             HStack(alignment: .center, spacing: PSSpacing.md) {
                 VStack(alignment: .leading, spacing: 4) {

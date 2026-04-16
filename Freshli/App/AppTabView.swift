@@ -46,6 +46,7 @@ struct AppTabView: View {
     }()
     @State private var previousTab: AppTab = .home
     @State private var showAddItem = false
+    @State private var showFoodScanner = false
     @State private var tabBarVisibility = TabBarVisibilityService.shared
     @State private var prefetchCoordinator = PrefetchCoordinator.shared
     @State private var dataStore = FreshliDataStore.shared
@@ -75,7 +76,7 @@ struct AppTabView: View {
             case .home:
                 chromedTab {
                     NavigationStack {
-                        FLHomePage(showAddItem: $showAddItem, switchToTab: { switchTab(to: $0) })
+                        FLHomePage(showAddItem: $showAddItem, showFoodScanner: $showFoodScanner, switchToTab: { switchTab(to: $0) })
                     }
                     .measureTTI(for: .home)
                 }
@@ -107,6 +108,11 @@ struct AppTabView: View {
         .sensoryFeedback(.selection, trigger: selectedTab)
         .sheet(isPresented: $showAddItem) {
             NavigationStack { AddItemView() }
+                .presentationDragIndicator(.visible)
+                .sheetTransition()
+        }
+        .sheet(isPresented: $showFoodScanner) {
+            NavigationStack { FoodScannerView() }
                 .presentationDragIndicator(.visible)
                 .sheetTransition()
         }

@@ -105,28 +105,13 @@ private struct PressableContent: View {
 
     var body: some View {
         configuration.label
-            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.93 : 1.0)
-            .opacity(configuration.isPressed ? 0.85 : 1.0)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.96 : 1.0)
+            .brightness(configuration.isPressed ? -0.05 : 0)
             .animation(reduceMotion ? .none : FLMotion.springQuick, value: configuration.isPressed)
-            .overlay {
-                if !reduceMotion && isPressed {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color.white.opacity(0.08))
-                        .scaleEffect(1.02)
-                        .transition(.opacity)
-                }
-            }
-            .animation(.easeOut(duration: 0.3), value: isPressed)
             .onChange(of: configuration.isPressed) { _, pressed in
                 if pressed {
-                    isPressed = true
                     FreshliHapticManager.shared.glassRipple(density: density)
                     MotionVocabularyService.shared.speakMotion(.glassRipple(density: density))
-                } else {
-                    Task { @MainActor in
-                        try? await Task.sleep(for: .milliseconds(500))
-                        isPressed = false
-                    }
                 }
             }
     }
@@ -154,32 +139,15 @@ private struct BounceContent: View {
     let density: FLMaterialDensity
     let reduceMotion: Bool
 
-    @State private var isPressed = false
-
     var body: some View {
         configuration.label
-            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.93 : 1.0)
-            .opacity(configuration.isPressed ? 0.85 : 1.0)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.96 : 1.0)
+            .brightness(configuration.isPressed ? -0.05 : 0)
             .animation(reduceMotion ? .none : FLMotion.springBouncy, value: configuration.isPressed)
-            .overlay {
-                if !reduceMotion && isPressed {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color.white.opacity(0.08))
-                        .scaleEffect(1.02)
-                        .transition(.opacity)
-                }
-            }
-            .animation(.easeOut(duration: 0.3), value: isPressed)
             .onChange(of: configuration.isPressed) { _, pressed in
                 if pressed {
-                    isPressed = true
                     FreshliHapticManager.shared.glassRipple(density: density)
                     MotionVocabularyService.shared.speakMotion(.glassRipple(density: density))
-                } else {
-                    Task { @MainActor in
-                        try? await Task.sleep(for: .milliseconds(500))
-                        isPressed = false
-                    }
                 }
             }
     }

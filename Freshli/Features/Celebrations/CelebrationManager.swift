@@ -194,19 +194,7 @@ final class CelebrationManager {
     private func presentCelebration(_ type: CelebrationType) {
         activeCelebration = type
         isPresenting = true
-
-        // Haptic feedback synced with celebration animation entrance.
-        // FreshliHapticManager provides richer CHHapticEngine patterns;
-        // falls back to PSHaptics on devices without CoreHaptics support.
         FreshliHapticManager.shared.celebrationHaptic(intensity: type.intensity)
-
-        // Auto-dismiss for small celebrations
-        if type.intensity == .small {
-            Task { @MainActor in
-                try? await Task.sleep(for: .seconds(2.0))
-                self.dismissCelebration()
-            }
-        }
     }
 
     func dismissCelebration() {

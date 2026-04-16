@@ -5,9 +5,9 @@ import SwiftUI
 // Each type defines its own color palette, icon, copy, and intensity
 
 enum CelebrationIntensity {
-    case small    // Quick 1.5s toast, 4 confetti, no CTA
-    case medium   // Full-screen, 6 confetti, CTA button
-    case hero     // Full-screen, 12 confetti, badge reveal, extra stats
+    case small    // Full-screen, 8 confetti, CTA button (formerly toast)
+    case medium   // Full-screen, 12 confetti, CTA button
+    case hero     // Full-screen, 20 confetti, badge reveal, extra stats
 }
 
 enum CelebrationType: Identifiable, Equatable {
@@ -47,7 +47,7 @@ enum CelebrationType: Identifiable, Equatable {
         switch self {
         case .firstItemAdded: return .medium
         case .firstFoodSaved: return .medium
-        case .recipeMatchSuccess: return .small
+        case .recipeMatchSuccess: return .medium
         case .shareCompleted: return .medium
         case .donationCompleted: return .medium
         case .expiryRescueStreak(let count): return count >= 7 ? .hero : .medium
@@ -203,9 +203,9 @@ enum CelebrationType: Identifiable, Equatable {
 
     var confettiCount: Int {
         switch intensity {
-        case .small: return 4
-        case .medium: return 6
-        case .hero: return 12
+        case .small: return 8
+        case .medium: return 12
+        case .hero: return 20
         }
     }
 }

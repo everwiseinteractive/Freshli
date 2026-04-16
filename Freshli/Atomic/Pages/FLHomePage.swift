@@ -13,6 +13,7 @@ import os
 
 struct FLHomePage: View {
     @Binding var showAddItem: Bool
+    @Binding var showFoodScanner: Bool
     var switchToTab: (AppTab) -> Void
 
     // MARK: - Data
@@ -392,7 +393,7 @@ struct FLHomePage: View {
 
             // Quick actions grid — Atomic organism
             FLQuickActions(
-                onScanFridge: { showAddItem = true },
+                onScanFridge: { showFoodScanner = true },
                 onAddItem: { showAddItem = true },
                 onViewRecipes: { switchToTab(.recipes) },
                 onSwitchTab: switchToTab
