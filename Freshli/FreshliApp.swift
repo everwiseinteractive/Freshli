@@ -160,11 +160,34 @@ struct FreshliApp: App {
                 networkMonitor.start()
                 ambientLight.startMonitoring()
 
-                if GazeTrackingService.shared.isEnabled {
-                    GazeTrackingService.shared.startTracking()
-                }
+                // Gaze tracking (ARKit face tracking) is an accessibility extra —
+                // it MUST NOT run on the launch/splash critical path because
+                // ARSession.run can take 100–500ms to initialize and, if the
+                // TrueDepth camera is contended (Stage Manager on iPadOS),
+                // can stall long enough for App Review to report a hang.
+                // We start it after the splash dissolves via `.task(id:)` below.
 
                 ShaderWarmUpService.warmUpAll()
+
+                // ── Master safety timeout ──
+                // Guarantees the splash never hangs past this deadline, no matter
+                // what happens to any individual gate. App Review's device is
+                // fresh-provisioned with unpredictable network/keychain latency;
+                // a hard ceiling is the only way to ensure "failed to load past
+                // the splash screen" cannot happen. 6 seconds is well above the
+                // soft per-gate timeouts (3s) and the 2s minimum display, so
+                // under normal conditions this never fires.
+                Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(6.0))
+                    guard showSplash else { return }
+                    logger.warning("FreshliApp: master safety timeout reached — forcing splash exit")
+                    splashMinimumTimeMet = true
+                    authResolved = true
+                    dataPrefetched = true
+                    appContentReady = true
+                    splashProgress = 1.0
+                    shouldExitSplash = true
+                }
 
                 // ── Minimum display time (2.0 s) — runs in parallel ──
                 Task { @MainActor in
@@ -173,7 +196,7 @@ struct FreshliApp: App {
                     checkAllGates()
                 }
 
-                // ── Auth restore ──
+                // ── Auth restore (3s internal timeout — see AuthManager.restoreSession) ──
                 logger.info("FreshliApp: Restoring session...")
                 splashProgress = 0.15
 
@@ -184,7 +207,7 @@ struct FreshliApp: App {
                 splashProgress = 0.50
                 checkAllGates()
 
-                // ── Notifications ──
+                // ── Notifications (3s internal timeout — see requestAuthorization) ──
                 let notificationService = NotificationService()
                 notificationService.registerCategories()
                 await notificationService.requestAuthorization()
@@ -209,6 +232,16 @@ struct FreshliApp: App {
                     Task {
                         await offlineSyncQueue.processQueue(using: syncService)
                     }
+                }
+            }
+            .onChange(of: showSplash) { _, splashVisible in
+                // Start ARKit gaze tracking AFTER the splash dissolves. Doing
+                // this on the splash/launch path can stall first render on
+                // some devices (see FreshliApp.task comment). Gaze is an
+                // opt-in accessibility feature — delaying its start by a
+                // second is imperceptible.
+                if !splashVisible, GazeTrackingService.shared.isEnabled {
+                    GazeTrackingService.shared.startTracking()
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in

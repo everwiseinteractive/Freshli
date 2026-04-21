@@ -6,10 +6,31 @@ import UserNotifications
 final class NotificationService {
     private(set) var isAuthorized = false
 
-    func requestAuthorization() async {
+    /// Request notification authorization.
+    ///
+    /// **Launch-safety:** the UNUserNotificationCenter.requestAuthorization call
+    /// blocks until the user responds to the system permission alert. App Review
+    /// runs apps on freshly-provisioned devices where this dialog can appear
+    /// slowly, or (on iPad in Stage Manager) land in an unexpected window —
+    /// either situation can stall the splash indefinitely. After `timeout`
+    /// seconds we stop waiting and treat the permission as un-granted so the
+    /// splash can proceed; real user permission will be re-requested later
+    /// when we actually want to schedule a notification.
+    func requestAuthorization(timeout: TimeInterval = 3.0) async {
         do {
-            let granted = try await UNUserNotificationCenter.current()
-                .requestAuthorization(options: [.alert, .badge, .sound])
+            let granted = try await withThrowingTaskGroup(of: Bool.self) { group in
+                group.addTask {
+                    try await UNUserNotificationCenter.current()
+                        .requestAuthorization(options: [.alert, .badge, .sound])
+                }
+                group.addTask {
+                    try await Task.sleep(for: .seconds(timeout))
+                    throw CancellationError()
+                }
+                defer { group.cancelAll() }
+                guard let first = try await group.next() else { return false }
+                return first
+            }
             isAuthorized = granted
             if granted {
                 UIApplication.shared.registerForRemoteNotifications()
@@ -17,6 +38,11 @@ final class NotificationService {
             } else {
                 PSLogger.notifications.warning("Notification authorization denied by user")
             }
+        } catch is CancellationError {
+            // Timeout — don't block the splash. We will ask again the next
+            // time a notification is actually scheduled.
+            isAuthorized = false
+            PSLogger.notifications.debug("Authorization request timed out after \(Int(timeout))s — will retry on next schedule")
         } catch {
             isAuthorized = false
             PSLogger.notifications.error("Authorization request failed: \(error.localizedDescription)")

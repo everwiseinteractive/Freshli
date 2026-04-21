@@ -69,17 +69,41 @@ final class AuthManager {
     // MARK: - Session Restoration
 
     /// Called once at app launch to check for an existing session.
-    func restoreSession() async {
+    ///
+    /// **Launch-safety:** this method is on the critical splash-screen path.
+    /// If the Supabase SDK's network/keychain call stalls (flaky Wi-Fi, keychain
+    /// not-yet-unlocked on first-run, SDK internal retry), we do NOT want the
+    /// splash to hang indefinitely. After `timeout` seconds we abandon the
+    /// attempt and fall through to `.unauthenticated`, which lets the splash
+    /// dissolve and shows the AuthView so the user can sign in manually.
+    /// The session can still be restored in the background when the SDK's
+    /// `authStateChanges` stream fires.
+    func restoreSession(timeout: TimeInterval = 3.0) async {
         do {
-            let session = try await client.auth.session
+            let session = try await withThrowingTaskGroup(of: Session.self) { group in
+                group.addTask {
+                    try await AppSupabase.client.auth.session
+                }
+                group.addTask {
+                    try await Task.sleep(for: .seconds(timeout))
+                    throw AuthError.unknown("restoreSession timed out after \(Int(timeout))s")
+                }
+                // Whichever task finishes first wins; cancel the rest.
+                defer { group.cancelAll() }
+                guard let first = try await group.next() else {
+                    throw AuthError.unknown("restoreSession produced no result")
+                }
+                return first
+            }
             currentUserId = session.user.id
             currentUserEmail = session.user.email
             currentDisplayName = session.user.userMetadata["display_name"]?.stringValue
             authState = .authenticated
             PSLogger.auth.info("Session restored successfully")
         } catch {
-            // Session unavailable or expired — user is unauthenticated
-            PSLogger.auth.debug("No existing session found: \(error.localizedDescription)")
+            // Session unavailable, expired, or the attempt timed out —
+            // treat as unauthenticated so the splash can proceed.
+            PSLogger.auth.debug("restoreSession fell through to unauthenticated: \(error.localizedDescription)")
             authState = .unauthenticated
         }
     }
