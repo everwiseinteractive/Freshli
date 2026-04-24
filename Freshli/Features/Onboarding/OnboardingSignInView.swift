@@ -13,6 +13,7 @@ struct OnboardingSignInView: View {
     @State private var isSigningIn = false
     @State private var showAppleError = false
     @State private var buttonGlow = false
+    @State private var pendingNonce: String?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -97,66 +98,36 @@ struct OnboardingSignInView: View {
 
             // Auth buttons
             VStack(spacing: PSSpacing.lg) {
-                // High-gloss Sign in with Apple button
-                Button {
-                    signInWithApple()
-                } label: {
-                    HStack(spacing: PSSpacing.md) {
-                        Image(systemName: "apple.logo")
-                            .font(.system(size: PSLayout.scaledFont(20), weight: .semibold))
-
-                        Text(String(localized: "Sign in with Apple"))
-                            .font(.system(size: PSLayout.scaledFont(18), weight: .bold))
+                // Official SwiftUI Sign in with Apple button.
+                // See AuthView.swift for the full rationale — summary: this is
+                // the HIG-required button, and SwiftUI manages its own
+                // ASAuthorizationController + presentation anchor, which fixes
+                // the iPadOS 26 / Stage Manager SIWA failure reported in
+                // App Review.
+                ZStack {
+                    SignInWithAppleButton(.signIn) { request in
+                        PSHaptics.shared.mediumTap()
+                        request.requestedScopes = [.fullName, .email]
+                        let nonce = AppleSignInCoordinator.randomNonceString()
+                        pendingNonce = nonce
+                        request.nonce = AppleSignInCoordinator.sha256(nonce)
+                    } onCompletion: { result in
+                        handleAppleSignInCompletion(result)
                     }
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
+                    .signInWithAppleButtonStyle(.black)
                     .frame(height: PSLayout.scaled(60))
-                    .background(
-                        ZStack {
-                            // Base black
-                            RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous)
-                                .fill(.black)
-
-                            // High-gloss top highlight
-                            RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous)
-                                .fill(
-                                    LinearGradient(
-                                        stops: [
-                                            .init(color: .white.opacity(0.18), location: 0),
-                                            .init(color: .white.opacity(0.05), location: 0.45),
-                                            .init(color: .clear, location: 0.5),
-                                            .init(color: .black.opacity(0.1), location: 1.0),
-                                        ],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
-                                )
-
-                            // Glow border
-                            RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous)
-                                .strokeBorder(
-                                    LinearGradient(
-                                        colors: [.white.opacity(0.25), .white.opacity(0.05)],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    ),
-                                    lineWidth: 0.5
-                                )
-                        }
-                    )
-                    .elevation(.z3)
+                    .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
                     .shadow(color: PSColors.primaryGreen.opacity(buttonGlow ? 0.2 : 0), radius: 20, y: 0)
-                    .overlay {
-                        if isSigningIn {
-                            RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous)
-                                .fill(.black.opacity(0.5))
-                            ProgressView()
-                                .tint(.white)
-                        }
+                    .disabled(isSigningIn)
+
+                    if isSigningIn {
+                        RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous)
+                            .fill(.black.opacity(0.5))
+                            .frame(height: PSLayout.scaled(60))
+                        ProgressView()
+                            .tint(.white)
                     }
                 }
-                .buttonStyle(PressableButtonStyle())
-                .disabled(isSigningIn)
                 .accessibilityLabel(String(localized: "Sign in with Apple"))
                 .opacity(appeared ? 1 : 0)
                 .offset(y: appeared ? 0 : 20)
@@ -193,21 +164,55 @@ struct OnboardingSignInView: View {
         }
     }
 
-    private func signInWithApple() {
-        PSHaptics.shared.mediumTap()
-        isSigningIn = true
-        Task {
-            do {
-                try await authManager.signInWithApple()
-                PSHaptics.shared.success()
-                onSignedIn()
-            } catch {
-                if authManager.errorMessage != nil {
-                    PSHaptics.shared.error()
-                    showAppleError = true
-                }
+    private func handleAppleSignInCompletion(_ result: Result<ASAuthorization, Error>) {
+        switch result {
+        case .success(let authorization):
+            guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                  let identityTokenData = credential.identityToken,
+                  let identityToken = String(data: identityTokenData, encoding: .utf8),
+                  let nonce = pendingNonce else {
+                PSHaptics.shared.error()
+                authManager.errorMessage = String(localized: "Could not retrieve Apple ID credentials. Please try again.")
+                showAppleError = true
+                return
             }
-            isSigningIn = false
+
+            let fullName: String? = {
+                guard let nc = credential.fullName else { return nil }
+                let parts = [nc.givenName, nc.familyName].compactMap { $0 }
+                return parts.isEmpty ? nil : parts.joined(separator: " ")
+            }()
+
+            isSigningIn = true
+            Task {
+                do {
+                    try await authManager.signInWithApple(
+                        idToken: identityToken,
+                        nonce: nonce,
+                        fullName: fullName
+                    )
+                    PSHaptics.shared.success()
+                    onSignedIn()
+                } catch {
+                    if authManager.errorMessage != nil {
+                        PSHaptics.shared.error()
+                        showAppleError = true
+                    }
+                }
+                isSigningIn = false
+                pendingNonce = nil
+            }
+
+        case .failure(let error):
+            // User-initiated cancel: stay silent (no error alert).
+            if let authError = error as? ASAuthorizationError, authError.code == .canceled {
+                pendingNonce = nil
+                return
+            }
+            PSHaptics.shared.error()
+            authManager.errorMessage = String(localized: "Sign in with Apple failed. Please try again or use email sign in.")
+            showAppleError = true
+            pendingNonce = nil
         }
     }
 }

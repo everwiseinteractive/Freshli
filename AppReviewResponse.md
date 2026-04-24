@@ -1,75 +1,60 @@
 # App Store Review Response — Freshli 1.0
-**Review date:** April 19, 2026
+**Review date:** April 23, 2026
 **Review devices:** iPhone 17 Pro Max (iOS 26.4.1), iPad Air 11-inch (M3) (iPadOS 26.4.1)
+**Build:** 1.0 (19) — uploaded after this fix
 
 Dear App Review,
 
-Thank you for the follow-up review. We have reproduced and fixed the launch-hang, re-confirmed the EULA placement in App Store Connect metadata, and restated the TrueDepth answers in full below.
+Thank you for the continued review. We identified the underlying cause of the Sign in with Apple error on iPad and have moved to Apple's official SwiftUI `SignInWithAppleButton` component. The full TrueDepth answers from the previous submission are restated verbatim below so they appear in this build's review notes as well.
 
 ---
 
-## Guideline 2.1(a) — App Completeness (app failed to load past splash)
+## Guideline 2.1(a) — App Completeness (Sign in with Apple error on iPad)
 
-**We reproduced this.** On a freshly-provisioned iPhone 17 Pro Max and iPad Air 11-inch (M3) running iOS/iPadOS 26.4.1 we saw the same symptom: the splash ring reached ~50% and stalled for >30 seconds. The build did eventually recover, but well past any reasonable review timeout.
+### Root cause
 
-**Root cause.** Our splash screen waited on **four independent gates** before dissolving (minimum display time, auth restore, notification permission, app-content ready). Two of those gates called system APIs that can block for a long time on a fresh device the very first time the app runs:
+Our previous build drove the Sign in with Apple flow through a **custom `Button`** that invoked `ASAuthorizationController` directly via our own coordinator. While we added a presentation-context provider to handle iPad multi-window, the coordinator's presentation-anchor discovery is sensitive to the exact state of `UIApplication.connectedScenes` on iPadOS 26.4.1 — in particular, when Stage Manager is active, there can be a brief window in which no `UIWindowScene` is in `.foregroundActive` state. When that happens, our fallback returned a detached `ASPresentationAnchor()` (an empty `UIWindow` with no scene), and `ASAuthorizationController.performRequests()` then either failed with `not handled` or presented into an invalid window. Our error surface in `AuthManager.signInWithApple()` mapped that to a visible "Sign in with Apple couldn't open / failed" alert — which is the error message App Review saw.
 
-1. `Supabase.auth.session` — on first launch, the Supabase Swift SDK opens the keychain and performs a network refresh. On a just-provisioned device with no keychain entry yet and intermittent App Review Wi-Fi, this call could hang for tens of seconds.
-2. `UNUserNotificationCenter.requestAuthorization(...)` — the system notification consent alert. On iPadOS 26.4.1 inside Stage Manager the alert can land in a non-key window; the awaited call then never resolves until the user notices the alert.
+We have been unable to reproduce this 100% of the time — it depends on scene activation timing on a freshly-provisioned iPad Air in Stage Manager — but we consistently reproduced *transient* failures on that device by backgrounding/foregrounding the app mid-launch. The official SwiftUI button does not hit this code path.
 
-A third, less-likely contributor was our optional **ARKit face-tracking** (Gaze-Adaptive UI accessibility feature): `ARSession.run` with `ARFaceTrackingConfiguration` can take 100–500 ms to warm the TrueDepth pipeline, and on iPad multi-window the TrueDepth camera can be briefly contended, which compounds the stall.
+### Fix shipped in this build
 
-Because the splash had **no absolute ceiling**, any one of these stalls could hold the launch indefinitely.
+We replaced the custom `Button` with Apple's **official `SignInWithAppleButton`** SwiftUI component in both auth entry points (`AuthView.swift` and `OnboardingSignInView.swift`).
 
-**Fixes shipped in this build (belt-and-braces).**
+`SignInWithAppleButton` is the HIG-required component for Sign in with Apple (§4.8). It:
 
-| Layer | Fix |
-|---|---|
-| **Master safety timeout** | `FreshliApp.swift` starts a 6-second task at the top of `.task` that force-passes every gate and dissolves the splash no matter what. This is the absolute ceiling — the splash **cannot** remain visible past this point. |
-| **Soft per-gate timeouts** | `AuthManager.restoreSession(timeout: 3.0)` and `NotificationService.requestAuthorization(timeout: 3.0)` now race the system call against a 3-second `Task.sleep` using `withThrowingTaskGroup`. Whichever finishes first wins; the loser is cancelled. On timeout we fall through as "unauthenticated"/"not granted" so launch can proceed, and retry in the background via Supabase's `authStateChanges` stream and on the next notification-scheduling call. |
-| **Gaze tracking deferred** | `GazeTrackingService.startTracking()` has been **removed from the launch critical path** and now starts via `.onChange(of: showSplash)` *after* the splash dissolves. ARKit never touches the TrueDepth camera during launch. Gaze is an opt-in accessibility feature, so a sub-second delay is imperceptible. |
+- Owns its own `ASAuthorizationController` lifecycle
+- Picks the correct `presentationAnchor` automatically, including on iPadOS multi-window, Split View, Slide Over, and Stage Manager
+- Passes our nonce-bound request through `onRequest` so the cryptographic chain is preserved end-to-end
+- Returns the credential (or `ASAuthorizationError.canceled`) through `onCompletion`, which we hand off to a new `AuthManager.signInWithApple(idToken:nonce:fullName:)` method that exchanges the token with Supabase
 
-**Worst-case launch path is now deterministic.** Even if every single system API is hung, the splash exits at 6 seconds with the main UI already rendered underneath (our splash is a `ZStack` overlay — the tab view is live from frame 1).
+The legacy coordinator + `AuthManager.signInWithApple()` method remain for unit-test paths but are no longer reachable from the UI.
 
-**Verified on:**
-- iPhone 17 Pro Max, iOS 26.4.1 — fresh provisioning, Wi-Fi off, Airplane Mode on: splash dissolves at 6.0 s ±0.1 s, app fully interactive.
-- iPad Air 11-inch (M3), iPadOS 26.4.1 — fresh provisioning, Stage Manager active, three windows: splash dissolves at 6.0 s ±0.1 s, app fully interactive.
-- Same devices with good network: splash dissolves in ~2.0 s (our minimum display time) every launch.
+### Verified on
 
-**Demo credentials for review:**
-- Email: **reviewer@freshli.app**
-- Password: **FreshliReview2026!**
-- Or tap **"Continue without account"** on the auth landing screen to explore in guest mode.
+- iPad Air 11-inch (M3), iPadOS 26.4.1 — Stage Manager active with three simultaneous windows — Sign in with Apple sheet opens first time, every time
+- iPad Air 11-inch (M3), iPadOS 26.4.1 — Split View + Slide Over — works
+- iPhone 17 Pro Max, iOS 26.4.1 — works
+- Reviewer account **reviewer@freshli.app** / **FreshliReview2026!** also still available for email sign-in, and **"Continue without account"** on the auth landing screen gives full access to the app in guest mode
 
----
+### Demo credentials (re-confirmed)
 
-## Guideline 3.1.2(c) — Subscriptions (functional EULA in metadata)
+- **Email:** reviewer@freshli.app
+- **Password:** FreshliReview2026!
 
-We have added a direct, functional link to the Terms of Use (EULA) to **both** the in-app paywall and the App Store Connect metadata.
-
-**In-app paywall** (`FreshliProView.swift` → `legalDisclosures`):
-- **Terms of Use (EULA):** https://freshli.app/terms.html
-- **Privacy Policy:** https://freshli.app/privacy.html
-
-Both URLs return HTTP 200 and render the complete documents. They are displayed alongside all required subscription disclosures (price, billing period, auto-renewal, cancellation instructions, free-trial terms).
-
-**App Store Connect metadata:**
-- The **App Description** for this version now contains the literal line "Terms of Use (EULA): https://freshli.app/terms.html" in its own paragraph near the end of the description, so App Review can see the EULA link without installing the app.
-- The **Privacy Policy URL** field under App Information is set to `https://freshli.app/privacy.html`.
-
-Both links have been tested from the App Store Connect preview and from a fresh Safari session.
+Or tap **"Continue without account"** on the auth landing to explore the full app in guest mode.
 
 ---
 
 ## Guideline 2.1 — Information Needed: TrueDepth API (complete restatement)
 
-Here are complete answers to each of the five questions, restated in full for this review.
+Restated here in full — these answers apply to build 1.0 (19) as submitted.
 
 ### 1. What information is the app collecting using the TrueDepth API?
 
 Freshli uses Apple's ARKit face-tracking via the TrueDepth camera to compute a **gaze vector** — a normalised point on the screen (x, y in the range 0–1) representing where the user's eyes appear to be looking, plus a confidence score.
 
-Concretely, ARKit provides an `ARFaceAnchor` each frame. Freshli reads **only two properties** from that anchor — `leftEyeTransform` and `rightEyeTransform` (the 4×4 rotation/translation matrices of each eye relative to the face) — averages them, and projects the result onto a normalised screen coordinate. Freshli **does not** use, store, or read:
+Concretely, ARKit provides an `ARFaceAnchor` on each frame. Freshli reads **only two properties** from that anchor — `leftEyeTransform` and `rightEyeTransform` (the 4×4 rotation/translation matrices of each eye relative to the face) — averages them, and projects the result onto a normalised screen coordinate. Freshli **does not** use, store, or read:
 
 - The face mesh / geometry (`geometry` property)
 - Blendshape coefficients (`blendShapes`)
@@ -135,13 +120,13 @@ The Privacy Policy states verbatim, under section **2.6 Face Data (TrueDepth API
 
 | File | Change |
 |---|---|
-| `Freshli/FreshliApp.swift` | Added 6 s master safety timeout; moved `GazeTrackingService.startTracking()` off the launch path to `.onChange(of: showSplash)` |
-| `Freshli/Supabase/AuthManager.swift` | `restoreSession(timeout:)` now races the Supabase session call against a 3 s timer via `withThrowingTaskGroup`; falls through to `.unauthenticated` on timeout |
-| `Freshli/Services/NotificationService.swift` | `requestAuthorization(timeout:)` now races the system consent alert against a 3 s timer; falls through to "not granted" on timeout and retries later |
+| `Freshli/Features/Auth/AuthView.swift` | Custom SIWA `Button` replaced with official `SignInWithAppleButton(.signIn)`; nonce managed via `@State`; completion handler invokes the new credential-taking auth path |
+| `Freshli/Features/Onboarding/OnboardingSignInView.swift` | Same refactor — `SignInWithAppleButton(.signIn)` with in-view loading overlay |
+| `Freshli/Supabase/AuthManager.swift` | New method `signInWithApple(idToken:nonce:fullName:)` that exchanges pre-obtained credentials with Supabase; legacy coordinator-driven method retained and refactored to delegate |
 
-Build target unchanged: iOS/iPadOS 26.4, Universal (device family 1,2,7), bundle ID `everwise.interactive.Freshli`.
+The complete previous launch-path fixes (splash master safety timeout, auth/notification timeout races, deferred gaze tracking) remain in place.
 
-Please let us know if you need anything further. Thank you for your time reviewing Freshli.
+Please let us know if you need anything further.
 
 Best regards,
 Jay Lawrence

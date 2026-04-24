@@ -104,6 +104,11 @@ struct AuthLandingView: View {
     @State private var appeared = false
     @State private var showAppleError = false
     @State private var isSigningIn = false
+    // Nonce is generated in `onRequest` and consumed in `onCompletion`. We
+    // stash it here so the two closures can share state without forcing us
+    // to spin up our own ASAuthorizationController (which is what previously
+    // broke on iPadOS Stage Manager).
+    @State private var pendingNonce: String?
 
     var body: some View {
         GeometryReader { proxy in
@@ -162,38 +167,31 @@ struct AuthLandingView: View {
 
                     // Auth buttons section
                     VStack(spacing: PSSpacing.lg) {
-                // Sign in with Apple
+                // Sign in with Apple — OFFICIAL SwiftUI button.
                 //
-                // We render a custom button (not SignInWithAppleButton) because we
-                // need to run the full nonce-bound flow through AppleSignInCoordinator
-                // and exchange the identity token with Supabase. The previous
-                // implementation overlaid a transparent Button on top of
-                // SignInWithAppleButton which caused two parallel ASAuthorizationController
-                // requests to fire — one without a nonce, one with — which is what
-                // broke Sign in with Apple on iPadOS 26.4.1 (App Review feedback).
-                //
-                // This button follows Apple's Human Interface Guidelines for
-                // Sign in with Apple (SF Pro semibold, Apple logo, 54pt height,
-                // corner radius, black on dark / white on light).
-                Button {
-                    signInWithApple()
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "apple.logo")
-                            .font(.system(size: 20, weight: .medium))
-                        Text(String(localized: "Sign in with Apple"))
-                            .font(.system(size: 17, weight: .semibold))
-                    }
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 54)
-                    .background(Color.black)
-                    .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
+                // We use Apple's SignInWithAppleButton (not a custom Button) for two reasons:
+                //   1. HIG compliance — §4.8 Sign in with Apple requires the
+                //      Apple-provided button.
+                //   2. iPadOS 26 / Stage Manager — SignInWithAppleButton owns its
+                //      own ASAuthorizationController and presentation anchor, so
+                //      SwiftUI picks the correct window automatically. Custom
+                //      ASAuthorizationController presentation has been unreliable
+                //      on iPad Air 11" M3 / iPadOS 26.4.1 in App Review, producing
+                //      the "an error message was displayed" rejection.
+                SignInWithAppleButton(.signIn) { request in
+                    request.requestedScopes = [.fullName, .email]
+                    let nonce = AppleSignInCoordinator.randomNonceString()
+                    pendingNonce = nonce
+                    request.nonce = AppleSignInCoordinator.sha256(nonce)
+                } onCompletion: { result in
+                    handleAppleSignInCompletion(result)
                 }
-                .buttonStyle(PressableButtonStyle())
+                .signInWithAppleButtonStyle(.black)
+                .frame(height: 54)
+                .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
+                .disabled(isSigningIn)
                 .accessibilityLabel(String(localized: "Sign in with Apple"))
                 .accessibilityHint(String(localized: "Uses your Apple ID to sign in securely"))
-                .disabled(isSigningIn)
 
                 // Divider
                 HStack(spacing: PSSpacing.md) {
@@ -283,19 +281,55 @@ struct AuthLandingView: View {
         }
     }
 
-    private func signInWithApple() {
-        isSigningIn = true
-        Task {
-            do {
-                try await authManager.signInWithApple()
-            } catch {
-                if authManager.errorMessage != nil {
-                    showAppleError = true
-                }
+    private func handleAppleSignInCompletion(_ result: Result<ASAuthorization, Error>) {
+        switch result {
+        case .success(let authorization):
+            guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                  let identityTokenData = credential.identityToken,
+                  let identityToken = String(data: identityTokenData, encoding: .utf8),
+                  let nonce = pendingNonce else {
+                authManager.errorMessage = String(localized: "Could not retrieve Apple ID credentials. Please try again.")
+                showAppleError = true
+                return
             }
-            isSigningIn = false
+
+            let fullName: String? = {
+                guard let nc = credential.fullName else { return nil }
+                let parts = [nc.givenName, nc.familyName].compactMap { $0 }
+                return parts.isEmpty ? nil : parts.joined(separator: " ")
+            }()
+
+            isSigningIn = true
+            Task {
+                do {
+                    try await authManager.signInWithApple(
+                        idToken: identityToken,
+                        nonce: nonce,
+                        fullName: fullName
+                    )
+                } catch {
+                    if authManager.errorMessage != nil {
+                        showAppleError = true
+                    }
+                }
+                isSigningIn = false
+                pendingNonce = nil
+            }
+
+        case .failure(let error):
+            // User-initiated cancel: ASAuthorizationError.canceled — silent.
+            if let authError = error as? ASAuthorizationError, authError.code == .canceled {
+                pendingNonce = nil
+                return
+            }
+            authManager.errorMessage = String(localized: "Sign in with Apple failed. Please try again or use email sign in.")
+            logger.error("SignInWithAppleButton failed: \(error.localizedDescription, privacy: .public)")
+            showAppleError = true
+            pendingNonce = nil
         }
     }
+
+    private var logger: Logger { Logger(subsystem: "com.freshli.app", category: "AuthView") }
 }
 
 // Make AuthScreen conform for animation value

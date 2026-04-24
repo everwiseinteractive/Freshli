@@ -233,33 +233,39 @@ final class AuthManager {
 
     // MARK: - Sign in with Apple
 
-    /// Handle Sign in with Apple using the identity token from ASAuthorizationController.
-    func signInWithApple() async throws {
+    /// Exchange a pre-obtained Apple identity token + nonce with Supabase.
+    ///
+    /// This is the NEW primary path, driven by SwiftUI's `SignInWithAppleButton`.
+    /// Using the system button means SwiftUI manages the ASAuthorizationController
+    /// and its presentation anchor internally — eliminating the iPadOS
+    /// multi-window / Stage Manager presentation bugs that have been breaking
+    /// Sign in with Apple in App Review (iPad Air 11" M3, iPadOS 26.4.1).
+    ///
+    /// - Parameters:
+    ///   - idToken: The `identityToken` string from `ASAuthorizationAppleIDCredential`.
+    ///   - nonce: The RAW (unhashed) nonce. Apple ID tokens carry the SHA256 hash.
+    ///   - fullName: Optional display name. Apple only provides this on the very
+    ///     first sign-in for a given Apple ID; on subsequent sign-ins we fall back
+    ///     to `user_metadata.display_name`.
+    func signInWithApple(idToken: String, nonce: String, fullName: String?) async throws {
         isProcessing = true
         errorMessage = nil
         defer { isProcessing = false }
 
-        let coordinator = AppleSignInCoordinator()
-
         do {
-            let result = try await coordinator.signIn()
-
-            // Exchange Apple identity token with Supabase
             let session = try await client.auth.signInWithIdToken(
                 credentials: .init(
                     provider: .apple,
-                    idToken: result.identityToken,
-                    nonce: result.nonce
+                    idToken: idToken,
+                    nonce: nonce
                 )
             )
 
             currentUserId = session.user.id
             currentUserEmail = session.user.email
 
-            // Use the full name from Apple if available, otherwise fall back to metadata
-            if let fullName = result.fullName, !fullName.isEmpty {
+            if let fullName, !fullName.isEmpty {
                 currentDisplayName = fullName
-                // Update the user metadata with the display name
                 do {
                     try await client.auth.update(user: .init(
                         data: ["display_name": .string(fullName)]
@@ -275,28 +281,57 @@ final class AuthManager {
             }
 
             authState = .authenticated
-            PSLogger.auth.info("User signed in with Apple successfully")
+            PSLogger.auth.info("User signed in with Apple successfully (SwiftUI button path)")
+        } catch {
+            let raw = error.localizedDescription.lowercased()
+            let message: String
+            if raw.contains("network") || raw.contains("offline") || raw.contains("connection") || raw.contains("timed out") {
+                message = String(localized: "Can't reach the server. Check your internet connection and try again.")
+            } else if raw.contains("invalid") && (raw.contains("token") || raw.contains("nonce")) {
+                message = String(localized: "Sign in with Apple token couldn't be verified. Please try again or use email sign in.")
+            } else {
+                message = String(localized: "Sign in with Apple failed. Please try again or use email sign in.")
+            }
+            errorMessage = message
+            PSLogger.auth.error("SignInWithApple (token exchange) failed: \(error.localizedDescription)")
+            throw AuthError.signInFailed(message)
+        }
+    }
+
+    /// Legacy path kept for callers that still invoke the coordinator directly.
+    /// Prefer the `signInWithApple(idToken:nonce:fullName:)` overload driven by
+    /// SwiftUI's `SignInWithAppleButton`.
+    func signInWithApple() async throws {
+        isProcessing = true
+        errorMessage = nil
+        defer { isProcessing = false }
+
+        let coordinator = AppleSignInCoordinator()
+
+        do {
+            let result = try await coordinator.signIn()
+            try await signInWithApple(
+                idToken: result.identityToken,
+                nonce: result.nonce,
+                fullName: result.fullName
+            )
         } catch let error as AppleSignInError where error.errorDescription == nil {
-            // User cancelled — don't show error
             PSLogger.auth.debug("Apple Sign-In cancelled by user")
             return
+        } catch let error as AuthError {
+            throw error
         } catch {
-            // Map common failure modes to actionable copy. Keep it short — this
-            // is surfaced in an alert on the auth landing screen.
             let raw = error.localizedDescription.lowercased()
             let message: String
             if raw.contains("network") || raw.contains("offline") || raw.contains("connection") || raw.contains("timed out") {
                 message = String(localized: "Can't reach the server. Check your internet connection and try again.")
             } else if raw.contains("not handled") || raw.contains("no window") {
-                // ASAuthorizationController couldn't find a presentation anchor.
-                // Should not happen now that AppleSignInCoordinator provides one,
-                // but kept as a defensive message.
                 message = String(localized: "Sign in with Apple couldn't open. Please try again or use email sign in.")
             } else {
                 message = String(localized: "Sign in with Apple failed. Please try again or use email sign in.")
             }
             errorMessage = message
-            PSLogger.auth.error("SignInWithApple failed: \(error.localizedDescription)")
+            PSLogger.auth.error("SignInWithApple (legacy coordinator) failed: \(error.localizedDescription)")
             throw AuthError.signInFailed(message)
         }
     }
