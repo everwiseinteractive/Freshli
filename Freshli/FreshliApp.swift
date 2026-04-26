@@ -146,41 +146,36 @@ struct FreshliApp: App {
                 }
             }
             .task {
-                // ── Services that start during splash ──
-                do {
-                    try Tips.configure([
-                        .displayFrequency(.immediate),
-                        .datastoreLocation(.applicationDefault)
-                    ])
-                } catch {
-                    logger.error("TipKit configure failed: \(error.localizedDescription, privacy: .public)")
-                }
-
-                diagnosticsService.start()
-                networkMonitor.start()
-                ambientLight.startMonitoring()
-
-                // Gaze tracking (ARKit face tracking) is an accessibility extra —
-                // it MUST NOT run on the launch/splash critical path because
-                // ARSession.run can take 100–500ms to initialize and, if the
-                // TrueDepth camera is contended (Stage Manager on iPadOS),
-                // can stall long enough for App Review to report a hang.
-                // We start it after the splash dissolves via `.task(id:)` below.
-
-                ShaderWarmUpService.warmUpAll()
-
-                // ── Master safety timeout ──
-                // Guarantees the splash never hangs past this deadline, no matter
-                // what happens to any individual gate. App Review's device is
-                // fresh-provisioned with unpredictable network/keychain latency;
-                // a hard ceiling is the only way to ensure "failed to load past
-                // the splash screen" cannot happen. 6 seconds is well above the
-                // soft per-gate timeouts (3s) and the 2s minimum display, so
-                // under normal conditions this never fires.
+                // ── Master safety timeout (FIRST thing we schedule) ──
+                //
+                // Apple's freeze-detection heuristic for App Review reports
+                // "app froze upon launch" when the app appears unresponsive
+                // for roughly 5 seconds. Build 19 was rejected with this
+                // exact message on iPhone 17 Pro Max / iOS 26.4, so we
+                // pull the master ceiling well below that threshold.
+                //
+                // 3.5 s is comfortably under Apple's threshold AND above
+                // the 1.5 s minimum display, the 2 s auth timeout, and the
+                // 1 s notification timeout (max sequential = 3 s, still
+                // under the master so the master only fires in pathological
+                // hangs, e.g. Supabase keychain stuck on a fresh-provisioned
+                // device with unpredictable network).
+                //
+                // CRITICAL: this Task is scheduled BEFORE any other awaited
+                // work in the .task body, so even if the very first call
+                // below is the one that hangs, this safety net is already
+                // armed.
                 Task { @MainActor in
-                    try? await Task.sleep(for: .seconds(6.0))
+                    try? await Task.sleep(for: .seconds(3.5))
                     guard showSplash else { return }
                     logger.warning("FreshliApp: master safety timeout reached — forcing splash exit")
+                    // If auth state never resolved, force it to .unauthenticated
+                    // so mainAppContent has something concrete to render once
+                    // the splash dissolves (instead of the .loading Color.clear).
+                    if authManager.authState == .loading {
+                        logger.warning("FreshliApp: master timeout firing with authState=.loading — forcing .unauthenticated")
+                        authManager.authState = .unauthenticated
+                    }
                     splashMinimumTimeMet = true
                     authResolved = true
                     dataPrefetched = true
@@ -189,28 +184,57 @@ struct FreshliApp: App {
                     shouldExitSplash = true
                 }
 
-                // ── Minimum display time (2.0 s) — runs in parallel ──
+                // ── Minimum display time (1.5 s) — runs in parallel ──
                 Task { @MainActor in
-                    try? await Task.sleep(for: .seconds(2.0))
+                    try? await Task.sleep(for: .seconds(1.5))
                     splashMinimumTimeMet = true
                     checkAllGates()
                 }
 
-                // ── Auth restore (3s internal timeout — see AuthManager.restoreSession) ──
+                // ── Non-critical service startup (deferred off-main, fire-and-forget) ──
+                //
+                // TipKit configure does disk I/O, MetricKit registration touches
+                // a system framework, NWPathMonitor.start schedules a queue,
+                // brightness polling sets up a Timer. None of these are needed
+                // for the splash to dissolve — defer them so a slow init in any
+                // of these can't block the launch path.
+                Task { @MainActor in
+                    do {
+                        try Tips.configure([
+                            .displayFrequency(.immediate),
+                            .datastoreLocation(.applicationDefault)
+                        ])
+                    } catch {
+                        logger.error("TipKit configure failed: \(error.localizedDescription, privacy: .public)")
+                    }
+                    diagnosticsService.start()
+                    networkMonitor.start()
+                    ambientLight.startMonitoring()
+                }
+
+                // Gaze tracking (ARKit face tracking) — started in the
+                // .onChange(of: showSplash) handler below, never on the
+                // launch path. ARSession.run can take 100–500ms and may
+                // contend with TrueDepth in iPad Stage Manager.
+
+                // ── Auth restore (2 s internal timeout) ──
                 logger.info("FreshliApp: Restoring session...")
                 splashProgress = 0.15
 
-                await authManager.restoreSession()
+                await authManager.restoreSession(timeout: 2.0)
 
                 logger.info("FreshliApp: Session restored, state = \(String(describing: authManager.authState))")
                 authResolved = true
                 splashProgress = 0.50
                 checkAllGates()
 
-                // ── Notifications (3s internal timeout — see requestAuthorization) ──
+                // ── Notifications (1 s internal timeout) ──
+                // Permission prompt is fire-and-forget; if iOS hasn't
+                // returned a decision in 1 second we proceed without it
+                // and re-request later when actually scheduling alerts.
                 let notificationService = NotificationService()
                 notificationService.registerCategories()
-                await notificationService.requestAuthorization()
+                await notificationService.requestAuthorization(timeout: 1.0)
 
                 dataPrefetched = true
                 splashProgress = 0.75
