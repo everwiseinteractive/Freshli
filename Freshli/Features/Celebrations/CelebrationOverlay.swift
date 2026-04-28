@@ -431,7 +431,7 @@ private struct CelebrationConfettiCanvas: View {
                 birth: now + Double.random(in: 0...0.3),
                 lifetime: Double.random(in: 1.5...3.0),
                 rotationSpeed: Double.random(in: 0.5...2.0),
-                shape: [ConfettiShape.circle, .star, .sparkle].randomElement()!
+                shape: [ConfettiShape.circle, .star, .sparkle].randomElement() ?? .circle
             )
         }
     }

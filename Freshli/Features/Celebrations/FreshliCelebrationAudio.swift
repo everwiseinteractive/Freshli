@@ -56,11 +56,13 @@ final class FreshliCelebrationAudio {
         // Shimmer frequencies — ascending arpeggio based on flavor
         let frequencies = shimmerFrequencies(for: flavor)
 
-        // Generate stereo PCM buffer
-        let format = AVAudioFormat(
+        // Generate stereo PCM buffer.
+        // AVAudioFormat returns Optional — guard so the function exits
+        // cleanly if the format can't be created (unusual hardware/OS state).
+        guard let format = AVAudioFormat(
             standardFormatWithSampleRate: sampleRate,
             channels: 2
-        )!
+        ) else { return }
         guard let buffer = AVAudioPCMBuffer(
             pcmFormat: format,
             frameCapacity: AVAudioFrameCount(frameCount)

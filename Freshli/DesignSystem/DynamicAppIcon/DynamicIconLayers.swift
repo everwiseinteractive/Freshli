@@ -355,7 +355,7 @@ enum IconLayerExporter {
     @discardableResult
     static func exportAll() -> [String] {
         var paths: [String] = []
-        let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return paths }
         let iconDir = docs.appendingPathComponent("IconLayers", isDirectory: true)
         try? FileManager.default.createDirectory(at: iconDir, withIntermediateDirectories: true)
 

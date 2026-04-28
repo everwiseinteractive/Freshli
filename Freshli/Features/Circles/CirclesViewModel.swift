@@ -251,7 +251,7 @@ final class CirclesViewModel {
 
     private func generateInviteCode() -> String {
         let chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // no ambiguous chars
-        return String((0..<6).map { _ in chars.randomElement()! })
+        return String((0..<6).map { _ in chars.randomElement() ?? "A" })
     }
 
     private func resetCreateForm() {

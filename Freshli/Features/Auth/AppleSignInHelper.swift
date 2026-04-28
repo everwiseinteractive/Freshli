@@ -97,7 +97,11 @@ final class AppleSignInCoordinator: NSObject, ASAuthorizationControllerDelegate,
     // MARK: - Nonce Utilities
 
     static func randomNonceString(length: Int = 32) -> String {
-        precondition(length > 0)
+        // Guard instead of precondition — precondition() fires in both Debug
+        // and Release builds, which would crash the app if somehow called with
+        // length <= 0. Guard returns a safe fallback so the SIWA flow fails
+        // gracefully rather than crashing.
+        guard length > 0 else { return randomNonceString(length: 32) }
         var randomBytes = [UInt8](repeating: 0, count: length)
         let errorCode = SecRandomCopyBytes(kSecRandomDefault, randomBytes.count, &randomBytes)
         guard errorCode == errSecSuccess else {

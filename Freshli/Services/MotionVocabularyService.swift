@@ -315,7 +315,7 @@ final class MotionVocabularyService {
             let pattern = try CHHapticPattern(events: events, parameters: [])
             let player = try engine.makePlayer(with: pattern)
             try player.start(atTime: 0)
-        } catch {}
+        } catch { logger.debug("CHHaptic playback skipped: \(error.localizedDescription, privacy: .public)") }
     }
 
     private func playBrightTap(intensity: Float) {
@@ -400,7 +400,7 @@ final class MotionVocabularyService {
             let pattern = try CHHapticPattern(events: events, parameters: [])
             let player = try engine.makePlayer(with: pattern)
             try player.start(atTime: 0)
-        } catch {}
+        } catch { logger.debug("CHHaptic playback skipped: \(error.localizedDescription, privacy: .public)") }
     }
 
     private func playShadowShiftHaptic(direction: Float) {
@@ -420,7 +420,7 @@ final class MotionVocabularyService {
             let pattern = try CHHapticPattern(events: events, parameters: [])
             let player = try engine.makePlayer(with: pattern)
             try player.start(atTime: 0)
-        } catch {}
+        } catch { logger.debug("CHHaptic playback skipped: \(error.localizedDescription, privacy: .public)") }
     }
 
     private func playScanHaptic(confidence: Double) {
@@ -476,7 +476,7 @@ final class MotionVocabularyService {
             let pattern = try CHHapticPattern(events: events, parameters: [])
             let player = try engine.makePlayer(with: pattern)
             try player.start(atTime: 0)
-        } catch {}
+        } catch { logger.debug("CHHaptic playback skipped: \(error.localizedDescription, privacy: .public)") }
     }
 
     // MARK: - Audio Synthesis
