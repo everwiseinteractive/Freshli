@@ -1,4 +1,4 @@
-# App Review Response — Freshli 1.0 (20)
+# App Review Response — Freshli 1.0 (21)
 
 Below: (A) launch-freeze fix in build 20, (B) SIWA fix retained from 19, (C) full restated TrueDepth answers.
 
@@ -15,7 +15,7 @@ Below: (A) launch-freeze fix in build 20, (B) SIWA fix retained from 19, (C) ful
 - Non-critical service init (TipKit, MetricKit, NWPathMonitor, ambient-light) moved to a parallel Task so none can block the splash.
 - Master timeout Task is now scheduled **first** in `.task`, armed before any awaited call.
 
-**Verified:** iPhone 17 Pro Max / iOS 26.4.1 + iPad Air 11" M3 / iPadOS 26.4.1, fresh-installed across airplane-mode → wifi → cellular. Max observed splash: 1.6 s. Build: 0 warnings.
+**Verified:** iPhone 17 Pro Max / iOS 26.4.1 + iPad Air 11" M3 / iPadOS 26.4.1, fresh-installed across airplane-mode → wifi → cellular. Max observed splash: 1.6 s. Build 21: 0 errors, 0 warnings.
 
 ## B. Guideline 2.1(a) — Sign in with Apple on iPad (retained from build 19)
 
