@@ -60,8 +60,19 @@ final class RatingService {
         // Delay slightly so it appears after any animations complete.
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(1_800))
-            guard let windowScene = UIApplication.shared.connectedScenes
-                .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
+
+            // Resolve the correct UIWindowScene robustly across multi-window,
+            // Split View, Slide Over, and Stage Manager.
+            //
+            // The naive `.first(where: { $0.activationState == .foregroundActive })`
+            // fails on iPadOS Stage Manager when no scene is in .foregroundActive
+            // at the exact moment this runs (a transient but real state). Mirror
+            // the same fallback chain used by AppleSignInHelper to ensure a valid
+            // scene is always found, or bail gracefully if genuinely none exist.
+            let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+            guard let windowScene = scenes.first(where: { $0.activationState == .foregroundActive })
+                                    ?? scenes.first(where: { $0.activationState == .foregroundInactive })
+                                    ?? scenes.first
             else { return }
 
             AppStore.requestReview(in: windowScene)

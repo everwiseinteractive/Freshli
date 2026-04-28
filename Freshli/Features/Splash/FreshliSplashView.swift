@@ -64,6 +64,12 @@ struct FreshliSplashView: View {
     @State private var shimmerPhase: CGFloat = -0.3
     @State private var haloBreathScale: CGFloat = 1.0
 
+    /// Stored so we can cancel the shimmer loop explicitly when the
+    /// exit sequence begins — prevents the Task from orphaning on
+    /// @MainActor if the splash is torn down through the master-
+    /// safety-timeout path.
+    @State private var shimmerTask: Task<Void, Never>?
+
     // MARK: - Progress Display
 
     /// Smoothed value — only moves forward, never snaps backward.
@@ -346,7 +352,9 @@ struct FreshliSplashView: View {
     }
 
     private func startShimmerLoop() {
-        Task { @MainActor in
+        // Store the Task so beginExitSequence() / onDisappear can cancel it
+        // explicitly, preventing it from orphaning on @MainActor.
+        shimmerTask = Task { @MainActor in
             try? await Task.sleep(for: .seconds(0.6))
             while !Task.isCancelled && !exitActive {
                 shimmerPhase = -0.3
@@ -376,6 +384,11 @@ struct FreshliSplashView: View {
 
     private func beginExitSequence() {
         exitActive = true
+
+        // Cancel the shimmer loop immediately so it doesn't consume
+        // @MainActor time during the exit animation.
+        shimmerTask?.cancel()
+        shimmerTask = nil
 
         // Completion haptic
         PSHaptics.shared.lightTap()
@@ -411,7 +424,20 @@ struct FreshliSplashView: View {
         guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
         do {
             let engine = try CHHapticEngine()
-            try engine.start()
+            // Use the non-blocking completion-handler variant of start().
+            //
+            // The synchronous start() (no completion handler) blocks the calling
+            // thread — on the main actor this is the UI thread — for 100–400ms
+            // on a freshly-provisioned device while the Taptic Engine framework
+            // initialises. That block sits squarely on the critical launch path
+            // and was contributing to the "app froze upon launch" reports from
+            // App Review (iPhone 17 Pro Max, build 19; iPad Air 11" M3, build 18).
+            //
+            // start(completionHandler:) returns immediately; the engine finishes
+            // initialising in the background. Any haptic playback attempted
+            // before start completes will throw — that throw is already caught
+            // silently in playSplashHaptics(), so the splash degrades gracefully.
+            engine.start(completionHandler: nil)
             hapticEngine = engine
         } catch { /* graceful degradation */ }
     }
