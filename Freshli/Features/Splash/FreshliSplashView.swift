@@ -497,17 +497,23 @@ private struct SplashShimmerModifier: ViewModifier {
         } else {
             content
                 .overlay {
-                    LinearGradient(
-                        stops: [
-                            .init(color: .clear, location: max(0, shimmerProgress - 0.15)),
-                            .init(color: .white.opacity(0.18), location: shimmerProgress),
-                            .init(color: .clear, location: min(1, shimmerProgress + 0.15))
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                    .blendMode(.overlay)
-                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    // shimmerProgress runs -0.3 → 1.3; guard lo < hi so the
+                    // middle stop is always in [0,1] and strictly ordered.
+                    let lo = max(0.0, shimmerProgress - 0.15)
+                    let hi = min(1.0, shimmerProgress + 0.15)
+                    if lo < hi {
+                        LinearGradient(
+                            stops: [
+                                .init(color: .clear,              location: lo),
+                                .init(color: .white.opacity(0.18), location: (lo + hi) * 0.5),
+                                .init(color: .clear,              location: hi)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        .blendMode(.overlay)
+                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    }
                 }
         }
     }

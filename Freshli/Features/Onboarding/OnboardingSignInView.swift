@@ -116,6 +116,10 @@ struct OnboardingSignInView: View {
                     }
                     .signInWithAppleButtonStyle(.black)
                     .frame(height: PSLayout.scaled(60))
+                    // Cap at 375 pt to stay within ASAuthorizationAppleIDButton's
+                    // internal UIKit constraint — prevents the infinite layout
+                    // loop on iPad that kills the process (code 9).
+                    .frame(maxWidth: 375)
                     .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
                     .shadow(color: PSColors.primaryGreen.opacity(buttonGlow ? 0.2 : 0), radius: 20, y: 0)
                     .disabled(isSigningIn)

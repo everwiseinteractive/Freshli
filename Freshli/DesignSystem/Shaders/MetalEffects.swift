@@ -42,20 +42,21 @@ struct MetalShimmerModifier: ViewModifier {
         } else {
             content
                 .overlay {
-                    GeometryReader { geo in
-                        Rectangle()
-                            .fill(
-                                LinearGradient(
-                                    stops: [
-                                        .init(color: .clear, location: max(0, phase - 0.15)),
-                                        .init(color: .white.opacity(0.12), location: phase),
-                                        .init(color: .clear, location: min(1, phase + 0.15))
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .blendMode(.overlay)
+                    // phase runs -0.3 → 1.3; guard lo < hi so the middle stop
+                    // is always within [0,1] and strictly ordered.
+                    let lo = max(0.0, phase - 0.15)
+                    let hi = min(1.0, phase + 0.15)
+                    if lo < hi {
+                        LinearGradient(
+                            stops: [
+                                .init(color: .clear,              location: lo),
+                                .init(color: .white.opacity(0.12), location: (lo + hi) * 0.5),
+                                .init(color: .clear,              location: hi)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        .blendMode(.overlay)
                     }
                 }
                 .clipped()

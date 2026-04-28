@@ -258,6 +258,27 @@ struct FreshliApp: App {
                     }
                 }
             }
+            // ── Onboarding → main-app transition ──
+            // .onChange(of: shouldExit) on FreshliSplashView only fires when the
+            // value *changes*; it does not fire for the initial value the view
+            // receives on first appearance.  On a first install the user goes
+            // through OnboardingView while the .task above runs in parallel —
+            // all splash gates pass (shouldExitSplash = true) *before* the
+            // ZStack with FreshliSplashView is ever inserted into the hierarchy.
+            // When hasCompletedOnboarding flips true, FreshliSplashView sees
+            // shouldExit = true from its very first render, so .onChange never
+            // fires and the splash loops forever.
+            //
+            // Fix: the moment onboarding completes AND all gates have already
+            // passed, skip the splash entirely by collapsing showSplash → false
+            // immediately, before the ZStack even renders.
+            .onChange(of: hasCompletedOnboarding) { _, completed in
+                guard completed, shouldExitSplash else { return }
+                logger.info("FreshliApp: onboarding completed after gates passed — skipping splash")
+                withAnimation(.easeOut(duration: 0.15)) {
+                    showSplash = false
+                }
+            }
             .onChange(of: showSplash) { _, splashVisible in
                 // Start ARKit gaze tracking AFTER the splash dissolves. Doing
                 // this on the splash/launch path can stall first render on

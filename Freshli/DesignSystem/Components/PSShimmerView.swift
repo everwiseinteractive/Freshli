@@ -47,17 +47,26 @@ private struct ShimmerShaderModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .overlay {
-                LinearGradient(
-                    stops: [
-                        .init(color: .clear, location: max(0, phase - 0.15)),
-                        .init(color: .white.opacity(0.15), location: phase),
-                        .init(color: .clear, location: min(1, phase + 0.15))
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .blendMode(.overlay)
-                .allowsHitTesting(false)
+                // phase animates from -0.3 to 1.3 so the band sweeps on- and
+                // off-screen.  Only render the gradient while the band actually
+                // overlaps [0,1]; otherwise the middle stop falls outside that
+                // range and SwiftUI raises "Gradient stop locations must be
+                // ordered", causing repeated rendering warnings on iPad.
+                let lo = max(0.0, phase - 0.15)
+                let hi = min(1.0, phase + 0.15)
+                if lo < hi {
+                    LinearGradient(
+                        stops: [
+                            .init(color: .clear,             location: lo),
+                            .init(color: .white.opacity(0.15), location: (lo + hi) * 0.5),
+                            .init(color: .clear,             location: hi)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .blendMode(.overlay)
+                    .allowsHitTesting(false)
+                }
             }
             .clipped()
     }

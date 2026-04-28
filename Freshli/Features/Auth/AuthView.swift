@@ -188,6 +188,15 @@ struct AuthLandingView: View {
                 }
                 .signInWithAppleButtonStyle(.black)
                 .frame(height: 54)
+                // ASAuthorizationAppleIDButton has an internal UIKit constraint
+                // of width <= 375.  On iPad (≥ 744 pt wide) the unconstrained
+                // SwiftUI frame tries to fill the content area (~668 pt), which
+                // UIKit refuses — triggering an infinite constraint-break /
+                // re-layout loop that eventually kills the process (code 9).
+                // Capping at 375 keeps SwiftUI's offer within UIKit's limit on
+                // every device, while having no visible effect on iPhones whose
+                // content area is already narrower than 375 pt.
+                .frame(maxWidth: 375)
                 .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
                 .disabled(isSigningIn)
                 .accessibilityLabel(String(localized: "Sign in with Apple"))

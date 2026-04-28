@@ -350,17 +350,23 @@ struct ShimmerModifier: ViewModifier {
             let capturedPhase = phase
             content
                 .overlay {
-                    LinearGradient(
-                        stops: [
-                            .init(color: .clear, location: max(0, capturedPhase - 0.15)),
-                            .init(color: .white.opacity(0.12), location: capturedPhase),
-                            .init(color: .clear, location: min(1, capturedPhase + 0.15))
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                    .blendMode(.overlay)
-                    .allowsHitTesting(false)
+                    // phase runs -0.3 → 1.3; only render while lo < hi so the
+                    // middle stop stays inside [0,1] and stops remain ordered.
+                    let lo = max(0.0, capturedPhase - 0.15)
+                    let hi = min(1.0, capturedPhase + 0.15)
+                    if lo < hi {
+                        LinearGradient(
+                            stops: [
+                                .init(color: .clear,              location: lo),
+                                .init(color: .white.opacity(0.12), location: (lo + hi) * 0.5),
+                                .init(color: .clear,              location: hi)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                        .blendMode(.overlay)
+                        .allowsHitTesting(false)
+                    }
                 }
                 .clipped()
                 .task {
