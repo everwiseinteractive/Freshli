@@ -59,6 +59,7 @@ struct AppTabView: View {
     @Environment(AuthManager.self) private var authManager
     @Environment(SyncService.self) private var syncService
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(SubscriptionService.self) private var subscriptionService
 
     @State private var intentPrediction = IntentPredictionService()
 
@@ -442,43 +443,64 @@ struct AppTabView: View {
         let active = selectedTab == .profile
 
         return Button { switchTab(to: .profile) } label: {
-            ZStack {
-                // Liquid Glass circle — green-tinted when active, neutral when inactive
-                Circle()
-                    .fill(active ? PSColors.primaryGreen.opacity(0.35) : Color(.systemBackground).opacity(0.85))
-                    .overlay(
-                        Circle()
-                            .strokeBorder(
-                                active
-                                    ? PSColors.primaryGreen.opacity(0.45)
-                                    : PSColors.primaryGreen.opacity(0.15),
-                                lineWidth: 1.5
-                            )
-                    )
-                    .shadow(
-                        color: active
-                            ? PSColors.primaryGreen.opacity(0.55)
-                            : .black.opacity(0.28),
-                        radius: active ? 14 : 8,
-                        y: 4
-                    )
+            ZStack(alignment: .topTrailing) {
+                // Glass circle + person icon
+                ZStack {
+                    // Liquid Glass circle — green-tinted when active, neutral when inactive
+                    Circle()
+                        .fill(active ? PSColors.primaryGreen.opacity(0.35) : Color(.systemBackground).opacity(0.85))
+                        .overlay(
+                            Circle()
+                                .strokeBorder(
+                                    active
+                                        ? PSColors.primaryGreen.opacity(0.45)
+                                        : PSColors.primaryGreen.opacity(0.15),
+                                    lineWidth: 1.5
+                                )
+                        )
+                        .shadow(
+                            color: active
+                                ? PSColors.primaryGreen.opacity(0.55)
+                                : .black.opacity(0.28),
+                            radius: active ? 14 : 8,
+                            y: 4
+                        )
 
-                Image(systemName: "person.fill")
-                    .font(.system(size: PSLayout.scaledFont(20), weight: .semibold))
-                    .foregroundStyle(active ? .white : PSColors.primaryGreen.opacity(0.7))
+                    Image(systemName: "person.fill")
+                        .font(.system(size: PSLayout.scaledFont(20), weight: .semibold))
+                        .foregroundStyle(active ? .white : PSColors.primaryGreen.opacity(0.7))
+                }
+                .frame(width: PSLayout.scaled(56), height: PSLayout.scaled(56))
+                .glassEffect(
+                    active
+                        ? .regular.tint(PSColors.primaryGreen)
+                        : .regular,
+                    in: Circle()
+                )
+                // Subtle scale-up gives a satisfying "press" feel when active
+                .scaleEffect(active ? 1.07 : 1.0)
+
+                // Crown badge — nudges free users to discover Freshli+.
+                // Hidden when the profile tab is already active (user is there).
+                if !subscriptionService.isProUser && !active {
+                    Circle()
+                        .fill(PSColors.secondaryAmber)
+                        .frame(width: PSLayout.scaled(18), height: PSLayout.scaled(18))
+                        .overlay {
+                            Image(systemName: "crown.fill")
+                                .font(.system(size: PSLayout.scaledFont(9), weight: .black))
+                                .foregroundStyle(.white)
+                        }
+                        .overlay(Circle().strokeBorder(.white, lineWidth: 1.5))
+                        .offset(x: 3, y: -2)
+                        .accessibilityHidden(true)
+                }
             }
-            .frame(width: PSLayout.scaled(56), height: PSLayout.scaled(56))
-            .glassEffect(
-                active
-                    ? .regular.tint(PSColors.primaryGreen)
-                    : .regular,
-                in: Circle()
-            )
-            // Subtle scale-up gives a satisfying "press" feel when active
-            .scaleEffect(active ? 1.07 : 1.0)
         }
         .buttonStyle(PressableButtonStyle())
         .animation(FLMotion.freshliCurve, value: selectedTab)
+        .accessibilityLabel(subscriptionService.isProUser ? "Profile" : "Profile — Upgrade to Freshli+")
+        .accessibilityHint(subscriptionService.isProUser ? "" : "Crown badge indicates Freshli+ is available")
     }
 
     // MARK: - Seed Data

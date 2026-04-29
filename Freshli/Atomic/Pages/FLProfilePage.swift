@@ -55,11 +55,11 @@ struct FLProfilePage: View {
                 VStack(spacing: PSSpacing.xl) {
                     profileCard.staggeredAppearance(index: 0)
                     statsGrid.staggeredAppearance(index: 1)
-                    heroTierCard.staggeredAppearance(index: 2)
-                    discoverHeroCard.staggeredAppearance(index: 3)
-                    milestonesCard.staggeredAppearance(index: 4)
-                    settingsCard.staggeredAppearance(index: 5)
-                    proCard.staggeredAppearance(index: 6)
+                    proCard.staggeredAppearance(index: 2)
+                    heroTierCard.staggeredAppearance(index: 3)
+                    discoverHeroCard.staggeredAppearance(index: 4)
+                    milestonesCard.staggeredAppearance(index: 5)
+                    settingsCard.staggeredAppearance(index: 6)
                 }
                 .adaptiveHPadding()
             }

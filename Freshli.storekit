@@ -1,0 +1,159 @@
+{
+  "identifier" : "6A3C2AC4-38D2-4715-A565-A2EE1F3FAE37",
+  "nonConsumableProducts" : [
+
+  ],
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_interruptedPurchasesEnabled" : false,
+    "_localReceiptValidation" : false,
+    "_shouldAddStorePaymentAutomatically" : true,
+    "_storefront" : "GBR",
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Load Products"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Purchase"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Verification"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Store Sync"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Subscription Status"
+      }
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "E2B0EA2B-B427-4436-AD2E-D70FFA0D48A7",
+      "localizations" : [
+        {
+          "customAppName" : "",
+          "description" : "Premium features for Freshli — AI Chef, analytics, and family sharing.",
+          "displayName" : "Freshli+",
+          "locale" : "en_GB"
+        }
+      ],
+      "name" : "Freshli+",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "3.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "18344F44-320D-4218-AECE-C36691300160",
+          "introductoryOffer" : {
+            "displayPrice" : "0.00",
+            "duration" : "P14D",
+            "mode" : "FREE_TRIAL",
+            "offerID" : "EF9F2C02-3892-4249-988D-E2F359C6662E",
+            "type" : "introductory"
+          },
+          "localizations" : [
+            {
+              "description" : "Full access to all Freshli+ features. Renews monthly. Cancel any time.",
+              "displayName" : "Freshli+ Monthly",
+              "locale" : "en_GB"
+            }
+          ],
+          "productID" : "com.freshli.pro.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Freshli+ Monthly",
+          "subscriptionGroupID" : "E2B0EA2B-B427-4436-AD2E-D70FFA0D48A7",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "29.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "CE677D37-B79C-4176-8E30-3E1DBAF458E5",
+          "introductoryOffer" : {
+            "displayPrice" : "0.00",
+            "duration" : "P14D",
+            "mode" : "FREE_TRIAL",
+            "offerID" : "73C056C7-CF23-4753-8247-4FCC8EE4D6A2",
+            "type" : "introductory"
+          },
+          "localizations" : [
+            {
+              "description" : "Full access to all Freshli+ features. Renews yearly. Cancel any time.",
+              "displayName" : "Freshli+ Yearly",
+              "locale" : "en_GB"
+            }
+          ],
+          "productID" : "com.freshli.pro.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Freshli+ Yearly",
+          "subscriptionGroupID" : "E2B0EA2B-B427-4436-AD2E-D70FFA0D48A7",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "5.99",
+          "familyShareable" : true,
+          "groupNumber" : 2,
+          "internalID" : "248303BB-3B9D-4566-BAB5-F88CFA646340",
+          "introductoryOffer" : {
+            "displayPrice" : "0.00",
+            "duration" : "P14D",
+            "mode" : "FREE_TRIAL",
+            "offerID" : "5625303F-77DE-40F8-AE6D-9D73CF983EC8",
+            "type" : "introductory"
+          },
+          "localizations" : [
+            {
+              "description" : "Freshli+ for up to 6 family members via Family Sharing. Renews monthly.",
+              "displayName" : "Freshli+ Family",
+              "locale" : "en_GB"
+            }
+          ],
+          "productID" : "com.freshli.pro.family",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Freshli+ Family",
+          "subscriptionGroupID" : "E2B0EA2B-B427-4436-AD2E-D70FFA0D48A7",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "formatVersion" : "2.0",
+    "storeKitVersion" : "2"
+  }
+}
