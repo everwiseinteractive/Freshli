@@ -1,0 +1,20 @@
+# ASC In-App Event Paste Sheet — pt-BR
+# Event: Plastic Free July 2026 · Badge: Challenge
+# Window: 2026-07-01T00:00:00+01:00 → 2026-07-31T23:59:59+01:00
+# Deep link: freshli://events/plastic-free-july
+
+──────────────────────────────────────────────
+EVENT NAME (max 30 chars):
+Julho Sem Plástico
+
+──────────────────────────────────────────────
+SHORT DESCRIPTION (max 50 chars):
+Resgate comida. Recuse plástico.
+
+──────────────────────────────────────────────
+LONG DESCRIPTION (max 120 chars):
+31 dias resgatando despensa. Recusar plástico descartável. Cozinhar do zero. Ganhe o emblema Herói Sem Plástico.
+
+──────────────────────────────────────────────
+NOTIFICATION TEXT (max 50 chars, optional):
+Dia 1 começa agora — resgate seu primeiro alimento!

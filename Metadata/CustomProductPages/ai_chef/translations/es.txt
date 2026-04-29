@@ -1,0 +1,30 @@
+# ASC Custom Product Page Paste Sheet — es
+# Page: AI Chef · URL: freshli-ai-chef
+# Target: Tech-savvy users, foodies, Apple Intelligence enthusiasts, iPhone 17 Pro / iOS 26 early adopters
+
+──────────────────────────────────────────────
+PROMOTIONAL TEXT (max 170 chars):
+Apple Intelligence lee tu despensa y escribe recetas para tus ingredientes exactos. En el dispositivo. Instantáneo. Privado. Cero envío a la nube.
+
+──────────────────────────────────────────────
+DESCRIPTION (max 4000 chars):
+APPLE INTELLIGENCE COCINA POR TI.
+
+El Rescue Chef de Freshli usa Foundation Models Framework de iOS 26 — el mismo LLM en dispositivo que potencia Apple Intelligence. Lee tu despensa y crea recetas con lo que tienes. Sin internet. Sin enviar nada a la nube.
+
+NO ES CHATGPT PARA COMIDA.
+Sin OpenAI. Sin Anthropic. Sin nube de terceros. Cero tokens enviados. El modelo corre en el Neural Engine de tu iPhone — instantáneo, privado, incluso en modo avión.
+
+CÓMO FUNCIONA
+1. Abre la despensa — ya sabe qué tienes, cuándo caduca, qué urge.
+2. Toca Rescue Chef.
+3. Apple Intelligence prioriza por urgencia y escribe 3 recetas en 0,8s.
+4. Cada receta usa tu stock real — sin ingredientes inventados.
+
+RECETAS QUE RESPONDEN A TU MIRADA
+Mira una tarjeta 0,6s — TrueDepth en dispositivo detecta tu intención y la tarjeta florece.
+
+LIQUID GLASS UI
+Cada superficie renderizada en vivo por shader Metal 4 refractivo. Tu cocina respira.
+
+PARA EL FUTURO DE COCINAR. AHORA.

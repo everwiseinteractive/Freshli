@@ -1,0 +1,20 @@
+# ASC In-App Event Paste Sheet — en-GB
+# Event: Holiday Pantry Hero 2026 · Badge: Challenge
+# Window: 2026-12-18T00:00:00+00:00 → 2026-12-31T23:59:59+00:00
+# Deep link: freshli://events/holiday-pantry-hero
+
+──────────────────────────────────────────────
+EVENT NAME (max 30 chars):
+Holiday Pantry Hero
+
+──────────────────────────────────────────────
+SHORT DESCRIPTION (max 50 chars):
+Don't waste the feast. Share the love.
+
+──────────────────────────────────────────────
+LONG DESCRIPTION (max 120 chars):
+Holidays = 5x food waste. Track every leftover, share surplus with neighbours, earn 2x karma. Become a Hero.
+
+──────────────────────────────────────────────
+NOTIFICATION TEXT (max 50 chars, optional):
+Holidays start now — rescue every leftover!

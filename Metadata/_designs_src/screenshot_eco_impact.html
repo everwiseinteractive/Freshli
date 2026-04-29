@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Freshli — Eco Impact Hero</title>
+<link rel="stylesheet" href="freshli.css">
+<style>
+  body { width: 1290px; height: 2796px; }
+  .stage { width: 1290px; height: 2796px; position: relative; overflow: hidden; }
+
+  .top-pad { padding: 130px 90px 60px; text-align: center; }
+
+  .badge {
+    display: inline-block;
+    padding: 16px 32px;
+    background: rgba(45,212,191,0.25);
+    backdrop-filter: blur(30px);
+    border: 1.5px solid rgba(45,212,191,0.55);
+    border-radius: 999px;
+    font-size: 28px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--teal-400);
+    margin-bottom: 56px;
+  }
+  .headline {
+    font-size: 134px; font-weight: 900; letter-spacing: -0.04em; line-height: 0.94;
+    color: white;
+    text-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    margin-bottom: 28px;
+  }
+  .headline .accent { color: var(--teal-400); }
+  .sub {
+    font-size: 38px; font-weight: 600;
+    color: rgba(255,255,255,0.92);
+    line-height: 1.34;
+  }
+
+  .phone-stage {
+    position: absolute;
+    left: 50%; top: 1180px; transform: translateX(-50%);
+    width: 720px; height: 1300px;
+  }
+
+  .phone {
+    width: 720px; height: 1474px;
+    background: #0A0A0A;
+    border-radius: 100px;
+    border: 14px solid rgba(255,255,255,0.18);
+    box-shadow: 0 50px 100px rgba(0,0,0,0.6), inset 0 0 0 2px rgba(255,255,255,0.05);
+    overflow: hidden;
+    position: relative;
+  }
+  .phone .notch {
+    position: absolute; top: 28px; left: 50%; transform: translateX(-50%);
+    width: 168px; height: 50px; background: black; border-radius: 36px; z-index: 5;
+  }
+  .phone .screen {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #052E1A 0%, #14532D 100%);
+    padding: 130px 32px 32px;
+  }
+
+  .nav-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 32px;
+  }
+  .nav-row .title { font-size: 32px; font-weight: 900; color: white; letter-spacing: -0.02em; }
+
+  .impact-hero {
+    background: linear-gradient(135deg, rgba(20,184,166,0.35), rgba(34,197,94,0.25));
+    backdrop-filter: blur(20px);
+    border: 1.5px solid rgba(45,212,191,0.45);
+    border-radius: 36px;
+    padding: 40px 36px;
+    margin-bottom: 24px;
+    text-align: center;
+    color: white;
+  }
+  .impact-hero .live {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 16px; font-weight: 700; letter-spacing: 0.18em;
+    color: var(--teal-400); margin-bottom: 18px;
+  }
+  .impact-hero .live .pulse { width: 12px; height: 12px; background: #2DD4BF; border-radius: 50%; box-shadow: 0 0 12px #2DD4BF; }
+  .impact-hero .big {
+    font-size: 92px; font-weight: 900; letter-spacing: -0.04em; line-height: 1;
+    color: white; margin-bottom: 8px;
+  }
+  .impact-hero .big .unit { font-size: 44px; font-weight: 700; opacity: 0.85; }
+  .impact-hero .lbl {
+    font-size: 18px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+    color: rgba(255,255,255,0.85);
+  }
+
+  .grid-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+  .gs-cell {
+    background: rgba(255,255,255,0.10);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 24px;
+    padding: 24px;
+    color: white;
+  }
+  .gs-cell .num { font-size: 42px; font-weight: 900; letter-spacing: -0.03em; color: var(--teal-400); margin-bottom: 4px; }
+  .gs-cell .lbl { font-size: 14px; font-weight: 600; opacity: 0.8; }
+
+  .compare-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 22px;
+    padding: 22px 24px;
+    color: white;
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 12px;
+  }
+  .compare-card .ic { width: 48px; height: 48px; border-radius: 14px; background: rgba(45,212,191,0.2); display: flex; align-items: center; justify-content: center; }
+  .compare-card .text { flex: 1; }
+  .compare-card .text .a { font-size: 16px; font-weight: 700; color: white; margin-bottom: 2px; }
+  .compare-card .text .b { font-size: 13px; color: rgba(255,255,255,0.7); }
+  .compare-card .val { font-size: 22px; font-weight: 800; color: var(--teal-400); }
+
+  .freshli-mark {
+    position: absolute; top: 60px; right: 60px;
+    width: 88px; height: 88px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 22px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+    z-index: 50;
+  }
+
+  .cta-block {
+    position: absolute; left: 0; right: 0; bottom: 80px;
+    text-align: center; padding: 0 80px;
+  }
+  .privacy-line {
+    display: inline-flex; align-items: center; gap: 14px;
+    padding: 22px 44px;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(30px);
+    border: 1.5px solid rgba(45,212,191,0.5);
+    border-radius: 999px;
+    font-size: 28px; font-weight: 800;
+    color: white;
+    letter-spacing: -0.005em;
+    margin-bottom: 22px;
+  }
+  .privacy-line .ic { width: 36px; height: 36px; }
+  .trust-line {
+    font-size: 22px; font-weight: 600; color: rgba(255,255,255,0.85);
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<div class="stage mesh-teal">
+  <!-- Orbs -->
+  <div style="position:absolute; top:-100px; right:-100px; width:520px; height:520px; border-radius:50%; background:radial-gradient(circle, rgba(45,212,191,0.45), transparent 70%); filter:blur(2px);"></div>
+  <div style="position:absolute; bottom:-150px; left:-150px; width:560px; height:560px; border-radius:50%; background:radial-gradient(circle, rgba(34,197,94,0.4), transparent 70%); filter:blur(2px);"></div>
+
+  <!-- Sparkles -->
+  <div class="sparkle" style="top: 240px; right: 220px; width: 8px; height: 8px;"></div>
+  <div class="sparkle" style="top: 380px; left: 200px; width: 6px; height: 6px;"></div>
+  <div class="sparkle" style="top: 520px; right: 280px; width: 5px; height: 5px;"></div>
+  <div class="sparkle" style="bottom: 480px; left: 140px; width: 7px; height: 7px;"></div>
+  <div class="sparkle" style="bottom: 320px; right: 200px; width: 5px; height: 5px;"></div>
+
+  <div class="freshli-mark">
+    <svg width="52" height="52" viewBox="0 0 64 64" fill="none">
+      <path d="M32 8C32 8 18 14 18 32C18 44 26 56 32 56C38 56 46 44 46 32C46 14 32 8 32 8Z" fill="#22C55E"/>
+      <path d="M32 14C32 14 24 30 32 50" stroke="#15803D" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div class="top-pad">
+    <div class="badge">YOUR CLIMATE · LIVE</div>
+    <div class="headline">Your kitchen.<br>Your climate.<br><span class="accent">Tracked.</span></div>
+    <div class="sub">Backed by peer-reviewed climate science.<br>50,000+ rescuers. 1M meals saved.</div>
+  </div>
+
+  <div class="phone-stage">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen">
+        <div class="nav-row">
+          <div style="width:50px; height:50px; border-radius:14px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center;"><span style="color:white; font-size:28px;">‹</span></div>
+          <div class="title">My Impact</div>
+          <div style="width:50px; height:50px; border-radius:14px; background:rgba(255,255,255,0.1); display:flex; align-items:center; justify-content:center;"><span style="color:white; font-size:22px;">⤴</span></div>
+        </div>
+
+        <div class="impact-hero">
+          <div class="live"><div class="pulse"></div>YEAR TO DATE</div>
+          <div class="big">147<span class="unit"> kg CO₂</span></div>
+          <div class="lbl">Avoided · Apr 2026</div>
+        </div>
+
+        <div class="grid-stats">
+          <div class="gs-cell">
+            <div class="num">£412</div>
+            <div class="lbl">Money saved</div>
+          </div>
+          <div class="gs-cell">
+            <div class="num">2,840L</div>
+            <div class="lbl">Water reclaimed</div>
+          </div>
+          <div class="gs-cell">
+            <div class="num">186</div>
+            <div class="lbl">Items rescued</div>
+          </div>
+          <div class="gs-cell">
+            <div class="num">38</div>
+            <div class="lbl">Day streak</div>
+          </div>
+        </div>
+
+        <div style="font-size:14px; font-weight:700; letter-spacing:0.18em; color:rgba(255,255,255,0.6); margin: 6px 4px 12px; text-transform:uppercase;">EQUIVALENT TO</div>
+
+        <div class="compare-card">
+          <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="#2DD4BF"><path d="M5 11l1.5-4.5h11L19 11M6 17h2M16 17h2M3 17V11h18v6h-3a2 2 0 11-4 0H10a2 2 0 11-4 0H3z"/></svg></div>
+          <div class="text">
+            <div class="a">582 km not driven</div>
+            <div class="b">Average UK petrol car</div>
+          </div>
+          <div class="val">↑</div>
+        </div>
+
+        <div class="compare-card">
+          <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="#2DD4BF"><path d="M12 2C8 6 6 10 6 14c0 4 3 7 6 7s6-3 6-7c0-4-2-8-6-12z"/></svg></div>
+          <div class="text">
+            <div class="a">7 trees planted</div>
+            <div class="b">Carbon-equivalent</div>
+          </div>
+          <div class="val">↑</div>
+        </div>
+
+        <div class="compare-card">
+          <div class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="#2DD4BF"><path d="M2 12c0-3 4-6 10-6s10 3 10 6-4 6-10 6-10-3-10-6z"/><path d="M22 12c-4 4-8 6-10 6" stroke="#2DD4BF" stroke-width="2" fill="none"/></svg></div>
+          <div class="text">
+            <div class="a">1 short flight cancelled</div>
+            <div class="b">London → Paris equivalent</div>
+          </div>
+          <div class="val">↑</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-block">
+    <div class="privacy-line">
+      <svg class="ic" viewBox="0 0 24 24" fill="#2DD4BF"><path d="M12 2L4 6v6c0 5 3 9 8 10 5-1 8-5 8-10V6l-8-4z"/></svg>
+      100% on-device · zero tracking
+    </div>
+    <div class="trust-line">No analytics · No ads · Privacy Manifest</div>
+  </div>
+
+  <div class="noise"></div>
+</div>
+</body>
+</html>

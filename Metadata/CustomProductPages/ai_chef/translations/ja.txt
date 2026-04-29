@@ -1,0 +1,30 @@
+# ASC Custom Product Page Paste Sheet — ja
+# Page: AI Chef · URL: freshli-ai-chef
+# Target: Tech-savvy users, foodies, Apple Intelligence enthusiasts, iPhone 17 Pro / iOS 26 early adopters
+
+──────────────────────────────────────────────
+PROMOTIONAL TEXT (max 170 chars):
+Apple Intelligenceがあなたのパントリーを読み、正確な食材でレシピを生成。オンデバイス、瞬時、プライベート。クラウドへの送信ゼロ。
+
+──────────────────────────────────────────────
+DESCRIPTION (max 4000 chars):
+Apple Intelligenceがあなたのために料理する。
+
+FreshliのRescue Chefは、iOS 26のFoundation Models Frameworkで構築 — Apple Intelligenceを動かす同じオンデバイスLLM。あなたのパントリーを読み、今あるもので作れるレシピを生成。インターネット不要、クラウドへの送信ゼロ。
+
+これは食べ物用ChatGPTではありません。
+OpenAIなし。Anthropicなし。サードパーティクラウドなし。送信トークンゼロ。モデルはiPhoneのNeural Engineで動作 — 瞬時、プライベート、機内モードでも動作。
+
+仕組み
+1. パントリーを開く — 何があるか、何が期限切れ間近かを既に把握。
+2. Rescue Chefをタップ。
+3. Apple Intelligenceが緊急度で優先順位付けし、0.8秒で3つのレシピを生成。
+4. 各レシピは実在の在庫を使用 — 架空の食材なし。
+
+視線適応レシピ
+カードを0.6秒見つめる — オンデバイスTrueDepthが意図を検出。
+
+Liquid Glass UI
+Metal 4屈折シェーダーで全表面をライブレンダリング。
+
+料理の未来へ。今すぐ。

@@ -1,0 +1,20 @@
+# ASC In-App Event Paste Sheet — ja
+# Event: World Food Day 2026 · Badge: Special Event
+# Window: 2026-10-16T00:00:00+01:00 → 2026-10-16T23:59:59+01:00
+# Deep link: freshli://events/world-food-day
+
+──────────────────────────────────────────────
+EVENT NAME (max 30 chars):
+世界食料デースプリント
+
+──────────────────────────────────────────────
+SHORT DESCRIPTION (max 50 chars):
+1日で10億品目を救う。
+
+──────────────────────────────────────────────
+LONG DESCRIPTION (max 120 chars):
+10月16日、Freshliのグローバル救助スプリントに参加。各救出を記録、ライブ救助波を10億まで。
+
+──────────────────────────────────────────────
+NOTIFICATION TEXT (max 50 chars, optional):
+世界食料デー — 救出スタート！

@@ -1,0 +1,50 @@
+# ASC Custom Product Page Paste Sheet — en-GB
+# Page: AI Chef · URL: freshli-ai-chef
+# Target: Tech-savvy users, foodies, Apple Intelligence enthusiasts, iPhone 17 Pro / iOS 26 early adopters
+
+──────────────────────────────────────────────
+PROMOTIONAL TEXT (max 170 chars):
+Apple Intelligence reads your pantry and writes recipes for your exact ingredients. On-device. Instant. Private. No food data ever leaves your iPhone.
+
+──────────────────────────────────────────────
+DESCRIPTION (max 4000 chars):
+APPLE INTELLIGENCE COOKS FOR YOU.
+
+Freshli's Rescue Chef is built on Apple's iOS 26 Foundation Models Framework — the same on-device LLM that powers Apple Intelligence. It reads your exact pantry and writes recipes that use what you have. Right now. With no internet. With nothing leaving your phone.
+
+THIS IS NOT CHATGPT FOR FOOD.
+No OpenAI. No Anthropic. No third-party cloud. No tokens shipped to a server. The model runs on your iPhone's Neural Engine — instantly, privately, even on aeroplane mode. Your food data is yours. Forever.
+
+HOW IT WORKS
+1. Open Freshli's pantry — it already knows what you have, when it expires, and what's most urgent.
+2. Tap Rescue Chef.
+3. Apple Intelligence reads the pantry, ranks ingredients by expiry urgency, and writes 3 recipes in 0.8 seconds.
+4. Each recipe is grounded in your actual stock — no missing ingredients, no inventions.
+
+GAZE-ADAPTIVE RECIPES
+Hold your gaze on a recipe card for 0.6 seconds. Freshli detects your intent (via TrueDepth, on-device) and the card blooms — refraction density deepens, specular highlights track your device tilt, a luminous rim traces the edge. The app responds before you tap.
+
+LIQUID GLASS UI
+Every surface in Freshli is rendered live by a Metal 4 refractive shader. Your pantry breathes. Your cards float. Ambient light bends through the interface. No static backgrounds. No flat UI. A living kitchen.
+
+THE MELT TRANSITION
+Switch tabs and the current view dissolves through a Metal 4 noise field — pixels liquefying along an organic frontier edged in green light. Your iPhone vibrates in sync: a soft rumble dissolving into a crystalline click as the new screen solidifies.
+
+BUILT FOR 2026
+• Metal 4 · MSL 3.2 · Ray-traced specular lighting
+• iOS 26 Foundation Models Framework
+• 120Hz ProMotion · locked frame budget
+• Swift 6 Strict Concurrency throughout
+• Full WCAG 2.2 AA accessibility · Reduce Motion supported
+
+SIRI & SHORTCUTS
+'Hey Siri, rescue my pantry.'
+Siri opens Freshli, runs Rescue Chef, and reads back the top recipe. Hands-free, eyes-free.
+
+WIDGETS, COMPLICATIONS, LIVE ACTIVITIES
+• Lock Screen widget — what's expiring today
+• Apple Watch complication — quick log
+• Live Activities — cooking timer with progress on Dynamic Island
+• Interactive widget — one-tap consume
+
+FOR THE FUTURE OF COOKING. RIGHT NOW.

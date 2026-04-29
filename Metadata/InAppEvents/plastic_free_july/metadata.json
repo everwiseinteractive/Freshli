@@ -1,0 +1,58 @@
+{
+  "referenceName": "Plastic Free July 2026",
+  "badge": "Challenge",
+  "eventPurpose": "Special Event",
+  "primaryLocale": "en-GB",
+  "deepLinkURL": "freshli://events/plastic-free-july",
+  "schedule": {
+    "publishDate": "2026-06-24T09:00:00+01:00",
+    "eventStart": "2026-07-01T00:00:00+01:00",
+    "eventEnd": "2026-07-31T23:59:59+01:00",
+    "timeZone": "Europe/London"
+  },
+  "priority": "Featured",
+  "primaryCategory": "Food & Drink",
+  "secondaryCategory": "Lifestyle",
+  "ageRating": "4+",
+  "countriesAndRegions": "All",
+  "territories": ["Worldwide"],
+  "localizations": {
+    "en-GB": {
+      "eventName": "Plastic Free July",
+      "shortDescription": "Rescue food. Refuse plastic. Save the planet.",
+      "longDescription": "Track 31 days of pantry rescue. Refuse single-use plastic. Cook from scratch. Earn the Plastic-Free Hero badge.",
+      "notificationText": "Day 1 starts now — track your first rescue!"
+    },
+    "es": {
+      "eventName": "Julio Sin Plástico",
+      "shortDescription": "Rescata comida. Rechaza el plástico.",
+      "longDescription": "31 días de cocina sin plástico. Rastrea cada rescate. Cocina desde cero. Gana la insignia Héroe Sin Plástico.",
+      "notificationText": "Empieza el Día 1 — ¡rescata tu primer alimento!"
+    },
+    "fr": {
+      "eventName": "Juillet Sans Plastique",
+      "shortDescription": "Sauvez la nourriture. Refusez le plastique.",
+      "longDescription": "31 jours sans plastique à usage unique. Suivez chaque sauvetage. Cuisinez maison. Devenez Héros Zéro Plastique.",
+      "notificationText": "Jour 1 commence — sauvez votre premier aliment !"
+    },
+    "de": {
+      "eventName": "Plastikfreier Juli",
+      "shortDescription": "Lebensmittel retten. Plastik vermeiden.",
+      "longDescription": "31 Tage Vorratskammer retten. Einwegplastik vermeiden. Selbst kochen. Verdiene das Plastikfrei-Held-Abzeichen.",
+      "notificationText": "Tag 1 startet — rette dein erstes Lebensmittel!"
+    },
+    "pt-BR": {
+      "eventName": "Julho Sem Plástico",
+      "shortDescription": "Resgate comida. Recuse plástico.",
+      "longDescription": "31 dias resgatando despensa. Recusar plástico descartável. Cozinhar do zero. Ganhe o emblema Herói Sem Plástico.",
+      "notificationText": "Dia 1 começa agora — resgate seu primeiro alimento!"
+    },
+    "ja": {
+      "eventName": "プラスチックフリー7月",
+      "shortDescription": "食品を救う。プラスチックを断つ。",
+      "longDescription": "31日間のパントリー救助に挑戦。使い捨てプラスチック断ち、自炊で「プラスチックフリーヒーロー」獲得。",
+      "notificationText": "1日目スタート — 最初の食品を救出しよう！"
+    }
+  },
+  "tags": ["Sustainability", "Challenge", "Food Waste", "Eco-Friendly", "Community"]
+}

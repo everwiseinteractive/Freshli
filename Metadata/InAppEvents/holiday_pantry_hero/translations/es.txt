@@ -1,0 +1,20 @@
+# ASC In-App Event Paste Sheet — es
+# Event: Holiday Pantry Hero 2026 · Badge: Challenge
+# Window: 2026-12-18T00:00:00+00:00 → 2026-12-31T23:59:59+00:00
+# Deep link: freshli://events/holiday-pantry-hero
+
+──────────────────────────────────────────────
+EVENT NAME (max 30 chars):
+Héroe Festivo
+
+──────────────────────────────────────────────
+SHORT DESCRIPTION (max 50 chars):
+No desperdicies la fiesta. Comparte.
+
+──────────────────────────────────────────────
+LONG DESCRIPTION (max 120 chars):
+Las fiestas = 5x desperdicio. Rastrea cada sobra, comparte con vecinos, gana 2x karma. Sé un Héroe.
+
+──────────────────────────────────────────────
+NOTIFICATION TEXT (max 50 chars, optional):
+Las fiestas empiezan — ¡rescata cada sobra!

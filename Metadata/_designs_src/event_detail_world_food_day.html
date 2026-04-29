@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>World Food Day — Event Detail</title>
+<link rel="stylesheet" href="freshli.css">
+<style>
+  body { width: 1920px; height: 1080px; }
+  .stage { width: 1920px; height: 1080px; position: relative; overflow: hidden; }
+
+  .left { position: absolute; left: 110px; top: 50%; transform: translateY(-50%); width: 880px; }
+  .right { position: absolute; right: 80px; top: 50%; transform: translateY(-50%); width: 760px; height: 760px; display:flex; align-items:center; justify-content:center; }
+
+  .badge-pill {
+    display: inline-block;
+    padding: 16px 32px;
+    background: rgba(245,158,11,0.28);
+    backdrop-filter: blur(30px);
+    border: 1.5px solid rgba(251,191,36,0.6);
+    border-radius: 999px;
+    font-size: 24px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--amber-400);
+    margin-bottom: 36px;
+  }
+
+  .title-eyebrow {
+    font-size: 26px; font-weight: 600; letter-spacing: 0.42em;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 18px;
+  }
+  .title-main {
+    font-size: 144px; font-weight: 900; letter-spacing: -0.04em; line-height: 0.88;
+    color: white;
+    text-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    margin-bottom: 28px;
+  }
+  .title-main .accent { color: var(--amber-400); }
+  .title-sub {
+    font-size: 34px; font-weight: 600;
+    color: rgba(255,255,255,0.92);
+    line-height: 1.32;
+    margin-bottom: 48px;
+  }
+
+  .live-counter {
+    display: inline-flex; align-items: center; gap: 18px;
+    padding: 22px 36px;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(30px);
+    border: 1.5px solid rgba(251,191,36,0.55);
+    border-radius: 999px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+  }
+  .live-counter .pulse {
+    width: 16px; height: 16px;
+    background: #FBBF24;
+    border-radius: 50%;
+    box-shadow: 0 0 24px #FBBF24, 0 0 48px rgba(251,191,36,0.4);
+  }
+  .live-counter .num {
+    font-size: 44px; font-weight: 900; letter-spacing: -0.02em;
+    color: var(--amber-400);
+  }
+  .live-counter .lbl {
+    font-size: 22px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: rgba(255,255,255,0.85);
+  }
+
+  .freshli-mark {
+    position: absolute; top: 50px; right: 50px;
+    width: 88px; height: 88px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 22px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+    z-index: 10;
+  }
+</style>
+</head>
+<body>
+<div class="stage mesh-amber">
+  <!-- Sparkles -->
+  <div class="sparkle" style="top: 110px; left: 380px; width: 8px; height: 8px;"></div>
+  <div class="sparkle" style="top: 220px; left: 120px; width: 5px; height: 5px;"></div>
+  <div class="sparkle" style="top: 460px; left: 720px; width: 7px; height: 7px;"></div>
+  <div class="sparkle" style="bottom: 140px; left: 540px; width: 6px; height: 6px;"></div>
+  <div class="sparkle" style="top: 120px; right: 280px; width: 4px; height: 4px;"></div>
+  <div class="sparkle" style="bottom: 230px; right: 320px; width: 5px; height: 5px;"></div>
+
+  <div class="freshli-mark">
+    <svg width="52" height="52" viewBox="0 0 64 64" fill="none">
+      <path d="M32 8C32 8 18 14 18 32C18 44 26 56 32 56C38 56 46 44 46 32C46 14 32 8 32 8Z" fill="#22C55E"/>
+      <path d="M32 14C32 14 24 30 32 50" stroke="#15803D" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div class="left">
+    <div class="badge-pill">SPECIAL EVENT</div>
+    <div class="title-eyebrow">OCTOBER 16 · 2026 · WORLDWIDE</div>
+    <div class="title-main">World Food<br><span class="accent">Day Sprint</span>.</div>
+    <div class="title-sub">One day. One billion items rescued.<br>Track your saves. Watch the wave.</div>
+
+    <div class="live-counter">
+      <div class="pulse"></div>
+      <div>
+        <div class="num">1,000,000,000</div>
+        <div class="lbl">Global Rescue Goal · Live</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <svg width="760" height="760" viewBox="0 0 760 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Glow -->
+      <circle cx="380" cy="380" r="370" fill="url(#globeGlow)"/>
+
+      <!-- Globe -->
+      <circle cx="380" cy="380" r="280" fill="url(#globeFill)" stroke="rgba(255,255,255,0.4)" stroke-width="3"/>
+
+      <!-- Grid -->
+      <ellipse cx="380" cy="380" rx="280" ry="80" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" fill="none"/>
+      <ellipse cx="380" cy="380" rx="280" ry="160" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" fill="none"/>
+      <ellipse cx="380" cy="380" rx="280" ry="240" stroke="rgba(255,255,255,0.14)" stroke-width="1.5" fill="none"/>
+      <ellipse cx="380" cy="380" rx="80" ry="280" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" fill="none"/>
+      <ellipse cx="380" cy="380" rx="160" ry="280" stroke="rgba(255,255,255,0.18)" stroke-width="1.5" fill="none"/>
+      <line x1="380" y1="100" x2="380" y2="660" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+
+      <!-- Continents -->
+      <path d="M260 270 Q230 300 250 350 Q235 400 260 450 Q270 500 305 530 Q295 480 285 430 Q310 380 305 320 Q285 290 260 270 Z" fill="#22C55E" opacity="0.85"/>
+      <path d="M395 250 Q425 280 435 325 Q460 350 450 395 Q455 440 425 490 Q395 510 380 470 Q365 420 380 370 Q370 320 380 270 Q388 252 395 250 Z" fill="#16A34A" opacity="0.85"/>
+      <path d="M495 290 Q535 310 555 360 Q565 410 530 445 Q555 470 530 495 Q505 480 495 445 Q488 400 505 345 Q495 310 495 290 Z" fill="#22C55E" opacity="0.85"/>
+
+      <!-- Live pins -->
+      <circle cx="270" cy="365" r="11" fill="#FBBF24"/>
+      <circle cx="270" cy="365" r="20" fill="none" stroke="#FBBF24" stroke-width="2.5" opacity="0.55"/>
+      <circle cx="405" cy="320" r="11" fill="#FBBF24"/>
+      <circle cx="405" cy="320" r="20" fill="none" stroke="#FBBF24" stroke-width="2.5" opacity="0.55"/>
+      <circle cx="425" cy="445" r="11" fill="#FBBF24"/>
+      <circle cx="525" cy="380" r="11" fill="#FBBF24"/>
+      <circle cx="525" cy="380" r="20" fill="none" stroke="#FBBF24" stroke-width="2.5" opacity="0.55"/>
+      <circle cx="315" cy="455" r="11" fill="#FBBF24"/>
+      <circle cx="555" cy="465" r="9" fill="#FBBF24"/>
+      <circle cx="345" cy="305" r="9" fill="#FBBF24"/>
+
+      <!-- Orbiting rescue arrows -->
+      <path d="M120 180 Q220 130 340 150" stroke="#FBBF24" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="10 8"/>
+      <path d="M640 150 Q540 100 460 130" stroke="#FBBF24" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="10 8"/>
+      <path d="M640 600 Q540 660 460 630" stroke="#FBBF24" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="10 8"/>
+      <path d="M120 600 Q220 660 340 630" stroke="#FBBF24" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="10 8"/>
+
+      <defs>
+        <radialGradient id="globeGlow" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stop-color="rgba(251,191,36,0.4)"/>
+          <stop offset="1" stop-color="rgba(251,191,36,0)"/>
+        </radialGradient>
+        <radialGradient id="globeFill" cx="0.35" cy="0.35" r="0.7">
+          <stop offset="0" stop-color="#1A4530"/>
+          <stop offset="1" stop-color="#052E1A"/>
+        </radialGradient>
+      </defs>
+    </svg>
+  </div>
+
+  <div class="noise"></div>
+</div>
+</body>
+</html>

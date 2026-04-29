@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Plastic Free July — Event Card</title>
+<link rel="stylesheet" href="freshli.css">
+<style>
+  body { width: 1080px; height: 1080px; }
+  .stage { width: 1080px; height: 1080px; position: relative; overflow: hidden; }
+
+  .badge-pill {
+    position: absolute; top: 60px; left: 60px;
+    padding: 18px 36px;
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(30px);
+    border: 1.5px solid rgba(255,255,255,0.4);
+    border-radius: 999px;
+    font-size: 28px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--teal-400);
+  }
+
+  .freshli-mark {
+    position: absolute; top: 60px; right: 60px;
+    width: 110px; height: 110px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 28px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  }
+
+  .jar {
+    position: absolute;
+    left: 50%; top: 50%; transform: translate(-50%, -54%);
+    width: 440px; height: 540px;
+  }
+
+  .title-block {
+    position: absolute;
+    left: 0; right: 0; bottom: 96px;
+    padding: 0 70px;
+    text-align: center;
+  }
+  .title-eyebrow {
+    font-size: 30px; font-weight: 600; letter-spacing: 0.42em;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 16px;
+  }
+  .title-main {
+    font-size: 124px; font-weight: 900; letter-spacing: -0.04em; line-height: 0.92;
+    color: white;
+    text-shadow: 0 8px 40px rgba(0,0,0,0.4);
+  }
+  .title-main .accent { color: var(--teal-400); }
+  .title-sub {
+    font-size: 32px; font-weight: 600;
+    color: rgba(255,255,255,0.92);
+    margin-top: 28px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Decorative orbs */
+  .orb {
+    position: absolute; border-radius: 50%; filter: blur(2px);
+  }
+</style>
+</head>
+<body>
+<div class="stage mesh-teal">
+  <!-- Decorative sparkles -->
+  <div class="sparkle" style="top: 140px; right: 250px; width: 6px; height: 6px;"></div>
+  <div class="sparkle" style="top: 220px; left: 180px; width: 4px; height: 4px;"></div>
+  <div class="sparkle" style="top: 380px; right: 140px; width: 8px; height: 8px;"></div>
+  <div class="sparkle" style="top: 480px; left: 80px; width: 5px; height: 5px;"></div>
+  <div class="sparkle" style="bottom: 280px; right: 80px; width: 6px; height: 6px;"></div>
+
+  <!-- Decorative orbs -->
+  <div class="orb" style="top: 120px; left: -60px; width: 220px; height: 220px; background: radial-gradient(circle, rgba(45,212,191,0.4), transparent 70%);"></div>
+  <div class="orb" style="bottom: 100px; right: -80px; width: 280px; height: 280px; background: radial-gradient(circle, rgba(74,222,128,0.35), transparent 70%);"></div>
+
+  <div class="badge-pill">31-DAY CHALLENGE</div>
+  <div class="freshli-mark">
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+      <path d="M32 8C32 8 18 14 18 32C18 44 26 56 32 56C38 56 46 44 46 32C46 14 32 8 32 8Z" fill="#22C55E"/>
+      <path d="M32 14C32 14 24 30 32 50" stroke="#15803D" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <!-- Glass jar with food items -->
+  <svg class="jar" viewBox="0 0 440 540" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Jar lid -->
+    <rect x="80" y="60" width="280" height="60" rx="12" fill="url(#lidGrad)" stroke="rgba(255,255,255,0.5)" stroke-width="3"/>
+    <rect x="80" y="60" width="280" height="14" rx="6" fill="rgba(255,255,255,0.45)"/>
+
+    <!-- Jar body (glass) -->
+    <path d="M70 130 Q70 120 80 120 L360 120 Q370 120 370 130 L370 480 Q370 520 330 520 L110 520 Q70 520 70 480 Z"
+          fill="url(#jarGrad)" stroke="rgba(255,255,255,0.55)" stroke-width="3"/>
+    <!-- Specular highlight -->
+    <path d="M95 145 L95 470 Q95 488 113 488" stroke="rgba(255,255,255,0.6)" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M125 145 L125 200" stroke="rgba(255,255,255,0.35)" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+    <!-- Food items inside -->
+    <!-- Tomato -->
+    <circle cx="140" cy="380" r="36" fill="#EF5350"/>
+    <path d="M140 348 Q145 344 150 350" stroke="#22C55E" stroke-width="4" stroke-linecap="round"/>
+    <!-- Lemon -->
+    <ellipse cx="220" cy="395" rx="34" ry="28" fill="#FBBF24"/>
+    <!-- Carrot top -->
+    <ellipse cx="290" cy="390" rx="28" ry="26" fill="#F5923E"/>
+    <path d="M278 365 L283 350 M290 360 L292 345 M302 365 L305 350" stroke="#22C55E" stroke-width="4" stroke-linecap="round"/>
+    <!-- Avocado -->
+    <ellipse cx="170" cy="320" rx="28" ry="36" fill="#86EFAC"/>
+    <circle cx="170" cy="320" r="10" fill="#15803D"/>
+    <!-- Apple -->
+    <circle cx="265" cy="320" r="32" fill="#22C55E"/>
+    <path d="M265 290 Q268 286 272 290" stroke="#15803D" stroke-width="3" stroke-linecap="round"/>
+    <!-- Berries -->
+    <circle cx="120" cy="450" r="16" fill="#E11D48"/>
+    <circle cx="155" cy="465" r="14" fill="#7E22CE"/>
+    <circle cx="195" cy="455" r="15" fill="#E11D48"/>
+    <circle cx="240" cy="465" r="14" fill="#7E22CE"/>
+    <circle cx="285" cy="455" r="16" fill="#E11D48"/>
+    <circle cx="320" cy="465" r="13" fill="#7E22CE"/>
+
+    <!-- Floating leaf -->
+    <path d="M340 200 Q360 195 365 215 Q360 230 340 220 Z" fill="#4ADE80" opacity="0.9"/>
+    <path d="M340 200 Q352 210 365 215" stroke="#15803D" stroke-width="2" fill="none"/>
+
+    <!-- "PLASTIC FREE" small label on jar -->
+    <rect x="148" y="240" width="144" height="40" rx="6" fill="rgba(255,255,255,0.92)"/>
+    <text x="220" y="266" text-anchor="middle" font-family="-apple-system" font-size="20" font-weight="800" fill="#0D9488" letter-spacing="2">PLASTIC FREE</text>
+
+    <defs>
+      <linearGradient id="lidGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#0D9488"/>
+        <stop offset="1" stop-color="#14B8A6"/>
+      </linearGradient>
+      <linearGradient id="jarGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="rgba(255,255,255,0.18)"/>
+        <stop offset="1" stop-color="rgba(255,255,255,0.06)"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <div class="title-block">
+    <div class="title-eyebrow">JULY 1 – 31 · 2026</div>
+    <div class="title-main">Plastic Free <span class="accent">July</span></div>
+    <div class="title-sub">Rescue food. Refuse plastic. Save the planet.</div>
+  </div>
+
+  <div class="noise"></div>
+</div>
+</body>
+</html>

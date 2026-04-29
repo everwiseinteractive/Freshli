@@ -1,0 +1,46 @@
+# ASC Custom Product Page Paste Sheet — en-GB
+# Page: Eco Impact · URL: freshli-eco
+# Target: Climate-conscious users, sustainability advocates, Gen Z eco-warriors
+
+──────────────────────────────────────────────
+PROMOTIONAL TEXT (max 170 chars):
+Track every kg of CO₂ avoided. Watch the Live Rescue Wave. Join 50,000+ people preventing 1 million meals from landfill — entirely on your iPhone.
+
+──────────────────────────────────────────────
+DESCRIPTION (max 4000 chars):
+YOUR KITCHEN. YOUR CLIMATE. TRACKED.
+
+Food waste accounts for 8–10% of global greenhouse gas emissions. If food waste were a country, it would be the third-largest emitter on Earth — after only the US and China. Freshli puts that fight in your pocket.
+
+LIVE RESCUE WAVE
+Watch the world rescue food in real-time. Every item logged by every Freshli user, anywhere on Earth, animates across a global mesh-gradient map. Be part of the wave that hit 1 million rescues — and counting.
+
+MEASURED BY SCIENCE
+Freshli's CO₂ figures are sourced from peer-reviewed life-cycle assessments (Poore & Nemecek, 2018; FAO 2024). Not vibes — actual climate science. Every kg of beef saved = 27 kg CO₂e avoided. Every kg of veg = 1.4 kg.
+
+YOUR PERSONAL CLIMATE DASHBOARD
+• kg CO₂ avoided this week, month, year
+• Litres of water saved (food has a water footprint)
+• Land area protected from agricultural conversion
+• Compare your impact to: car miles not driven, trees planted, flights cancelled
+
+COMMUNITY FRIDGES
+Find community fridges near you. List your surplus for free collection. Find local pods for hyper-local food sharing. Earn karma — climb hero tiers from Seedling to Champion.
+
+WEEKLY IMPACT WRAP
+Cinematic Sunday recap of your week: meals saved, kg CO₂ avoided, water reclaimed, money kept. Share to socials in one tap.
+
+FRESHLI+ UNLOCKS
+• Unlimited pantry tracking
+• Advanced impact analytics with month/year/lifetime views
+• Carbon-cost recipe sorting (lowest CO₂ first)
+• Live Activities for cooking timers
+• Priority support
+
+PRIVACY-FIRST
+All computation happens on your iPhone. No food data, no impact data, no usage data ever leaves your device. Anonymous aggregate stats only — opt-in, never required.
+
+NO ADS. NO TRACKING. NO COMPROMISE.
+Freshli has zero analytics SDKs and zero advertising SDKs. The Privacy Manifest declares zero tracking — verifiable by Apple.
+
+FOR THE PLANET. WITH PROOF.

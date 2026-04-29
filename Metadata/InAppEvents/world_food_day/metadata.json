@@ -1,0 +1,58 @@
+{
+  "referenceName": "World Food Day 2026",
+  "badge": "Special Event",
+  "eventPurpose": "Special Event",
+  "primaryLocale": "en-GB",
+  "deepLinkURL": "freshli://events/world-food-day",
+  "schedule": {
+    "publishDate": "2026-10-09T09:00:00+01:00",
+    "eventStart": "2026-10-16T00:00:00+01:00",
+    "eventEnd": "2026-10-16T23:59:59+01:00",
+    "timeZone": "Europe/London"
+  },
+  "priority": "Featured",
+  "primaryCategory": "Food & Drink",
+  "secondaryCategory": "Lifestyle",
+  "ageRating": "4+",
+  "countriesAndRegions": "All",
+  "territories": ["Worldwide"],
+  "localizations": {
+    "en-GB": {
+      "eventName": "World Food Day Sprint",
+      "shortDescription": "One day. One billion items rescued. Worldwide.",
+      "longDescription": "Join Freshli's global rescue sprint on World Food Day. Log your saves. Watch the Live Rescue Wave hit 1B items.",
+      "notificationText": "World Food Day is here — start rescuing!"
+    },
+    "es": {
+      "eventName": "Maratón Día Mundial",
+      "shortDescription": "Un día. Mil millones de rescates.",
+      "longDescription": "Únete al maratón global de Freshli el Día Mundial de la Alimentación. Registra cada rescate. Llega a 1B juntos.",
+      "notificationText": "¡El Día Mundial es hoy — empieza a rescatar!"
+    },
+    "fr": {
+      "eventName": "Sprint Journée Mondiale",
+      "shortDescription": "Un jour. Un milliard d'aliments sauvés.",
+      "longDescription": "Rejoignez le sprint mondial Freshli ce 16 octobre. Enregistrez chaque sauvetage. Atteignons 1 milliard ensemble.",
+      "notificationText": "La Journée Mondiale est là — commencez !"
+    },
+    "de": {
+      "eventName": "Welternährungstag",
+      "shortDescription": "Ein Tag. Eine Milliarde gerettet.",
+      "longDescription": "Mach mit beim globalen Freshli-Sprint am Welternährungstag. Logge jede Rettung. Schau der Welle zu — 1 Mrd Ziel.",
+      "notificationText": "Welternährungstag ist heute — los geht's!"
+    },
+    "pt-BR": {
+      "eventName": "Sprint Dia Mundial",
+      "shortDescription": "Um dia. Um bilhão de itens salvos.",
+      "longDescription": "Participe do sprint global Freshli no Dia Mundial da Alimentação. Registre resgates. Vamos a 1 bilhão juntos.",
+      "notificationText": "Dia Mundial chegou — comece a resgatar!"
+    },
+    "ja": {
+      "eventName": "世界食料デースプリント",
+      "shortDescription": "1日で10億品目を救う。",
+      "longDescription": "10月16日、Freshliのグローバル救助スプリントに参加。各救出を記録、ライブ救助波を10億まで。",
+      "notificationText": "世界食料デー — 救出スタート！"
+    }
+  },
+  "tags": ["Global", "World Food Day", "One Day Sprint", "Community", "Rescue Wave"]
+}

@@ -51,6 +51,7 @@
 		CF101D652F86A4B400B10799 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		CF101D842F86A8C100B10799 /* FreshliWidgetsExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FreshliWidgetsExtension.entitlements; sourceTree = "<group>"; };
 		CF3017F12F87A00000B10799 /* FreshliTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FreshliTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A60E4EC616AD43359AE9D5C7 /* Freshli.storekit */ = {isa = PBXFileReference; lastKnownFileType = com.apple.storekit.configuration; path = Freshli.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -125,6 +126,7 @@
 		CF1017AF2F85D97D00B10799 = {
 			isa = PBXGroup;
 			children = (
+				A60E4EC616AD43359AE9D5C7 /* Freshli.storekit */,
 				CF101D842F86A8C100B10799 /* FreshliWidgetsExtension.entitlements */,
 				CF1017BA2F85D97D00B10799 /* Freshli */,
 				CF3017F22F87A00000B10799 /* FreshliTests */,

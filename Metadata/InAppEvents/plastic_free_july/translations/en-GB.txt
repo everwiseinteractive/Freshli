@@ -1,0 +1,20 @@
+# ASC In-App Event Paste Sheet — en-GB
+# Event: Plastic Free July 2026 · Badge: Challenge
+# Window: 2026-07-01T00:00:00+01:00 → 2026-07-31T23:59:59+01:00
+# Deep link: freshli://events/plastic-free-july
+
+──────────────────────────────────────────────
+EVENT NAME (max 30 chars):
+Plastic Free July
+
+──────────────────────────────────────────────
+SHORT DESCRIPTION (max 50 chars):
+Rescue food. Refuse plastic. Save the planet.
+
+──────────────────────────────────────────────
+LONG DESCRIPTION (max 120 chars):
+Track 31 days of pantry rescue. Refuse single-use plastic. Cook from scratch. Earn the Plastic-Free Hero badge.
+
+──────────────────────────────────────────────
+NOTIFICATION TEXT (max 50 chars, optional):
+Day 1 starts now — track your first rescue!

@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Freshli — Family Focus Hero</title>
+<link rel="stylesheet" href="freshli.css">
+<style>
+  body { width: 1290px; height: 2796px; }
+  .stage { width: 1290px; height: 2796px; position: relative; overflow: hidden; }
+
+  .top-pad { padding: 130px 90px 60px; text-align: center; }
+
+  .badge {
+    display: inline-block;
+    padding: 16px 32px;
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(30px);
+    border: 1.5px solid rgba(255,255,255,0.4);
+    border-radius: 999px;
+    font-size: 28px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+    color: white;
+    margin-bottom: 56px;
+  }
+  .headline {
+    font-size: 132px; font-weight: 900; letter-spacing: -0.04em; line-height: 0.94;
+    color: white;
+    text-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    margin-bottom: 28px;
+  }
+  .headline .accent { color: #FBBF24; }
+  .sub {
+    font-size: 38px; font-weight: 600;
+    color: rgba(255,255,255,0.92);
+    line-height: 1.34;
+    letter-spacing: 0.005em;
+  }
+
+  .phones-stage {
+    position: absolute;
+    left: 50%; top: 1240px; transform: translateX(-50%);
+    width: 1100px; height: 1180px;
+  }
+
+  /* Phone mockups */
+  .phone {
+    position: absolute;
+    width: 540px; height: 1106px;
+    background: #0A0A0A;
+    border-radius: 76px;
+    border: 12px solid rgba(255,255,255,0.18);
+    box-shadow: 0 40px 80px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(255,255,255,0.05);
+    overflow: hidden;
+  }
+  .phone .notch {
+    position: absolute; top: 22px; left: 50%; transform: translateX(-50%);
+    width: 124px; height: 38px; background: black; border-radius: 28px;
+    z-index: 5;
+  }
+  .phone .screen {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #F0FDF4 0%, #DCFCE7 100%);
+    padding: 96px 28px 24px;
+  }
+  .phone .header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 22px;
+    background: linear-gradient(135deg, #16A34A, #22C55E);
+    border-radius: 26px;
+    color: white;
+    margin-bottom: 18px;
+  }
+  .phone .header .greet { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+  .phone .header .stat { font-size: 14px; font-weight: 600; opacity: 0.92; }
+
+  .family-row { display: flex; gap: 8px; padding: 14px 18px; background: white; border-radius: 22px; margin-bottom: 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.08); }
+  .avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: white; border: 3px solid white; }
+
+  .pantry-card {
+    background: white;
+    border-radius: 22px;
+    padding: 16px;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 14px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  }
+  .pantry-card .ic { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 30px; }
+  .pantry-card .info { flex: 1; }
+  .pantry-card .name { font-size: 18px; font-weight: 700; color: #030213; margin-bottom: 4px; }
+  .pantry-card .meta { font-size: 13px; color: #717182; font-weight: 500; }
+  .pantry-card .bar { width: 56px; height: 36px; border-radius: 12px; display:flex; align-items:center; justify-content:center; font-size: 14px; font-weight: 800; color: white; }
+
+  /* Phone 1 (left, back) */
+  .phone-1 {
+    left: 0; top: 70px;
+    transform: rotate(-8deg);
+  }
+  /* Phone 2 (right, front) */
+  .phone-2 {
+    right: 0; top: 0;
+    transform: rotate(8deg);
+  }
+
+  .freshli-mark {
+    position: absolute; top: 60px; right: 60px;
+    width: 88px; height: 88px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 22px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+    z-index: 50;
+  }
+
+  /* Bottom CTA */
+  .cta-block {
+    position: absolute; left: 0; right: 0; bottom: 80px;
+    text-align: center; padding: 0 80px;
+  }
+  .price-pill {
+    display: inline-block;
+    padding: 22px 44px;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(30px);
+    border: 1.5px solid rgba(251,191,36,0.55);
+    border-radius: 999px;
+    font-size: 36px; font-weight: 800;
+    color: white;
+    letter-spacing: -0.005em;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    margin-bottom: 24px;
+  }
+  .price-pill .accent { color: #FBBF24; }
+  .trial-line {
+    font-size: 24px; font-weight: 600; color: rgba(255,255,255,0.85);
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<div class="stage mesh-green">
+  <!-- Decorative orbs -->
+  <div style="position:absolute; top:-100px; left:-100px; width:480px; height:480px; border-radius:50%; background:radial-gradient(circle, rgba(74,222,128,0.45), transparent 70%); filter:blur(2px);"></div>
+  <div style="position:absolute; bottom:-150px; right:-180px; width:560px; height:560px; border-radius:50%; background:radial-gradient(circle, rgba(45,212,191,0.4), transparent 70%); filter:blur(2px);"></div>
+
+  <!-- Sparkles -->
+  <div class="sparkle" style="top: 280px; left: 180px; width: 8px; height: 8px;"></div>
+  <div class="sparkle" style="top: 380px; right: 240px; width: 6px; height: 6px;"></div>
+  <div class="sparkle" style="top: 480px; left: 280px; width: 5px; height: 5px;"></div>
+  <div class="sparkle" style="top: 580px; right: 180px; width: 7px; height: 7px;"></div>
+  <div class="sparkle" style="bottom: 580px; left: 100px; width: 6px; height: 6px;"></div>
+  <div class="sparkle" style="bottom: 380px; right: 120px; width: 5px; height: 5px;"></div>
+
+  <div class="freshli-mark">
+    <svg width="52" height="52" viewBox="0 0 64 64" fill="none">
+      <path d="M32 8C32 8 18 14 18 32C18 44 26 56 32 56C38 56 46 44 46 32C46 14 32 8 32 8Z" fill="#22C55E"/>
+      <path d="M32 14C32 14 24 30 32 50" stroke="#15803D" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div class="top-pad">
+    <div class="badge">FRESHLI+ FAMILY · NEW</div>
+    <div class="headline">One pantry.<br>Six members.<br><span class="accent">Zero waste.</span></div>
+    <div class="sub">Apple Family Sharing · synced live<br>across every iPhone, iPad &amp; Watch.</div>
+  </div>
+
+  <div class="phones-stage">
+    <!-- Phone 1: Mum's view -->
+    <div class="phone phone-1">
+      <div class="notch"></div>
+      <div class="screen">
+        <div class="header">
+          <div>
+            <div class="greet">Hi, Sarah 👋</div>
+            <div class="stat">23 items · 4 expiring soon</div>
+          </div>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="white"><circle cx="12" cy="8" r="4"/><path d="M4 22V20C4 16 7.5 14 12 14S20 16 20 20V22"/></svg>
+        </div>
+
+        <div class="family-row">
+          <div class="avatar" style="background:#16A34A;">S</div>
+          <div class="avatar" style="background:#0D9488;">M</div>
+          <div class="avatar" style="background:#F59E0B;">L</div>
+          <div class="avatar" style="background:#7E22CE;">E</div>
+          <div class="avatar" style="background:#E11D48;">+2</div>
+          <div style="margin-left:auto; font-size:13px; font-weight:700; color:#15803D; align-self:center;">FAMILY · 6</div>
+        </div>
+
+        <div class="pantry-card">
+          <div class="ic" style="background:#FEE2E2;">🍅</div>
+          <div class="info">
+            <div class="name">Cherry Tomatoes</div>
+            <div class="meta">Added by Sarah · Apr 26</div>
+          </div>
+          <div class="bar" style="background:#F59E0B;">2d</div>
+        </div>
+
+        <div class="pantry-card">
+          <div class="ic" style="background:#DCFCE7;">🥬</div>
+          <div class="info">
+            <div class="name">Spinach</div>
+            <div class="meta">Added by Mike · Apr 27</div>
+          </div>
+          <div class="bar" style="background:#EF4444;">1d</div>
+        </div>
+
+        <div class="pantry-card">
+          <div class="ic" style="background:#FEF3C7;">🧀</div>
+          <div class="info">
+            <div class="name">Cheddar 250g</div>
+            <div class="meta">Added by Sarah · Apr 24</div>
+          </div>
+          <div class="bar" style="background:#22C55E;">8d</div>
+        </div>
+
+        <div class="pantry-card">
+          <div class="ic" style="background:#DBEAFE;">🥛</div>
+          <div class="info">
+            <div class="name">Whole Milk 2L</div>
+            <div class="meta">Added by Lily · Apr 28</div>
+          </div>
+          <div class="bar" style="background:#22C55E;">5d</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phone 2: Dad's view -->
+    <div class="phone phone-2">
+      <div class="notch"></div>
+      <div class="screen">
+        <div class="header" style="background:linear-gradient(135deg,#0D9488,#14B8A6);">
+          <div>
+            <div class="greet">Hi, Mike 👋</div>
+            <div class="stat">Same pantry · Live synced</div>
+          </div>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2"><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M5 19l3-3M16 8l3-3" stroke-linecap="round" fill="none"/></svg>
+        </div>
+
+        <!-- Shopping list card -->
+        <div style="background:white; border-radius:22px; padding:20px; margin-bottom:14px; box-shadow:0 4px 14px rgba(0,0,0,0.06);">
+          <div style="display:flex; justify-content:space-between; margin-bottom:14px;">
+            <div style="font-size:18px; font-weight:800; color:#030213;">Shopping List</div>
+            <div style="font-size:13px; font-weight:700; color:#16A34A;">SHARED</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid #F5F5F5;">
+            <div style="width:22px; height:22px; border-radius:6px; border:2px solid #22C55E; background:#22C55E; display:flex; align-items:center; justify-content:center;"><span style="color:white; font-size:14px; font-weight:900;">✓</span></div>
+            <div style="font-size:15px; color:#171717; flex:1;">Tomatoes (Sarah)</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid #F5F5F5;">
+            <div style="width:22px; height:22px; border-radius:6px; border:2px solid #E5E5E5;"></div>
+            <div style="font-size:15px; color:#171717; flex:1;">Sourdough loaf (Mike)</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid #F5F5F5;">
+            <div style="width:22px; height:22px; border-radius:6px; border:2px solid #E5E5E5;"></div>
+            <div style="font-size:15px; color:#171717; flex:1;">Apples (Lily)</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:12px; padding:8px 0;">
+            <div style="width:22px; height:22px; border-radius:6px; border:2px solid #E5E5E5;"></div>
+            <div style="font-size:15px; color:#171717; flex:1;">Pasta (Mike)</div>
+          </div>
+        </div>
+
+        <!-- Family Wrap -->
+        <div style="background:linear-gradient(135deg,#16A34A,#0D9488); border-radius:22px; padding:20px; color:white; margin-bottom:14px;">
+          <div style="font-size:13px; font-weight:700; letter-spacing:0.1em; opacity:0.85; margin-bottom:8px;">FAMILY WRAP · WEEK 17</div>
+          <div style="font-size:32px; font-weight:900; letter-spacing:-0.03em; margin-bottom:6px;">£42 saved</div>
+          <div style="font-size:13px; font-weight:600; opacity:0.85;">14kg CO₂ avoided · 23 meals rescued</div>
+        </div>
+
+        <div class="pantry-card">
+          <div class="ic" style="background:#FFEDD5;">🥕</div>
+          <div class="info">
+            <div class="name">Carrots</div>
+            <div class="meta">Added by Sarah · Apr 26</div>
+          </div>
+          <div class="bar" style="background:#F59E0B;">3d</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-block">
+    <div class="price-pill">£5.99/mo · <span class="accent">14-day free trial</span></div>
+    <div class="trial-line">Up to 6 family members · Cancel anytime</div>
+  </div>
+
+  <div class="noise"></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Freshli — AI Chef Hero</title>
+<link rel="stylesheet" href="freshli.css">
+<style>
+  body { width: 1290px; height: 2796px; }
+  .stage { width: 1290px; height: 2796px; position: relative; overflow: hidden; }
+
+  .top-pad { padding: 130px 90px 60px; text-align: center; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 14px;
+    padding: 16px 32px;
+    background: rgba(255,255,255,0.18);
+    backdrop-filter: blur(30px);
+    border: 1.5px solid rgba(255,255,255,0.4);
+    border-radius: 999px;
+    font-size: 28px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: white;
+    margin-bottom: 56px;
+  }
+  .badge .ai-spark {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, #FBBF24, #2DD4BF, #A78BFA);
+    border-radius: 50%;
+    box-shadow: 0 0 16px rgba(167,139,250,0.6);
+  }
+
+  .headline {
+    font-size: 130px; font-weight: 900; letter-spacing: -0.04em; line-height: 0.94;
+    color: white;
+    text-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    margin-bottom: 28px;
+  }
+  .headline .accent {
+    background: linear-gradient(135deg, #FBBF24, #2DD4BF, #A78BFA);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .sub {
+    font-size: 38px; font-weight: 600;
+    color: rgba(255,255,255,0.92);
+    line-height: 1.34;
+  }
+
+  .phone-stage {
+    position: absolute;
+    left: 50%; top: 1160px; transform: translateX(-50%);
+    width: 720px; height: 1320px;
+  }
+
+  .phone {
+    width: 720px; height: 1474px;
+    background: #0A0A0A;
+    border-radius: 100px;
+    border: 14px solid rgba(255,255,255,0.18);
+    box-shadow: 0 50px 100px rgba(0,0,0,0.6), inset 0 0 0 2px rgba(255,255,255,0.05);
+    overflow: hidden;
+    position: relative;
+  }
+  .phone .notch {
+    position: absolute; top: 28px; left: 50%; transform: translateX(-50%);
+    width: 168px; height: 50px; background: black; border-radius: 36px; z-index: 5;
+  }
+  .phone .screen {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, #0F1F1A 0%, #1A2C24 100%);
+    padding: 130px 32px 32px;
+  }
+
+  .ai-prompt {
+    background: linear-gradient(135deg, rgba(167,139,250,0.18), rgba(45,212,191,0.18));
+    backdrop-filter: blur(20px);
+    border: 1.5px solid rgba(167,139,250,0.45);
+    border-radius: 32px;
+    padding: 28px;
+    margin-bottom: 22px;
+    color: white;
+  }
+  .ai-prompt .row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+  .ai-prompt .ic {
+    width: 44px; height: 44px; border-radius: 14px;
+    background: linear-gradient(135deg, #FBBF24, #A78BFA);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 24px rgba(167,139,250,0.5);
+  }
+  .ai-prompt .label { font-size: 16px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #C4B5FD; }
+  .ai-prompt .q { font-size: 22px; font-weight: 600; line-height: 1.32; color: white; margin-bottom: 14px; }
+  .ai-prompt .gen { font-size: 14px; font-weight: 700; letter-spacing: 0.14em; color: #2DD4BF; text-transform: uppercase; }
+
+  .recipe-card {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 28px;
+    padding: 22px;
+    margin-bottom: 16px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  .recipe-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.16) 0%, transparent 35%);
+    pointer-events: none; border-radius: inherit;
+  }
+  .recipe-card .top { display: flex; gap: 14px; margin-bottom: 14px; align-items: center; }
+  .recipe-card .swatch {
+    width: 64px; height: 64px;
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+  }
+  .recipe-card .name { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 4px; }
+  .recipe-card .meta { font-size: 13px; font-weight: 600; opacity: 0.75; letter-spacing: 0.05em; text-transform: uppercase; }
+  .recipe-card .ingredients { font-size: 15px; font-weight: 500; line-height: 1.4; opacity: 0.85; }
+  .recipe-card .badge-row { display: flex; gap: 8px; margin-top: 14px; }
+  .recipe-card .pill {
+    padding: 6px 12px;
+    background: rgba(45,212,191,0.2);
+    color: #2DD4BF;
+    font-size: 11px; font-weight: 800; letter-spacing: 0.08em;
+    border-radius: 999px; text-transform: uppercase;
+  }
+  .recipe-card .pill.urgent { background: rgba(245,158,11,0.2); color: #FBBF24; }
+
+  .recipe-card.glow {
+    border: 1.5px solid rgba(167,139,250,0.55);
+    box-shadow: 0 0 40px rgba(167,139,250,0.25), inset 0 1px 0 rgba(255,255,255,0.18);
+  }
+
+  .freshli-mark {
+    position: absolute; top: 60px; right: 60px;
+    width: 88px; height: 88px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 22px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+    z-index: 50;
+  }
+
+  .cta-block {
+    position: absolute; left: 0; right: 0; bottom: 80px;
+    text-align: center; padding: 0 80px;
+  }
+  .privacy-line {
+    display: inline-flex; align-items: center; gap: 14px;
+    padding: 22px 44px;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(30px);
+    border: 1.5px solid rgba(167,139,250,0.55);
+    border-radius: 999px;
+    font-size: 28px; font-weight: 800;
+    color: white;
+    letter-spacing: -0.005em;
+    margin-bottom: 22px;
+  }
+  .privacy-line .ic { width: 36px; height: 36px; }
+  .trust-line {
+    font-size: 22px; font-weight: 600; color: rgba(255,255,255,0.85);
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+<div class="stage" style="background: radial-gradient(circle at 25% 25%, #A78BFA 0%, transparent 45%), radial-gradient(circle at 75% 30%, #2DD4BF 0%, transparent 50%), radial-gradient(circle at 50% 85%, #22C55E 0%, transparent 55%), radial-gradient(circle at 15% 75%, #14B8A6 0%, transparent 45%), linear-gradient(135deg, #0A0E1F 0%, #15803D 100%);">
+  <!-- Orbs -->
+  <div style="position:absolute; top:-100px; left:-100px; width:520px; height:520px; border-radius:50%; background:radial-gradient(circle, rgba(167,139,250,0.45), transparent 70%); filter:blur(2px);"></div>
+  <div style="position:absolute; bottom:-150px; right:-150px; width:560px; height:560px; border-radius:50%; background:radial-gradient(circle, rgba(45,212,191,0.4), transparent 70%); filter:blur(2px);"></div>
+
+  <!-- Sparkles -->
+  <div class="sparkle" style="top: 200px; right: 240px; width: 8px; height: 8px; box-shadow: 0 0 14px #C4B5FD;"></div>
+  <div class="sparkle" style="top: 360px; left: 180px; width: 6px; height: 6px;"></div>
+  <div class="sparkle" style="top: 520px; right: 220px; width: 7px; height: 7px;"></div>
+  <div class="sparkle" style="bottom: 480px; left: 150px; width: 6px; height: 6px;"></div>
+  <div class="sparkle" style="bottom: 360px; right: 180px; width: 5px; height: 5px;"></div>
+  <div class="sparkle" style="top: 700px; left: 120px; width: 7px; height: 7px; box-shadow: 0 0 14px #FBBF24;"></div>
+
+  <div class="freshli-mark">
+    <svg width="52" height="52" viewBox="0 0 64 64" fill="none">
+      <path d="M32 8C32 8 18 14 18 32C18 44 26 56 32 56C38 56 46 44 46 32C46 14 32 8 32 8Z" fill="#22C55E"/>
+      <path d="M32 14C32 14 24 30 32 50" stroke="#15803D" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div class="top-pad">
+    <div class="badge"><div class="ai-spark"></div>APPLE INTELLIGENCE</div>
+    <div class="headline">AI Chef<br>cooks for you.<br><span class="accent">On-device.</span></div>
+    <div class="sub">Reads your pantry. Writes recipes.<br>0.8 seconds. Zero cloud.</div>
+  </div>
+
+  <div class="phone-stage">
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="screen">
+        <!-- AI prompt area -->
+        <div class="ai-prompt">
+          <div class="row">
+            <div class="ic">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 2L14 9L21 9.5L15.5 14L17.5 21L12 16.5L6.5 21L8.5 14L3 9.5L10 9Z"/></svg>
+            </div>
+            <div class="label">RESCUE CHEF</div>
+          </div>
+          <div class="q">"Use my expiring spinach, the half-tomato, last bit of cheddar, and 2 eggs."</div>
+          <div class="gen">⚡ Generated in 0.84s · Foundation Models</div>
+        </div>
+
+        <!-- Recipe 1 (glowing — gaze-adaptive) -->
+        <div class="recipe-card glow">
+          <div class="top">
+            <div class="swatch" style="background:linear-gradient(135deg,#FBBF24,#F59E0B);">🍳</div>
+            <div>
+              <div class="name">Spinach &amp; Cheddar Frittata</div>
+              <div class="meta">12 min · 1 pan · serves 2</div>
+            </div>
+          </div>
+          <div class="ingredients">2 eggs · 60g spinach · 30g cheddar · ½ tomato · pinch salt</div>
+          <div class="badge-row">
+            <div class="pill urgent">Uses 4 expiring</div>
+            <div class="pill">Low CO₂</div>
+            <div class="pill">Gluten-free</div>
+          </div>
+        </div>
+
+        <!-- Recipe 2 -->
+        <div class="recipe-card">
+          <div class="top">
+            <div class="swatch" style="background:linear-gradient(135deg,#22C55E,#15803D);">🥗</div>
+            <div>
+              <div class="name">Wilted Spinach Salad</div>
+              <div class="meta">6 min · no cook · serves 1</div>
+            </div>
+          </div>
+          <div class="ingredients">60g spinach · ½ tomato · 30g cheddar shaved · olive oil · balsamic</div>
+          <div class="badge-row">
+            <div class="pill urgent">Uses 3 expiring</div>
+            <div class="pill">Vegetarian</div>
+          </div>
+        </div>
+
+        <!-- Recipe 3 -->
+        <div class="recipe-card">
+          <div class="top">
+            <div class="swatch" style="background:linear-gradient(135deg,#0D9488,#14B8A6);">🥪</div>
+            <div>
+              <div class="name">Cheddar &amp; Egg Toastie</div>
+              <div class="meta">8 min · pan · serves 1</div>
+            </div>
+          </div>
+          <div class="ingredients">2 eggs · 30g cheddar · spinach · sourdough · butter</div>
+          <div class="badge-row">
+            <div class="pill urgent">Uses 3 expiring</div>
+            <div class="pill">Comfort</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-block">
+    <div class="privacy-line">
+      <svg class="ic" viewBox="0 0 24 24" fill="#A78BFA"><path d="M12 2L4 6v6c0 5 3 9 8 10 5-1 8-5 8-10V6l-8-4z"/></svg>
+      Private · Foundation Models on-device
+    </div>
+    <div class="trust-line">No OpenAI · No cloud · No data leaves your iPhone</div>
+  </div>
+
+  <div class="noise"></div>
+</div>
+</body>
+</html>

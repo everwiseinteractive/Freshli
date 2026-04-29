@@ -1,0 +1,40 @@
+{
+  "referenceName": "Family Focus",
+  "url": "freshli-family",
+  "deepLink": "freshli://upgrade/family",
+  "audience": "Parents and families with shared kitchens",
+  "campaignNotes": "Drive Freshli+ Family subscriptions (£5.99/mo, up to 6 members via Family Sharing). Pair with parenting blogs, family ad networks, in-app onboarding 'family' selection.",
+  "localizations": {
+    "en-GB": {
+      "promotionalText": "Freshli+ Family — up to 6 family members share one pantry, one shopping list, one mission to waste less. £5.99/mo, 14-day free trial.",
+      "description": "ONE PANTRY. SIX FAMILY MEMBERS. ZERO WASTE.\n\nFreshli+ Family turns your kitchen into a shared command centre. Mum spots the half-tomato. Dad knows the spinach is wilting. The kids see the lunch leftovers. Everyone eats fresher — and nothing gets thrown away.\n\nWHY FAMILIES LOVE FRESHLI+ FAMILY\n• Up to 6 members via Apple Family Sharing\n• One synced pantry across every iPhone, iPad, and Apple Watch\n• Shared shopping list — tap-to-add from any device\n• Kid-safe mode hides expiry alerts from younger users\n• Family meal planner with allergen awareness\n• Per-member karma tracking — gamify the rescue\n\nAI CHEF FOR THE WHOLE FAMILY\nApple Intelligence reads the family pantry and writes recipes everyone can eat. Allergens flagged. Picky eaters considered. Done in seconds, on-device, fully private.\n\nWEEKLY FAMILY WRAP\nEvery Sunday, see your family's combined impact: meals saved, money kept, CO₂ avoided. A cinematic recap built to share — perfect for the family WhatsApp.\n\nALL THE FRESHLI+ FEATURES\n• Unlimited pantry items (free tier capped at 30)\n• Advanced expiry analytics\n• Recipe history and meal-prep planner\n• Live Activities for cooking timers\n• Apple Watch complications\n• Priority support\n\n14-DAY FREE TRIAL\nTry Freshli+ Family free for 14 days. £5.99/month after, billed via Apple ID. Cancel anytime in Settings.\n\nPrivacy first: family pantry data stays on each device, syncs via iCloud, never touches Freshli's servers.\n\nFor your family. For the planet."
+    },
+    "es": {
+      "promotionalText": "Freshli+ Familia — hasta 6 miembros comparten una despensa, una lista, una misión: cero desperdicio. 5,99 €/mes, 14 días gratis.",
+      "description": "UNA DESPENSA. SEIS MIEMBROS. CERO DESPERDICIO.\n\nFreshli+ Familia convierte la cocina en un centro de mando compartido. Mamá ve el tomate. Papá sabe que la espinaca se marchita. Todos comen más fresco — nada se tira.\n\nPOR QUÉ FUNCIONA\n• Hasta 6 miembros vía Compartir en Familia\n• Una despensa sincronizada en todos los dispositivos\n• Lista de compra compartida\n• Modo niño que oculta alertas de caducidad\n• Plan de comidas familiar con alérgenos\n• Karma por miembro — gamifica el rescate\n\nCHEF IA PARA TODA LA FAMILIA\nApple Intelligence lee la despensa familiar y crea recetas que todos pueden comer. Alérgenos marcados. Comensales exigentes considerados. En segundos. En el dispositivo. Privado.\n\nRESUMEN SEMANAL FAMILIAR\nCada domingo, el impacto combinado de tu familia: comidas salvadas, dinero, CO₂ evitado. Cinematográfico, listo para compartir.\n\nPARA TU FAMILIA. POR EL PLANETA."
+    },
+    "fr": {
+      "promotionalText": "Freshli+ Famille — jusqu'à 6 membres partagent un garde-manger, une liste, une mission : zéro gaspi. 5,99 €/mois, 14 jours offerts.",
+      "description": "UN GARDE-MANGER. SIX MEMBRES. ZÉRO DÉCHET.\n\nFreshli+ Famille transforme votre cuisine en centre de commande partagé. Maman voit la tomate. Papa sait que les épinards fanent. Tout le monde mange plus frais — rien ne se jette.\n\nPOURQUOI ÇA MARCHE\n• Jusqu'à 6 membres via Partage Familial Apple\n• Garde-manger synchronisé sur chaque appareil\n• Liste de courses partagée\n• Mode enfant qui masque les alertes\n• Planificateur de repas avec allergènes\n• Karma par membre — gamifiez le sauvetage\n\nCHEF IA POUR TOUTE LA FAMILLE\nApple Intelligence lit le garde-manger familial et crée des recettes pour tous. Allergènes signalés. Difficiles considérés. Sur l'appareil, instantané, privé.\n\nRÉCAP HEBDO FAMILIAL\nChaque dimanche, l'impact combiné de votre famille. Cinématographique, prêt à partager.\n\nPOUR VOTRE FAMILLE. POUR LA PLANÈTE."
+    },
+    "de": {
+      "promotionalText": "Freshli+ Familie — bis 6 Mitglieder teilen eine Vorratskammer, eine Liste, eine Mission: null Verschwendung. 5,99 €/Monat, 14 Tage gratis.",
+      "description": "EINE VORRATSKAMMER. SECHS MITGLIEDER. NULL VERSCHWENDUNG.\n\nFreshli+ Familie verwandelt eure Küche in eine geteilte Kommandozentrale. Mama sieht die halbe Tomate. Papa weiß, der Spinat welkt. Die Kinder sehen die Reste. Alle essen frischer — nichts landet im Müll.\n\nWARUM FAMILIEN ES LIEBEN\n• Bis 6 Mitglieder via Apple Familienfreigabe\n• Synchronisierte Vorratskammer auf jedem Gerät\n• Geteilte Einkaufsliste\n• Kindermodus blendet Verfalls-Warnungen aus\n• Familien-Essensplaner mit Allergenen\n• Karma pro Mitglied — Rettung als Spiel\n\nKI-CHEF FÜR DIE GANZE FAMILIE\nApple Intelligence liest die Familien-Vorratskammer und schreibt Rezepte für alle. Allergene markiert. Mäkler berücksichtigt. Auf dem Gerät, sofort, privat.\n\nWÖCHENTLICHER FAMILIEN-RECAP\nJeden Sonntag der gemeinsame Familien-Impact. Kinoreif, teilbar.\n\nFÜR EURE FAMILIE. FÜR DEN PLANETEN."
+    },
+    "pt-BR": {
+      "promotionalText": "Freshli+ Família — até 6 membros compartilham uma despensa, uma lista, uma missão: zero desperdício. R$29,90/mês, 14 dias grátis.",
+      "description": "UMA DESPENSA. SEIS MEMBROS. ZERO DESPERDÍCIO.\n\nFreshli+ Família transforma a cozinha em centro de comando compartilhado. Mãe vê o tomate. Pai sabe que o espinafre murchou. As crianças veem as sobras. Todos comem mais fresco — nada vai para o lixo.\n\nPOR QUE FAMÍLIAS AMAM\n• Até 6 membros via Compartilhamento Familiar\n• Despensa sincronizada em todos dispositivos\n• Lista de compras compartilhada\n• Modo infantil oculta alertas de validade\n• Planejador familiar com alérgenos\n• Karma por membro — gamifique o resgate\n\nCHEF IA PARA TODA FAMÍLIA\nApple Intelligence lê a despensa familiar e cria receitas para todos. Alérgenos marcados. Exigentes considerados. No dispositivo, instantâneo, privado.\n\nRESUMO SEMANAL FAMILIAR\nTodo domingo, o impacto combinado da família. Cinematográfico, pronto para compartilhar.\n\nPARA SUA FAMÍLIA. PARA O PLANETA."
+    },
+    "ja": {
+      "promotionalText": "Freshli+ファミリー — 最大6人で1つのパントリー、1つの買い物リスト、1つの目標を共有。月額¥600、14日間無料。",
+      "description": "1つのパントリー。6人の家族。ゼロウェイスト。\n\nFreshli+ファミリーはキッチンを共有指令室に変えます。母はトマトを見、父はほうれん草の鮮度を知り、子供たちは残り物を見る。全員がより新鮮に食べ、何も捨てない。\n\n家族が愛する理由\n• Apple ファミリー共有で最大6人\n• 全デバイスで同期されたパントリー\n• 共有買い物リスト\n• 子供モードで賞味期限警告を非表示\n• アレルゲン対応の家族食事プラン\n• メンバー別カルマ — 救出をゲーム化\n\n家族全員のためのAIシェフ\nApple Intelligenceが家族のパントリーを読み、全員が食べられるレシピを作成。アレルゲン表示、好き嫌い考慮。オンデバイス、瞬時、プライベート。\n\n毎週の家族ハイライト\n毎週日曜、家族の合計インパクト。映画的、シェア可能。\n\n家族のため。地球のため。"
+    }
+  },
+  "screenshotConcepts": [
+    "Hero: 'One pantry. Six members. Zero waste.' — family avatars over green mesh gradient",
+    "Family pantry sync — multiple iPhones showing same pantry in real-time",
+    "Shared shopping list — auto-merge view from 3 family members",
+    "Family meal plan — calendar with allergen badges",
+    "Weekly Family Wrap — collage of family rescue stats"
+  ]
+}

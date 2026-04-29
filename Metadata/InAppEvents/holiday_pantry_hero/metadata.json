@@ -1,0 +1,58 @@
+{
+  "referenceName": "Holiday Pantry Hero 2026",
+  "badge": "Challenge",
+  "eventPurpose": "Special Event",
+  "primaryLocale": "en-GB",
+  "deepLinkURL": "freshli://events/holiday-pantry-hero",
+  "schedule": {
+    "publishDate": "2026-12-11T09:00:00+00:00",
+    "eventStart": "2026-12-18T00:00:00+00:00",
+    "eventEnd": "2026-12-31T23:59:59+00:00",
+    "timeZone": "Europe/London"
+  },
+  "priority": "Featured",
+  "primaryCategory": "Food & Drink",
+  "secondaryCategory": "Lifestyle",
+  "ageRating": "4+",
+  "countriesAndRegions": "All",
+  "territories": ["Worldwide"],
+  "localizations": {
+    "en-GB": {
+      "eventName": "Holiday Pantry Hero",
+      "shortDescription": "Don't waste the feast. Share the love.",
+      "longDescription": "Holidays = 5x food waste. Track every leftover, share surplus with neighbours, earn 2x karma. Become a Hero.",
+      "notificationText": "Holidays start now — rescue every leftover!"
+    },
+    "es": {
+      "eventName": "Héroe Festivo",
+      "shortDescription": "No desperdicies la fiesta. Comparte.",
+      "longDescription": "Las fiestas = 5x desperdicio. Rastrea cada sobra, comparte con vecinos, gana 2x karma. Sé un Héroe.",
+      "notificationText": "Las fiestas empiezan — ¡rescata cada sobra!"
+    },
+    "fr": {
+      "eventName": "Héros des Fêtes",
+      "shortDescription": "Ne gaspillez pas le festin. Partagez.",
+      "longDescription": "Fêtes = 5x plus de gaspillage. Suivez chaque reste, partagez avec les voisins, gagnez 2x karma. Devenez Héros.",
+      "notificationText": "Les fêtes commencent — sauvez chaque reste !"
+    },
+    "de": {
+      "eventName": "Festtags-Held",
+      "shortDescription": "Verschwende kein Festmahl. Teile es.",
+      "longDescription": "Festtage = 5x Verschwendung. Verfolge jeden Rest, teile mit Nachbarn, verdiene 2x Karma. Werde zum Helden.",
+      "notificationText": "Festtage starten — rette jeden Rest!"
+    },
+    "pt-BR": {
+      "eventName": "Herói das Festas",
+      "shortDescription": "Não desperdice a ceia. Compartilhe.",
+      "longDescription": "Festas = 5x desperdício. Rastreie cada sobra, compartilhe com vizinhos, ganhe 2x karma. Seja um Herói.",
+      "notificationText": "As festas começam — resgate cada sobra!"
+    },
+    "ja": {
+      "eventName": "ホリデーパントリーヒーロー",
+      "shortDescription": "ごちそうを無駄にしない。共有しよう。",
+      "longDescription": "祝日は廃棄が5倍。残り物を追跡、隣人と共有、カルマ2倍。ヒーローになろう。",
+      "notificationText": "ホリデースタート — 残り物を全部救おう！"
+    }
+  },
+  "tags": ["Holiday", "Christmas", "Leftovers", "Community Sharing", "2x Karma"]
+}

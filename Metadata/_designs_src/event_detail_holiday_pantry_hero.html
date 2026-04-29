@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Holiday Pantry Hero — Event Detail</title>
+<link rel="stylesheet" href="freshli.css">
+<style>
+  body { width: 1920px; height: 1080px; }
+  .stage { width: 1920px; height: 1080px; position: relative; overflow: hidden; }
+
+  .left { position: absolute; left: 110px; top: 50%; transform: translateY(-50%); width: 880px; }
+  .right { position: absolute; right: 80px; top: 50%; transform: translateY(-50%); width: 760px; height: 760px; display:flex; align-items:center; justify-content:center; }
+
+  .badge-pill {
+    display: inline-block;
+    padding: 16px 32px;
+    background: rgba(244,63,94,0.25);
+    backdrop-filter: blur(30px);
+    border: 1.5px solid rgba(244,63,94,0.55);
+    border-radius: 999px;
+    font-size: 24px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+    color: #FDA4AF;
+    margin-bottom: 36px;
+  }
+
+  .title-eyebrow {
+    font-size: 26px; font-weight: 600; letter-spacing: 0.42em;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 18px;
+  }
+  .title-main {
+    font-size: 132px; font-weight: 900; letter-spacing: -0.04em; line-height: 0.88;
+    color: white;
+    text-shadow: 0 8px 40px rgba(0,0,0,0.4);
+    margin-bottom: 28px;
+  }
+  .title-main .accent { color: #FDA4AF; }
+  .title-sub {
+    font-size: 34px; font-weight: 600;
+    color: rgba(255,255,255,0.92);
+    line-height: 1.32;
+    margin-bottom: 48px;
+  }
+
+  .karma-row { display: flex; gap: 20px; margin-bottom: 8px; }
+  .karma-pill {
+    padding: 18px 28px;
+    background: rgba(255,255,255,0.10);
+    backdrop-filter: blur(30px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 16px;
+    font-size: 22px; font-weight: 700;
+    color: white;
+    letter-spacing: 0.04em;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .karma-pill .ic { width: 28px; height: 28px; }
+
+  .freshli-mark {
+    position: absolute; top: 50px; right: 50px;
+    width: 88px; height: 88px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 22px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+    z-index: 10;
+  }
+</style>
+</head>
+<body>
+<div class="stage mesh-festive">
+  <!-- Snowflakes -->
+  <svg style="position:absolute; top:130px; left:280px; width:32px; height:32px; opacity:0.85;" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+  <svg style="position:absolute; top:240px; right:480px; width:24px; height:24px; opacity:0.85;" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+  <svg style="position:absolute; bottom:280px; left:380px; width:28px; height:28px; opacity:0.85;" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+  <svg style="position:absolute; bottom:180px; right:320px; width:22px; height:22px; opacity:0.85;" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+  <svg style="position:absolute; top:380px; left:50px; width:20px; height:20px; opacity:0.85;" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/></svg>
+
+  <div class="freshli-mark">
+    <svg width="52" height="52" viewBox="0 0 64 64" fill="none">
+      <path d="M32 8C32 8 18 14 18 32C18 44 26 56 32 56C38 56 46 44 46 32C46 14 32 8 32 8Z" fill="#22C55E"/>
+      <path d="M32 14C32 14 24 30 32 50" stroke="#15803D" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div class="left">
+    <div class="badge-pill">CHALLENGE · 2X KARMA</div>
+    <div class="title-eyebrow">DECEMBER 18 – 31 · 2026</div>
+    <div class="title-main">Holiday<br>Pantry <span class="accent">Hero</span>.</div>
+    <div class="title-sub">Don't waste the feast.<br>Share the love. Earn 2× karma.</div>
+
+    <div class="karma-row">
+      <div class="karma-pill">
+        <svg class="ic" viewBox="0 0 24 24" fill="#FBBF24"><path d="M12 2L15 9L22 9.5L17 14.5L18.5 22L12 18L5.5 22L7 14.5L2 9.5L9 9Z"/></svg>
+        2× Karma · All 14 Days
+      </div>
+      <div class="karma-pill">
+        <svg class="ic" viewBox="0 0 24 24" fill="#FDA4AF"><circle cx="12" cy="12" r="10" stroke="#FDA4AF" stroke-width="2" fill="none"/><path d="M8 12L11 15L16 9" stroke="#FDA4AF" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>
+        Hero Badge
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <svg width="760" height="760" viewBox="0 0 760 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Glow -->
+      <circle cx="380" cy="380" r="360" fill="url(#wreathGlow)"/>
+
+      <!-- Wreath base -->
+      <circle cx="380" cy="380" r="270" fill="none" stroke="#15803D" stroke-width="76" stroke-dasharray="2 2" opacity="0.9"/>
+
+      <!-- 12 leaf clusters around the ring (every 30°) -->
+      <g>
+        <!-- top -->
+        <ellipse cx="380" cy="110" rx="30" ry="48" fill="#22C55E"/>
+        <ellipse cx="350" cy="124" rx="24" ry="40" fill="#16A34A" transform="rotate(-20 350 124)"/>
+        <ellipse cx="410" cy="124" rx="24" ry="40" fill="#16A34A" transform="rotate(20 410 124)"/>
+        <circle cx="380" cy="110" r="14" fill="#E11D48"/>
+        <circle cx="338" cy="134" r="9" fill="#FBBF24"/>
+        <circle cx="422" cy="134" r="9" fill="#FBBF24"/>
+
+        <!-- top-right -->
+        <ellipse cx="568" cy="190" rx="30" ry="48" fill="#22C55E" transform="rotate(45 568 190)"/>
+        <ellipse cx="595" cy="220" rx="24" ry="38" fill="#16A34A" transform="rotate(60 595 220)"/>
+        <circle cx="568" cy="190" r="13" fill="#E11D48"/>
+        <circle cx="606" cy="245" r="9" fill="#FBBF24"/>
+
+        <!-- right -->
+        <ellipse cx="650" cy="380" rx="30" ry="48" fill="#22C55E" transform="rotate(90 650 380)"/>
+        <ellipse cx="650" cy="345" rx="24" ry="38" fill="#16A34A" transform="rotate(75 650 345)"/>
+        <circle cx="650" cy="380" r="13" fill="#E11D48"/>
+        <circle cx="624" cy="295" r="9" fill="#FBBF24"/>
+
+        <!-- bottom-right -->
+        <ellipse cx="568" cy="570" rx="30" ry="48" fill="#22C55E" transform="rotate(135 568 570)"/>
+        <ellipse cx="595" cy="540" rx="24" ry="38" fill="#16A34A" transform="rotate(120 595 540)"/>
+        <circle cx="568" cy="570" r="13" fill="#E11D48"/>
+        <circle cx="606" cy="515" r="9" fill="#FBBF24"/>
+
+        <!-- bottom -->
+        <ellipse cx="380" cy="650" rx="30" ry="48" fill="#22C55E"/>
+        <ellipse cx="350" cy="638" rx="24" ry="40" fill="#16A34A" transform="rotate(20 350 638)"/>
+        <ellipse cx="410" cy="638" rx="24" ry="40" fill="#16A34A" transform="rotate(-20 410 638)"/>
+        <circle cx="380" cy="650" r="14" fill="#E11D48"/>
+        <circle cx="338" cy="624" r="9" fill="#FBBF24"/>
+
+        <!-- bottom-left -->
+        <ellipse cx="192" cy="570" rx="30" ry="48" fill="#22C55E" transform="rotate(-135 192 570)"/>
+        <ellipse cx="165" cy="540" rx="24" ry="38" fill="#16A34A" transform="rotate(-120 165 540)"/>
+        <circle cx="192" cy="570" r="13" fill="#E11D48"/>
+        <circle cx="154" cy="515" r="9" fill="#FBBF24"/>
+
+        <!-- left -->
+        <ellipse cx="110" cy="380" rx="30" ry="48" fill="#22C55E" transform="rotate(90 110 380)"/>
+        <ellipse cx="110" cy="415" rx="24" ry="38" fill="#16A34A" transform="rotate(105 110 415)"/>
+        <circle cx="110" cy="380" r="13" fill="#E11D48"/>
+        <circle cx="136" cy="465" r="9" fill="#FBBF24"/>
+
+        <!-- top-left -->
+        <ellipse cx="192" cy="190" rx="30" ry="48" fill="#22C55E" transform="rotate(-45 192 190)"/>
+        <ellipse cx="165" cy="220" rx="24" ry="38" fill="#16A34A" transform="rotate(-60 165 220)"/>
+        <circle cx="192" cy="190" r="13" fill="#E11D48"/>
+        <circle cx="154" cy="245" r="9" fill="#FBBF24"/>
+      </g>
+
+      <!-- Center gift box -->
+      <g transform="translate(380, 380)">
+        <rect x="-130" y="-90" width="260" height="190" rx="20" fill="url(#boxGrad)" stroke="rgba(255,255,255,0.4)" stroke-width="3"/>
+        <rect x="-22" y="-90" width="44" height="190" fill="#E11D48"/>
+        <rect x="-130" y="-20" width="260" height="36" fill="#E11D48"/>
+        <path d="M-50 -90 Q-50 -150 0 -120 Q50 -150 50 -90 Z" fill="#E11D48"/>
+        <circle cx="0" cy="-100" r="14" fill="#FBBF24"/>
+
+        <!-- Food peeking -->
+        <circle cx="-70" cy="-80" r="14" fill="#22C55E" opacity="0.95"/>
+        <circle cx="80" cy="-78" r="13" fill="#FBBF24" opacity="0.95"/>
+        <ellipse cx="-40" cy="-92" rx="11" ry="9" fill="#EF5350" opacity="0.95"/>
+        <ellipse cx="50" cy="-90" rx="11" ry="9" fill="#86EFAC" opacity="0.95"/>
+      </g>
+
+      <!-- Sparkles -->
+      <circle cx="60" cy="120" r="5" fill="white"/>
+      <circle cx="700" cy="140" r="4" fill="white"/>
+      <circle cx="700" cy="600" r="5" fill="white"/>
+      <circle cx="80" cy="640" r="4" fill="white"/>
+      <circle cx="380" cy="40" r="5" fill="white"/>
+
+      <defs>
+        <radialGradient id="wreathGlow" cx="0.5" cy="0.5" r="0.55">
+          <stop offset="0" stop-color="rgba(244,63,94,0.20)"/>
+          <stop offset="1" stop-color="rgba(244,63,94,0)"/>
+        </radialGradient>
+        <linearGradient id="boxGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#FBBF24"/>
+          <stop offset="1" stop-color="#F59E0B"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  </div>
+
+  <div class="noise"></div>
+</div>
+</body>
+</html>

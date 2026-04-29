@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>World Food Day Sprint — Event Card</title>
+<link rel="stylesheet" href="freshli.css">
+<style>
+  body { width: 1920px; height: 1080px; }
+  .stage { width: 1920px; height: 1080px; position: relative; overflow: hidden; }
+
+  .badge-pill {
+    position: absolute; top: 60px; left: 60px;
+    padding: 18px 36px;
+    background: rgba(245,158,11,0.28);
+    backdrop-filter: blur(30px);
+    border: 1.5px solid rgba(251,191,36,0.6);
+    border-radius: 999px;
+    font-size: 28px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--amber-400);
+  }
+
+  .freshli-mark {
+    position: absolute; top: 60px; right: 60px;
+    width: 110px; height: 110px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 28px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+  }
+
+  .globe-stage {
+    position: absolute;
+    left: 50%; top: 50%; transform: translate(-50%, -56%);
+    width: 540px; height: 540px;
+  }
+
+  .title-block {
+    position: absolute;
+    left: 50%; transform: translateX(-50%); bottom: 88px; padding: 0 70px; width: 1080px;
+    text-align: center;
+  }
+  .title-eyebrow {
+    font-size: 30px; font-weight: 600; letter-spacing: 0.42em;
+    color: rgba(255,255,255,0.85);
+    margin-bottom: 16px;
+  }
+  .title-main {
+    font-size: 110px; font-weight: 900; letter-spacing: -0.04em; line-height: 0.9;
+    color: white;
+    text-shadow: 0 8px 40px rgba(0,0,0,0.4);
+  }
+  .title-main .accent { color: var(--amber-400); }
+  .title-sub {
+    font-size: 30px; font-weight: 600;
+    color: rgba(255,255,255,0.92);
+    margin-top: 24px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Counter pill on globe */
+  .counter {
+    position: absolute;
+    top: 60%; left: 50%; transform: translate(-50%, 0);
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(30px);
+    border: 1.5px solid rgba(251,191,36,0.5);
+    padding: 16px 32px;
+    border-radius: 999px;
+    font-size: 36px; font-weight: 800; letter-spacing: -0.02em;
+    color: var(--amber-400);
+    white-space: nowrap;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+  .counter .pulse-dot {
+    display: inline-block; width: 14px; height: 14px;
+    background: #FBBF24; border-radius: 50%;
+    margin-right: 12px; vertical-align: middle;
+    box-shadow: 0 0 16px #FBBF24;
+  }
+</style>
+</head>
+<body>
+<div class="stage mesh-amber">
+  <!-- Sparkles -->
+  <div class="sparkle" style="top: 130px; right: 230px; width: 8px; height: 8px;"></div>
+  <div class="sparkle" style="top: 200px; left: 200px; width: 5px; height: 5px;"></div>
+  <div class="sparkle" style="top: 360px; right: 130px; width: 6px; height: 6px;"></div>
+  <div class="sparkle" style="top: 520px; left: 90px; width: 7px; height: 7px;"></div>
+  <div class="sparkle" style="bottom: 320px; right: 110px; width: 5px; height: 5px;"></div>
+  <div class="sparkle" style="bottom: 420px; left: 150px; width: 4px; height: 4px;"></div>
+
+  <div class="badge-pill">SPECIAL EVENT</div>
+  <div class="freshli-mark">
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+      <path d="M32 8C32 8 18 14 18 32C18 44 26 56 32 56C38 56 46 44 46 32C46 14 32 8 32 8Z" fill="#22C55E"/>
+      <path d="M32 14C32 14 24 30 32 50" stroke="#15803D" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <!-- Globe -->
+  <svg class="globe-stage" viewBox="0 0 540 540" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Glow -->
+    <circle cx="270" cy="270" r="260" fill="url(#globeGlow)"/>
+    <!-- Globe sphere -->
+    <circle cx="270" cy="270" r="200" fill="url(#globeFill)" stroke="rgba(255,255,255,0.4)" stroke-width="3"/>
+    <!-- Latitude lines -->
+    <ellipse cx="270" cy="270" rx="200" ry="60" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" fill="none"/>
+    <ellipse cx="270" cy="270" rx="200" ry="120" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" fill="none"/>
+    <ellipse cx="270" cy="270" rx="200" ry="180" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" fill="none"/>
+    <!-- Longitude lines -->
+    <ellipse cx="270" cy="270" rx="60" ry="200" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" fill="none"/>
+    <ellipse cx="270" cy="270" rx="120" ry="200" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" fill="none"/>
+    <line x1="270" y1="70" x2="270" y2="470" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
+
+    <!-- Continents simplified -->
+    <!-- Americas -->
+    <path d="M180 180 Q160 200 175 240 Q165 280 185 320 Q195 360 220 380 Q210 340 200 300 Q220 260 215 220 Q200 200 180 180 Z" fill="#22C55E" opacity="0.85"/>
+    <!-- Africa/Europe -->
+    <path d="M280 160 Q300 180 310 220 Q330 240 320 280 Q325 320 305 360 Q280 380 270 340 Q255 300 270 260 Q260 220 270 180 Q275 165 280 160 Z" fill="#16A34A" opacity="0.85"/>
+    <!-- Asia/Australia -->
+    <path d="M360 200 Q390 215 400 250 Q410 290 380 320 Q400 340 380 360 Q360 350 350 320 Q345 280 360 240 Q360 220 360 200 Z" fill="#22C55E" opacity="0.85"/>
+
+    <!-- Live rescue pins (animated dots) -->
+    <circle cx="195" cy="260" r="8" fill="#FBBF24" opacity="0.9"/>
+    <circle cx="195" cy="260" r="14" fill="none" stroke="#FBBF24" stroke-width="2" opacity="0.6"/>
+    <circle cx="290" cy="220" r="8" fill="#FBBF24" opacity="0.9"/>
+    <circle cx="290" cy="220" r="14" fill="none" stroke="#FBBF24" stroke-width="2" opacity="0.6"/>
+    <circle cx="305" cy="320" r="8" fill="#FBBF24" opacity="0.9"/>
+    <circle cx="375" cy="270" r="8" fill="#FBBF24" opacity="0.9"/>
+    <circle cx="375" cy="270" r="14" fill="none" stroke="#FBBF24" stroke-width="2" opacity="0.6"/>
+    <circle cx="225" cy="330" r="8" fill="#FBBF24" opacity="0.9"/>
+    <circle cx="395" cy="340" r="6" fill="#FBBF24" opacity="0.9"/>
+
+    <!-- Rescue arrows orbiting -->
+    <path d="M80 120 Q160 90 240 100" stroke="#FBBF24" stroke-width="3" fill="none" stroke-linecap="round" stroke-dasharray="8 6"/>
+    <path d="M460 100 Q400 70 350 100" stroke="#FBBF24" stroke-width="3" fill="none" stroke-linecap="round" stroke-dasharray="8 6"/>
+    <path d="M460 440 Q400 470 350 460" stroke="#FBBF24" stroke-width="3" fill="none" stroke-linecap="round" stroke-dasharray="8 6"/>
+
+    <defs>
+      <radialGradient id="globeGlow" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0" stop-color="rgba(251,191,36,0.4)"/>
+        <stop offset="1" stop-color="rgba(251,191,36,0)"/>
+      </radialGradient>
+      <radialGradient id="globeFill" cx="0.35" cy="0.35" r="0.65">
+        <stop offset="0" stop-color="#1A4530"/>
+        <stop offset="1" stop-color="#052E1A"/>
+      </radialGradient>
+    </defs>
+  </svg>
+
+  <div class="counter">
+    <span class="pulse-dot"></span>1,000,000,000 GOAL
+  </div>
+
+  <div class="title-block">
+    <div class="title-eyebrow">OCT 16 · 2026 · WORLDWIDE</div>
+    <div class="title-main">World Food <span class="accent">Day</span></div>
+    <div class="title-sub">One day. One billion items rescued. Together.</div>
+  </div>
+
+  <div class="noise"></div>
+</div>
+</body>
+</html>

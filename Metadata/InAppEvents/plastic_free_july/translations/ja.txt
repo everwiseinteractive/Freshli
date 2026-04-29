@@ -1,0 +1,20 @@
+# ASC In-App Event Paste Sheet — ja
+# Event: Plastic Free July 2026 · Badge: Challenge
+# Window: 2026-07-01T00:00:00+01:00 → 2026-07-31T23:59:59+01:00
+# Deep link: freshli://events/plastic-free-july
+
+──────────────────────────────────────────────
+EVENT NAME (max 30 chars):
+プラスチックフリー7月
+
+──────────────────────────────────────────────
+SHORT DESCRIPTION (max 50 chars):
+食品を救う。プラスチックを断つ。
+
+──────────────────────────────────────────────
+LONG DESCRIPTION (max 120 chars):
+31日間のパントリー救助に挑戦。使い捨てプラスチック断ち、自炊で「プラスチックフリーヒーロー」獲得。
+
+──────────────────────────────────────────────
+NOTIFICATION TEXT (max 50 chars, optional):
+1日目スタート — 最初の食品を救出しよう！

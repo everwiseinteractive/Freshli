@@ -1,0 +1,20 @@
+# ASC In-App Event Paste Sheet — es
+# Event: World Food Day 2026 · Badge: Special Event
+# Window: 2026-10-16T00:00:00+01:00 → 2026-10-16T23:59:59+01:00
+# Deep link: freshli://events/world-food-day
+
+──────────────────────────────────────────────
+EVENT NAME (max 30 chars):
+Maratón Día Mundial
+
+──────────────────────────────────────────────
+SHORT DESCRIPTION (max 50 chars):
+Un día. Mil millones de rescates.
+
+──────────────────────────────────────────────
+LONG DESCRIPTION (max 120 chars):
+Únete al maratón global de Freshli el Día Mundial de la Alimentación. Registra cada rescate. Llega a 1B juntos.
+
+──────────────────────────────────────────────
+NOTIFICATION TEXT (max 50 chars, optional):
+¡El Día Mundial es hoy — empieza a rescatar!
