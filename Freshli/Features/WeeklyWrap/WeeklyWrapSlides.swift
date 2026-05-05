@@ -24,8 +24,22 @@ struct BigNumberSlide: View {
     private let countDuration: Duration = .seconds(1.8)
 
     var body: some View {
+        // ScrollView wrapper guarantees the slide content is fully reachable
+        // even on the smallest iPhones (SE 3rd gen, 4.7" / 667pt) when
+        // Dynamic Type / streak badge / WoW comparison all stack up.
+        // Safe-area padding leaves room for the progress bar + close button
+        // (top) and the home indicator + auto-advance hint (bottom).
+        ScrollView(showsIndicators: false) {
+            slideContent
+                .frame(maxWidth: .infinity, minHeight: PSLayout.screenHeight - 80, alignment: .center)
+        }
+        .safeAreaPadding(.top, 64)
+        .safeAreaPadding(.bottom, 32)
+    }
+
+    private var slideContent: some View {
         VStack(spacing: PSSpacing.xxxl) {
-            Spacer()
+            Spacer(minLength: 0)
 
             // Streak flame badge — only if the user has an active streak
             if viewModel.hasStreak && showSubtitle {
@@ -52,9 +66,14 @@ struct BigNumberSlide: View {
             // The Big Number — keyframe-driven bounce pop at the end
             VStack(spacing: PSSpacing.lg) {
                 Text("\(displayedCount)")
-                    .font(.system(size: 120, weight: .heavy, design: .rounded))
+                    .font(.system(size: PSLayout.scaledFont(120), weight: .heavy, design: .rounded))
                     .monospacedDigit()
                     .foregroundColor(.white)
+                    // Cap line count and let the digits scale down before
+                    // they overflow the screen (e.g. 4-digit weeks on
+                    // iPhone SE 3rd gen — 375pt wide).
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                     .contentTransition(.numericText())
                     .compositingGroup()
                     .keyframeAnimator(
@@ -82,8 +101,10 @@ struct BigNumberSlide: View {
                     }
 
                 Text("items saved")
-                    .font(.system(size: 28, weight: .semibold, design: .rounded))
+                    .font(.system(size: PSLayout.scaledFont(28), weight: .semibold, design: .rounded))
                     .foregroundColor(.white.opacity(0.9))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .opacity(showSubtitle ? 1 : 0)
                     .offset(y: showSubtitle ? 0 : 10)
             }
@@ -117,8 +138,8 @@ struct BigNumberSlide: View {
                 .transition(PSMotion.fadeSlide)
             }
 
-            Spacer()
-            Spacer()
+            Spacer(minLength: 0)
+            Spacer(minLength: 0)
         }
         .padding(.horizontal, PSSpacing.screenHorizontal)
         .task { await runEntrance() }
@@ -179,10 +200,25 @@ struct CommunityHeroSlide: View {
     }
 
     var body: some View {
-        VStack(spacing: PSSpacing.xxxl) {
-            Spacer()
+        // ScrollView keeps everything reachable on iPhone SE 3rd gen even
+        // when the breakdown pills + best-day insight + Dynamic Type all
+        // push the layout taller than 667pt.
+        ScrollView(showsIndicators: false) {
+            slideContent
+                .frame(maxWidth: .infinity, minHeight: PSLayout.screenHeight - 80, alignment: .center)
+        }
+        .safeAreaPadding(.top, 64)
+        .safeAreaPadding(.bottom, 32)
+    }
 
-            // Heart icon with expanding rings
+    private var slideContent: some View {
+        VStack(spacing: PSSpacing.xxxl) {
+            Spacer(minLength: 0)
+
+            // Heart icon with expanding rings.
+            // ZStack must be `.clipped()` because the largest ring expands
+            // to 180×180pt — without clipping, on narrow content stacks the
+            // outer ring can overlap adjacent text.
             ZStack {
                 ForEach(0..<3, id: \.self) { i in
                     Circle()
@@ -206,25 +242,33 @@ struct CommunityHeroSlide: View {
                     // Native SymbolEffect breathing replaces the manual PhaseAnimator
                     .symbolEffect(.breathe, options: .repeating, isActive: !reduceMotion && heartAppeared)
             }
+            // Reserve a fixed slot for the rings so neighbouring elements
+            // don't shift as they expand, and clip the outer ring so it
+            // can never bleed into adjacent text on narrow screens.
+            .frame(width: 200, height: 200)
+            .clipShape(Rectangle())
 
             // Stats
             VStack(spacing: PSSpacing.xl) {
                 Text("\(displayedPeople)")
-                    .font(.system(size: 96, weight: .heavy, design: .rounded))
+                    .font(.system(size: PSLayout.scaledFont(96), weight: .heavy, design: .rounded))
                     .monospacedDigit()
                     .foregroundColor(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                     .contentTransition(.numericText())
                     .compositingGroup()
 
                 Text("meals shared with\nyour community")
-                    .font(.system(size: 22, weight: .semibold, design: .rounded))
+                    .font(.system(size: PSLayout.scaledFont(22), weight: .semibold, design: .rounded))
                     .foregroundColor(.white.opacity(0.9))
                     .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.8)
                     .opacity(showContent ? 1 : 0)
                     .offset(y: showContent ? 0 : 12)
             }
 
-            Spacer()
+            Spacer(minLength: 0)
 
             // Breakdown pills
             if showContent {
@@ -263,7 +307,7 @@ struct CommunityHeroSlide: View {
                 .transition(PSMotion.fadeSlide)
             }
 
-            Spacer()
+            Spacer(minLength: 0)
         }
         .padding(.horizontal, PSSpacing.screenHorizontal)
         .task { await runEntrance() }
@@ -340,10 +384,22 @@ struct EnvironmentalImpactSlide: View {
     private var growthFactor: CGFloat { min(CGFloat(co2Saved) / 50.0, 1.0) }
 
     var body: some View {
-        VStack(spacing: PSSpacing.xl) {
-            Spacer()
+        // ScrollView so the tree + stats + share button never get cut off
+        // on iPhone SE 3rd gen (the tree alone is 260pt; stats + actions
+        // add another ~360pt; total ~620pt + safe area).
+        ScrollView(showsIndicators: false) {
+            slideContent
+                .frame(maxWidth: .infinity, minHeight: PSLayout.screenHeight - 80, alignment: .center)
+        }
+        .safeAreaPadding(.top, 64)
+        .safeAreaPadding(.bottom, 32)
+    }
 
-            // 3D Tree
+    private var slideContent: some View {
+        VStack(spacing: PSSpacing.xl) {
+            Spacer(minLength: 0)
+
+            // 3D Tree (Canvas auto-clips to its frame)
             treeView
                 .frame(height: PSLayout.scaled(260))
 
@@ -351,13 +407,16 @@ struct EnvironmentalImpactSlide: View {
             if showStats {
                 VStack(spacing: PSSpacing.md) {
                     Text(viewModel.wrapData.co2AvoidedDisplay + " kg")
-                        .font(.system(size: 48, weight: .heavy, design: .rounded))
+                        .font(.system(size: PSLayout.scaledFont(48), weight: .heavy, design: .rounded))
                         .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.6)
 
                     Text("CO\u{2082} kept out of\nthe atmosphere")
-                        .font(.system(size: 18, weight: .semibold, design: .rounded))
+                        .font(.system(size: PSLayout.scaledFont(18), weight: .semibold, design: .rounded))
                         .foregroundColor(.white.opacity(0.85))
                         .multilineTextAlignment(.center)
+                        .minimumScaleFactor(0.8)
 
                     // Tree equivalence
                     HStack(spacing: PSSpacing.xs) {
@@ -385,7 +444,7 @@ struct EnvironmentalImpactSlide: View {
                 .transition(PSMotion.fadeSlide)
             }
 
-            Spacer()
+            Spacer(minLength: 0)
 
             // Share + Done — pinned above the floating tab bar
             if showActions {
@@ -416,9 +475,10 @@ struct EnvironmentalImpactSlide: View {
 
             // Clear the floating tab bar pill (~60pt) + home indicator (14pt)
             // + visual breathing room so the Share button sits comfortably
-            // above the tab bar on all device sizes.
-            Spacer()
-                .frame(height: PSLayout.scaled(120))
+            // above the tab bar on all device sizes. minLength keeps it
+            // collapsible inside the ScrollView when content is tall.
+            Spacer(minLength: 0)
+                .frame(minHeight: PSLayout.scaled(120))
         }
         .padding(.horizontal, PSSpacing.screenHorizontal)
         .task { await runEntrance() }

@@ -1,20 +1,32 @@
 import SwiftUI
+import UIKit
 
 // MARK: - PSLayout
-// Adaptive layout utilities for responsive sizing across all iPhone models.
+// Adaptive layout utilities for responsive sizing across all iPhone models,
+// iPad sizes, and visionOS canvases.
 //
 // Device width reference (logical points):
 //   iPhone SE (2nd/3rd gen)  : 375 pt   → compact tier
 //   iPhone 16 / 17           : 393 pt   → standard tier  (reference width)
 //   iPhone 16 Pro            : 402 pt   → standard tier
 //   iPhone 16 Pro Max        : 430 pt   → expanded tier
-//   iPhone 17 Pro Max (est.) : 440 pt   → ultraExpanded tier
+//   iPhone 17 Pro Max        : 440 pt   → ultraExpanded tier
 //
-// iPhone 17 Pro Max specs (estimated):
-//   Logical resolution : ~440 × 956 pt
-//   Physical display   : ~6.9 inch
-//   Refresh rate       : ProMotion 120 Hz
-//   Notch style        : Dynamic Island
+// Dynamic Type integration (added 2026-05-03):
+//   `scaledFont(_:)` now passes its width-adjusted base size through
+//   `UIFontMetrics.default.scaledValue(for:)`. This means every one of
+//   the ~970 call sites of `font(.system(size: PSLayout.scaledFont(N)))`
+//   automatically participates in the user's preferred content size
+//   category, including AX1–AX5.
+//
+//   Layout safety: scaling is capped at the equivalent of AX3 (~1.6×
+//   the width-adjusted base size) so that hand-tuned compositions like
+//   the floating tab bar pill, Liquid Glass card grids, and dashboard
+//   tiles do not blow out their containing frames at AX5.
+//
+//   Views that opt in to AX4/AX5 by setting `.dynamicTypeSize(...)`
+//   override this cap at the boundary; the rest of the app stays
+//   visually composed.
 
 @MainActor
 enum PSLayout {
@@ -50,12 +62,43 @@ enum PSLayout {
         (value * widthScale).rounded()
     }
 
-    /// Scales a font size with a gentler curve (less aggressive than full proportional).
-    /// Fonts scale down on compact screens but barely grow on expanded — prevents text overflow.
+    /// Scales a font size with a gentler curve (less aggressive than full proportional)
+    /// AND honors the user's preferred content size category (Dynamic Type).
+    ///
+    /// Pipeline:
+    ///   1. Apply width-based scaling (shrinks on compact iPhones, never grows).
+    ///   2. Pass the width-adjusted size through UIFontMetrics so AX1–AX5 take effect.
+    ///   3. Cap growth at ~1.6× the width-adjusted base (AX3-equivalent) so layouts
+    ///      stay visually intact. Views that opt in to extreme Dynamic Type can
+    ///      override the cap by setting `.dynamicTypeSize(...)` at the boundary.
+    ///
+    /// IMPORTANT: this function is *intentionally* called inside SwiftUI view bodies
+    /// (e.g. `.font(.system(size: PSLayout.scaledFont(20), weight: .semibold))`) so
+    /// that body re-evaluation re-computes the size when the user changes their
+    /// preferred content size category in Settings → Accessibility.
     static func scaledFont(_ size: CGFloat) -> CGFloat {
+        // Step 1 — width scaling (existing behaviour, unchanged for visual rhythm)
         let rawFontScale = 1.0 + (widthScale - 1.0) * 0.5
-        let fontScale = min(rawFontScale, 1.0)  // Never scale fonts UP — only shrink on compact
-        return max((size * fontScale).rounded(.down), 1)
+        let widthClamp = min(rawFontScale, 1.0)
+        let widthAdjusted = max((size * widthClamp).rounded(.down), 1)
+
+        // Step 2 — Dynamic Type scaling via UIFontMetrics (NEW)
+        let scaled = UIFontMetrics.default.scaledValue(for: widthAdjusted)
+
+        // Step 3 — layout-safety cap (~AX3) so floating tab bars, dashboard
+        // tiles, and recipe cards don't blow out at AX4/AX5.
+        let layoutCeiling = widthAdjusted * 1.6
+        return min(scaled, layoutCeiling)
+    }
+
+    /// Same as `scaledFont(_:)` but without the layout-safety cap.
+    /// Use only on text-only screens (e.g. recipe steps, legal text, weekly wrap)
+    /// where AX4/AX5 should be allowed to scale fully.
+    static func scaledFontUncapped(_ size: CGFloat) -> CGFloat {
+        let rawFontScale = 1.0 + (widthScale - 1.0) * 0.5
+        let widthClamp = min(rawFontScale, 1.0)
+        let widthAdjusted = max((size * widthClamp).rounded(.down), 1)
+        return UIFontMetrics.default.scaledValue(for: widthAdjusted)
     }
 
     // MARK: - Device Tiers

@@ -239,7 +239,12 @@ struct SavingsImpactPage: View {
                     x: 0, y: illustrationHeight * 0.36
                 )
             }
+            // Pin the illustration to a fixed slot and clip so the largest
+            // ring (180+50*2 = 280pt) and floating impact labels can never
+            // overlap the headline below on iPhone SE 3rd gen.
+            .frame(maxWidth: .infinity)
             .frame(height: illustrationHeight)
+            .clipped()
 
             // Text content
             VStack(spacing: PSSpacing.lg) {

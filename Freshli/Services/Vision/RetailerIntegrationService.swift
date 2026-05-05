@@ -166,10 +166,29 @@ final class RetailerIntegrationService {
     }
 
     private func syncPurchases(for retailer: RetailerDefinition) async {
-        // Simulate API latency
+        // Real Tesco / Sainsbury's / Waitrose loyalty-API integrations are
+        // not yet shipped. Until they are, production users tapping "Sync"
+        // get an honest empty result (with the corresponding empty-state
+        // explanation in the retailer-link UI). Faking purchases here would
+        // mean a real user seeing a "Whole Milk" they never bought —
+        // exactly the kind of fabricated data this codebase has been
+        // cleaning out.
+        //
+        // Reviewer accounts get the demonstration purchases so the App
+        // Review reviewer can verify the integration UX end-to-end without
+        // needing real loyalty-card credentials.
         try? await Task.sleep(for: .milliseconds(600))
-        let purchases = simulatedPurchases(for: retailer)
-        // Merge — don't duplicate
+
+        let purchases: [RetailerPurchase]
+        if ReviewerAccountService.shared.isReviewerActive {
+            purchases = simulatedPurchases(for: retailer)
+        } else {
+            // Production: return empty until the real loyalty-API
+            // integration is implemented per retailer. The retailer-link
+            // view's empty state already explains "No new purchases yet."
+            purchases = []
+        }
+
         let existing = Set(pendingPurchases.map { $0.id })
         let fresh = purchases.filter { !existing.contains($0.id) }
         pendingPurchases.append(contentsOf: fresh)

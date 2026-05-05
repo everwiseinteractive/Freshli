@@ -8,6 +8,16 @@
 	</array>
 	<key>com.apple.developer.aps-environment</key>
 	<string>production</string>
+	<!--
+	  iCloud / CloudKit entitlements:
+	  - `cloudKitDatabase: .none` is intentionally set on the SwiftData
+	    `ModelContainer` (see FreshliApp.swift) — Supabase is the cloud
+	    sync layer for pantry data.
+	  - However, `FamilySyncService` uses CloudKit DIRECTLY (CKContainer,
+	    CKShare, CKRecord) to back the family-sharing feature. That's a
+	    separate use of CloudKit from SwiftData's auto-sync, and it
+	    REQUIRES the entitlements below.
+	-->
 	<key>com.apple.developer.icloud-container-identifiers</key>
 	<array>
 		<string>iCloud.everwise.interactive.Freshli</string>

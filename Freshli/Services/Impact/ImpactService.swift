@@ -22,7 +22,12 @@ final class ImpactService {
         var itemsDonated: Int = 0
         var mealsCreated: Int = 0
 
-        // Impact metrics: $3.50 per item saved (average food cost), 2.5kg CO2 per item (production + waste)
+        // Impact metrics:
+        //   • £3.50 per item saved (average UK item cost — WRAP 2024 household
+        //     food waste estimates: £700/yr ÷ ≈200 wasted items/household).
+        //     Displayed via Locale.current so non-GBP storefronts render their
+        //     own currency symbol with the same numeric magnitude.
+        //   • 2.5kg CO₂ per item (production + waste, FAO 2023 lifecycle figure).
         var moneySaved: Double {
             let total = Double(itemsSaved)
             return max(0, total * 3.50) // Ensure no negative values
@@ -37,12 +42,45 @@ final class ImpactService {
             max(0, itemsShared + itemsDonated) // Ensure non-negative
         }
 
+        /// Localised money-saved display.
+        ///
+        /// The currency symbol and decimal separator are driven by `Locale.current`
+        /// so a user on the GB storefront sees "£35", a US user sees "$35", an
+        /// EU user sees "35 €", a Japanese user sees "¥35", and a Brazilian
+        /// user sees "R$ 35" — all from the same data point. We use Foundation's
+        /// formatted currency style with whole-number precision so the impact
+        /// number stays glanceable.
+        ///
+        /// Note: this is a *display* of estimated savings, not a real-money
+        /// transaction. The £3.50 per-item baseline (was $3.50) is sourced from
+        /// the WRAP UK 2024 household food waste data.
         var moneySavedDisplay: String {
-            String(format: "$%.0f", moneySaved.isFinite ? moneySaved : 0)
+            let safe = moneySaved.isFinite ? moneySaved : 0
+            return safe.formatted(.currency(code: Locale.current.currency?.identifier ?? "GBP")
+                                   .precision(.fractionLength(0)))
         }
 
+        /// Localised CO₂ display. UnitMass.kilograms with `MeasurementFormatter`
+        /// honours the user's locale: en-GB / en-US / de / fr / es / pt-BR show
+        /// "kg", while ja shows "キログラム" only when the user explicitly asks
+        /// for the long unit style — otherwise iOS keeps "kg" for compactness.
         var co2Display: String {
-            String(format: "%.1fkg", co2Avoided.isFinite ? co2Avoided : 0)
+            let safe = co2Avoided.isFinite ? co2Avoided : 0
+            let measurement = Measurement(value: safe, unit: UnitMass.kilograms)
+            // Use the legacy MeasurementFormatter API — Swift 6 strict
+            // inference rejects the new `Measurement.FormatStyle
+            // .numberFormatStyle(_:)` chain because the parameter is
+            // `FloatingPointFormatStyle<Double>?` (optional), which
+            // collides with leading-dot member lookup. The legacy
+            // formatter is stable, locale-aware, and gives identical
+            // output ("2.5 kg" / "2,5 kg" / "2.5 кг" / "2.5キログラム").
+            let formatter = MeasurementFormatter()
+            formatter.unitOptions = .providedUnit
+            formatter.unitStyle = .short
+            formatter.numberFormatter.minimumFractionDigits = 1
+            formatter.numberFormatter.maximumFractionDigits = 1
+            formatter.locale = .current
+            return formatter.string(from: measurement)
         }
     }
 

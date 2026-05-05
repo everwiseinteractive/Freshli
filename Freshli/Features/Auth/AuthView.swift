@@ -282,6 +282,17 @@ struct AuthLandingView: View {
             withAnimation(PSMotion.springDefault.delay(0.1)) {
                 appeared = true
             }
+            // Defensive: clear any stale signing-in spinner state from a
+            // previous attempt that may not have cleaned up its own
+            // local @State (e.g. backgrounded mid-flow). Without this,
+            // re-entering AuthView could leave the SignInWithAppleButton
+            // disabled and the "Signing in…" hint visible on a fresh
+            // viewing — exactly the "doesn't progress" symptom reported
+            // 2026-05-04. authManager.errorMessage is also cleared so
+            // the alert doesn't auto-fire on re-entry.
+            isSigningIn = false
+            pendingNonce = nil
+            authManager.errorMessage = nil
         }
         .alert(String(localized: "Sign In Failed"), isPresented: $showAppleError) {
             Button(String(localized: "OK")) {}
@@ -309,17 +320,31 @@ struct AuthLandingView: View {
             }()
 
             isSigningIn = true
-            Task {
+            Task { @MainActor in
+                // signInWithApple no longer throws on Supabase failure —
+                // it always succeeds when Apple has authenticated the
+                // user, falling back to local Apple auth if the server
+                // exchange can't be completed. The user always
+                // progresses past the auth screen.
+                //
+                // The function still signals errors with `throws` for
+                // truly catastrophic failures (e.g. malformed credential
+                // data) which we surface as an alert.
                 do {
                     try await authManager.signInWithApple(
                         idToken: identityToken,
                         nonce: nonce,
-                        fullName: fullName
+                        fullName: fullName,
+                        appleUserIdentifier: credential.user,
+                        email: credential.email
                     )
+                    logger.info("Sign in with Apple complete (cloud=\(authManager.isUsingLocalAppleAuth ? "no" : "yes"))")
                 } catch {
-                    if authManager.errorMessage != nil {
-                        showAppleError = true
+                    logger.error("Sign in with Apple unexpectedly threw: \(error.localizedDescription, privacy: .public)")
+                    if authManager.errorMessage == nil {
+                        authManager.errorMessage = String(localized: "We couldn't complete sign in. Please try again, or use email sign in.")
                     }
+                    showAppleError = true
                 }
                 isSigningIn = false
                 pendingNonce = nil
@@ -329,12 +354,14 @@ struct AuthLandingView: View {
             // User-initiated cancel: ASAuthorizationError.canceled — silent.
             if let authError = error as? ASAuthorizationError, authError.code == .canceled {
                 pendingNonce = nil
+                isSigningIn = false
                 return
             }
             authManager.errorMessage = String(localized: "Sign in with Apple failed. Please try again or use email sign in.")
             logger.error("SignInWithAppleButton failed: \(error.localizedDescription, privacy: .public)")
             showAppleError = true
             pendingNonce = nil
+            isSigningIn = false
         }
     }
 

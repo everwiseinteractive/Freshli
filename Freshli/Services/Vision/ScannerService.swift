@@ -33,6 +33,7 @@ enum ScanError: LocalizedError {
 @Observable @MainActor
 final class ScannerService {
     private let logger = PSLogger(category: .pantry)
+    private let barcodeLookup = BarcodeLookupService()
 
     var isCameraAvailable: Bool {
         AVCaptureDevice.default(for: .video) != nil
@@ -56,36 +57,31 @@ final class ScannerService {
         }
     }
 
-    /// Look up a barcode and return the product information if available.
-    /// For unknown barcodes, returns nil so the user can enter details manually.
-    /// Note: In production, this should integrate with a product database API
-    /// (e.g., Open Food Facts, GS1 UPC database) to provide real-time data.
-    func lookupBarcode(_ code: String) -> FreshliItem? {
+    /// Look up a barcode against the Open Food Facts product database.
+    /// Returns a fully-populated `FreshliItem` (name, brand, category,
+    /// storage, sensible shelf-life, barcode persisted) the user can
+    /// review and adjust before saving. Throws a `BarcodeLookupService.LookupError`
+    /// with a user-friendly localized message when the product can't be
+    /// found, the network is unavailable, or the API rate-limits us.
+    ///
+    /// This replaces the prior 3-product hardcoded dictionary which gave
+    /// real users the impression the scanner was broken.
+    func lookupBarcode(_ code: String) async throws -> FreshliItem {
+        try await barcodeLookup.lookup(barcode: code)
+    }
+
+    /// Synchronous variant kept for backward compatibility with call sites
+    /// that haven't migrated to the async API yet. Returns `nil` and lets
+    /// the caller fall back to manual entry; does not perform the lookup
+    /// (the network call must run on the async API). Marked deprecated to
+    /// flag remaining call sites.
+    @available(*, deprecated, message: "Use the async `lookupBarcode(_:)` overload — this fallback never finds products and is only kept to avoid call-site breakage.")
+    func lookupBarcodeSync(_ code: String) -> FreshliItem? {
         guard !code.isEmpty else {
             logger.warning("Barcode is empty")
             return nil
         }
-
-        // MVP: Sample product database with hardcoded barcodes
-        let sampleProducts: [String: (String, FoodCategory, StorageLocation)] = [
-            "5000159407236": ("Heinz Baked Beans", .canned, .pantry),
-            "5010477348678": ("Cadbury Dairy Milk", .snacks, .pantry),
-            "5000128654296": ("PG Tips Tea", .beverages, .pantry),
-        ]
-
-        if let product = sampleProducts[code] {
-            return FreshliItem(
-                name: product.0,
-                category: product.1,
-                storageLocation: product.2,
-                quantity: 1,
-                unit: .pieces,
-                expiryDate: .daysFromNow(30)
-            )
-        }
-
-        // Unknown barcode: log and return nil for manual entry
-        logger.debug("Unknown barcode: \(code)")
+        logger.warning("Synchronous barcode lookup is deprecated — call site should migrate to async lookupBarcode")
         return nil
     }
 }

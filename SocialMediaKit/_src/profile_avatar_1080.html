@@ -1,0 +1,53 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="social.css">
+<style>
+  body { width: 1080px; height: 1080px; }
+  .stage { width: 1080px; height: 1080px; position: relative; overflow: hidden; }
+  .badge { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+</style></head><body>
+<div class="stage mesh-green">
+  <div class="sparkle" style="top: 180px; left: 240px; width: 10px; height: 10px;"></div>
+  <div class="sparkle" style="top: 320px; right: 200px; width: 8px; height: 8px;"></div>
+  <div class="sparkle" style="bottom: 280px; left: 180px; width: 7px; height: 7px;"></div>
+  <div class="sparkle" style="bottom: 200px; right: 240px; width: 9px; height: 9px;"></div>
+
+  <div style="position:absolute; top:-100px; left:-100px; width:480px; height:480px; border-radius:50%; background:radial-gradient(circle, rgba(74,222,128,0.5), transparent 70%); filter:blur(2px);"></div>
+  <div style="position:absolute; bottom:-150px; right:-120px; width:520px; height:520px; border-radius:50%; background:radial-gradient(circle, rgba(45,212,191,0.4), transparent 70%); filter:blur(2px);"></div>
+
+  <svg class="badge" width="700" height="700" viewBox="0 0 700 700" fill="none">
+    <!-- Outer leaf -->
+    <path d="M350 80
+             C 350 80, 130 160, 130 380
+             C 130 510, 230 620, 350 620
+             C 470 620, 570 510, 570 380
+             C 570 160, 350 80, 350 80 Z"
+          fill="white" filter="url(#shadow)"/>
+    <!-- Inner leaf gradient -->
+    <path d="M350 130
+             C 350 130, 175 200, 175 380
+             C 175 490, 255 575, 350 575
+             C 445 575, 525 490, 525 380
+             C 525 200, 350 130, 350 130 Z"
+          fill="url(#leafGrad)"/>
+    <!-- Vein -->
+    <path d="M350 175
+             C 340 230, 320 290, 330 360
+             C 340 430, 360 490, 360 550"
+          stroke="#15803D" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <!-- Vein branches -->
+    <path d="M350 240 Q 380 260 410 270" stroke="#15803D" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M340 320 Q 305 340 280 350" stroke="#15803D" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M340 400 Q 380 425 415 430" stroke="#15803D" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M350 470 Q 315 490 290 495" stroke="#15803D" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <defs>
+      <linearGradient id="leafGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#4ADE80"/>
+        <stop offset="1" stop-color="#16A34A"/>
+      </linearGradient>
+      <filter id="shadow"><feDropShadow dx="0" dy="20" stdDeviation="30" flood-color="black" flood-opacity="0.3"/></filter>
+    </defs>
+  </svg>
+
+  <div class="noise"></div>
+</div>
+</body></html>

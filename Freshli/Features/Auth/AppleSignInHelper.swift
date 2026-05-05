@@ -53,7 +53,18 @@ final class AppleSignInCoordinator: NSObject, ASAuthorizationControllerDelegate,
             ?? scenes.first?.windows.first(where: { $0.isKeyWindow })
             ?? scenes.first?.windows.first
 
-        return keyWindow ?? ASPresentationAnchor()
+        if let keyWindow { return keyWindow }
+        // iOS 26 deprecated `UIWindow.init()` — fabricate one from any
+        // available scene as the fallback. If no scene is connected
+        // (vanishingly rare for a foreground sign-in attempt), the
+        // system will still synthesise a presentation anchor.
+        if let scene = scenes.first {
+            return ASPresentationAnchor(windowScene: scene)
+        }
+        // Last-resort branch — should never run in practice, but keeps
+        // the function total. ASPresentationAnchor is a UIWindow so
+        // `UIWindow(frame:)` (still supported) gives us a valid value.
+        return ASPresentationAnchor(frame: .zero)
     }
 
     // MARK: - ASAuthorizationControllerDelegate
@@ -78,7 +89,8 @@ final class AppleSignInCoordinator: NSObject, ASAuthorizationControllerDelegate,
             identityToken: identityToken,
             nonce: nonce,
             email: appleCredential.email,
-            fullName: fullName
+            fullName: fullName,
+            userIdentifier: appleCredential.user
         )
 
         continuation?.resume(returning: result)
@@ -130,6 +142,10 @@ struct AppleSignInResult {
     let nonce: String
     let email: String?
     let fullName: String?
+    /// Apple's stable per-Apple-ID-per-team identifier from
+    /// `ASAuthorizationAppleIDCredential.user`. Used by `AppleIdentityCache`
+    /// as the local user key when the Supabase UUID isn't available.
+    let userIdentifier: String
 }
 
 enum AppleSignInError: LocalizedError {

@@ -188,20 +188,27 @@ struct OnboardingSignInView: View {
             }()
 
             isSigningIn = true
-            Task {
+            Task { @MainActor in
+                // signInWithApple now succeeds whenever Apple has authed
+                // the user, falling back to local Apple auth if the
+                // Supabase exchange fails (with background retry). It
+                // only throws on truly catastrophic credential issues.
                 do {
                     try await authManager.signInWithApple(
                         idToken: identityToken,
                         nonce: nonce,
-                        fullName: fullName
+                        fullName: fullName,
+                        appleUserIdentifier: credential.user,
+                        email: credential.email
                     )
                     PSHaptics.shared.success()
                     onSignedIn()
                 } catch {
-                    if authManager.errorMessage != nil {
-                        PSHaptics.shared.error()
-                        showAppleError = true
+                    PSHaptics.shared.error()
+                    if authManager.errorMessage == nil {
+                        authManager.errorMessage = String(localized: "We couldn't complete sign in. Please try again, or use email sign in.")
                     }
+                    showAppleError = true
                 }
                 isSigningIn = false
                 pendingNonce = nil

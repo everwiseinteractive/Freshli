@@ -13,6 +13,10 @@ import os
 
 struct FLPantryPage: View {
     @Binding var showAddItem: Bool
+    /// When set, the empty-state "Scan a receipt / fridge" action opens
+    /// `FoodScannerView` directly. Otherwise the empty state falls back
+    /// to `showAddItem`.
+    var showFoodScanner: Binding<Bool>? = nil
 
     // MARK: - Data
 
@@ -478,16 +482,59 @@ struct FLPantryPage: View {
         Group {
             if filteredItems.isEmpty {
                 ScrollView {
-                    PSEmptyState(
-                        icon: searchText.isEmpty ? "refrigerator" : "magnifyingglass",
-                        title: searchText.isEmpty ? String(localized: "Your pantry is empty") : String(localized: "No matching ingredients"),
-                        message: searchText.isEmpty
-                            ? String(localized: "Start adding ingredients to keep track of what you have and get recipe suggestions.")
-                            : String(localized: "Try adjusting your search or category filter."),
-                        actionTitle: searchText.isEmpty ? String(localized: "Add Ingredient") : nil,
-                        action: searchText.isEmpty ? { showAddItem = true } : nil
-                    )
-                    .adaptiveCardPadding()
+                    if searchText.isEmpty {
+                        // First-run empty state. The user has zero items and
+                        // needs to be taught the THREE ways to add their first
+                        // one. A generic "Add Ingredient" button hides the
+                        // barcode/receipt/manual options behind one tap and
+                        // makes the app feel less capable than it is.
+                        PSEmptyStateRich(
+                            icon: "refrigerator",
+                            title: String(localized: "Your pantry is empty"),
+                            message: String(localized: "Add items the way that's easiest for you. Freshli will track expiry dates, send you reminders before food goes off, and suggest recipes for what you already have."),
+                            actions: [
+                                PSEmptyStateAction(
+                                    icon: "barcode.viewfinder",
+                                    title: String(localized: "Scan a barcode"),
+                                    subtitle: String(localized: "Point your camera at any product barcode — name, brand, and category fill in automatically."),
+                                    tint: PSColors.primaryGreen,
+                                    action: { showAddItem = true }
+                                ),
+                                PSEmptyStateAction(
+                                    icon: "doc.text.viewfinder",
+                                    title: String(localized: "Scan a receipt or fridge"),
+                                    subtitle: String(localized: "Use Smart Add to capture multiple items at once from a shopping receipt or your fridge contents."),
+                                    tint: PSColors.infoBlue,
+                                    action: {
+                                        if let scannerBinding = showFoodScanner {
+                                            scannerBinding.wrappedValue = true
+                                        } else {
+                                            showAddItem = true
+                                        }
+                                    }
+                                ),
+                                PSEmptyStateAction(
+                                    icon: "keyboard",
+                                    title: String(localized: "Type it in"),
+                                    subtitle: String(localized: "Search our food database or enter your own item with a custom expiry date."),
+                                    tint: PSColors.secondaryAmber,
+                                    action: { showAddItem = true }
+                                )
+                            ]
+                        )
+                        .adaptiveCardPadding()
+                    } else {
+                        // Search-empty state: no rich actions needed, the user
+                        // already has items and is just filtering.
+                        PSEmptyState(
+                            icon: "magnifyingglass",
+                            title: String(localized: "No matching ingredients"),
+                            message: String(localized: "Try a different search term, clear the search, or change the category filter at the top of the list."),
+                            actionTitle: String(localized: "Clear search"),
+                            action: { searchText = "" }
+                        )
+                        .adaptiveCardPadding()
+                    }
                 }
             } else {
                 ScrollView {

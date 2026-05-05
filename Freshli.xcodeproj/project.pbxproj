@@ -45,13 +45,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A60E4EC616AD43359AE9D5C7 /* Freshli.storekit */ = {isa = PBXFileReference; lastKnownFileType = com.apple.storekit.configuration; path = Freshli.storekit; sourceTree = "<group>"; };
 		CF1017B82F85D97D00B10799 /* Freshli.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Freshli.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CF101D612F86A4B300B10799 /* FreshliWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FreshliWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		CF101D632F86A4B300B10799 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		CF101D652F86A4B400B10799 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		CF101D842F86A8C100B10799 /* FreshliWidgetsExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FreshliWidgetsExtension.entitlements; sourceTree = "<group>"; };
 		CF3017F12F87A00000B10799 /* FreshliTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FreshliTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		A60E4EC616AD43359AE9D5C7 /* Freshli.storekit */ = {isa = PBXFileReference; lastKnownFileType = com.apple.storekit.configuration; path = Freshli.storekit; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -460,7 +460,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Freshli/Freshli.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 25;
 				DEVELOPMENT_TEAM = F853777W6P;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -468,9 +468,6 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Freshli/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Freshli uses the camera to scan barcodes and receipts for quick item entry.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Freshli uses your location to find nearby food sharing opportunities.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Freshli uses your photo library to scan receipts.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -509,7 +506,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Freshli/Freshli.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 25;
 				DEVELOPMENT_TEAM = F853777W6P;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -517,9 +514,6 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Freshli/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "Freshli uses the camera to scan barcodes and receipts for quick item entry.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Freshli uses your location to find nearby food sharing opportunities.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "Freshli uses your photo library to scan receipts.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -558,7 +552,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = FreshliWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 25;
 				DEVELOPMENT_TEAM = F853777W6P;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FreshliWidgets/Info.plist;
@@ -591,7 +585,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = FreshliWidgetsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 25;
 				DEVELOPMENT_TEAM = F853777W6P;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FreshliWidgets/Info.plist;
@@ -623,7 +617,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 25;
 				DEVELOPMENT_TEAM = F853777W6P;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
@@ -648,7 +642,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 25;
 				DEVELOPMENT_TEAM = F853777W6P;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.4;

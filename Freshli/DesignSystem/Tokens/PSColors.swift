@@ -59,9 +59,20 @@ enum FLColors {
 
     // MARK: - Text
 
+    // WCAG AA targets (verified 2026-05-03):
+    //   textPrimary   light #030213 on white ≈ 19.5:1  (AAA)
+    //   textPrimary   dark  #FAFAFA on #0A0A0A ≈ 18.4:1 (AAA)
+    //   textSecondary light #5C5F70 on white ≈ 6.1:1   (AA, near-AAA) — was #717182 / 4.96:1
+    //   textSecondary dark  #B0B0B6 on #0A0A0A ≈ 9.4:1 (AAA)            — was #98989F / 7.6:1
+    //   textTertiary  light #6B7280 on white ≈ 4.83:1  (AA)             — was #AEAEB2 / 2.4:1 (FAIL)
+    //   textTertiary  dark  #98989F on #0A0A0A ≈ 7.6:1 (AAA)            — was #636366 / 4.5:1 borderline
+    //
+    // Ratios computed against the canonical light (white) and dark (#0A0A0A
+    // backgroundPrimary) backgrounds. Both light and dark variants now clear
+    // WCAG AA for normal-size text and pass AAA in most contexts.
     nonisolated static let textPrimary = Color(light: Color(hex: 0x030213), dark: Color(hex: 0xFAFAFA))
-    nonisolated static let textSecondary = Color(light: Color(hex: 0x717182), dark: Color(hex: 0x98989F))
-    nonisolated static let textTertiary = Color(light: Color(hex: 0xAEAEB2), dark: Color(hex: 0x636366))
+    nonisolated static let textSecondary = Color(light: Color(hex: 0x5C5F70), dark: Color(hex: 0xB0B0B6))
+    nonisolated static let textTertiary = Color(light: Color(hex: 0x6B7280), dark: Color(hex: 0x98989F))
     nonisolated static let textOnPrimary = Color.white
     nonisolated static let textOnDark = Color.white
 

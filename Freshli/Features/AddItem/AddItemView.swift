@@ -30,6 +30,10 @@ struct AddItemView: View {
     @State private var showReceiptInfo = false
     @State private var saveError: String?
     @State private var saveMessage: String?
+    /// Optional free-form notes — populated by barcode lookups (e.g.
+    /// the product brand) and editable by the user. Empty string is
+    /// stored as `nil` on save so the SwiftData column stays clean.
+    @State private var notes: String = ""
 
     private let logger = Logger(subsystem: "com.freshli.app", category: "AddItemView")
 
@@ -364,7 +368,9 @@ struct AddItemView: View {
             unit: unit,
             expiryDate: expiryDate,
             barcode: barcode,
-            notes: nil
+            notes: notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                ? nil
+                : notes.trimmingCharacters(in: .whitespacesAndNewlines)
         )
         AnalyticsService.shared.track(.itemAdded, properties: .props([
             "category":        category.rawValue,
@@ -422,14 +428,46 @@ struct AddItemView: View {
         }
     }
 
+    /// Handle a scanned barcode by querying the Open Food Facts product
+    /// database via `BarcodeLookupService`. The user sees a fully-populated
+    /// form (name, brand, category, storage, sensible expiry estimate) on
+    /// success, or a clear, recoverable error message on lookup failure.
+    /// In every failure case the user can still keep the scanned barcode
+    /// and finish the entry manually — we never silently drop their work.
     private func handleScannedBarcode(_ code: String) {
         PSHaptics.shared.mediumTap()
         barcode = code
-        let scannerService = ScannerService()
-        if let product = scannerService.lookupBarcode(code) {
-            name = product.name
-            category = product.category
-            storageLocation = product.storageLocation
+
+        // Optimistic UI: show a "looking up…" hint right away so the user
+        // knows we accepted the scan and aren't frozen.
+        saveError = nil
+
+        Task { @MainActor in
+            do {
+                let scannerService = ScannerService()
+                let product = try await scannerService.lookupBarcode(code)
+                // Pre-fill the form. The user reviews and can adjust any
+                // field before tapping Save — we never auto-save.
+                name = product.name
+                category = product.category
+                storageLocation = product.storageLocation
+                quantity = product.quantity
+                unit = product.unit
+                expiryDate = product.expiryDate
+                if let brandNote = product.notes, !brandNote.isEmpty, notes.isEmpty {
+                    notes = brandNote
+                }
+                PSHaptics.shared.success()
+            } catch let lookupError as BarcodeLookupService.LookupError {
+                // Surface the lookup error in the form's existing error slot
+                // so the user can keep typing manually without losing the
+                // barcode they just scanned.
+                saveError = lookupError.errorDescription
+                PSHaptics.shared.warning()
+            } catch {
+                saveError = String(localized: "Couldn't look up that barcode. Please add the item manually.")
+                PSHaptics.shared.warning()
+            }
         }
     }
 }

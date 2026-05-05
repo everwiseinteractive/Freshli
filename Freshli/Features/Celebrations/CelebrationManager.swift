@@ -195,13 +195,26 @@ final class CelebrationManager {
         activeCelebration = type
         isPresenting = true
         FreshliHapticManager.shared.celebrationHaptic(intensity: type.intensity)
+
+        // Route the celebration through PopupCenter so it renders ABOVE
+        // any sheet, fullScreenCover, or system alert that's currently
+        // presented. The previous ZStack-overlay-on-root architecture
+        // could not reach above sheet windows, so a celebration fired
+        // while AddItemView was open was visually hidden behind it.
+        let popup = type.asPopup(onAcknowledge: { [weak self] in
+            // PopupCenter has finished animating out; clear the local
+            // mirror state and pop the queue.
+            self?.handlePopupAcknowledged()
+        })
+        PopupCenter.shared.present(popup)
     }
 
-    func dismissCelebration() {
-        withAnimation(PSMotion.freshliCurve) {
-            activeCelebration = nil
-            isPresenting = false
-        }
+    /// Called by PopupCenter when the user taps the acknowledge button.
+    /// Mirrors the previous `dismissCelebration` semantics for any code
+    /// that read `activeCelebration` directly (e.g. analytics).
+    private func handlePopupAcknowledged() {
+        activeCelebration = nil
+        isPresenting = false
 
         // Present next queued celebration after brief pause
         if !celebrationQueue.isEmpty {
@@ -211,5 +224,13 @@ final class CelebrationManager {
                 self.presentCelebration(next)
             }
         }
+    }
+
+    /// Public hook kept for backward-compatibility with any caller that
+    /// wants to dismiss programmatically (e.g. a deep-link arriving while
+    /// a celebration is up). Delegates to PopupCenter so the visual
+    /// state stays in sync.
+    func dismissCelebration() {
+        PopupCenter.shared.dismiss()
     }
 }

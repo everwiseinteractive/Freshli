@@ -1,0 +1,98 @@
+/* Freshli Social Media Design System */
+
+:root {
+  --green-50: #F0FDF4;
+  --green-100: #DCFCE7;
+  --green-300: #86EFAC;
+  --green-400: #4ADE80;
+  --green-500: #22C55E;
+  --green-600: #16A34A;
+  --green-700: #15803D;
+  --green-800: #14532D;
+  --green-900: #052E1A;
+  --emerald-400: #34D399;
+  --emerald-500: #10B981;
+  --emerald-600: #059669;
+  --emerald-700: #047857;
+  --amber-400: #FBBF24;
+  --amber-500: #F59E0B;
+  --amber-600: #D97706;
+  --teal-400: #2DD4BF;
+  --teal-500: #14B8A6;
+  --teal-600: #0D9488;
+  --rose-500: #F43F5E;
+  --rose-600: #E11D48;
+  --purple-400: #C4B5FD;
+  --purple-500: #A78BFA;
+  --white: #FFFFFF;
+  --black: #0A0A0A;
+  --ink: #030213;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: var(--black);
+  color: var(--white);
+  overflow: hidden;
+}
+
+.mesh-green {
+  background:
+    radial-gradient(circle at 20% 30%, var(--emerald-500) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, var(--green-400) 0%, transparent 45%),
+    radial-gradient(circle at 60% 80%, var(--teal-500) 0%, transparent 55%),
+    radial-gradient(circle at 30% 90%, var(--green-700) 0%, transparent 50%),
+    linear-gradient(135deg, var(--green-900) 0%, var(--green-700) 100%);
+}
+
+.mesh-light {
+  background:
+    radial-gradient(circle at 25% 25%, var(--green-300) 0%, transparent 50%),
+    radial-gradient(circle at 75% 30%, var(--emerald-400) 0%, transparent 45%),
+    radial-gradient(circle at 50% 85%, var(--green-100) 0%, transparent 55%),
+    linear-gradient(135deg, var(--green-50) 0%, var(--green-100) 100%);
+}
+
+.mesh-amber {
+  background:
+    radial-gradient(circle at 30% 25%, var(--amber-400) 0%, transparent 50%),
+    radial-gradient(circle at 80% 40%, var(--green-400) 0%, transparent 50%),
+    radial-gradient(circle at 50% 90%, var(--emerald-600) 0%, transparent 55%),
+    linear-gradient(135deg, #2A1A05 0%, var(--green-700) 100%);
+}
+
+.mesh-ai {
+  background:
+    radial-gradient(circle at 25% 25%, var(--purple-500) 0%, transparent 45%),
+    radial-gradient(circle at 75% 30%, var(--teal-400) 0%, transparent 50%),
+    radial-gradient(circle at 50% 85%, var(--green-500) 0%, transparent 55%),
+    radial-gradient(circle at 15% 75%, var(--teal-500) 0%, transparent 45%),
+    linear-gradient(135deg, #0A0E1F 0%, var(--green-700) 100%);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+.sparkle {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(255,255,255,0.9);
+}
+
+.noise {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0.06; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Freshli leaf icon — used across all assets */
+.freshli-leaf {
+  display: inline-block;
+}

@@ -94,14 +94,50 @@ final class CommunityMarketplaceViewModel {
 
     // MARK: - Data Loading
 
-    /// Load all active listings
+    /// Load listings, preferring nearby results based on the user's current
+    /// location. Falls back to the global active feed in three honest cases:
+    ///
+    ///   1. The user denied Location permission — Community works fine
+    ///      without a location, just without the "nearby" sort.
+    ///   2. We can't get a location fix in a reasonable time (e.g. indoors,
+    ///      no GPS) — show all listings rather than block the screen.
+    ///   3. The nearby query returns zero results — show the global feed
+    ///      so the user can still discover listings outside their radius.
+    ///
+    /// Replaces the prior unconditional `fetchActiveListings` path so users
+    /// who DID grant Location permission actually get the nearby experience
+    /// they were promised in the onboarding rationale.
     func loadListings() async {
         isLoading = true
         errorMessage = nil
 
+        // Try to get a fresh user location. We bound the wait so a slow GPS
+        // fix doesn't block the screen — anything ≤ 1.5s feels instant.
+        let userLocation = await tryLocateUser()
+
         do {
+            if let coord = userLocation {
+                userLatitude = coord.latitude
+                userLongitude = coord.longitude
+                let nearby = try await listingService.fetchNearbyListings(
+                    latitude: coord.latitude,
+                    longitude: coord.longitude,
+                    radiusKm: 15.0
+                )
+                if !nearby.isEmpty {
+                    listings = nearby
+                    debugLog("Loaded \(nearby.count) nearby listings within 15 km")
+                    isLoading = false
+                    return
+                }
+                // Empty nearby radius — fall through to the global feed
+                // so the user sees something instead of an empty-state.
+                debugLog("Nearby query returned 0 results, falling back to global feed")
+            }
+
+            // No location, or empty nearby radius — show the global feed.
             listings = try await listingService.fetchActiveListings()
-            debugLog("Loaded \(self.listings.count) active listings")
+            debugLog("Loaded \(self.listings.count) active listings (global feed)")
         } catch {
             errorMessage = "Failed to load listings: \(error.localizedDescription)"
             logger.error("Error loading listings: \(error)")
@@ -110,7 +146,9 @@ final class CommunityMarketplaceViewModel {
         isLoading = false
     }
 
-    /// Load nearby listings based on user location
+    /// Explicit entry point for callers that already have a known coordinate
+    /// (e.g. tapping a map pin to refresh that area). Most callers should
+    /// use `loadListings()` instead, which auto-resolves the user location.
     func loadNearbyListings(latitude: Double, longitude: Double) async {
         userLatitude = latitude
         userLongitude = longitude
@@ -131,6 +169,31 @@ final class CommunityMarketplaceViewModel {
         }
 
         isLoading = false
+    }
+
+    /// Returns the freshest available user coordinate, or `nil` if the user
+    /// hasn't granted Location permission, the device can't get a fix, or
+    /// the request times out. Never throws — Community must work without
+    /// Location too.
+    @MainActor
+    private func tryLocateUser() async -> CLLocationCoordinate2D? {
+        // Fast path: a recent in-memory fix from LocationService.
+        if let coord = LocationService.shared.bestAvailableCoordinate() {
+            return coord
+        }
+        // Bounded async fix request (1.5s).
+        do {
+            let task = Task { try await LocationService.shared.requestLocation() }
+            let timeout = Task {
+                try await Task.sleep(for: .milliseconds(1500))
+                task.cancel()
+            }
+            let location = try await task.value
+            timeout.cancel()
+            return location.coordinate
+        } catch {
+            return nil
+        }
     }
 
     // MARK: - Claim Flow

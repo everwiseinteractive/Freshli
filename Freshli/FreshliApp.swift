@@ -113,7 +113,14 @@ struct FreshliApp: App {
                 }
             }
             .background(Color.black.ignoresSafeArea())
-            .celebrationOverlay(manager: celebrationManager)
+            // ── Celebration popups ──
+            // Celebrations now route through `PopupCenter` (see
+            // `DesignSystem/Components/PopupCenter.swift`). PopupCenter
+            // owns its own UIWindow at `.alert + 1` level so popups always
+            // render ABOVE sheets, fullScreenCovers, the keyboard, and
+            // system alerts — solving the prior bug where a celebration
+            // fired while AddItemView was presented was hidden behind it.
+            // No `.celebrationOverlay(...)` modifier is needed here.
             .toastOverlay(manager: toastManager)
             .environment(celebrationManager)
             .environment(authManager)
@@ -210,6 +217,12 @@ struct FreshliApp: App {
                     diagnosticsService.start()
                     networkMonitor.start()
                     ambientLight.startMonitoring()
+
+                    // MetricKit: subscribe for daily metric + diagnostic payloads
+                    // so we can validate 120Hz / TTI / hang-time claims with
+                    // real-user telemetry across the user base, not just internal
+                    // test devices. See `MetricKitService.swift` for what we capture.
+                    MetricKitService.shared.start()
                 }
 
                 // Gaze tracking (ARKit face tracking) — started in the
@@ -298,6 +311,15 @@ struct FreshliApp: App {
             }
         }
         .modelContainer(Self.modelContainer)
+
+        // ── visionOS Immersive Space ─────────────────────────────────
+        // On Vision Pro the iOS scene runs in a window above the user's
+        // hands; tapping "Open Immersive Pantry" in the iOS Profile tab
+        // opens the spatial scene below. The scene is conditionally
+        // compiled so iPhone / iPad builds skip it cleanly.
+        #if os(visionOS)
+        FreshliImmersivePantryScene()
+        #endif
     }
 
     // MARK: - Main App Content

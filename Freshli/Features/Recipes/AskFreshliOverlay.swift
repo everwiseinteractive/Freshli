@@ -176,45 +176,56 @@ struct AskFreshliOverlay: View {
             )
             .ignoresSafeArea()
 
-            // Accent glow blobs
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [PSColors.primaryGreen.opacity(0.15), .clear],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: 200
+            // Accent glow blobs.
+            // The blobs are intentionally larger than the visible area so
+            // they bleed light off-screen, but the entire glow group is
+            // wrapped in `.clipped()` against the parent so the heavy
+            // blur radii (60 / 50 / 40 pt) can never paint outside the
+            // overlay's safe drawing surface — preventing visual smearing
+            // beyond the screen edges, especially on iPhone SE 3rd gen
+            // where the offsets put blob centres near the edges.
+            ZStack {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [PSColors.primaryGreen.opacity(0.15), .clear],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 200
+                        )
                     )
-                )
-                .frame(width: 400, height: 400)
-                .offset(x: -80, y: -200)
-                .blur(radius: 60)
+                    .frame(width: 400, height: 400)
+                    .offset(x: -80, y: -200)
+                    .blur(radius: 60)
 
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [PSColors.accentTeal.opacity(0.12), .clear],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: 180
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [PSColors.accentTeal.opacity(0.12), .clear],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 180
+                        )
                     )
-                )
-                .frame(width: 360, height: 360)
-                .offset(x: 100, y: 180)
-                .blur(radius: 50)
+                    .frame(width: 360, height: 360)
+                    .offset(x: 100, y: 180)
+                    .blur(radius: 50)
 
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [Color.purple.opacity(0.08), .clear],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: 160
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [Color.purple.opacity(0.08), .clear],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 160
+                        )
                     )
-                )
-                .frame(width: 320, height: 320)
-                .offset(x: -60, y: 100)
-                .blur(radius: 40)
+                    .frame(width: 320, height: 320)
+                    .offset(x: -60, y: 100)
+                    .blur(radius: 40)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .clipped()
         }
     }
 
@@ -581,11 +592,15 @@ struct AskFreshliOverlay: View {
 
         // Stagger card reveals
         for i in 0..<aiService.missions.count {
+            // Discard `Set.insert(_:)`'s `(inserted: Bool, ...)` tuple
+            // — it bubbles up as the closure's return value, which makes
+            // `withAnimation` return non-Void, which Swift then flags
+            // as "Result of call to 'withAnimation' is unused".
             withAnimation(
                 .spring(duration: 0.6, bounce: 0.25)
                 .delay(Double(i) * 0.15 + 0.2)
             ) {
-                visibleCardIndices.insert(i)
+                _ = visibleCardIndices.insert(i)
             }
         }
 

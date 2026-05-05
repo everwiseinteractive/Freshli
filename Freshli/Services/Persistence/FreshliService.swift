@@ -158,9 +158,23 @@ final class FreshliService {
     }
 
     // MARK: - Seed Data
-
+    //
+    // CRITICAL: this method MUST NEVER run in App Store builds. The body is
+    // wrapped in `#if DEBUG` so the entire seed path is stripped from release
+    // builds at compile time. The earlier production regression (every fresh
+    // user / guest opening the app saw 10 dummy pantry items they hadn't
+    // added) was caused by this method being called unconditionally from
+    // AppTabView. The fix is layered:
+    //
+    //   1. AppTabView only calls this in DEBUG, AND only when the user has
+    //      flipped a Settings → Developer toggle.
+    //   2. The implementation itself is gated by `#if DEBUG` so even an
+    //      accidental call site in release code becomes a no-op at runtime.
+    //
     /// Load sample data if the pantry is empty.
+    /// **DEBUG-ONLY.** A no-op in release builds.
     func seedSampleDataIfNeeded() {
+        #if DEBUG
         guard itemCount() == 0 else {
             logger.debug("Pantry already has items, skipping seed")
             return
@@ -172,9 +186,14 @@ final class FreshliService {
             }
             try modelContext.save()
             SpotlightService.indexItems(items)
-            logger.info("Loaded sample data")
+            logger.info("Loaded sample data (DEBUG only)")
         } catch {
             logger.error("Failed to load sample data: \(error.localizedDescription)")
         }
+        #else
+        // Release builds: hard no-op. Do not load sample data under any
+        // circumstance. A real user's pantry is theirs alone.
+        _ = ()
+        #endif
     }
 }

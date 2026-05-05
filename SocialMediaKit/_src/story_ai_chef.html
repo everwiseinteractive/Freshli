@@ -1,0 +1,56 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="social.css">
+<style>
+  body { width: 1080px; height: 1920px; }
+  .stage { width: 1080px; height: 1920px; position: relative; overflow: hidden; padding: 240px 90px 200px; }
+  .badge { display: inline-flex; align-items: center; gap: 14px; padding: 18px 32px; background: rgba(255,255,255,0.18); backdrop-filter: blur(30px); border: 1.5px solid rgba(167,139,250,0.6); border-radius: 999px; font-size: 26px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: white; margin-bottom: 60px; }
+  .ai-spark { width: 26px; height: 26px; background: linear-gradient(135deg, #FBBF24, #2DD4BF, #A78BFA); border-radius: 50%; box-shadow: 0 0 16px rgba(167,139,250,0.7); }
+  .headline { font-size: 144px; font-weight: 900; letter-spacing: -0.04em; line-height: 0.92; color: white; text-shadow: 0 8px 40px rgba(0,0,0,0.3); margin-bottom: 40px; }
+  .headline .accent { background: linear-gradient(135deg, #FBBF24, #2DD4BF, #A78BFA); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .sub { font-size: 32px; font-weight: 600; line-height: 1.32; color: rgba(255,255,255,0.92); margin-bottom: 80px; }
+
+  .demo-card { background: rgba(255,255,255,0.10); backdrop-filter: blur(30px); border: 1.5px solid rgba(167,139,250,0.45); border-radius: 32px; padding: 36px; margin-bottom: 24px; color: white; }
+  .demo-card .label { display: inline-flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #C4B5FD; margin-bottom: 18px; }
+  .demo-card .label .pulse { width: 12px; height: 12px; background: #C4B5FD; border-radius: 50%; box-shadow: 0 0 12px #C4B5FD; }
+  .demo-card .q { font-size: 26px; font-weight: 600; line-height: 1.32; color: white; margin-bottom: 18px; }
+  .demo-card .gen { font-size: 16px; font-weight: 800; letter-spacing: 0.14em; color: var(--amber-400); text-transform: uppercase; }
+
+  .swipe-up { position: absolute; left: 50%; bottom: 130px; transform: translateX(-50%); }
+  .swipe-up .text { font-size: 26px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: white; padding: 16px 38px; background: rgba(255,255,255,0.18); backdrop-filter: blur(30px); border: 1.5px solid rgba(255,255,255,0.4); border-radius: 999px; }
+  .freshli-mark { position: absolute; top: 90px; right: 90px; width: 110px; height: 110px; background: rgba(255,255,255,0.95); border-radius: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 40px rgba(0,0,0,0.35); }
+  .handle { position: absolute; top: 90px; left: 90px; padding: 14px 26px; background: rgba(0,0,0,0.45); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.3); border-radius: 999px; font-size: 22px; font-weight: 700; color: white; letter-spacing: 0.04em; }
+</style></head><body>
+<div class="stage mesh-ai">
+  <div class="sparkle" style="top: 360px; left: 240px; width: 9px; height: 9px; box-shadow: 0 0 14px #C4B5FD;"></div>
+  <div class="sparkle" style="top: 580px; right: 220px; width: 6px; height: 6px;"></div>
+  <div class="sparkle" style="bottom: 700px; left: 220px; width: 7px; height: 7px; box-shadow: 0 0 14px #FBBF24;"></div>
+  <div class="sparkle" style="bottom: 480px; right: 200px; width: 6px; height: 6px;"></div>
+
+  <div style="position:absolute; top:-100px; left:-100px; width:480px; height:480px; border-radius:50%; background:radial-gradient(circle, rgba(167,139,250,0.5), transparent 70%); filter:blur(2px);"></div>
+  <div style="position:absolute; bottom:-150px; right:-150px; width:560px; height:560px; border-radius:50%; background:radial-gradient(circle, rgba(45,212,191,0.4), transparent 70%); filter:blur(2px);"></div>
+
+  <div class="handle">@freshli</div>
+  <div class="freshli-mark">
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+      <path d="M32 8C32 8 18 14 18 32C18 44 26 56 32 56C38 56 46 44 46 32C46 14 32 8 32 8Z" fill="#22C55E"/>
+      <path d="M32 14C32 14 24 30 32 50" stroke="#15803D" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div class="badge"><span class="ai-spark"></span>Apple Intelligence</div>
+  <div class="headline">Tell it<br>what you have.<br><span class="accent">Get dinner.</span></div>
+  <div class="sub">In 0.84 seconds. On-device.<br>Zero cloud. Zero waste.</div>
+
+  <div class="demo-card">
+    <div class="label"><span class="pulse"></span>RESCUE CHEF</div>
+    <div class="q">"Use my expiring spinach, the half-tomato, last bit of cheddar, and 2 eggs."</div>
+    <div class="gen">⚡ 3 recipes generated</div>
+  </div>
+
+  <div class="swipe-up">
+    <div class="text">Try it free ↗</div>
+  </div>
+
+  <div class="noise"></div>
+</div>
+</body></html>

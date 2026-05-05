@@ -112,12 +112,21 @@ final class LayoutEngine {
         (value * widthScale).rounded()
     }
 
-    /// Scales font size with a gentler curve — fonts shrink on compact but
-    /// barely grow on expanded to prevent text overflow.
+    /// Scales font size with a gentler curve AND honors the user's preferred
+    /// content size category (Dynamic Type).
+    ///
+    /// Width scaling shrinks on compact iPhones; UIFontMetrics scaling lets
+    /// AX1–AX5 take effect. A ~1.6× ceiling on the width-adjusted size keeps
+    /// hand-tuned compositions intact at AX4/AX5 unless a parent view opts
+    /// out of the cap with `.dynamicTypeSize(...)`.
     func scaledFont(_ size: CGFloat) -> CGFloat {
         let curve = 1.0 + (widthScale - 1.0) * 0.5
-        let clamped = min(curve, 1.02)  // near-zero upscale
-        return max((size * clamped).rounded(.down), 1)
+        let clamped = min(curve, 1.02)
+        let widthAdjusted = max((size * clamped).rounded(.down), 1)
+
+        let scaled = UIFontMetrics.default.scaledValue(for: widthAdjusted)
+        let layoutCeiling = widthAdjusted * 1.6
+        return min(scaled, layoutCeiling)
     }
 
     // MARK: - Dynamic Padding Helpers

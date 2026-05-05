@@ -12,5 +12,125 @@
 	<string>Freshli uses your location to show nearby community food listings and set pickup locations.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<!--
+	  Alternate app icons.
+
+	  This block is intentionally COMMENTED OUT until the seasonal icon
+	  PNGs are dropped into the corresponding `.appiconset` folders in
+	  Assets.xcassets. The asset-catalog compiler validates that every
+	  `CFBundleAlternateIcons` entry resolves to real PNG files at submit
+	  time; declaring entries that point to empty `.appiconset` stubs
+	  would cause the App Store validation step to fail.
+
+	  Uncomment this block AFTER dropping in the PNGs (see the README in
+	  each `.appiconset` folder). The `AlternateIconService` API surface
+	  and `SeasonalIconRenderer` source-of-truth views are already wired
+	  up, so once these entries are live the icon-switch flow is
+	  end-to-end functional.
+	-->
+	<!--
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>AppIcon</string>
+			</array>
+			<key>UIPrerenderedIcon</key>
+			<false/>
+		</dict>
+		<key>CFBundleAlternateIcons</key>
+		<dict>
+			<key>plastic-free-july</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIcon-PlasticFreeJuly</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>holiday-pantry-hero</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIcon-HolidayPantryHero</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>world-food-day</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIcon-WorldFoodDay</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>freshli-pride</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIcon-FreshliPride</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+		</dict>
+	</dict>
+	<key>CFBundleIcons~ipad</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconFiles</key>
+			<array>
+				<string>AppIcon</string>
+			</array>
+			<key>UIPrerenderedIcon</key>
+			<false/>
+		</dict>
+		<key>CFBundleAlternateIcons</key>
+		<dict>
+			<key>plastic-free-july</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIcon-PlasticFreeJuly</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>holiday-pantry-hero</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIcon-HolidayPantryHero</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>world-food-day</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIcon-WorldFoodDay</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>freshli-pride</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>AppIcon-FreshliPride</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+		</dict>
+	</dict>
+	-->
 </dict>
 </plist>

@@ -39,3 +39,10 @@ DESIGNED FOR EVERYONE
 Built with Swift 6.2, SwiftUI, and SwiftData. Powered by Apple Intelligence. Designed for the planet.
 
 For the people. For the planet.
+
+—
+
+Privacy Policy: https://freshli.app/privacy-policy.html
+Terms of Use (EULA): https://freshli.app/terms-of-use.html
+
+Freshli+ subscriptions auto-renew unless cancelled at least 24 hours before the end of the current period. Manage and cancel anytime in Settings → Apple ID → Subscriptions. Free trials convert to paid subscriptions automatically when the trial ends, unless cancelled beforehand. Any unused portion of a free trial is forfeited when a subscription is purchased.

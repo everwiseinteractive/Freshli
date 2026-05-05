@@ -226,12 +226,16 @@ private struct IntroScreen: View {
                 // Title with animation
                 VStack(spacing: PSSpacing.md) {
                     Text("Your Week")
-                        .font(.system(size: 48, weight: .bold, design: .default))
+                        .font(.system(size: PSLayout.scaledFont(48), weight: .bold, design: .default))
                         .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
 
                     Text("in Review")
-                        .font(.system(size: 48, weight: .bold, design: .default))
+                        .font(.system(size: PSLayout.scaledFont(48), weight: .bold, design: .default))
                         .foregroundColor(PSColors.primaryGreen)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                 }
                 .opacity(showTitle ? 1 : 0)
                 .scaleEffect(showTitle ? 1 : 0.8)
@@ -289,9 +293,11 @@ private struct ItemsSavedScreen: View {
                 VStack(spacing: PSSpacing.xl) {
                     // Large counter
                     Text("\(displayedCount)")
-                        .font(.system(size: 96, weight: .bold, design: .rounded))
+                        .font(.system(size: PSLayout.scaledFont(96), weight: .bold, design: .rounded))
                         .monospacedDigit()
                         .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                         .contentTransition(.numericText())
                         .compositingGroup()
 
@@ -405,9 +411,11 @@ private struct MoneySavedScreen: View {
 
                 VStack(spacing: PSSpacing.xl) {
                     Text("$\(Int(displayedAmount))")
-                        .font(.system(size: 96, weight: .bold, design: .rounded))
+                        .font(.system(size: PSLayout.scaledFont(96), weight: .bold, design: .rounded))
                         .monospacedDigit()
                         .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                         .contentTransition(.numericText())
                         .compositingGroup()
 
@@ -469,9 +477,11 @@ private struct EnvironmentalImpactScreen: View {
 
                 VStack(spacing: PSSpacing.xl) {
                     Text("\(String(format: "%.1f", displayedCO2))kg")
-                        .font(.system(size: 80, weight: .bold, design: .rounded))
+                        .font(.system(size: PSLayout.scaledFont(80), weight: .bold, design: .rounded))
                         .monospacedDigit()
                         .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                         .contentTransition(.numericText())
                         .compositingGroup()
 
@@ -667,9 +677,11 @@ private struct StreakScreen: View {
 
                             VStack(alignment: .leading, spacing: PSSpacing.xs) {
                                 Text("\(wrapData.currentStreak)")
-                                    .font(.system(size: 64, weight: .bold, design: .rounded))
+                                    .font(.system(size: PSLayout.scaledFont(64), weight: .bold, design: .rounded))
                                     .monospacedDigit()
                                     .foregroundColor(.white)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.6)
                                     .contentTransition(.numericText())
                                     .compositingGroup()
 

@@ -1,0 +1,54 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><link rel="stylesheet" href="social.css">
+<style>
+  body { width: 1080px; height: 1920px; }
+  .stage { width: 1080px; height: 1920px; position: relative; overflow: hidden; padding: 200px 90px 200px; }
+  .badge { display: inline-block; padding: 18px 36px; background: rgba(255,255,255,0.18); backdrop-filter: blur(30px); border: 1.5px solid rgba(255,255,255,0.4); border-radius: 999px; font-size: 28px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--amber-400); margin-bottom: 80px; }
+  .headline { font-size: 156px; font-weight: 900; letter-spacing: -0.04em; line-height: 0.9; color: white; text-shadow: 0 8px 40px rgba(0,0,0,0.3); margin-bottom: 36px; }
+  .headline .accent { color: var(--amber-400); }
+  .sub { font-size: 36px; font-weight: 600; line-height: 1.32; color: rgba(255,255,255,0.92); margin-bottom: 80px; }
+
+  .leaf { position: absolute; left: 50%; bottom: 580px; transform: translateX(-50%); }
+
+  .swipe-up { position: absolute; left: 50%; bottom: 130px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .swipe-up .arrow { font-size: 60px; color: white; animation: bounce 1.6s ease-in-out infinite; }
+  .swipe-up .text { font-size: 26px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: white; padding: 16px 38px; background: rgba(255,255,255,0.18); backdrop-filter: blur(30px); border: 1.5px solid rgba(255,255,255,0.4); border-radius: 999px; }
+  .freshli-mark { position: absolute; top: 90px; right: 90px; width: 110px; height: 110px; background: rgba(255,255,255,0.95); border-radius: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 12px 40px rgba(0,0,0,0.35); }
+  .handle { position: absolute; top: 90px; left: 90px; padding: 14px 26px; background: rgba(0,0,0,0.45); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.3); border-radius: 999px; font-size: 22px; font-weight: 700; color: white; letter-spacing: 0.04em; }
+</style></head><body>
+<div class="stage mesh-green">
+  <div class="sparkle" style="top: 380px; left: 240px; width: 8px; height: 8px;"></div>
+  <div class="sparkle" style="top: 600px; right: 200px; width: 6px; height: 6px;"></div>
+  <div class="sparkle" style="bottom: 700px; left: 180px; width: 7px; height: 7px;"></div>
+  <div class="sparkle" style="bottom: 520px; right: 240px; width: 5px; height: 5px;"></div>
+  <div class="sparkle" style="bottom: 360px; left: 260px; width: 6px; height: 6px;"></div>
+
+  <div style="position:absolute; top:-100px; left:-100px; width:480px; height:480px; border-radius:50%; background:radial-gradient(circle, rgba(74,222,128,0.45), transparent 70%); filter:blur(2px);"></div>
+  <div style="position:absolute; bottom:-150px; right:-150px; width:560px; height:560px; border-radius:50%; background:radial-gradient(circle, rgba(45,212,191,0.4), transparent 70%); filter:blur(2px);"></div>
+
+  <div class="handle">@freshli</div>
+  <div class="freshli-mark">
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+      <path d="M32 8C32 8 18 14 18 32C18 44 26 56 32 56C38 56 46 44 46 32C46 14 32 8 32 8Z" fill="#22C55E"/>
+      <path d="M32 14C32 14 24 30 32 50" stroke="#15803D" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div class="badge">FRESHLI 1.0 · OUT NOW</div>
+  <div class="headline">Rescue<br>food.<br>Save the<br><span class="accent">planet.</span></div>
+  <div class="sub">Apple Intelligence in your kitchen.<br>On-device. Always private.</div>
+
+  <svg class="leaf" width="280" height="280" viewBox="0 0 280 280" fill="none">
+    <path d="M140 30 C 140 30, 35 70, 35 165 C 35 220, 80 250, 140 250 C 200 250, 245 220, 245 165 C 245 70, 140 30, 140 30 Z" fill="rgba(255,255,255,0.9)"/>
+    <path d="M140 55 C 140 55, 60 85, 60 165 C 60 210, 95 235, 140 235 C 185 235, 220 210, 220 165 C 220 85, 140 55, 140 55 Z" fill="url(#lg)"/>
+    <path d="M140 75 C 134 110, 124 150, 130 195 C 134 220, 140 235, 140 245" stroke="#15803D" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <defs><linearGradient id="lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4ADE80"/><stop offset="1" stop-color="#16A34A"/></linearGradient></defs>
+  </svg>
+
+  <div class="swipe-up">
+    <div class="text">Tap link in bio ↗</div>
+  </div>
+
+  <div class="noise"></div>
+</div>
+</body></html>

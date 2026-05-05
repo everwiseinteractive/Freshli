@@ -9,7 +9,7 @@ struct ImpactStatsTests {
 
     // MARK: - Money Saved
 
-    @Test("Money saved is $3.50 per item saved")
+    @Test("Money saved is 3.50 per item saved (currency-agnostic)")
     func moneySavedBasic() {
         let stats = ImpactService.ImpactStats(itemsSaved: 10, itemsShared: 0, itemsDonated: 0, mealsCreated: 0)
         #expect(stats.moneySaved == 35.0)
@@ -27,14 +27,20 @@ struct ImpactStatsTests {
         #expect(stats.moneySaved >= 0)
     }
 
-    @Test("Money saved display formats without decimals", arguments: [
-        (1, "$4"),
-        (10, "$35"),
-        (0, "$0"),
+    /// Display format is locale-driven (Locale.current), so we assert the
+    /// magnitude (the digits) rather than the currency symbol — the symbol
+    /// changes per storefront. Whole-number precision is asserted by checking
+    /// the digits exactly equal the expected value.
+    @Test("Money saved display rounds to whole units", arguments: [
+        (1, "4"),
+        (10, "35"),
+        (0, "0"),
     ])
-    func moneySavedDisplay(itemsSaved: Int, expected: String) {
+    func moneySavedDisplay(itemsSaved: Int, expectedDigits: String) {
         let stats = ImpactService.ImpactStats(itemsSaved: itemsSaved, itemsShared: 0, itemsDonated: 0, mealsCreated: 0)
-        #expect(stats.moneySavedDisplay == expected)
+        let display = stats.moneySavedDisplay
+        let digits = display.filter(\.isNumber)
+        #expect(digits == expectedDigits)
     }
 
     // MARK: - CO2 Avoided
@@ -60,14 +66,23 @@ struct ImpactStatsTests {
         #expect(stats.co2Avoided == 0.0)
     }
 
-    @Test("CO2 display formats to one decimal", arguments: [
-        (4, "10.0kg"),
-        (1, "2.5kg"),
-        (0, "0.0kg"),
+    /// CO2 display is locale-driven through MeasurementFormatter.
+    /// We assert the numeric magnitude rather than the unit suffix — the unit
+    /// is "kg" in en-GB / en-US / es / fr / de / pt-BR / ja in abbreviated form,
+    /// but spelled differently in some locales' long forms.
+    @Test("CO2 display rounds to one decimal", arguments: [
+        (4, "10.0"),
+        (1, "2.5"),
+        (0, "0.0"),
     ])
-    func co2Display(itemsSaved: Int, expected: String) {
+    func co2Display(itemsSaved: Int, expectedNumeric: String) {
         let stats = ImpactService.ImpactStats(itemsSaved: itemsSaved, itemsShared: 0, itemsDonated: 0, mealsCreated: 0)
-        #expect(stats.co2Display == expected)
+        let display = stats.co2Display
+        // Strip the unit and any non-decimal whitespace, normalising decimal separator.
+        let normalized = display
+            .replacingOccurrences(of: ",", with: ".")
+            .filter { $0.isNumber || $0 == "." }
+        #expect(normalized == expectedNumeric)
     }
 
     // MARK: - Total Meals Helped

@@ -93,6 +93,34 @@ final class NeutralSpotService {
 
     // MARK: - Search Nearby Spots
 
+    /// Search for neutral meeting spots (community fridges, cafés, libraries,
+    /// parks) near the **user's current location**. Resolves the location
+    /// from `LocationService.shared` and falls back to an empty result with
+    /// a clear `error` string when permission is denied or no fix is
+    /// available — the calling view should render the appropriate empty
+    /// state in that case.
+    ///
+    /// Use this overload from any view that wants "near me" results without
+    /// hand-rolling another CLLocationManager. Pass an explicit coordinate
+    /// to the other overload only when you already have one in hand
+    /// (e.g. tapping a map pin to refresh that region).
+    @discardableResult
+    func searchNearbyUserSpots(radius: CLLocationDistance = 2000) async -> [NeutralSpot] {
+        do {
+            let location = try await LocationService.shared.requestLocation()
+            return await searchNearbySpots(near: location.coordinate, radius: radius)
+        } catch let locationError as LocationError {
+            error = locationError.errorDescription
+            spots = []
+            logger.warning("Cannot search neutral spots — location unavailable")
+            return []
+        } catch {
+            self.error = error.localizedDescription
+            spots = []
+            return []
+        }
+    }
+
     /// Search for neutral meeting spots near a given location
     func searchNearbySpots(
         near coordinate: CLLocationCoordinate2D,

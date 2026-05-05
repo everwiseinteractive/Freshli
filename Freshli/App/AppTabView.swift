@@ -87,8 +87,13 @@ struct AppTabView: View {
                 }
             case .pantry:
                 chromedTab {
-                    NavigationStack { FLPantryPage(showAddItem: $showAddItem) }
-                        .measureTTI(for: .pantry)
+                    NavigationStack {
+                        FLPantryPage(
+                            showAddItem: $showAddItem,
+                            showFoodScanner: $showFoodScanner
+                        )
+                    }
+                    .measureTTI(for: .pantry)
                 }
             case .recipes:
                 chromedTab {
@@ -132,7 +137,30 @@ struct AppTabView: View {
             // Mark cold launch complete (first tab is now interactive)
             ColdLaunchTracker.shared.markInteractive()
 
-            seedDataIfNeeded()
+            // ── Sample-data seeding ──
+            // The pantry MUST start empty for every real user, including guests.
+            //
+            // Two narrowly-gated paths can populate it:
+            //
+            //   1. DEBUG builds with the developer toggle flipped — used by
+            //      the Freshli team during development.
+            //   2. The App Review reviewer account (`reviewer@freshli.app`)
+            //      gets a curated demonstration set on sign-in so reviewers
+            //      can verify expiry alerts, Rescue Chef, and the swipe UX
+            //      without first scanning items by hand. This runs from
+            //      `ReviewerDemoSeedService` and is idempotent — sign-out +
+            //      sign-in is safe.
+            //
+            // Real users (including guests) never reach either path.
+            #if DEBUG
+            if UserDefaults.standard.bool(forKey: "freshli.dev.loadSampleData") {
+                seedDataIfNeeded()
+            }
+            #endif
+
+            // Reviewer demo seed runs in BOTH debug and release builds — the
+            // gate is the signed-in email, not the build configuration.
+            ReviewerDemoSeedService.seedIfNeeded(modelContext: modelContext)
 
             // ── Signal readiness to FreshliApp ──
             // The splash screen waits for this before dissolving, ensuring

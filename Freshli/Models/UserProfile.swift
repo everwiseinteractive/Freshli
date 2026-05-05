@@ -10,6 +10,13 @@ final class UserProfile {
     var expiryReminderDays: Int
     var preferredLanguage: String
 
+    /// Public URL of the user's profile picture (hosted in the Supabase
+    /// `avatars` Storage bucket). `nil` until the user uploads a photo;
+    /// the `FreshliAvatar` view falls back to a coloured-initials circle
+    /// in that case. Synced bidirectionally with
+    /// `SupabaseProfile.avatarUrl` via `ProfileService.updateAvatarUrl`.
+    var avatarURL: String?
+
     // MARK: - Impact Stats
 
     var itemsSaved: Int

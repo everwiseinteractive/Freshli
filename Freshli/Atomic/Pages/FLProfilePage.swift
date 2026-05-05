@@ -177,12 +177,19 @@ struct FLProfilePage: View {
 
     private var profileCard: some View {
         HStack(spacing: PSSpacing.xl) {
-            // Avatar circle (exception: this IS the avatar, keep the ZStack)
+            // Profile avatar — tappable PhotosPicker that uploads the
+            // chosen image to Supabase Storage, persists the URL on the
+            // user's profile row, and updates the local SwiftData
+            // record. The brand gradient ring is preserved as a halo
+            // around the FreshliAvatar so the visual identity carries
+            // through whether the user has uploaded a photo or is
+            // showing the deterministic initials fallback.
+            //
+            // When the user is not signed in (currentUserId is nil) we
+            // render the read-only avatar — uploads require a real
+            // user identifier so the storage RLS policy can scope
+            // writes per-user.
             ZStack {
-                Circle()
-                    .fill(.white)
-                    .frame(width: PSLayout.scaled(84), height: PSLayout.scaled(84))
-                    .elevation(.z2)
                 Circle()
                     .strokeBorder(
                         LinearGradient(
@@ -192,12 +199,29 @@ struct FLProfilePage: View {
                         ),
                         lineWidth: 3
                     )
-                    .frame(width: PSLayout.scaled(84), height: PSLayout.scaled(84))
-                Image(systemName: "person.crop.circle.fill")
-                    .font(.system(size: PSLayout.scaledFont(60)))
-                    .foregroundStyle(PSColors.primaryGreen.opacity(0.5))
+                    .frame(width: PSLayout.scaled(96), height: PSLayout.scaled(96))
+
+                if let userId = authManager.currentUserId {
+                    FreshliAvatarPicker(
+                        displayName: displayName,
+                        userId: userId,
+                        avatarURL: Binding(
+                            get: { profile.avatarURL },
+                            set: { newValue in
+                                profile.avatarURL = newValue
+                                try? modelContext.save()
+                            }
+                        )
+                    )
+                } else {
+                    FreshliAvatar(
+                        displayName: displayName,
+                        avatarURL: profile.avatarURL,
+                        size: .xxl
+                    )
+                }
             }
-            .accessibilityLabel("Profile avatar")
+            .accessibilityLabel(authManager.currentUserId == nil ? "Profile avatar" : "Profile avatar — tap to change")
 
             VStack(alignment: .leading, spacing: PSSpacing.xs) {
                 Text(displayName)

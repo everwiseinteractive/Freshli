@@ -223,7 +223,7 @@ struct DeliveryOptionCard: View {
 }
 
 #Preview("Selected Partner") {
-    var preview = MissingIngredientSheet(
+    let preview = MissingIngredientSheet(
         item: ShoppingItem(
             name: "Parmesan Cheese",
             quantity: 100,

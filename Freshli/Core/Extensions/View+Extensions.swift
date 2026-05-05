@@ -132,4 +132,67 @@ extension View {
     func psMinTouchTarget() -> some View {
         self.frame(minWidth: 44, minHeight: 44)
     }
+
+    // MARK: - VoiceOver Custom Actions for List Rows
+    //
+    // Repeated row content (Pantry items, Recipe cards, Community listings,
+    // Inventory rows) is the most-traversed surface in the app. Without
+    // custom actions, a VoiceOver user must swipe through every action
+    // button on every row — exhausting on long lists.
+    //
+    // These helpers attach a structured set of `accessibilityCustomAction`
+    // entries to the row's container element so the user can perform any
+    // action with the rotor in two flicks: rotor → "Actions", flick down to
+    // pick, double-tap to fire.
+    //
+    // The labels are localised at the call site via `String(localized:)`.
+
+    /// Attaches a single VoiceOver custom action.
+    func psCustomAction(_ label: LocalizedStringKey, action: @escaping () -> Void) -> some View {
+        self.accessibilityAction(named: Text(label), action)
+    }
+
+    /// Attaches the canonical pantry-row action set (consume, share, donate,
+    /// edit, delete). Pass nil for any action that does not apply to this row
+    /// — for example a community listing has no "consume" action.
+    func psPantryRowActions(
+        onConsume: (() -> Void)? = nil,
+        onShare: (() -> Void)? = nil,
+        onDonate: (() -> Void)? = nil,
+        onEdit: (() -> Void)? = nil,
+        onDelete: (() -> Void)? = nil
+    ) -> some View {
+        self
+            .if(onConsume != nil) { v in v.accessibilityAction(named: Text(String(localized: "Mark consumed")), onConsume!) }
+            .if(onShare != nil)   { v in v.accessibilityAction(named: Text(String(localized: "Share with community")), onShare!) }
+            .if(onDonate != nil)  { v in v.accessibilityAction(named: Text(String(localized: "Donate")), onDonate!) }
+            .if(onEdit != nil)    { v in v.accessibilityAction(named: Text(String(localized: "Edit")), onEdit!) }
+            .if(onDelete != nil)  { v in v.accessibilityAction(named: Text(String(localized: "Delete")), onDelete!) }
+    }
+
+    /// Recipe-card actions: cook now, save, share, view details.
+    func psRecipeRowActions(
+        onCook: (() -> Void)? = nil,
+        onSave: (() -> Void)? = nil,
+        onShare: (() -> Void)? = nil
+    ) -> some View {
+        self
+            .if(onCook != nil)  { v in v.accessibilityAction(named: Text(String(localized: "Start cooking")), onCook!) }
+            .if(onSave != nil)  { v in v.accessibilityAction(named: Text(String(localized: "Save recipe")), onSave!) }
+            .if(onShare != nil) { v in v.accessibilityAction(named: Text(String(localized: "Share recipe")), onShare!) }
+    }
+
+    /// Community-listing actions: claim, message, save, report.
+    func psListingRowActions(
+        onClaim: (() -> Void)? = nil,
+        onMessage: (() -> Void)? = nil,
+        onSave: (() -> Void)? = nil,
+        onReport: (() -> Void)? = nil
+    ) -> some View {
+        self
+            .if(onClaim != nil)   { v in v.accessibilityAction(named: Text(String(localized: "Claim listing")), onClaim!) }
+            .if(onMessage != nil) { v in v.accessibilityAction(named: Text(String(localized: "Message neighbour")), onMessage!) }
+            .if(onSave != nil)    { v in v.accessibilityAction(named: Text(String(localized: "Save listing")), onSave!) }
+            .if(onReport != nil)  { v in v.accessibilityAction(named: Text(String(localized: "Report listing")), onReport!) }
+    }
 }
