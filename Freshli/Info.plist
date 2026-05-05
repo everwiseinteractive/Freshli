@@ -10,6 +10,14 @@
 	<string>Freshli saves shared recipe images and impact cards to your photo library.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Freshli uses your location to show nearby community food listings and set pickup locations.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Freshli uses Face ID to confirm you're the account owner when you stake a Trust Badge on a community listing or claim. Your face data never leaves the device — Apple's Face ID handles authentication entirely on-device.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Freshli uses gyroscope readings to make the Liquid Glass surfaces catch the light as you tilt your device — the same way real glass would. Motion data is read only while the app is open, never sent off-device, and never stored.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Freshli can add expiry dates to your Calendar so you see what needs using on your daily agenda. This is optional — you'll be asked the first time you turn it on in Settings.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Freshli can create Reminders for items expiring soon so you get a Lock Screen nudge a day before. This is optional — you'll be asked the first time you turn it on in Settings.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<!--

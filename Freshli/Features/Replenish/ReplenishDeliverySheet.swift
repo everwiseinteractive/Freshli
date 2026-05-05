@@ -1,9 +1,10 @@
 import SwiftUI
 
 // MARK: - Replenish Delivery Sheet
-// "Purchase with Delivery" — simulated affiliate integration
-// structured for Instacart / Ocado / Amazon Fresh / Apple Pay
-// with placeholder URLs.
+// "Purchase with Delivery" — affiliate-link integration for Instacart,
+// Ocado, Amazon Fresh, and Apple Pay handoff. Each option opens the
+// partner's storefront with a per-item search query and our affiliate
+// tag preserved across the redirect. URLs live in `ReplenishModels.swift`.
 
 struct ReplenishDeliverySheet: View {
     let item: ReplenishItem
