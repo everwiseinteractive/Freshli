@@ -13,6 +13,40 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<!--
+	  Custom URL scheme for App Store In-App Event deep links.
+
+	  Required so iOS routes `freshli://events/<slug>` URLs to this app.
+	  Each App Store In-App Event configured in App Store Connect uses
+	  one of these slugs as its Event Deep Link:
+
+	    freshli://events/spring-pantry-reset
+	    freshli://events/world-environment-day
+	    freshli://events/plastic-free-july
+	    freshli://events/bbq-saver
+	    freshli://events/lunch-lab
+	    freshli://events/world-food-day
+	    freshli://events/holiday-pantry-hero
+
+	  Routing is handled by `URLRouterService` (Services/UI/URLRouterService.swift),
+	  which receives the URL via `.onOpenURL` in FreshliApp.swift.
+
+	  Universal Links (https://freshli.app/events/<slug>) resolve to the same
+	  routes — see the Associated Domains entitlement and the AASA file.
+	-->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>everwise.interactive.Freshli</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>freshli</string>
+			</array>
+		</dict>
+	</array>
+	<!--
 	  Alternate app icons.
 
 	  This block is intentionally COMMENTED OUT until the seasonal icon

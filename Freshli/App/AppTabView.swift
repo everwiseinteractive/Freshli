@@ -185,6 +185,36 @@ struct AppTabView: View {
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
             WidgetDataService.updateWidgetData(modelContext: modelContext)
         }
+        // ── In-App Event deep-link landing ──
+        // Apple requires that an event's deep link routes the user to the
+        // event's content inside the app. URLRouterService resolves the
+        // incoming URL to a Route; we react here by switching tabs and
+        // surfacing the event banner.
+        .onChange(of: URLRouterService.shared.pendingRoute) { _, newRoute in
+            guard let newRoute else { return }
+            switch newRoute {
+            case .event(let slug):
+                switchTab(to: slug.landingTab)
+            case .tab(let tab):
+                switchTab(to: tab)
+            case .unknown:
+                break
+            }
+            URLRouterService.shared.clear()
+        }
+        // The event banner overlays the tab content while an event is active.
+        .overlay(alignment: .top) {
+            if let slug = URLRouterService.shared.activeEvent {
+                FLEventBanner(
+                    title:    slug.displayTitle,
+                    subtitle: slug.displaySubtitle,
+                    onDismiss: { URLRouterService.shared.dismissActiveEvent() }
+                )
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .zIndex(50)
+            }
+        }
+        .animation(FLMotion.springDefault, value: URLRouterService.shared.activeEvent)
     }
 
     // MARK: - Tab Switching

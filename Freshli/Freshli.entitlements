@@ -9,6 +9,25 @@
 	<key>com.apple.developer.aps-environment</key>
 	<string>production</string>
 	<!--
+	  Associated Domains for Universal Links.
+
+	  Required so iOS routes `https://freshli.app/events/<slug>` URLs into the
+	  app instead of Safari. App Store In-App Event deep links work either as
+	  custom-scheme URLs (`freshli://...`) or Universal Links — Apple recommends
+	  Universal Links because they fall back gracefully to the marketing site
+	  when the app isn't installed.
+
+	  The matching apple-app-site-association JSON file MUST be deployed at:
+	      https://freshli.app/.well-known/apple-app-site-association
+	  with Content-Type: application/json (no .json extension on the URL).
+	  Source-of-truth file: `freshli-legal/.well-known/apple-app-site-association`.
+	-->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:freshli.app</string>
+		<string>applinks:www.freshli.app</string>
+	</array>
+	<!--
 	  iCloud / CloudKit entitlements:
 	  - `cloudKitDatabase: .none` is intentionally set on the SwiftData
 	    `ModelContainer` (see FreshliApp.swift) — Supabase is the cloud

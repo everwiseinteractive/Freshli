@@ -152,6 +152,19 @@ struct FreshliApp: App {
                     UserDefaults.standard.set("pantry", forKey: "lastSelectedTab")
                 }
             }
+            // ── Deep-link entry points for App Store In-App Events ──
+            // App Review REQUIRES that an in-app event's deep link routes the
+            // user to that event's content inside the app. URLRouterService
+            // resolves both the custom scheme (`freshli://events/<slug>`) and
+            // the universal-link variant (`https://freshli.app/events/<slug>`)
+            // into a `Route`; AppTabView observes `pendingRoute` and switches
+            // tabs / shows the event banner accordingly.
+            .onOpenURL { url in
+                URLRouterService.shared.handle(url)
+            }
+            .onContinueUserActivity(NSUserActivityTypeBrowsingWeb) { activity in
+                URLRouterService.shared.handle(activity.webpageURL)
+            }
             .task {
                 // ── Master safety timeout (FIRST thing we schedule) ──
                 //
