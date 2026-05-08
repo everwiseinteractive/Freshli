@@ -17,6 +17,12 @@ final class UserProfile {
     /// `SupabaseProfile.avatarUrl` via `ProfileService.updateAvatarUrl`.
     var avatarURL: String?
 
+    /// Mirrors `profiles.is_verified`. Surfaces as a blue checkmark
+    /// next to the display name throughout the app. Read-only on the
+    /// client — admin-set via the Supabase dashboard. Defaults to
+    /// `false`; populated when a fresh profile sync completes.
+    var isVerified: Bool = false
+
     // MARK: - Impact Stats
 
     var itemsSaved: Int

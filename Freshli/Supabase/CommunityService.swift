@@ -42,7 +42,7 @@ final class CommunityService {
             // Apply filters first (on PostgrestFilterBuilder), then transforms
             var filterQuery = client
                 .from("shared_listings")
-                .select("*, profiles!shared_listings_user_id_fkey(display_name, avatar_url)")
+                .select("*, profiles!shared_listings_user_id_fkey(display_name, avatar_url, is_verified)")
                 .eq("status", value: "active")
                 .eq("is_flagged", value: false)
 
@@ -74,7 +74,7 @@ final class CommunityService {
         do {
             let results: [CommunityListingDTO] = try await client
                 .from("shared_listings")
-                .select("*, profiles!shared_listings_user_id_fkey(display_name, avatar_url)")
+                .select("*, profiles!shared_listings_user_id_fkey(display_name, avatar_url, is_verified)")
                 .eq("user_id", value: userId.uuidString)
                 .order("date_posted", ascending: false)
                 .limit(50)
@@ -396,9 +396,13 @@ struct CommunityListingDTO: Codable, Identifiable, Sendable {
 struct ListingProfileDTO: Codable, Sendable {
     let displayName: String?
     let avatarUrl: String?
+    /// Mirrors `profiles.is_verified`. The feed renders a blue
+    /// checkmark next to the listing author's name when this is true.
+    let isVerified: Bool?
 
     enum CodingKeys: String, CodingKey {
         case displayName = "display_name"
         case avatarUrl = "avatar_url"
+        case isVerified = "is_verified"
     }
 }

@@ -25,6 +25,12 @@ struct FLProfilePage: View {
     @State private var showDiscover = false
     @State private var householdSize: Int = 1
     @State private var profileAppeared = false
+    /// True while the moderator inbox sheet is shown. Verified
+    /// accounts only — gated by `profile.isVerified` at the row.
+    @State private var showModeratorInbox = false
+    /// Mirror of `ModeratorReportService.shared.pendingCount` so the
+    /// settings row badge updates without explicit subscription.
+    @State private var pendingReportCount: Int = 0
     @AppStorage("isDarkMode") private var isDarkMode = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -41,6 +47,33 @@ struct FLProfilePage: View {
     private var isAuthenticated: Bool { authManager.authState == .authenticated }
     private var displayName: String {
         authManager.currentDisplayName ?? (profile.displayName.isEmpty ? String(localized: "Freshli User") : profile.displayName)
+    }
+
+    /// Pull the server-authoritative `is_verified` and `avatar_url`
+    /// from Supabase and write them to the local SwiftData mirror.
+    /// Cheap (single row, ~80 bytes) so it's safe to call on every
+    /// profile-tab appear. Silent on failure — the badge simply won't
+    /// appear until the next successful fetch.
+    @MainActor
+    private func syncRemoteProfileFields() async {
+        guard let userId = authManager.currentUserId else { return }
+        do {
+            let remote = try await ProfileService().fetchProfile(userId: userId)
+            // Mutate the SwiftData object directly. SwiftData picks
+            // up changes via its observation infrastructure, so the
+            // VerifiedBadge will reactively appear on the next render.
+            let nextVerified = remote.isVerified ?? false
+            if profile.isVerified != nextVerified {
+                profile.isVerified = nextVerified
+            }
+            if let url = remote.avatarUrl, profile.avatarURL != url {
+                profile.avatarURL = url
+            }
+            try? modelContext.save()
+        } catch {
+            // No-op: the badge is decorative; errors here would
+            // only spam the user.
+        }
     }
 
     // MARK: - Body
@@ -73,6 +106,32 @@ struct FLProfilePage: View {
                 try? await Task.sleep(for: .milliseconds(400))
                 profileAppeared.toggle()
             }
+            // Refresh server-authoritative profile fields (avatar URL,
+            // verification status) into the local SwiftData mirror so
+            // the badge appears for the founder and partner accounts
+            // without requiring a sign-out / sign-in cycle.
+            Task { @MainActor in
+                await syncRemoteProfileFields()
+                // After verification status is hydrated, refresh the
+                // moderator pending-count so the inbox row's badge is
+                // accurate before the user even taps it.
+                if profile.isVerified {
+                    await ModeratorReportService.shared.refreshPendingCount()
+                    pendingReportCount = ModeratorReportService.shared.pendingCount
+                }
+            }
+        }
+        .sheet(isPresented: $showModeratorInbox, onDismiss: {
+            // Refresh after the moderator triages reports so the
+            // settings-row badge counts down without restarting the
+            // tab.
+            Task { @MainActor in
+                await ModeratorReportService.shared.refreshPendingCount()
+                pendingReportCount = ModeratorReportService.shared.pendingCount
+            }
+        }) {
+            ModeratorInboxView()
+                .environment(authManager)
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
@@ -224,10 +283,21 @@ struct FLProfilePage: View {
             .accessibilityLabel(authManager.currentUserId == nil ? "Profile avatar" : "Profile avatar — tap to change")
 
             VStack(alignment: .leading, spacing: PSSpacing.xs) {
-                Text(displayName)
-                    .font(.system(size: PSLayout.scaledFont(22), weight: .bold))
-                    .tracking(-0.3)
-                    .foregroundStyle(PSColors.textPrimary)
+                HStack(spacing: 6) {
+                    Text(displayName)
+                        .font(.system(size: PSLayout.scaledFont(22), weight: .bold))
+                        .tracking(-0.3)
+                        .foregroundStyle(PSColors.textPrimary)
+                    // Renders the blue checkmark when the signed-in
+                    // profile is verified. `profile.isVerified` is
+                    // the local SwiftData mirror, kept in sync by
+                    // `ProfileService.fetchProfile` whenever auth /
+                    // sync runs.
+                    VerifiedBadge(
+                        isVerified: profile.isVerified,
+                        relativeTo: .title2
+                    )
+                }
 
                 let tier = HeroTier.tier(for: ImpactService(modelContext: modelContext).calculateStats().itemsSaved)
                 HStack(spacing: PSSpacing.xs) {
@@ -586,6 +656,54 @@ struct FLProfilePage: View {
         .accessibilityLabel("\(milestone.title): \(Int(milestone.progress * 100)) percent complete. \(milestone.description)")
     }
 
+    // MARK: - Moderator inbox row
+    //
+    // Custom settings row with a live "pending reports" badge.
+    // Renders only when the signed-in profile is verified, so this
+    // is invisible to every regular user.
+
+    private var moderatorInboxRow: some View {
+        Button {
+            PSHaptics.shared.lightTap()
+            showModeratorInbox = true
+        } label: {
+            HStack(spacing: PSSpacing.md) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(PSColors.expiredRed)
+                        .frame(width: 32, height: 32)
+                    Image(systemName: "shield.lefthalf.filled")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+                Text(String(localized: "Moderator inbox"))
+                    .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
+                    .foregroundStyle(PSColors.textPrimary)
+                Spacer()
+                if pendingReportCount > 0 {
+                    Text("\(pendingReportCount)")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(PSColors.expiredRed, in: Capsule())
+                }
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(PSColors.textTertiary)
+            }
+            .padding(.horizontal, PSSpacing.lg)
+            .frame(height: 56)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(
+            pendingReportCount > 0
+                ? String(localized: "Moderator inbox, \(pendingReportCount) pending")
+                : String(localized: "Moderator inbox")
+        )
+    }
+
     // MARK: - Settings Card
 
     private var settingsCard: some View {
@@ -608,6 +726,16 @@ struct FLProfilePage: View {
             settingsDivider()
             settingsNavRow(icon: "globe", iconColor: PSColors.infoBlue, title: String(localized: "Language")) { showLanguageSettings = true }
             settingsDivider()
+
+            // Moderator inbox — only renders for verified accounts.
+            // Hidden for everyone else (including the row + divider)
+            // so the founder's dashboard stays out of regular users'
+            // way. The pending-count badge mirrors the live realtime
+            // counter from `ModeratorReportService`.
+            if profile.isVerified {
+                moderatorInboxRow
+                settingsDivider()
+            }
 
             if isAuthenticated {
                 settingsActionRow(icon: "rectangle.portrait.and.arrow.right", iconColor: PSColors.expiredRed.opacity(0.8), title: String(localized: "Sign Out"), foreground: PSColors.expiredRed) {

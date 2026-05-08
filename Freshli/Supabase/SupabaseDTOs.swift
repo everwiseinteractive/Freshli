@@ -15,6 +15,10 @@ struct ProfileDTO: Codable, Sendable {
     var notificationsEnabled: Bool?
     var expiryReminderDays: Int?
     var preferredLanguage: String?
+    /// Mirrors `profiles.is_verified`. Decoded with a `nil` fallback
+    /// so older API responses (which didn't include the column)
+    /// remain compatible.
+    var isVerified: Bool?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -25,6 +29,7 @@ struct ProfileDTO: Codable, Sendable {
         case notificationsEnabled = "notifications_enabled"
         case expiryReminderDays = "expiry_reminder_days"
         case preferredLanguage = "preferred_language"
+        case isVerified = "is_verified"
     }
 }
 

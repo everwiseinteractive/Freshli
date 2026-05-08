@@ -21,6 +21,10 @@ struct ListingDetailView: View {
     @State private var errorMessage: String?
     @State private var successFlashTrigger = false
     @State private var errorShakeTrigger = false
+    /// True while the report-user sheet is showing. Driven by the
+    /// "..." toolbar menu (only visible when the viewer isn't the
+    /// listing's own author — you can't report yourself).
+    @State private var showReportUserSheet = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var isOwner: Bool {
@@ -59,6 +63,29 @@ struct ListingDetailView: View {
         .navigationTitle(String(localized: "Listing Details"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            // "More" menu — only shown when viewing somebody else's
+            // listing. Hosts the user-report path (separate from
+            // listing-level reports, which live on the feed card).
+            if !isOwner {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Button(role: .destructive) {
+                            showReportUserSheet = true
+                        } label: {
+                            Label(
+                                String(localized: "Report user"),
+                                systemImage: "person.crop.circle.badge.exclamationmark"
+                            )
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle.fill")
+                            .font(.system(size: PSLayout.scaledFont(22)))
+                            .foregroundStyle(PSColors.textTertiary)
+                    }
+                    .accessibilityLabel(String(localized: "More options"))
+                    .accessibilityHint(String(localized: "Report this user"))
+                }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button { dismiss() } label: {
                     Image(systemName: "xmark.circle.fill")
@@ -66,6 +93,13 @@ struct ListingDetailView: View {
                         .foregroundStyle(PSColors.textTertiary)
                 }
             }
+        }
+        .sheet(isPresented: $showReportUserSheet) {
+            ReportUserSheet(
+                reportedUserId: listing.userId,
+                reportedDisplayName: listing.displayName,
+                listingId: listing.id
+            )
         }
         .overlay {
             PSSuccessCelebration(
@@ -294,9 +328,15 @@ struct ListingDetailView: View {
                     .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(listing.displayName)
-                        .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
-                        .foregroundStyle(PSColors.textPrimary)
+                    HStack(spacing: 4) {
+                        Text(listing.displayName)
+                            .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
+                            .foregroundStyle(PSColors.textPrimary)
+                        VerifiedBadge(
+                            isVerified: listing.profiles?.isVerified ?? false,
+                            relativeTo: .callout
+                        )
+                    }
 
                     Text(isOwner ? String(localized: "You") : String(localized: "Community Member"))
                         .font(.system(size: PSLayout.scaledFont(13), weight: .medium))

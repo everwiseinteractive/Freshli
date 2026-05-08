@@ -30,6 +30,10 @@ struct FLCommunityPage: View {
     @State private var reportReason = ""
     @State private var reportDetails = ""
     @State private var feedError: String?
+    /// Listing whose author the user wants to report (account-level).
+    /// Driving an item-binding sheet means the sheet is presented iff
+    /// this is non-nil and dismissed by clearing it.
+    @State private var reportUserTarget: CommunityListingDTO?
     /// True while the area-picker sheet (header pill tap) is showing.
     @State private var showAreaPicker = false
     /// Mirror of `AreaService.shared.currentArea`. We can't observe
@@ -155,6 +159,15 @@ struct FLCommunityPage: View {
                     await refreshFeed()
                 }
             }
+        }
+        // User-report sheet — driven by an item binding so dismissing
+        // the sheet cleanly clears the target listing.
+        .sheet(item: $reportUserTarget) { listing in
+            ReportUserSheet(
+                reportedUserId: listing.userId,
+                reportedDisplayName: listing.displayName,
+                listingId: listing.id
+            )
         }
     }
 
@@ -646,8 +659,14 @@ struct FLCommunityPage: View {
                     .elevation(.z1)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    FLText(listing.displayName, .callout)
-                        .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
+                    HStack(spacing: 4) {
+                        FLText(listing.displayName, .callout)
+                            .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
+                        VerifiedBadge(
+                            isVerified: listing.profiles?.isVerified ?? false,
+                            relativeTo: .callout
+                        )
+                    }
 
                     HStack(spacing: 4) {
                         if let area = listing.areaName {
@@ -771,13 +790,22 @@ struct FLCommunityPage: View {
                     )
                 }
 
-                // Report button
+                // Report menu: separates "report this listing" (item-level
+                // moderation) from "report this user" (account-level
+                // moderation). The two paths route to different tables
+                // (community_reports vs user_reports) and different
+                // moderator surfaces.
                 Menu {
                     Button(role: .destructive) {
                         reportTarget = listing
                         showReportSheet = true
                     } label: {
-                        Label(String(localized: "Report"), systemImage: "flag")
+                        Label(String(localized: "Report listing"), systemImage: "flag")
+                    }
+                    Button(role: .destructive) {
+                        reportUserTarget = listing
+                    } label: {
+                        Label(String(localized: "Report user"), systemImage: "person.crop.circle.badge.exclamationmark")
                     }
                 } label: {
                     Image(systemName: "ellipsis")
@@ -786,7 +814,7 @@ struct FLCommunityPage: View {
                         .frame(width: 32, height: 32)
                 }
                 .accessibilityLabel(String(localized: "More options"))
-                .accessibilityHint(String(localized: "Double tap to report this listing"))
+                .accessibilityHint(String(localized: "Double tap to report this listing or user"))
             }
         }
         .padding(PSLayout.scaled(20))

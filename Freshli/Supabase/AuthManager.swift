@@ -61,6 +61,10 @@ final class AuthManager {
             // current user. Idempotent — does nothing if userId is
             // unchanged from the prior set.
             ClaimNotificationService.shared.bind(currentUserId: currentUserId)
+            // Same wiring for the moderator inbox: the service checks
+            // `profiles.is_verified` and silently exits for non-mods,
+            // so it's safe to bind for every signed-in user.
+            ModeratorReportService.shared.bind(currentUserId: currentUserId)
         }
     }
     var currentUserEmail: String? {

@@ -26,6 +26,10 @@ struct SupabaseProfile: Codable, Identifiable, Sendable {
     var streakCount: Int?
     var lastActiveDate: Date?
     var preferences: [String: AnyCodable]?
+    /// Officially verified account (Freshli founder, partner orgs).
+    /// Renders as a blue checkmark next to the display name in every
+    /// surface that shows a user identity. Admin-set only.
+    var isVerified: Bool?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -46,6 +50,7 @@ struct SupabaseProfile: Codable, Identifiable, Sendable {
         case streakCount = "streak_count"
         case lastActiveDate = "last_active_date"
         case preferences
+        case isVerified = "is_verified"
     }
 }
 
