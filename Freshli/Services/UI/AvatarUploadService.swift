@@ -80,8 +80,30 @@ final class AvatarUploadService {
                     )
                 )
         } catch {
-            logger.error("Avatar storage upload failed: \(error.localizedDescription, privacy: .public)")
-            throw AvatarUploadError.uploadFailed(underlying: error.localizedDescription)
+            // Map Supabase Storage errors to user-meaningful messages
+            // instead of the previous catch-all "check your connection"
+            // copy. The Storage SDK's localizedDescription contains
+            // hints we can pattern-match for the most common failures.
+            let raw = error.localizedDescription
+            let lower = raw.lowercased()
+            logger.error("Avatar storage upload failed: \(raw, privacy: .public)")
+
+            if lower.contains("bucket") && (lower.contains("not found") || lower.contains("does not exist")) {
+                throw AvatarUploadError.bucketMissing
+            } else if lower.contains("payload too large") || lower.contains("file size") || lower.contains("413") {
+                throw AvatarUploadError.fileTooLarge
+            } else if lower.contains("row-level security")
+                || lower.contains("not authorized")
+                || lower.contains("unauthorized")
+                || lower.contains("401") || lower.contains("403") {
+                throw AvatarUploadError.notAuthorised
+            } else if lower.contains("offline")
+                || lower.contains("network")
+                || lower.contains("timed out")
+                || lower.contains("connection") {
+                throw AvatarUploadError.networkUnavailable
+            }
+            throw AvatarUploadError.uploadFailed(underlying: raw)
         }
 
         // 3. Resolve public URL.
@@ -132,43 +154,70 @@ final class AvatarUploadService {
 
     // MARK: - Image processing
 
-    /// Resize to a max 512×512 square (centre-cropped) and JPEG-encode at
-    /// 0.85 quality. Strips EXIF metadata via the re-encode step.
+    /// Resize + centre-crop into a 512×512 square JPEG at 0.85 quality.
+    /// Strips EXIF metadata (re-encode), respects EXIF orientation.
+    ///
+    /// Implementation note: previous version cropped via
+    /// `cgImage.cropping(to:)` which operates in raw-pixel coordinates,
+    /// while `image.size` is in the orientation-corrected coordinate
+    /// space. For any photo not at `.up` orientation (i.e. nearly
+    /// every iPhone portrait shot) the cropRect was applied in the
+    /// wrong space, resulting in a wonky output and — for small
+    /// portrait images — a `cgImage.cropping(to:)` failure that fell
+    /// through to `image.jpegData(...)` returning the raw photo
+    /// uncropped, which then visibly stretched in the avatar circle.
+    ///
+    /// The new implementation uses a single `UIGraphicsImageRenderer`
+    /// pass with `image.draw(in: aspectFillRect)`. `UIImage.draw`
+    /// honours the image's orientation, so the drawn pixels land
+    /// upright every time. The aspect-fill maths centres the image
+    /// inside the target square the same way SwiftUI's
+    /// `.scaledToFill().clipShape(Circle())` would on the render
+    /// side — meaning the picture you upload is exactly the picture
+    /// the avatar border crops to.
     nonisolated static func processedJPEGData(from image: UIImage) -> Data? {
         let targetSize = CGSize(width: 512, height: 512)
+        guard image.size.width > 0, image.size.height > 0 else { return nil }
 
-        // Square centre-crop: take the smaller dimension as the side
-        // length so we never upscale the original.
-        let originalSize = image.size
-        let side = min(originalSize.width, originalSize.height)
-        let cropRect = CGRect(
-            x: (originalSize.width - side) / 2,
-            y: (originalSize.height - side) / 2,
-            width: side,
-            height: side
-        )
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1                  // 512 raw pixels — no @2x doubling
+        format.opaque = true              // JPEG; no alpha; cleaner blacks
+        format.preferredRange = .standard // sRGB output for universal compatibility
+        let renderer = UIGraphicsImageRenderer(size: targetSize, format: format)
 
-        guard let cgImage = image.cgImage,
-              let cropped = cgImage.cropping(to: cropRect.applying(
-                  CGAffineTransform(scaleX: image.scale, y: image.scale))) else {
-            return image.jpegData(compressionQuality: 0.85)
+        return renderer.jpegData(withCompressionQuality: 0.85) { _ in
+            // Aspect-fill: the source image is scaled to cover the
+            // entire target square; the longer dimension overflows
+            // and is centred. Mirrors `.scaledToFill()` on the render
+            // side so the WYSIWYG circle crop is consistent.
+            let imageSize = image.size
+            let imageAspect = imageSize.width / imageSize.height
+            let targetAspect = targetSize.width / targetSize.height
+
+            let drawRect: CGRect
+            if imageAspect > targetAspect {
+                // Source wider than target — match height, overflow horizontally.
+                let scaledWidth = targetSize.height * imageAspect
+                drawRect = CGRect(
+                    x: (targetSize.width - scaledWidth) / 2,
+                    y: 0,
+                    width: scaledWidth,
+                    height: targetSize.height
+                )
+            } else {
+                // Source taller (or equal) — match width, overflow vertically.
+                let scaledHeight = targetSize.width / imageAspect
+                drawRect = CGRect(
+                    x: 0,
+                    y: (targetSize.height - scaledHeight) / 2,
+                    width: targetSize.width,
+                    height: scaledHeight
+                )
+            }
+            // `UIImage.draw(in:)` respects the image's orientation,
+            // so portrait shots come out upright in the JPEG.
+            image.draw(in: drawRect)
         }
-        let croppedImage = UIImage(cgImage: cropped, scale: image.scale, orientation: image.imageOrientation)
-
-        // Now resize to 512×512.
-        let renderer = UIGraphicsImageRenderer(
-            size: targetSize,
-            format: {
-                let f = UIGraphicsImageRendererFormat()
-                f.scale = 1
-                f.opaque = true
-                return f
-            }()
-        )
-        let resized = renderer.image { _ in
-            croppedImage.draw(in: CGRect(origin: .zero, size: targetSize))
-        }
-        return resized.jpegData(compressionQuality: 0.85)
     }
 }
 
@@ -178,15 +227,34 @@ enum AvatarUploadError: LocalizedError, Sendable {
     case imageProcessingFailed
     case uploadFailed(underlying: String)
     case urlResolutionFailed
+    /// Server-side: the `avatars` Storage bucket doesn't exist or
+    /// has been renamed. Surfaces clearly so a developer can fix the
+    /// project setup rather than blaming the user's connection.
+    case bucketMissing
+    /// 413 / file-size-limit reject from Storage.
+    case fileTooLarge
+    /// 401 / 403 — RLS policy refused the upload (typically session
+    /// expired).
+    case notAuthorised
+    /// URL error / no internet.
+    case networkUnavailable
 
     var errorDescription: String? {
         switch self {
         case .imageProcessingFailed:
             return String(localized: "We couldn't process that image. Try a different photo.")
         case .uploadFailed:
-            return String(localized: "Couldn't upload your photo. Check your connection and try again.")
+            return String(localized: "Couldn't upload your photo. Please try again.")
         case .urlResolutionFailed:
             return String(localized: "Photo uploaded, but we couldn't link it to your profile. Try again in a moment.")
+        case .bucketMissing:
+            return String(localized: "Profile photos aren't set up on the server right now. Please try again later.")
+        case .fileTooLarge:
+            return String(localized: "That photo is too large. Try a smaller one or take a new picture.")
+        case .notAuthorised:
+            return String(localized: "Your session has expired. Please sign in again to upload a profile picture.")
+        case .networkUnavailable:
+            return String(localized: "No internet connection. Check your network and try again.")
         }
     }
 }
