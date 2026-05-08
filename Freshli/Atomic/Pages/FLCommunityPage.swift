@@ -900,7 +900,20 @@ struct FLCommunityPage: View {
     private func refreshFeed() async {
         PSHaptics.shared.refreshSnap()
         feedError = nil
-        await communityService.fetchFeed(searchQuery: searchText.isEmpty ? nil : searchText)
+
+        // Hydrate the user's current_area_id (from `profiles`) if the
+        // shared service hasn't already cached it. We do this here so
+        // a fresh launch of the Community tab still scopes the feed
+        // correctly without waiting on the create-listing form.
+        if AreaService.shared.currentArea == nil, let userId = authManager.currentUserId {
+            _ = try? await AreaService.shared.loadCurrentArea(for: userId)
+        }
+        let areaId = AreaService.shared.currentArea?.id
+
+        await communityService.fetchFeed(
+            areaId: areaId,
+            searchQuery: searchText.isEmpty ? nil : searchText
+        )
         if let error = communityService.error {
             feedError = error
         }
@@ -910,7 +923,11 @@ struct FLCommunityPage: View {
     }
 
     private func searchFeed() async {
-        await communityService.fetchFeed(searchQuery: searchText.isEmpty ? nil : searchText)
+        let areaId = AreaService.shared.currentArea?.id
+        await communityService.fetchFeed(
+            areaId: areaId,
+            searchQuery: searchText.isEmpty ? nil : searchText
+        )
     }
 
     private func submitReport() {

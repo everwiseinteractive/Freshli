@@ -19,7 +19,21 @@ final class CommunityService {
     // MARK: - Fetch Community Feed
 
     /// Fetch active listings for the community feed with pagination.
-    func fetchFeed(searchQuery: String? = nil, page: Int = 0, pageSize: Int = 20) async {
+    ///
+    /// `areaId` geofences the feed: when supplied (which is the
+    /// default for any signed-in user with a `current_area_id` set),
+    /// only listings posted in the same neighbourhood come back. This
+    /// is the core of the "each Area is its own Community" feature —
+    /// keeping food sharing local and minimising pickup-vehicle
+    /// emissions per the product brief. Pass `nil` to see every active
+    /// listing across the platform (used only by the area-picker
+    /// preview screen and the App Review reviewer flow).
+    func fetchFeed(
+        areaId: UUID? = nil,
+        searchQuery: String? = nil,
+        page: Int = 0,
+        pageSize: Int = 20
+    ) async {
         isLoading = true
         defer { isLoading = false }
         error = nil
@@ -32,6 +46,10 @@ final class CommunityService {
                 .eq("status", value: "active")
                 .eq("is_flagged", value: false)
 
+            if let areaId {
+                filterQuery = filterQuery.eq("area_id", value: areaId)
+            }
+
             if let search = searchQuery, !search.isEmpty {
                 filterQuery = filterQuery.ilike("item_name", pattern: "%\(search)%")
             }
@@ -43,7 +61,7 @@ final class CommunityService {
                 .execute()
                 .value
             listings = results
-            logger.info("Fetched \(results.count) listings for page \(page)")
+            logger.info("Fetched \(results.count) listings for page \(page) (area: \(areaId?.uuidString ?? "all", privacy: .public))")
         } catch {
             logger.error("FetchFeed failed: \(error.localizedDescription)")
             self.error = "Could not load community feed. Please try again."
@@ -74,8 +92,13 @@ final class CommunityService {
     func createListing(_ input: CreateListingInput, userId: UUID) async -> Bool {
         isLoading = true
         defer { isLoading = false }
+        error = nil
 
-        let payload: [String: AnyJSON] = [
+        // `area_id` carries the geofence: every listing belongs to
+        // exactly one community area, and the feed query above filters
+        // on it. The optional `latitude` / `longitude` are bonus —
+        // useful for the experimental "show on map" view.
+        var payload: [String: AnyJSON] = [
             "user_id": .string(userId.uuidString),
             "item_name": .string(input.itemName),
             "item_description": input.description.map { .string($0) } ?? .null,
@@ -87,6 +110,15 @@ final class CommunityService {
             "food_category": .string(input.foodCategory),
             "area_name": input.areaName.map { .string($0) } ?? .null,
         ]
+        if let areaId = input.areaId {
+            payload["area_id"] = .string(areaId.uuidString)
+        }
+        if let lat = input.latitude {
+            payload["latitude"] = .double(lat)
+        }
+        if let lng = input.longitude {
+            payload["longitude"] = .double(lng)
+        }
 
         do {
             try await client
@@ -96,8 +128,20 @@ final class CommunityService {
             logger.info("Created listing: \(input.itemName)")
             return true
         } catch {
+            // Surface a precise error so the form's UI can react. RLS /
+            // 401 errors mean the user's session is stale or hasn't
+            // been confirmed — we tell them to sign back in instead of
+            // hiding behind a generic message.
+            let message = error.localizedDescription.lowercased()
             logger.error("CreateListing failed: \(error.localizedDescription)")
-            self.error = "Could not create listing. Please try again."
+            if message.contains("row-level security") || message.contains("401")
+                || message.contains("jwt") || message.contains("not authenticated") {
+                self.error = String(localized: "Your session has expired. Please sign in again to share with the community.")
+            } else if message.contains("foreign key") || message.contains("violates") {
+                self.error = String(localized: "We couldn't post this — please refresh and try again.")
+            } else {
+                self.error = String(localized: "Could not create listing. Please try again.")
+            }
             return false
         }
     }
@@ -205,7 +249,20 @@ struct CreateListingInput {
     var pickupAddress: String?
     var pickupNotes: String?
     var foodCategory: String = "other"
+    /// Free-text fallback shown in cards when `areaId` resolution
+    /// failed (e.g. user denied location AND skipped the manual
+    /// picker). Keep the human-readable copy here so listings are
+    /// still legible.
     var areaName: String?
+    /// Geofence anchor — set by the create-listing flow after the
+    /// user confirms (or picks) their neighbourhood. The Community
+    /// feed filters on this; without it, listings are invisible to
+    /// neighbours.
+    var areaId: UUID?
+    /// Approximate centroid of the area (rounded). Used by the
+    /// experimental map view; never displayed at street-level fidelity.
+    var latitude: Double?
+    var longitude: Double?
 }
 
 // MARK: - Community Listing DTO (read model with joined profile)

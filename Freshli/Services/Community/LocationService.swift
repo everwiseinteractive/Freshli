@@ -134,6 +134,116 @@ final class LocationService: NSObject {
         currentLocation?.coordinate ?? cachedApproximateCoordinate
     }
 
+    // MARK: - Reverse geocoding (Apple Maps)
+    //
+    // `CLGeocoder` is Apple's first-party reverse geocoder — same data
+    // path as Apple Maps. We translate raw coordinates into the
+    // hierarchical neighbourhood / locality / country triple that the
+    // Areas feature uses to resolve a `community_areas` row via the
+    // `find_or_create_area` RPC.
+    //
+    // Privacy: the geocoder is invoked over Apple's privacy-preserving
+    // service (see https://developer.apple.com/documentation/corelocation/clgeocoder).
+    // No third-party servers see the user's coordinate.
+
+    private let geocoder = CLGeocoder()
+    private var lastReverseGeocode: (coord: CLLocationCoordinate2D, result: ResolvedArea, at: Date)?
+
+    /// Reverse-geocode a coordinate into a human-readable neighbourhood
+    /// + locality + country triple.
+    ///
+    /// Result is cached in-memory for 5 minutes per coordinate (rounded
+    /// to 3 decimals, ~110m) so consecutive calls from a fresh fix
+    /// don't re-hit Apple's reverse-geocode service. CLGeocoder is
+    /// rate-limited; callers should not invoke this in tight loops.
+    func reverseGeocode(_ coordinate: CLLocationCoordinate2D) async throws -> ResolvedArea {
+        // 5-minute cache — the user's neighbourhood doesn't change.
+        if let last = lastReverseGeocode,
+           Self.coordsApproximatelyEqual(last.coord, coordinate),
+           Date().timeIntervalSince(last.at) < 300 {
+            return last.result
+        }
+
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        let placemarks: [CLPlacemark]
+        do {
+            placemarks = try await geocoder.reverseGeocodeLocation(location)
+        } catch {
+            logger.warning("Reverse geocode failed: \(error.localizedDescription, privacy: .public)")
+            throw LocationError.geocodeFailed
+        }
+        guard let placemark = placemarks.first else {
+            throw LocationError.geocodeFailed
+        }
+
+        // Pick the most specific neighbourhood label CL provides:
+        //   subLocality (e.g. "Headingley") → locality (e.g. "Leeds")
+        //   → name (e.g. "Whitehall Road"). Always prefer subLocality.
+        let neighbourhood = placemark.subLocality
+            ?? placemark.locality
+            ?? placemark.subAdministrativeArea
+            ?? placemark.name
+            ?? String(localized: "Unknown area")
+
+        let locality = placemark.locality
+            ?? placemark.subAdministrativeArea
+            ?? placemark.administrativeArea
+            ?? ""
+
+        let country = placemark.country ?? ""
+        let countryCode = placemark.isoCountryCode ?? ""
+
+        // Display name: "<Neighbourhood>, <City>, <Country>" when all
+        // three are known; degrade gracefully when they aren't.
+        var parts: [String] = [neighbourhood]
+        if !locality.isEmpty, locality != neighbourhood { parts.append(locality) }
+        if !country.isEmpty { parts.append(country) }
+        let displayName = parts.joined(separator: ", ")
+
+        let resolved = ResolvedArea(
+            neighbourhood: neighbourhood,
+            locality: locality,
+            country: country,
+            countryCode: countryCode,
+            displayName: displayName,
+            coordinate: coordinate
+        )
+        lastReverseGeocode = (coordinate, resolved, Date())
+        return resolved
+    }
+
+    /// Forward geocode — turn a free-text place query into a coordinate
+    /// + canonicalised area triple. Used by the manual area picker
+    /// when the user types "Camden Town" instead of using GPS.
+    func forwardGeocode(_ query: String) async throws -> ResolvedArea {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { throw LocationError.geocodeFailed }
+
+        let placemarks: [CLPlacemark]
+        do {
+            placemarks = try await geocoder.geocodeAddressString(trimmed)
+        } catch {
+            logger.warning("Forward geocode failed: \(error.localizedDescription, privacy: .public)")
+            throw LocationError.geocodeFailed
+        }
+        guard let placemark = placemarks.first,
+              let coord = placemark.location?.coordinate else {
+            throw LocationError.geocodeFailed
+        }
+
+        // Re-use reverseGeocode's labelling logic by piping through
+        // it with the resolved coordinate — keeps neighbourhood vs
+        // locality vs country selection in one place.
+        return try await reverseGeocode(coord)
+    }
+
+    /// Treat coordinates as equal when their 3-decimal rounding (≈110m)
+    /// matches. Used as the cache key for reverse geocoding.
+    private static func coordsApproximatelyEqual(_ a: CLLocationCoordinate2D, _ b: CLLocationCoordinate2D) -> Bool {
+        Int(a.latitude  * 1000) == Int(b.latitude  * 1000) &&
+        Int(a.longitude * 1000) == Int(b.longitude * 1000)
+    }
+
     // MARK: - Caching
 
     private func cacheLocation(_ location: CLLocation) {
@@ -155,6 +265,7 @@ enum LocationError: LocalizedError, Sendable {
     case permissionDenied
     case unavailable
     case timedOut
+    case geocodeFailed
 
     var errorDescription: String? {
         switch self {
@@ -164,7 +275,38 @@ enum LocationError: LocalizedError, Sendable {
             return String(localized: "Couldn't determine your location. Check that Location Services is on, then try again.")
         case .timedOut:
             return String(localized: "Locating is taking longer than expected. You can keep waiting or browse all listings instead.")
+        case .geocodeFailed:
+            return String(localized: "We couldn't find a neighbourhood for that location. Try entering a place name instead.")
         }
+    }
+}
+
+// MARK: - ResolvedArea
+//
+// The product of a CLGeocoder lookup. Carries everything the
+// Areas server-side RPC needs: the neighbourhood label, the disambiguating
+// city + country, the canonical display string, and the centroid
+// coordinate. `Sendable` so it crosses actor boundaries cheanly.
+
+struct ResolvedArea: Sendable, Equatable {
+    /// e.g. "Headingley", "Le Marais", "SoMa".
+    let neighbourhood: String
+    /// e.g. "Leeds", "Paris", "San Francisco". Empty when unknown.
+    let locality: String
+    /// e.g. "United Kingdom", "France", "United States". Empty when unknown.
+    let country: String
+    /// ISO 3166-1 alpha-2, e.g. "GB", "FR", "US". Empty when unknown.
+    let countryCode: String
+    /// "Headingley, Leeds, United Kingdom".
+    let displayName: String
+    /// Centroid we used as the reverse-geocode probe. Carries through
+    /// to `community_areas.centroid_lat / lng` on first creation.
+    let coordinate: CLLocationCoordinate2D
+
+    static func == (lhs: ResolvedArea, rhs: ResolvedArea) -> Bool {
+        lhs.neighbourhood == rhs.neighbourhood &&
+        lhs.locality == rhs.locality &&
+        lhs.countryCode == rhs.countryCode
     }
 }
 

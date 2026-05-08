@@ -31,6 +31,22 @@ struct CommunityCreateListingView: View {
     @State private var showError = false
     @State private var errorMessage = ""
 
+    // Area resolution state
+    /// The auto-detected neighbourhood from the user's current
+    /// location. `nil` until reverse-geocoding completes (or fails).
+    @State private var resolvedArea: ResolvedArea?
+    /// The Supabase `community_areas` row the user has confirmed —
+    /// either by accepting the detected one or picking via the sheet.
+    /// Required for the listing INSERT; we block submit until it's set.
+    @State private var selectedArea: AreaRow?
+    /// True while the auto-detect pipeline is running on first appear.
+    @State private var isResolvingArea = false
+    /// True while the manual area picker sheet is shown.
+    @State private var showAreaPicker = false
+    /// User-visible status for the inline area card: "Detecting…",
+    /// "Confirm this neighbourhood", "Confirmed: Headingley", etc.
+    @State private var areaStatusMessage: String = ""
+
     // Pantry item picker
     @Query(filter: #Predicate<FreshliItem> { !$0.isConsumed && !$0.isShared && !$0.isDonated },
            sort: [SortDescriptor(\FreshliItem.expiryDate)])
@@ -39,6 +55,7 @@ struct CommunityCreateListingView: View {
 
     private var isFormValid: Bool {
         !itemName.trimmingCharacters(in: .whitespaces).isEmpty
+            && selectedArea != nil
     }
 
     var body: some View {
@@ -47,6 +64,7 @@ struct CommunityCreateListingView: View {
                 listingTypeToggle
                 freshliItemPicker
                 formFields
+                areaCard
                 pickupFields
                 safetyNote
                 submitButton
@@ -66,6 +84,18 @@ struct CommunityCreateListingView: View {
         .onAppear {
             if let prefill = prefillItemName, !prefill.isEmpty, itemName.isEmpty {
                 itemName = prefill
+            }
+            // Kick off area resolution as soon as the form opens so
+            // the user sees their detected neighbourhood inline rather
+            // than typing it in. Idempotent — won't re-run if we
+            // already have a saved current_area_id.
+            if selectedArea == nil {
+                Task { await loadOrResolveArea() }
+            }
+        }
+        .sheet(isPresented: $showAreaPicker) {
+            AreaPickerSheet(initial: resolvedArea) { row in
+                Task { await applySelectedArea(row) }
             }
         }
     }
@@ -259,12 +289,6 @@ struct CommunityCreateListingView: View {
 
     private var pickupFields: some View {
         VStack(spacing: PSSpacing.lg) {
-            fieldGroup(label: String(localized: "Area / Neighborhood")) {
-                TextField(String(localized: "e.g. Downtown, Westside"), text: $areaName)
-                    .font(.system(size: 16))
-                    .foregroundStyle(PSColors.textPrimary)
-            }
-
             if listingType == "share" {
                 fieldGroup(label: String(localized: "Pickup Address")) {
                     TextField(String(localized: "Address or meeting point"), text: $pickupAddress)
@@ -279,6 +303,179 @@ struct CommunityCreateListingView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Area Card
+    //
+    // Inline confirmation UI for the auto-detected neighbourhood. The
+    // single most important affordance in the form: it teaches the
+    // user that listings are scoped to an area, and gives them a
+    // one-tap path to confirm or change it.
+
+    private var areaCard: some View {
+        VStack(alignment: .leading, spacing: PSSpacing.sm) {
+            HStack(spacing: 6) {
+                Text(String(localized: "Sharing in"))
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(PSColors.textSecondary)
+                Text("*")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(PSColors.expiredRed)
+                Spacer()
+            }
+
+            HStack(spacing: PSSpacing.md) {
+                ZStack {
+                    Circle()
+                        .fill(PSColors.primaryGreen.opacity(0.12))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: "location.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(PSColors.primaryGreen)
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    if let selected = selectedArea {
+                        Text(selected.name)
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundStyle(PSColors.textPrimary)
+                        Text(selected.displayName)
+                            .font(.system(size: 13))
+                            .foregroundStyle(PSColors.textSecondary)
+                    } else if let resolved = resolvedArea {
+                        Text(resolved.neighbourhood)
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundStyle(PSColors.textPrimary)
+                        Text(resolved.displayName)
+                            .font(.system(size: 13))
+                            .foregroundStyle(PSColors.textSecondary)
+                    } else if isResolvingArea {
+                        Text(String(localized: "Detecting your area…"))
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(PSColors.textPrimary)
+                        Text(String(localized: "Using your location"))
+                            .font(.system(size: 13))
+                            .foregroundStyle(PSColors.textSecondary)
+                    } else {
+                        Text(String(localized: "Choose your area"))
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(PSColors.textPrimary)
+                        Text(String(localized: "So neighbours nearby can find this listing"))
+                            .font(.system(size: 13))
+                            .foregroundStyle(PSColors.textSecondary)
+                    }
+                }
+                Spacer()
+
+                if isResolvingArea && resolvedArea == nil {
+                    ProgressView().controlSize(.small)
+                }
+            }
+            .padding(.vertical, 14)
+            .padding(.horizontal, 16)
+            .background(PSColors.backgroundSecondary.opacity(0.5))
+            .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
+                    .strokeBorder(selectedArea == nil ? PSColors.expiredRed.opacity(0.4) : PSColors.border, lineWidth: 1)
+            )
+
+            HStack(spacing: PSSpacing.sm) {
+                if selectedArea == nil, let resolved = resolvedArea {
+                    Button {
+                        Task { await confirmResolved(resolved) }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "checkmark.circle.fill")
+                            Text(String(localized: "Confirm"))
+                                .font(.system(size: 14, weight: .bold))
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity)
+                        .background(PSColors.primaryGreen, in: Capsule())
+                        .foregroundStyle(.white)
+                    }
+                }
+                Button {
+                    showAreaPicker = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "pencil")
+                        Text(selectedArea == nil
+                             ? String(localized: "Change")
+                             : String(localized: "Change area"))
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity)
+                    .background(PSColors.backgroundSecondary, in: Capsule())
+                    .foregroundStyle(PSColors.textPrimary)
+                }
+            }
+
+            if let msg = areaStatusMessage.isEmpty ? nil : areaStatusMessage {
+                Text(msg)
+                    .font(.system(size: 12))
+                    .foregroundStyle(PSColors.textTertiary)
+                    .padding(.top, 2)
+            }
+        }
+    }
+
+    // MARK: - Area resolution helpers
+
+    /// Decide whether to load a saved current_area_id or kick off a
+    /// fresh CLGeocoder reverse lookup. Called once on `.onAppear`.
+    private func loadOrResolveArea() async {
+        guard let userId = authManager.currentUserId else { return }
+        isResolvingArea = true
+        defer { isResolvingArea = false }
+
+        // Fast path: the user already has a saved area from a prior
+        // session. Use it as the default and skip CLGeocoder entirely.
+        if let saved = try? await AreaService.shared.loadCurrentArea(for: userId) {
+            selectedArea = saved
+            areaName = saved.name
+            return
+        }
+
+        // Auto-detect via CLLocation → CLGeocoder. Failures don't
+        // block the form; the user can still tap "Change" and pick.
+        do {
+            let location = try await LocationService.shared.requestLocation()
+            let resolved = try await LocationService.shared.reverseGeocode(location.coordinate)
+            self.resolvedArea = resolved
+            areaStatusMessage = String(localized: "Tap Confirm to share with this area, or Change to pick a different one.")
+        } catch let locErr as LocationError {
+            areaStatusMessage = locErr.errorDescription
+                ?? String(localized: "Couldn't detect your area — tap Change to pick one.")
+        } catch {
+            areaStatusMessage = String(localized: "Couldn't detect your area — tap Change to pick one.")
+        }
+    }
+
+    /// User accepted the auto-detected neighbourhood. Resolves it
+    /// against `community_areas` (creating if necessary) and saves
+    /// to their profile so it sticks across sessions.
+    private func confirmResolved(_ resolved: ResolvedArea) async {
+        isResolvingArea = true
+        defer { isResolvingArea = false }
+        do {
+            let row = try await AreaService.shared.findOrCreate(resolved)
+            await applySelectedArea(row)
+        } catch {
+            areaStatusMessage = String(localized: "Couldn't save that area. Please try again.")
+        }
+    }
+
+    /// Common sink for both the auto-detect-confirm path and the
+    /// area-picker selection path.
+    private func applySelectedArea(_ row: AreaRow) async {
+        selectedArea = row
+        areaName = row.name
+        areaStatusMessage = ""
+        try? await AreaService.shared.setCurrentArea(row)
     }
 
     // MARK: - Reusable Field Group
@@ -383,7 +580,10 @@ struct CommunityCreateListingView: View {
             pickupAddress: pickupAddress.isEmpty ? nil : pickupAddress,
             pickupNotes: pickupNotes.isEmpty ? nil : pickupNotes,
             foodCategory: foodCategory,
-            areaName: areaName.isEmpty ? nil : areaName
+            areaName: areaName.isEmpty ? nil : areaName,
+            areaId: selectedArea?.id,
+            latitude: selectedArea?.centroidLat,
+            longitude: selectedArea?.centroidLng
         )
 
         Task {
