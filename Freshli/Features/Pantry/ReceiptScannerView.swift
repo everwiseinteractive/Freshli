@@ -118,31 +118,39 @@ struct ReceiptScannerView: View {
     }
 
     private var emptyStateView: some View {
-        VStack(spacing: PSSpacing.xl) {
-            Spacer()
-
-            VStack(spacing: PSSpacing.lg) {
-                Image(systemName: "receipt.fill")
-                    .font(.system(size: 48))
-                    .foregroundStyle(PSColors.primaryGreen)
+        ScrollView {
+            VStack(spacing: PSSpacing.xl) {
+                receiptHero
+                    .padding(.top, PSSpacing.xl)
 
                 VStack(spacing: PSSpacing.sm) {
-                    Text("Scan Your Receipt")
-                        .font(.system(size: 18, weight: .bold))
+                    Text(String(localized: "Turn any receipt into a stocked pantry"))
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundStyle(PSColors.textPrimary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, PSSpacing.screenHorizontal)
 
-                    Text("Take a photo or upload a receipt to automatically add items to your pantry")
-                        .font(.system(size: 14, weight: .regular))
+                    Text(String(localized: "Snap your shopping receipt and Freshli's on-device OCR pulls every item, category, and price — all parsed in a heartbeat."))
+                        .font(.system(size: 15))
                         .foregroundStyle(PSColors.textSecondary)
                         .multilineTextAlignment(.center)
+                        .lineSpacing(2)
+                        .padding(.horizontal, PSSpacing.xxl)
                 }
+
+                receiptFeaturePills
+
+                receiptPrivacyChip
+
+                Spacer(minLength: PSSpacing.xl)
             }
-
-            Spacer()
-
+            .frame(maxWidth: .infinity)
+        }
+        .scrollIndicators(.hidden)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             VStack(spacing: PSSpacing.md) {
                 PSButton(
-                    title: "Take Photo",
+                    title: String(localized: "Take Photo"),
                     icon: "camera.fill",
                     style: .primary,
                     isFullWidth: true,
@@ -150,7 +158,7 @@ struct ReceiptScannerView: View {
                 )
 
                 PSButton(
-                    title: "Choose from Photos",
+                    title: String(localized: "Choose from Photos"),
                     icon: "photo.fill",
                     style: .secondary,
                     isFullWidth: true,
@@ -158,8 +166,227 @@ struct ReceiptScannerView: View {
                 )
             }
             .padding(PSSpacing.screenHorizontal)
+            .padding(.top, PSSpacing.md)
             .padding(.bottom, PSSpacing.xl)
+            .background {
+                LinearGradient(
+                    colors: [
+                        PSColors.backgroundSecondary.opacity(0),
+                        PSColors.backgroundSecondary
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea(edges: .bottom)
+            }
         }
+    }
+
+    // MARK: - Empty-state hero
+    //
+    // Layered composition: aurora gradient halo → glass-plate
+    // backdrop → stylised receipt with three "scanned" line items
+    // → animated horizontal scan beam that sweeps top-to-bottom.
+    // The beam is the single dynamic element so the layout stays
+    // GPU-cheap; everything else is static SF Symbols + shapes.
+
+    @State private var receiptScanLineY: CGFloat = -40
+    @State private var receiptHaloPulse: Bool = false
+
+    private var receiptHero: some View {
+        ZStack {
+            // Layer 1 — soft aurora halo
+            Circle()
+                .fill(
+                    AngularGradient(
+                        colors: [
+                            PSColors.primaryGreen.opacity(0.55),
+                            PSColors.accentTeal.opacity(0.45),
+                            PSColors.infoBlue.opacity(0.50),
+                            PSColors.primaryGreen.opacity(0.55)
+                        ],
+                        center: .center
+                    )
+                )
+                .blur(radius: 28)
+                .frame(width: 220, height: 220)
+                .opacity(receiptHaloPulse ? 1.0 : 0.78)
+                .scaleEffect(receiptHaloPulse ? 1.04 : 0.96)
+
+            // Layer 2 — glass plate
+            RoundedRectangle(cornerRadius: 32, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 32, style: .continuous)
+                        .strokeBorder(.white.opacity(0.5), lineWidth: 1)
+                )
+                .frame(width: 180, height: 200)
+                .shadow(color: PSColors.primaryGreen.opacity(0.20), radius: 22, x: 0, y: 12)
+
+            // Layer 3 — stylised receipt with scan beam + item lines
+            ZStack(alignment: .top) {
+                receiptCard
+                // The beam — clipped to the receipt rect so it never
+                // bleeds outside the paper.
+                LinearGradient(
+                    colors: [
+                        PSColors.primaryGreen.opacity(0),
+                        PSColors.primaryGreen.opacity(0.85),
+                        PSColors.primaryGreen.opacity(0)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(width: 110, height: 26)
+                .blur(radius: 4)
+                .offset(y: receiptScanLineY)
+                .mask(receiptCard)
+            }
+        }
+        .frame(height: 240)
+        .accessibilityHidden(true)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) {
+                receiptHaloPulse = true
+            }
+            withAnimation(.linear(duration: 1.8).repeatForever(autoreverses: false)) {
+                receiptScanLineY = 180
+            }
+        }
+    }
+
+    /// The little paper-receipt rectangle with three "scanned" item
+    /// lines. Used both as the visible card and as the mask for the
+    /// scan-beam so the highlight stays inside the paper outline.
+    private var receiptCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Header band — represents the store name strip
+            RoundedRectangle(cornerRadius: 4)
+                .fill(PSColors.primaryGreen.opacity(0.85))
+                .frame(width: 60, height: 6)
+                .padding(.top, 14)
+                .padding(.leading, 14)
+
+            VStack(spacing: 7) {
+                receiptItemLine(width: 80)
+                receiptItemLine(width: 64)
+                receiptItemLine(width: 72)
+            }
+            .padding(.horizontal, 14)
+            .padding(.top, 8)
+
+            Spacer(minLength: 0)
+
+            // Total row — bolder bar at the bottom
+            HStack(spacing: 6) {
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(PSColors.textPrimary.opacity(0.65))
+                    .frame(width: 40, height: 8)
+                Spacer()
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(PSColors.primaryGreen)
+                    .frame(width: 28, height: 8)
+            }
+            .padding(.horizontal, 14)
+            .padding(.bottom, 14)
+        }
+        .frame(width: 110, height: 150)
+        .background(.white)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .strokeBorder(PSColors.borderLight, lineWidth: 0.5)
+        )
+        .shadow(color: .black.opacity(0.08), radius: 6, x: 0, y: 4)
+    }
+
+    private func receiptItemLine(width: CGFloat) -> some View {
+        HStack(spacing: 6) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(PSColors.textPrimary.opacity(0.55))
+                .frame(width: width, height: 5)
+            Spacer()
+            RoundedRectangle(cornerRadius: 2)
+                .fill(PSColors.textSecondary.opacity(0.5))
+                .frame(width: 18, height: 5)
+        }
+    }
+
+    private var receiptFeaturePills: some View {
+        VStack(alignment: .leading, spacing: PSSpacing.sm) {
+            receiptPillRow(
+                icon: "tag.fill",
+                tint: PSColors.primaryGreen,
+                title: String(localized: "Auto-categorise every item"),
+                detail: String(localized: "Produce, dairy, bakery — sorted instantly")
+            )
+            receiptPillRow(
+                icon: "calendar.badge.plus",
+                tint: PSColors.secondaryAmber,
+                title: String(localized: "Pulls expiry dates"),
+                detail: String(localized: "Smart shelf-life estimates per item, ready to edit")
+            )
+            receiptPillRow(
+                icon: "sterlingsign.circle.fill",
+                tint: PSColors.accentTeal,
+                title: String(localized: "Tracks what you spend"),
+                detail: String(localized: "Builds your impact dashboard from real receipts")
+            )
+        }
+        .padding(.horizontal, PSSpacing.screenHorizontal)
+    }
+
+    private func receiptPillRow(icon: String, tint: Color, title: String, detail: String) -> some View {
+        HStack(spacing: PSSpacing.md) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(tint.opacity(0.16))
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(tint)
+            }
+            .frame(width: 44, height: 44)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(PSColors.textPrimary)
+                Text(detail)
+                    .font(.system(size: 13))
+                    .foregroundStyle(PSColors.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(PSSpacing.md)
+        .background(PSColors.surfaceCard)
+        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
+                .strokeBorder(PSColors.borderLight, lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
+    }
+
+    private var receiptPrivacyChip: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "lock.shield.fill")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(PSColors.primaryGreen)
+            Text(String(localized: "On-device OCR — receipts never leave your iPhone"))
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(PSColors.textSecondary)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(PSColors.primaryGreen.opacity(0.08))
+        .clipShape(Capsule())
+        .overlay(
+            Capsule().strokeBorder(PSColors.primaryGreen.opacity(0.15), lineWidth: 1)
+        )
+        .padding(.horizontal, PSSpacing.screenHorizontal)
     }
 
     private var loadingView: some View {
