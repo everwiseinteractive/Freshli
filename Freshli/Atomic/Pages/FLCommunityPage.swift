@@ -30,6 +30,13 @@ struct FLCommunityPage: View {
     @State private var reportReason = ""
     @State private var reportDetails = ""
     @State private var feedError: String?
+    /// True while the area-picker sheet (header pill tap) is showing.
+    @State private var showAreaPicker = false
+    /// Mirror of `AreaService.shared.currentArea`. We can't observe
+    /// the singleton's `@Observable` properties from a property
+    /// wrapper here without owning the value, so we copy it on
+    /// `.task` and on `.sheet` dismiss.
+    @State private var headerArea: AreaRow?
     @Namespace private var tabNamespace
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -129,7 +136,108 @@ struct FLCommunityPage: View {
         }
         .task {
             logger.info("FLCommunityPage appeared — tab: \(activeTab)")
+            // Hydrate the area switcher's header label before
+            // refreshFeed() runs (refreshFeed loads the area too,
+            // but doing it here means the pill renders with a
+            // value on first paint instead of after the network
+            // round-trip).
+            if let userId = authManager.currentUserId {
+                _ = try? await AreaService.shared.loadCurrentArea(for: userId)
+            }
+            headerArea = AreaService.shared.currentArea
             await refreshFeed()
+        }
+        .sheet(isPresented: $showAreaPicker) {
+            AreaPickerSheet(initial: nil) { row in
+                Task {
+                    try? await AreaService.shared.setCurrentArea(row)
+                    headerArea = row
+                    await refreshFeed()
+                }
+            }
+        }
+    }
+
+    // MARK: - Area Switcher (header pill)
+    //
+    // Tappable pill that surfaces the current area + member count
+    // and, on tap, opens the AreaPickerSheet. The sheet's onSelect
+    // callback persists the new area to `profiles.current_area_id`
+    // and refreshes the feed in the new geofence.
+
+    private var areaSwitcherPill: some View {
+        Button {
+            PSHaptics.shared.lightTap()
+            showAreaPicker = true
+        } label: {
+            HStack(spacing: PSSpacing.sm) {
+                Image(systemName: "location.fill")
+                    .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
+                    .foregroundStyle(PSColors.primaryGreen)
+                VStack(alignment: .leading, spacing: 0) {
+                    if let area = headerArea {
+                        Text(area.name)
+                            .font(.system(size: PSLayout.scaledFont(14), weight: .bold))
+                            .foregroundStyle(PSColors.textPrimary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                        // Show "<member_count> neighbours" when ≥ 1
+                        // is registered to this area; falls back to
+                        // the locality string for empty areas so the
+                        // pill never looks broken.
+                        if area.memberCount > 0 {
+                            Text(membersLabel(count: area.memberCount))
+                                .font(.system(size: PSLayout.scaledFont(11)))
+                                .foregroundStyle(PSColors.textSecondary)
+                                .lineLimit(1)
+                        } else if let locality = area.locality, !locality.isEmpty,
+                                  locality != area.name {
+                            Text(locality)
+                                .font(.system(size: PSLayout.scaledFont(11)))
+                                .foregroundStyle(PSColors.textSecondary)
+                                .lineLimit(1)
+                        }
+                    } else {
+                        Text(String(localized: "Choose your area"))
+                            .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
+                            .foregroundStyle(PSColors.textPrimary)
+                            .lineLimit(1)
+                        Text(String(localized: "Tap to set your neighbourhood"))
+                            .font(.system(size: PSLayout.scaledFont(11)))
+                            .foregroundStyle(PSColors.textSecondary)
+                            .lineLimit(1)
+                    }
+                }
+                Spacer(minLength: PSSpacing.sm)
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: PSLayout.scaledFont(11), weight: .semibold))
+                    .foregroundStyle(PSColors.textSecondary)
+            }
+            .padding(.horizontal, PSSpacing.md)
+            .padding(.vertical, PSSpacing.sm)
+            .background(PSColors.backgroundSecondary)
+            .clipShape(Capsule())
+            .overlay(Capsule().strokeBorder(PSColors.border, lineWidth: 1))
+        }
+        .buttonStyle(PressableButtonStyle())
+        .accessibilityLabel(
+            headerArea.map {
+                String(localized: "Current area: \($0.name). Tap to change.")
+            } ?? String(localized: "Choose your community area")
+        )
+        .accessibilityHint(String(localized: "Opens the area picker"))
+    }
+
+    /// Pluralised "neighbour"/"neighbours" string. Stops at 999+ so
+    /// the pill never overflows on narrow screens.
+    private func membersLabel(count: Int) -> String {
+        let capped = min(count, 999)
+        if capped == 1 {
+            return String(localized: "1 neighbour")
+        } else if count > 999 {
+            return String(localized: "999+ neighbours")
+        } else {
+            return String(localized: "\(capped) neighbours")
         }
     }
 
@@ -203,7 +311,17 @@ struct FLCommunityPage: View {
             }
             .adaptiveHPadding()
             .padding(.top, PSSpacing.md)
-            .padding(.bottom, PSSpacing.lg)
+            .padding(.bottom, PSSpacing.sm)
+
+            // Area-switcher pill — sits between title and tabs so
+            // it's always visible. Reflects the geofence: every
+            // listing in the feed is from the same area, and tapping
+            // the pill lets the user switch areas (e.g. when
+            // travelling, or when they want to see a neighbouring
+            // community).
+            areaSwitcherPill
+                .adaptiveHPadding()
+                .padding(.bottom, PSSpacing.md)
 
             // Search bar (conditionally shown)
             if showSearch {
@@ -909,6 +1027,10 @@ struct FLCommunityPage: View {
             _ = try? await AreaService.shared.loadCurrentArea(for: userId)
         }
         let areaId = AreaService.shared.currentArea?.id
+        // Keep the header pill in sync — refreshFeed runs on
+        // pull-to-refresh AND after switch-area, so this is the
+        // canonical place to push the latest into local @State.
+        headerArea = AreaService.shared.currentArea
 
         await communityService.fetchFeed(
             areaId: areaId,

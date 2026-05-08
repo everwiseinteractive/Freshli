@@ -268,17 +268,11 @@ struct AreaPickerSheet: View {
                 errorMessage = String(localized: "Couldn't find that place.")
                 return
             }
-            // iOS 26 deprecated `placemark` on MKMapItem in favour of
-            // `location.coordinate`. Use the new API and prefer
-            // `addressRepresentations` for naming, with sensible
-            // fallbacks for older runtimes.
-            let coord: CLLocationCoordinate2D
-            if let loc = item.location {
-                coord = loc.coordinate
-            } else {
-                errorMessage = String(localized: "Couldn't find that place.")
-                return
-            }
+            // iOS 26 made `MKMapItem.location` non-optional (it
+            // replaces the deprecated `placemark` property). No
+            // optional unwrap is needed — matches the pattern in
+            // `NeutralSpotService.searchNearbyUserSpots`.
+            let coord = item.location.coordinate
             let resolvedArea = try await LocationService.shared.reverseGeocode(coord)
             await selectResolved(resolvedArea)
         } catch {
@@ -289,13 +283,24 @@ struct AreaPickerSheet: View {
 
 // MARK: - SearchCompleterCoordinator
 //
-// Bridges UIKit's `MKLocalSearchCompleter` (delegate-based) to a
+// Bridges MapKit's `MKLocalSearchCompleter` (delegate-based) to a
 // SwiftUI-friendly `@Observable` value. Updates `results` whenever
-// completer fires.
+// the completer publishes new suggestions.
+//
+// `@preconcurrency MKLocalSearchCompleterDelegate` is the canonical
+// pattern for adopting a delegate protocol whose method signatures
+// haven't yet been annotated `@MainActor` in the SDK, even though
+// the runtime guarantees main-thread delivery. Without this, Swift 6
+// strict concurrency would complain that the delegate methods can't
+// mutate MainActor-isolated state. With it, the methods adopt the
+// class's MainActor isolation — matching the documented runtime
+// behaviour and avoiding a `Task { @MainActor in … }` hop that would
+// itself trip a Sendable warning when capturing the (non-Sendable)
+// MKLocalSearchCompleter argument.
 
 @MainActor
 @Observable
-final class SearchCompleterCoordinator: NSObject, MKLocalSearchCompleterDelegate {
+final class SearchCompleterCoordinator: NSObject, @preconcurrency MKLocalSearchCompleterDelegate {
     private let completer = MKLocalSearchCompleter()
     var results: [MKLocalSearchCompletion] = []
 
@@ -314,16 +319,11 @@ final class SearchCompleterCoordinator: NSObject, MKLocalSearchCompleterDelegate
         completer.queryFragment = trimmed
     }
 
-    nonisolated func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
-        let snapshot = completer.results
-        Task { @MainActor in
-            self.results = snapshot
-        }
+    func completerDidUpdateResults(_ completer: MKLocalSearchCompleter) {
+        results = completer.results
     }
 
-    nonisolated func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
-        Task { @MainActor in
-            self.results = []
-        }
+    func completer(_ completer: MKLocalSearchCompleter, didFailWithError error: Error) {
+        results = []
     }
 }

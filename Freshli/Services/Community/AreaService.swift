@@ -24,13 +24,18 @@ import os
 // sharing local and minimising pickup-vehicle emissions, exactly the
 // product brief.
 //
-// All public methods are `nonisolated` so they're callable from
-// any actor context (LocationService is MainActor, but background
-// sync paths may also resolve areas).
+// `@Observable @MainActor` so SwiftUI views can read `currentArea`
+// without explicit subscription, and so all mutations (which touch
+// the network) happen on the main actor — the surface area is small
+// (handful of RPCs) and keeping it MainActor avoids Sendable churn
+// across actor boundaries for the UI surfaces that actually call it.
 // ══════════════════════════════════════════════════════════════════
 
 @Observable @MainActor
 final class AreaService {
+    /// Singleton — matches the LocationService.shared pattern used
+    /// elsewhere in the codebase. SWIFT_APPROACHABLE_CONCURRENCY in
+    /// the project settings allows this without `nonisolated(unsafe)`.
     static let shared = AreaService()
 
     // MARK: - Public observable state
