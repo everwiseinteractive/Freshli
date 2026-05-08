@@ -136,17 +136,25 @@ final class LocationService: NSObject {
 
     // MARK: - Reverse geocoding (Apple Maps)
     //
-    // `CLGeocoder` is Apple's first-party reverse geocoder — same data
-    // path as Apple Maps. We translate raw coordinates into the
-    // hierarchical neighbourhood / locality / country triple that the
-    // Areas feature uses to resolve a `community_areas` row via the
-    // `find_or_create_area` RPC.
+    // iOS 26 soft-deprecated `CLGeocoder` in favour of
+    // `MKReverseGeocodingRequest` / `MKGeocodingRequest`, but the
+    // MapKit replacements only expose `MKAddress` — a formatted
+    // string pair (`shortAddress` / `fullAddress`) with no
+    // structured neighbourhood / locality / country fields. The
+    // Areas feature needs those structured fields to build a
+    // canonical slug and disambiguate same-named neighbourhoods
+    // across cities, so we keep `CLGeocoder` and ring-fence the
+    // deprecation by routing every call through helpers marked
+    // `@available(iOS, deprecated: 26.0)`. Swift suppresses the
+    // deprecation warning inside a deprecated function, so callers
+    // (`reverseGeocode` / `forwardGeocode`) build cleanly. When
+    // MapKit eventually exposes structured fields we'll swap this
+    // out and retire the helpers — until then this is the only
+    // path that gives us the data we need.
     //
-    // Privacy: the geocoder is invoked over Apple's privacy-preserving
-    // service (see https://developer.apple.com/documentation/corelocation/clgeocoder).
-    // No third-party servers see the user's coordinate.
+    // Privacy: CLGeocoder is invoked over Apple's privacy-preserving
+    // service. No third-party servers see the user's coordinate.
 
-    private let geocoder = CLGeocoder()
     private var lastReverseGeocode: (coord: CLLocationCoordinate2D, result: ResolvedArea, at: Date)?
 
     /// Reverse-geocode a coordinate into a human-readable neighbourhood
@@ -154,8 +162,7 @@ final class LocationService: NSObject {
     ///
     /// Result is cached in-memory for 5 minutes per coordinate (rounded
     /// to 3 decimals, ~110m) so consecutive calls from a fresh fix
-    /// don't re-hit Apple's reverse-geocode service. CLGeocoder is
-    /// rate-limited; callers should not invoke this in tight loops.
+    /// don't re-hit Apple's reverse-geocode service.
     func reverseGeocode(_ coordinate: CLLocationCoordinate2D) async throws -> ResolvedArea {
         // 5-minute cache — the user's neighbourhood doesn't change.
         if let last = lastReverseGeocode,
@@ -164,21 +171,74 @@ final class LocationService: NSObject {
             return last.result
         }
 
-        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-        let placemarks: [CLPlacemark]
+        let placemark: CLPlacemark
         do {
-            placemarks = try await geocoder.reverseGeocodeLocation(location)
+            placemark = try await Self.runReverseGeocode(coordinate: coordinate)
         } catch {
             logger.warning("Reverse geocode failed: \(error.localizedDescription, privacy: .public)")
             throw LocationError.geocodeFailed
         }
-        guard let placemark = placemarks.first else {
+
+        let resolved = Self.resolveArea(from: placemark, fallbackCoordinate: coordinate)
+        lastReverseGeocode = (coordinate, resolved, Date())
+        return resolved
+    }
+
+    /// Forward geocode — turn a free-text place query into a coordinate
+    /// + canonicalised area triple. Used by the manual area picker
+    /// when the user types "Camden Town" instead of using GPS.
+    func forwardGeocode(_ query: String) async throws -> ResolvedArea {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { throw LocationError.geocodeFailed }
+
+        let placemark: CLPlacemark
+        do {
+            placemark = try await Self.runForwardGeocode(query: trimmed)
+        } catch {
+            logger.warning("Forward geocode failed: \(error.localizedDescription, privacy: .public)")
             throw LocationError.geocodeFailed
         }
 
-        // Pick the most specific neighbourhood label CL provides:
-        //   subLocality (e.g. "Headingley") → locality (e.g. "Leeds")
-        //   → name (e.g. "Whitehall Road"). Always prefer subLocality.
+        guard let coord = placemark.location?.coordinate else {
+            throw LocationError.geocodeFailed
+        }
+        let resolved = Self.resolveArea(from: placemark, fallbackCoordinate: coord)
+        lastReverseGeocode = (coord, resolved, Date())
+        return resolved
+    }
+
+    /// CLGeocoder reverse-lookup helper. Marked `@available(iOS,
+    /// deprecated: 26.0)` so Swift suppresses the deprecation
+    /// warning here — the callers above stay warning-free.
+    @available(iOS, deprecated: 26.0, message: "Pending MapKit MKAddress structured-field exposure")
+    private static func runReverseGeocode(coordinate: CLLocationCoordinate2D) async throws -> CLPlacemark {
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        let placemarks = try await CLGeocoder().reverseGeocodeLocation(location)
+        guard let placemark = placemarks.first else {
+            throw LocationError.geocodeFailed
+        }
+        return placemark
+    }
+
+    /// CLGeocoder forward-lookup helper, deprecation-suppressed for
+    /// the same reason as `runReverseGeocode`.
+    @available(iOS, deprecated: 26.0, message: "Pending MapKit MKAddress structured-field exposure")
+    private static func runForwardGeocode(query: String) async throws -> CLPlacemark {
+        let placemarks = try await CLGeocoder().geocodeAddressString(query)
+        guard let placemark = placemarks.first else {
+            throw LocationError.geocodeFailed
+        }
+        return placemark
+    }
+
+    /// Translate a CLPlacemark into our `ResolvedArea` value.
+    /// Centralised so the reverse + forward paths share one labelling
+    /// strategy. Picks the most specific neighbourhood label CL
+    /// provides: subLocality → locality → subAdministrativeArea → name.
+    private static func resolveArea(
+        from placemark: CLPlacemark,
+        fallbackCoordinate: CLLocationCoordinate2D
+    ) -> ResolvedArea {
         let neighbourhood = placemark.subLocality
             ?? placemark.locality
             ?? placemark.subAdministrativeArea
@@ -193,48 +253,20 @@ final class LocationService: NSObject {
         let country = placemark.country ?? ""
         let countryCode = placemark.isoCountryCode ?? ""
 
-        // Display name: "<Neighbourhood>, <City>, <Country>" when all
-        // three are known; degrade gracefully when they aren't.
         var parts: [String] = [neighbourhood]
         if !locality.isEmpty, locality != neighbourhood { parts.append(locality) }
         if !country.isEmpty { parts.append(country) }
         let displayName = parts.joined(separator: ", ")
 
-        let resolved = ResolvedArea(
+        let coord = placemark.location?.coordinate ?? fallbackCoordinate
+        return ResolvedArea(
             neighbourhood: neighbourhood,
             locality: locality,
             country: country,
             countryCode: countryCode,
             displayName: displayName,
-            coordinate: coordinate
+            coordinate: coord
         )
-        lastReverseGeocode = (coordinate, resolved, Date())
-        return resolved
-    }
-
-    /// Forward geocode — turn a free-text place query into a coordinate
-    /// + canonicalised area triple. Used by the manual area picker
-    /// when the user types "Camden Town" instead of using GPS.
-    func forwardGeocode(_ query: String) async throws -> ResolvedArea {
-        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { throw LocationError.geocodeFailed }
-
-        let placemarks: [CLPlacemark]
-        do {
-            placemarks = try await geocoder.geocodeAddressString(trimmed)
-        } catch {
-            logger.warning("Forward geocode failed: \(error.localizedDescription, privacy: .public)")
-            throw LocationError.geocodeFailed
-        }
-        guard let placemark = placemarks.first,
-              let coord = placemark.location?.coordinate else {
-            throw LocationError.geocodeFailed
-        }
-
-        // Re-use reverseGeocode's labelling logic by piping through
-        // it with the resolved coordinate — keeps neighbourhood vs
-        // locality vs country selection in one place.
-        return try await reverseGeocode(coord)
     }
 
     /// Treat coordinates as equal when their 3-decimal rounding (≈110m)

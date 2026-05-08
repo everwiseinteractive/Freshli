@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import CoreLocation
 
 // MARK: - Community Create Listing View
 // Full-featured form for creating Supabase-backed community listings.

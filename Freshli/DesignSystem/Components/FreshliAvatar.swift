@@ -39,6 +39,11 @@ public enum AvatarSize: CGFloat {
     }
 }
 
+// `public struct ... View` cancels SwiftUI's implicit `@MainActor`
+// inference on `body` in Swift 6, so we annotate explicitly. Doing
+// this at the type level keeps every member — stored properties,
+// computed properties, the body — on the same actor, which matches
+// what callers expect.
 @MainActor
 public struct FreshliAvatar: View {
     let displayName: String
@@ -161,11 +166,21 @@ public struct FreshliAvatarPicker: View {
     @Binding var avatarURL: String?
 
     @State private var pickerItem: PhotosPickerItem?
-    @State private var uploadService = AvatarUploadService.shared
     @State private var inlineError: String?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let logger = Logger(subsystem: "com.freshli.app", category: "FreshliAvatarPicker")
+
+    /// AvatarUploadService is a `@MainActor @Observable` singleton.
+    /// Using a computed read (instead of `@State private var =
+    /// AvatarUploadService.shared`) avoids touching a MainActor
+    /// value from `@State`'s nonisolated `init(wrappedValue:)`,
+    /// which is what was generating the eight `Main actor-isolated
+    /// property … cannot be referenced from a nonisolated context`
+    /// warnings in Xcode's strict-concurrency mode. SwiftUI's
+    /// observation system still tracks reads of `.isUploading`
+    /// because `AvatarUploadService` is `@Observable`.
+    private var uploadService: AvatarUploadService { .shared }
 
     public init(displayName: String, userId: UUID, avatarURL: Binding<String?>) {
         self.displayName = displayName
@@ -278,22 +293,44 @@ public struct FreshliAvatarPicker: View {
 
 // MARK: - Previews
 
-#Preview("Avatar — sizes (initials fallback)") {
-    HStack(spacing: 16) {
-        FreshliAvatar(displayName: "Sam Wilson", avatarURL: nil, size: .xs)
-        FreshliAvatar(displayName: "Maya Rodriguez", avatarURL: nil, size: .sm)
-        FreshliAvatar(displayName: "Priya Sharma", avatarURL: nil, size: .md)
-        FreshliAvatar(displayName: "Marcus Tan", avatarURL: nil, size: .lg)
-        FreshliAvatar(displayName: "Sofia Garcia", avatarURL: nil, size: .xl)
+// Both preview bodies are wrapped in private View structs whose
+// `body` is implicitly `@MainActor` (View protocol witness). Without
+// that wrapping, the `#Preview` macro's expanded closure would be
+// nonisolated and Swift 6 would warn that we're calling
+// `@MainActor public struct` initializers from a synchronous
+// nonisolated context. Wrapping puts the calls inside a MainActor
+// body where they're statically valid.
+
+private struct AvatarPreviewSizes: View {
+    var body: some View {
+        HStack(spacing: 16) {
+            FreshliAvatar(displayName: "Sam Wilson", avatarURL: nil, size: .xs)
+            FreshliAvatar(displayName: "Maya Rodriguez", avatarURL: nil, size: .sm)
+            FreshliAvatar(displayName: "Priya Sharma", avatarURL: nil, size: .md)
+            FreshliAvatar(displayName: "Marcus Tan", avatarURL: nil, size: .lg)
+            FreshliAvatar(displayName: "Sofia Garcia", avatarURL: nil, size: .xl)
+        }
+        .padding()
     }
-    .padding()
+}
+
+private struct AvatarPreviewPicker: View {
+    @State private var avatar: String? = nil
+
+    var body: some View {
+        FreshliAvatarPicker(
+            displayName: "Sam Wilson",
+            userId: UUID(),
+            avatarURL: $avatar
+        )
+        .padding()
+    }
+}
+
+#Preview("Avatar — sizes (initials fallback)") {
+    AvatarPreviewSizes()
 }
 
 #Preview("Avatar — picker") {
-    FreshliAvatarPicker(
-        displayName: "Sam Wilson",
-        userId: UUID(),
-        avatarURL: .constant(nil)
-    )
-    .padding()
+    AvatarPreviewPicker()
 }
