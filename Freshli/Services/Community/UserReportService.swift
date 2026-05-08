@@ -46,7 +46,7 @@ final class UserReportService {
     @discardableResult
     func report(
         reportedUserId: UUID,
-        reason: ReportReason,
+        reason: UserReportReason,
         details: String?,
         listingId: UUID? = nil
     ) async -> Bool {
@@ -87,12 +87,12 @@ final class UserReportService {
     }
 }
 
-// MARK: - ReportReason
+// MARK: - UserReportReason
 
 /// Whitelisted reasons the server's `user_reports.reason` CHECK
 /// constraint accepts. Adding a new case here means adding it to the
 /// CHECK constraint and the moderator inbox display map.
-enum ReportReason: String, CaseIterable, Identifiable, Sendable {
+enum UserReportReason: String, CaseIterable, Identifiable, Sendable {
     case harassment      = "harassment"
     case hateSpeech      = "hate_speech"
     case bullying        = "bullying"

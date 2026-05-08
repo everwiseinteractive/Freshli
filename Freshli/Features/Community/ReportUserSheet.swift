@@ -29,7 +29,7 @@ struct ReportUserSheet: View {
 
     @Environment(\.dismiss) private var dismiss
 
-    @State private var selectedReason: ReportReason?
+    @State private var selectedReason: UserReportReason?
     @State private var details: String = ""
     @State private var isSubmitting: Bool = false
     @State private var errorMessage: String?
@@ -95,7 +95,7 @@ struct ReportUserSheet: View {
             Text(String(localized: "Why are you reporting?"))
                 .font(.system(size: 15, weight: .semibold))
             VStack(spacing: 8) {
-                ForEach(ReportReason.allCases) { reason in
+                ForEach(UserReportReason.allCases) { reason in
                     Button {
                         withAnimation(.snappy(duration: 0.15)) {
                             selectedReason = reason

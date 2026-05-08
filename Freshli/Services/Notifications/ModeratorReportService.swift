@@ -177,7 +177,7 @@ final class ModeratorReportService {
 
             let listingIdString = action.record["listing_id"]?.stringValue
             let details         = action.record["details"]?.stringValue
-            let reason          = ReportReason(rawValue: reasonRaw) ?? .other
+            let reason          = UserReportReason(rawValue: reasonRaw) ?? .other
 
             await handleNewReport(
                 reportedUserId: reportedId,
@@ -192,7 +192,7 @@ final class ModeratorReportService {
     private func handleNewReport(
         reportedUserId: UUID,
         reporterId: UUID,
-        reason: ReportReason,
+        reason: UserReportReason,
         details: String?,
         listingId: UUID?
     ) async {
@@ -219,7 +219,7 @@ final class ModeratorReportService {
     // MARK: - Local notification
 
     private func scheduleLocalNotification(
-        reason: ReportReason,
+        reason: UserReportReason,
         reporterName: String,
         reportedName: String,
         details: String?

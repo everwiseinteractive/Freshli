@@ -121,13 +121,13 @@ struct ModeratorInboxView: View {
     private func reportRow(_ report: UserReportRow) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
-                Image(systemName: ReportReason(rawValue: report.reason)?.icon ?? "questionmark.circle")
+                Image(systemName: UserReportReason(rawValue: report.reason)?.icon ?? "questionmark.circle")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(width: 28, height: 28)
                     .background(Color.red.gradient, in: RoundedRectangle(cornerRadius: 8))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(ReportReason(rawValue: report.reason)?.displayName ?? report.reason)
+                    Text(UserReportReason(rawValue: report.reason)?.displayName ?? report.reason)
                         .font(.system(size: 14, weight: .bold))
                     Text(formattedDate(report.createdAt))
                         .font(.system(size: 11))
