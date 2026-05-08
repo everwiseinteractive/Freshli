@@ -39,26 +39,39 @@ struct PerksView: View {
         .background(PSColors.backgroundPrimary)
         .navigationTitle("Zero Waste Perks")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Redeem Reward", isPresented: $showRedeemAlert, presenting: selectedReward) { reward in
-            Button("Redeem \(reward.pointsCost) pts") {
-                redeem(reward)
+        .alert(String(localized: "Redeem Reward"), isPresented: $showRedeemAlert, presenting: selectedReward) { reward in
+            Button(String(localized: "Redeem \(reward.pointsCost) pts")) {
+                Task { await redeem(reward) }
             }
-            Button("Cancel", role: .cancel) { }
+            Button(String(localized: "Cancel"), role: .cancel) { }
         } message: { reward in
-            Text("Redeem \(reward.discountValue) from \(reward.retailer) for \(reward.pointsCost) Zero Waste Points?")
+            Text(String(localized: "Redeem \(reward.title) from \(reward.providerLabel) for \(reward.pointsCost) Zero Waste Points?"))
         }
     }
 
     // MARK: - Redemption
+    //
+    // Dispatches to `PerksService.performRedemption(_:)`, which runs
+    // the actual side-effect — switch app icon, unlock badge, open
+    // a charity URL, or grant a Freshli+ trial. Each returns a
+    // localised success message we surface as a toast; failure
+    // (e.g. the charity URL refused to open) shows a warning.
 
-    private func redeem(_ reward: WasteReward) {
+    private func redeem(_ reward: WasteReward) async {
         guard points >= reward.pointsCost else {
             toastManager.show(.warning(String(localized: "Not enough points yet — keep rescuing!")))
             return
         }
         PSHaptics.shared.success()
         lastRedeemedReward = reward
-        toastManager.show(.success(String(localized: "\(reward.discountValue) from \(reward.retailer) redeemed! Check your email for the code.")))
+
+        if let message = await PerksService.shared.performRedemption(reward) {
+            toastManager.show(.success(message))
+        } else {
+            toastManager.show(.warning(
+                String(localized: "Couldn't redeem that reward right now — please try again.")
+            ))
+        }
     }
 
     // MARK: - Points Hero
@@ -263,11 +276,11 @@ struct PerksView: View {
         return HStack(spacing: PSSpacing.md) {
             ZStack {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(reward.retailerColor.opacity(0.12))
+                    .fill(reward.providerColor.opacity(0.12))
                     .frame(width: PSLayout.scaled(50), height: PSLayout.scaled(50))
-                Text(reward.retailerLogo)
+                Text(reward.providerLogo)
                     .font(.system(size: PSLayout.scaledFont(22), weight: .black))
-                    .foregroundStyle(reward.retailerColor)
+                    .foregroundStyle(reward.providerColor)
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(reward.title)
@@ -277,13 +290,13 @@ struct PerksView: View {
                     .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
                     .foregroundStyle(PSColors.textSecondary)
                     .lineLimit(2)
-                Text(reward.retailer)
+                Text(reward.providerLabel)
                     .font(.system(size: PSLayout.scaledFont(11), weight: .semibold))
-                    .foregroundStyle(reward.retailerColor)
+                    .foregroundStyle(reward.providerColor)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: PSSpacing.xs) {
-                Text(reward.discountValue)
+                Text(reward.summaryValue)
                     .font(.system(size: PSLayout.scaledFont(15), weight: .black, design: .rounded))
                     .foregroundStyle(canAfford ? PSColors.primaryGreen : PSColors.textTertiary)
                 Button {

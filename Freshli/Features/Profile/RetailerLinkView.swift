@@ -1,361 +1,261 @@
 import SwiftUI
-import SwiftData
 
-// MARK: - Retailer Link View
-// Allows users to connect supermarket loyalty accounts so purchases
-// automatically appear in their digital pantry. Architecture is production-ready:
-// swap out `RetailerIntegrationService.simulatedPurchases` for real OAuth flows.
+// ══════════════════════════════════════════════════════════════════
+// MARK: - RetailerLinkView (Coming Soon)
+//
+// Previously this view exposed a list of "connectable" retailers
+// (Tesco, Sainsbury's, Whole Foods, etc.) backed by simulated OAuth
+// + simulated purchase imports. None of it talked to a real retailer
+// API — and shipping a fake "Connect" button on the App Store would
+// (a) mislead users, and (b) draw an App Review reject.
+//
+// Until we have signed retailer partnerships in place, this view is
+// a polished waitlist surface that:
+//
+//   • States the partnership status honestly with the founder's
+//     own copy.
+//   • Lets users tap "Notify me" — a one-tap mailto: opens the
+//     default mail app preaddressed to hello@freshli.app with a
+//     pre-filled subject. No mock waitlist, no email-collection
+//     form that goes nowhere.
+//   • Renders three feature pills so users understand what's
+//     actually coming once partnerships land (auto-import,
+//     points back, exclusive perks).
+//
+// All retailer simulation logic from the old implementation lives in
+// `RetailerIntegrationService` and remains untouched. Reviewer
+// account previews still work for demo purposes — we just don't
+// surface the connect flow to real users.
+// ══════════════════════════════════════════════════════════════════
 
 struct RetailerLinkView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Environment(PSToastManager.self) private var toastManager
     @Environment(\.dismiss) private var dismiss
-
-    @State private var retailerService = RetailerIntegrationService.shared
-    @State private var connectingId: String?
-    @State private var showImportSheet = false
-    @State private var showDisconnectAlert = false
-    @State private var disconnectTarget: RetailerDefinition?
-
-    // MARK: - Body
+    @State private var heroPulse: Bool = false
 
     var body: some View {
         ScrollView {
             VStack(spacing: PSSpacing.xxl) {
-                heroHeader
-                connectedSection
-                availableSection
-                pendingPurchasesSection
-                footerNote
+                heroVisual
+                    .padding(.top, PSSpacing.xxl)
+
+                titleBlock
+                featurePills
+                emailCTA
+
+                Spacer(minLength: PSSpacing.xl)
             }
+            .frame(maxWidth: .infinity)
             .padding(.horizontal, PSSpacing.screenHorizontal)
-            .padding(.vertical, PSSpacing.lg)
+            .padding(.bottom, PSSpacing.xxl)
         }
+        .scrollIndicators(.hidden)
         .background(PSColors.backgroundPrimary)
         .navigationTitle(String(localized: "Supermarket Sync"))
         .navigationBarTitleDisplayMode(.inline)
-        .task { await retailerService.syncAll() }
-        .alert(String(localized: "Disconnect \(disconnectTarget?.name ?? "")"), isPresented: $showDisconnectAlert) {
-            Button(String(localized: "Disconnect"), role: .destructive) {
-                if let r = disconnectTarget { retailerService.disconnect(retailer: r) }
-            }
-            Button(String(localized: "Cancel"), role: .cancel) {}
-        } message: {
-            Text(String(localized: "Future purchases won't be synced. Your existing pantry items won't be removed."))
-        }
     }
 
-    // MARK: - Hero Header
+    // MARK: - Hero visual
+    //
+    // Layered composition consistent with the scanner empty states:
+    // aurora halo → glass plate → palette-rendered shopping-cart
+    // glyph. Communicates "premium feature in the works" without a
+    // literal countdown timer.
 
-    private var heroHeader: some View {
-        VStack(spacing: PSSpacing.md) {
-            Image(systemName: "cart.badge.plus")
-                .font(.system(size: PSLayout.scaledFont(40)))
-                .foregroundStyle(PSColors.primaryGreen)
+    private var heroVisual: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    AngularGradient(
+                        colors: [
+                            PSColors.primaryGreen.opacity(0.55),
+                            PSColors.accentTeal.opacity(0.45),
+                            PSColors.secondaryAmber.opacity(0.55),
+                            PSColors.primaryGreen.opacity(0.55)
+                        ],
+                        center: .center
+                    )
+                )
+                .blur(radius: 30)
+                .frame(width: 240, height: 240)
+                .opacity(heroPulse ? 1.0 : 0.78)
+                .scaleEffect(heroPulse ? 1.04 : 0.96)
 
-            VStack(spacing: PSSpacing.xs) {
-                Text(String(localized: "Connect Your Supermarket"))
-                    .font(.system(size: PSLayout.scaledFont(20), weight: .black, design: .rounded))
-                    .foregroundStyle(PSColors.textPrimary)
-                Text(String(localized: "Link your loyalty card and your shop automatically lands in your pantry — no barcode scanning needed."))
-                    .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
-                    .foregroundStyle(PSColors.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(2)
-            }
-        }
-    }
+            RoundedRectangle(cornerRadius: 38, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 38, style: .continuous)
+                        .strokeBorder(.white.opacity(0.5), lineWidth: 1)
+                )
+                .frame(width: 144, height: 144)
+                .shadow(color: PSColors.primaryGreen.opacity(0.22), radius: 22, x: 0, y: 12)
 
-    // MARK: - Connected Retailers
+            ZStack {
+                Image(systemName: "cart.fill.badge.plus")
+                    .font(.system(size: 60, weight: .regular, design: .rounded))
+                    .symbolRenderingMode(.palette)
+                    .foregroundStyle(.white, PSColors.primaryGreen)
+                    .shadow(color: PSColors.primaryGreen.opacity(0.55), radius: 8, x: 0, y: 4)
 
-    @ViewBuilder
-    private var connectedSection: some View {
-        if !retailerService.connectedRetailers.isEmpty {
-            VStack(alignment: .leading, spacing: PSSpacing.sm) {
-                sectionHeader("Connected", icon: "checkmark.seal.fill", color: PSColors.primaryGreen)
-
-                ForEach(retailerService.connectedRetailers) { retailer in
-                    connectedRetailerRow(retailer)
-                }
-            }
-        }
-    }
-
-    private func connectedRetailerRow(_ retailer: RetailerDefinition) -> some View {
-        HStack(spacing: PSSpacing.lg) {
-            retailerLogo(retailer, size: 48)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(retailer.name)
-                    .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
-                    .foregroundStyle(PSColors.textPrimary)
+                // Floating "soon" badge offset to the corner of the
+                // glyph — clear time-orientation cue without text noise.
                 HStack(spacing: 4) {
-                    Circle().fill(PSColors.primaryGreen).frame(width: 6, height: 6)
-                    Text(String(localized: "Synced · \(retailer.loyaltyProgramName)"))
-                        .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
-                        .foregroundStyle(PSColors.primaryGreen)
+                    Image(systemName: "hourglass")
+                        .font(.system(size: 10, weight: .bold))
+                    Text(String(localized: "Coming Soon"))
+                        .font(.system(size: 10, weight: .bold))
+                        .textCase(.uppercase)
                 }
+                .foregroundStyle(.white)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(PSColors.secondaryAmber.gradient, in: Capsule())
+                .shadow(color: PSColors.secondaryAmber.opacity(0.45), radius: 6, x: 0, y: 3)
+                .offset(x: 60, y: -52)
             }
-
-            Spacer()
-
-            Button {
-                disconnectTarget = retailer
-                showDisconnectAlert = true
-            } label: {
-                Text(String(localized: "Unlink"))
-                    .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
-                    .foregroundStyle(PSColors.expiredRed)
-                    .padding(.horizontal, PSSpacing.md)
-                    .padding(.vertical, PSSpacing.xs)
-                    .background(PSColors.expiredRed.opacity(0.08))
-                    .clipShape(Capsule())
-            }
-            .buttonStyle(PressableButtonStyle())
         }
-        .padding(PSSpacing.lg)
-        .background(PSColors.primaryGreen.opacity(0.04))
-        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
-                .strokeBorder(PSColors.primaryGreen.opacity(0.15), lineWidth: 1)
-        )
+        .frame(height: 240)
+        .accessibilityHidden(true)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 2.4).repeatForever(autoreverses: true)) {
+                heroPulse = true
+            }
+        }
     }
 
-    // MARK: - Available Retailers
+    // MARK: - Title + the founder's copy
+    //
+    // Verbatim from the requirements: this is the exact message the
+    // founder wants users to read here. Short, honest, future-facing.
 
-    private var availableSection: some View {
+    private var titleBlock: some View {
+        VStack(spacing: PSSpacing.sm) {
+            Text(String(localized: "Supermarket Sync is on the way"))
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .foregroundStyle(PSColors.textPrimary)
+                .multilineTextAlignment(.center)
+
+            Text(String(localized: "We're currently reaching out to supermarkets to bring you benefits and perks when using Freshli. When you shop, your purchases will automatically show up in the app — no scanning, no manual entry."))
+                .font(.system(size: 15))
+                .foregroundStyle(PSColors.textSecondary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(2)
+                .padding(.horizontal, PSSpacing.md)
+        }
+    }
+
+    // MARK: - Three previewing capability rows
+
+    private var featurePills: some View {
         VStack(alignment: .leading, spacing: PSSpacing.sm) {
-            sectionHeader("Available", icon: "link.badge.plus", color: PSColors.accentTeal)
-
-            let unconnected = RetailerDefinition.all.filter { !retailerService.connectedRetailerIds.contains($0.id) }
-            ForEach(unconnected) { retailer in
-                availableRetailerRow(retailer)
-            }
+            featurePillRow(
+                icon: "bolt.fill",
+                tint: PSColors.primaryGreen,
+                title: String(localized: "Auto-import every shop"),
+                detail: String(localized: "Receipts arrive in your pantry the moment you check out — no scanning required.")
+            )
+            featurePillRow(
+                icon: "gift.fill",
+                tint: PSColors.secondaryAmber,
+                title: String(localized: "Exclusive partner perks"),
+                detail: String(localized: "Money off, points back and freebies tied to how much food you've rescued.")
+            )
+            featurePillRow(
+                icon: "shield.lefthalf.filled",
+                tint: PSColors.accentTeal,
+                title: String(localized: "Read-only by design"),
+                detail: String(localized: "Freshli will only ever see your purchases — never your payment details or account password.")
+            )
         }
     }
 
-    private func availableRetailerRow(_ retailer: RetailerDefinition) -> some View {
-        HStack(spacing: PSSpacing.lg) {
-            retailerLogo(retailer, size: 48)
+    private func featurePillRow(icon: String, tint: Color, title: String, detail: String) -> some View {
+        HStack(spacing: PSSpacing.md) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(tint.opacity(0.16))
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(tint)
+            }
+            .frame(width: 44, height: 44)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(retailer.name)
-                    .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
+                Text(title)
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(PSColors.textPrimary)
-                HStack(spacing: 4) {
-                    Image(systemName: retailer.supportsAutoSync ? "arrow.triangle.2.circlepath" : "qrcode")
-                        .font(.system(size: PSLayout.scaledFont(10)))
-                        .foregroundStyle(PSColors.textTertiary)
-                    Text(retailer.supportsAutoSync ? "Auto-sync · \(retailer.loyaltyProgramName)" : "Manual import · \(retailer.loyaltyProgramName)")
-                        .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
-                        .foregroundStyle(PSColors.textSecondary)
-                }
+                Text(detail)
+                    .font(.system(size: 13))
+                    .foregroundStyle(PSColors.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-
-            Spacer()
-
-            if connectingId == retailer.id {
-                ProgressView()
-                    .tint(retailer.logoColor)
-                    .frame(width: 60)
-            } else {
-                Button {
-                    connectRetailer(retailer)
-                } label: {
-                    Text(String(localized: "Connect"))
-                        .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, PSSpacing.md)
-                        .padding(.vertical, PSSpacing.xs)
-                        .background(retailer.logoColor)
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(PressableButtonStyle())
-            }
+            Spacer(minLength: 0)
         }
-        .padding(PSSpacing.lg)
+        .padding(PSSpacing.md)
         .background(PSColors.surfaceCard)
         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: PSSpacing.radiusLg, style: .continuous)
                 .strokeBorder(PSColors.borderLight, lineWidth: 1)
         )
+        .shadow(color: .black.opacity(0.04), radius: 4, x: 0, y: 2)
     }
 
-    // MARK: - Pending Purchases
+    // MARK: - Notify-me CTA
+    //
+    // No fake waitlist form. The user taps "Notify me when ready"
+    // and Mail opens preaddressed to hello@freshli.app with subject
+    // "Supermarket Sync — notify me". The team manually mails back
+    // when the feature ships. Honest, zero-infrastructure approach
+    // for a pre-partnership feature.
 
-    @ViewBuilder
-    private var pendingPurchasesSection: some View {
-        let pending = retailerService.pendingPurchases.filter { !$0.isImported }
-        if !pending.isEmpty {
-            VStack(alignment: .leading, spacing: PSSpacing.sm) {
-                sectionHeader("Ready to Import (\(pending.count))", icon: "tray.and.arrow.down.fill", color: PSColors.secondaryAmber)
-
-                ForEach(pending) { purchase in
-                    purchaseRow(purchase)
+    private var emailCTA: some View {
+        VStack(spacing: PSSpacing.sm) {
+            Link(destination: notifyURL) {
+                HStack(spacing: 8) {
+                    Image(systemName: "bell.badge.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                    Text(String(localized: "Notify me when ready"))
+                        .font(.system(size: 16, weight: .bold))
                 }
-
-                Button {
-                    importAll(pending)
-                } label: {
-                    HStack(spacing: PSSpacing.sm) {
-                        Image(systemName: "square.and.arrow.down")
-                        Text(String(localized: "Import All to Pantry"))
-                            .font(.system(size: PSLayout.scaledFont(14), weight: .bold))
-                    }
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, PSSpacing.lg)
-                    .background(PSColors.primaryGreen)
-                    .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusXl, style: .continuous))
-                    .shadow(color: PSColors.primaryGreen.opacity(0.3), radius: 12, y: 4)
-                }
-                .buttonStyle(PressableButtonStyle())
-                .padding(.top, PSSpacing.xs)
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(PSColors.primaryGreen, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .shadow(color: PSColors.primaryGreen.opacity(0.30), radius: 12, x: 0, y: 6)
             }
-        }
-    }
+            .accessibilityLabel(String(localized: "Notify me by email when supermarket sync is available"))
 
-    private func purchaseRow(_ purchase: RetailerPurchase) -> some View {
-        HStack(spacing: PSSpacing.lg) {
-            Text(FoodCategory.fromString(purchase.category).emoji)
-                .font(.system(size: PSLayout.scaledFont(24)))
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(purchase.itemName)
-                    .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
-                    .foregroundStyle(PSColors.textPrimary)
-                Text("\(purchase.retailerName) · \(formatDate(purchase.purchasedAt))")
-                    .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
-                    .foregroundStyle(PSColors.textSecondary)
-            }
-
-            Spacer()
-
-            Button {
-                importSingle(purchase)
-            } label: {
-                Image(systemName: "plus.circle.fill")
-                    .font(.system(size: PSLayout.scaledFont(22)))
-                    .foregroundStyle(PSColors.primaryGreen)
-            }
-            .buttonStyle(PressableButtonStyle())
-        }
-        .padding(.horizontal, PSSpacing.lg)
-        .padding(.vertical, PSSpacing.sm)
-        .background(PSColors.secondaryAmber.opacity(0.05))
-        .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous)
-                .strokeBorder(PSColors.secondaryAmber.opacity(0.15), lineWidth: 1)
-        )
-    }
-
-    // MARK: - Footer
-
-    private var footerNote: some View {
-        VStack(spacing: PSSpacing.xs) {
-            Image(systemName: "lock.shield.fill")
-                .font(.system(size: PSLayout.scaledFont(16)))
-                .foregroundStyle(PSColors.textTertiary)
-            Text(String(localized: "Freshli uses read-only access to your loyalty account. We never see payment info, and you can disconnect at any time."))
-                .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
+            Text(String(localized: "Opens Mail with hello@freshli.app pre-filled. We'll only message you once."))
+                .font(.system(size: 11))
                 .foregroundStyle(PSColors.textTertiary)
                 .multilineTextAlignment(.center)
-        }
-        .padding(.horizontal, PSSpacing.xl)
-    }
-
-    // MARK: - Helpers
-
-    private func sectionHeader(_ title: String, icon: String, color: Color) -> some View {
-        HStack(spacing: PSSpacing.sm) {
-            Image(systemName: icon)
-                .font(.system(size: PSLayout.scaledFont(13)))
-                .foregroundStyle(color)
-            Text(title)
-                .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
-                .foregroundStyle(PSColors.textSecondary)
-                .textCase(.uppercase)
-                .tracking(0.5)
+                .padding(.horizontal, PSSpacing.lg)
         }
     }
 
-    private func retailerLogo(_ retailer: RetailerDefinition, size: CGFloat) -> some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(retailer.logoColor.opacity(0.12))
-                .frame(width: PSLayout.scaled(size), height: PSLayout.scaled(size))
-            Text(String(retailer.name.prefix(1)))
-                .font(.system(size: PSLayout.scaledFont(size * 0.4), weight: .black, design: .rounded))
-                .foregroundStyle(retailer.logoColor)
-        }
-    }
-
-    private func formatDate(_ date: Date) -> String {
-        let f = RelativeDateTimeFormatter()
-        f.unitsStyle = .abbreviated
-        return f.localizedString(for: date, relativeTo: Date())
-    }
-
-    private func connectRetailer(_ retailer: RetailerDefinition) {
-        PSHaptics.shared.mediumTap()
-        connectingId = retailer.id
-        Task {
-            let success = await retailerService.connect(retailer: retailer)
-            connectingId = nil
-            if success {
-                toastManager.show(.success("Connected to \(retailer.name)! Purchases are ready to import."))
-            }
-        }
-    }
-
-    private func importSingle(_ purchase: RetailerPurchase) {
-        PSHaptics.shared.lightTap()
-        createPantryItem(from: purchase)
-        retailerService.markImported(purchase)
-        toastManager.show(.itemAdded(purchase.itemName))
-    }
-
-    private func importAll(_ purchases: [RetailerPurchase]) {
-        PSHaptics.shared.celebrate()
-        for purchase in purchases {
-            createPantryItem(from: purchase)
-            retailerService.markImported(purchase)
-        }
-        toastManager.show(.success("Imported \(purchases.count) items to your pantry!"))
-    }
-
-    private func createPantryItem(from purchase: RetailerPurchase) {
-        let category = FoodCategory.fromString(purchase.category)
-        let item = FreshliItem(
-            name: purchase.itemName,
-            category: category,
-            storageLocation: .fridge,
-            quantity: purchase.quantity,
-            unit: MeasurementUnit(rawValue: purchase.unit) ?? .pieces,
-            expiryDate: Date().addingTimeInterval(TimeInterval(category.defaultExpiryDays) * 86_400),
-            notes: "Imported from \(purchase.retailerName)"
-        )
-        modelContext.insert(item)
-        try? modelContext.save()
+    /// The mailto URL the "Notify me" button opens. URL-encoded so
+    /// special characters in the subject survive the round-trip.
+    private var notifyURL: URL {
+        var components = URLComponents()
+        components.scheme = "mailto"
+        components.path = "hello@freshli.app"
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: "Supermarket Sync — notify me"),
+            URLQueryItem(
+                name: "body",
+                value: "Hi Freshli team, please let me know when supermarket sync is live. Thanks!"
+            )
+        ]
+        // `URLComponents.url` returns nil only for malformed inputs;
+        // these are static literals so the force-unwrap is safe.
+        // Using `!` here keeps the expression readable; an `??` to
+        // a sentinel would never trigger.
+        return components.url ?? URL(string: "mailto:hello@freshli.app")!
     }
 }
-
-// MARK: - FoodCategory convenience
-
-private extension FoodCategory {
-    static func fromString(_ string: String) -> FoodCategory {
-        FoodCategory.allCases.first { $0.rawValue == string } ?? .other
-    }
-}
-
-// MARK: - Preview
 
 #Preview {
     NavigationStack {
         RetailerLinkView()
-            .environment(PSToastManager())
     }
 }

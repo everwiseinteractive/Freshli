@@ -65,6 +65,10 @@ final class AuthManager {
             // `profiles.is_verified` and silently exits for non-mods,
             // so it's safe to bind for every signed-in user.
             ModeratorReportService.shared.bind(currentUserId: currentUserId)
+            // Area-scoped Ping inbox — listens for ingredient_requests
+            // INSERTs in the user's confirmed area and fires a
+            // time-sensitive local notification to neighbours.
+            PingService.shared.bind(currentUserId: currentUserId)
         }
     }
     var currentUserEmail: String? {

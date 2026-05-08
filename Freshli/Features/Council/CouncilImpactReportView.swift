@@ -6,10 +6,21 @@ import SwiftData
 // so they can see their footprint and opt in to data sharing.
 
 struct CouncilImpactReportView: View {
+    @Environment(AuthManager.self) private var authManager
     @Query private var items: [FreshliItem]
     @State private var binLogService = BinLogService.shared
     @State private var report: CouncilReport?
-    @State private var postcode = "SW1A 1AA"
+    /// User-visible locality the report is scoped to. Resolved from
+    /// `AreaService.shared.currentArea` (which the user confirms in
+    /// the Community tab) and falls back to a generic "Your area"
+    /// label when the user hasn't set one yet.
+    @State private var localityLabel: String = String(localized: "Your area")
+    /// Display name of the local authority for `localityLabel`,
+    /// e.g. "Leeds City Council" for "Leeds", "Camden Council" for
+    /// "Camden". Computed via `CouncilLookup.councilName(for:)` —
+    /// this is what gets shown in the hero card so the user
+    /// understands which council the data is being shared with.
+    @State private var councilDisplayName: String = String(localized: "Your local council")
 
     var body: some View {
         ScrollView {
@@ -40,9 +51,26 @@ struct CouncilImpactReportView: View {
                 .font(.system(size: PSLayout.scaledFont(40)))
                 .foregroundStyle(Color(hex: 0x3B82F6))
             VStack(spacing: PSSpacing.xs) {
-                Text("Council Impact Report")
+                // Authority pill — surfaces the user's actual local
+                // council (resolved from their confirmed area) so the
+                // user is sure which authority the anonymised data
+                // would reach.
+                HStack(spacing: 6) {
+                    Image(systemName: "mappin.circle.fill")
+                        .font(.system(size: PSLayout.scaledFont(11), weight: .bold))
+                    Text(councilDisplayName)
+                        .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
+                .foregroundStyle(Color(hex: 0x3B82F6))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Color(hex: 0x3B82F6).opacity(0.12), in: Capsule())
+
+                Text(String(localized: "Council Impact Report"))
                     .font(.system(size: PSLayout.scaledFont(20), weight: .black, design: .rounded))
-                Text("Anonymised waste data helps your council plan better collections and reduction campaigns.")
+                Text(String(localized: "Anonymised waste data helps \(councilDisplayName) plan better collections and reduction campaigns."))
                     .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
                     .foregroundStyle(PSColors.textSecondary)
                     .multilineTextAlignment(.center)
@@ -55,9 +83,17 @@ struct CouncilImpactReportView: View {
         VStack(alignment: .leading, spacing: PSSpacing.md) {
             HStack {
                 VStack(alignment: .leading, spacing: PSSpacing.xxs) {
-                    Text("POSTCODE \(report.postcode)")
+                    // Header switched from postcode to locality —
+                    // councils don't aggregate by postcode in the
+                    // app's MVP; they aggregate by area. Keep the
+                    // tracked-uppercase typographic flavour so the
+                    // hero still reads as an official report.
+                    Text(localityLabel.uppercased())
                         .font(.system(size: PSLayout.scaledFont(11), weight: .black))
-                        .foregroundStyle(.white.opacity(0.7)).tracking(1.2)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .tracking(1.2)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
                     Text(report.reportPeriod)
                         .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
                         .foregroundStyle(.white.opacity(0.8))
@@ -291,11 +327,167 @@ struct CouncilImpactReportView: View {
     }
 
     private func generate() {
-        report = CouncilDataService.shared.generateReport(
-            items: items,
-            binEntries: binLogService.entries,
-            postcode: postcode
-        )
+        // Resolve the locality from the user's confirmed Community
+        // area. If they haven't picked one yet (older account, or
+        // location denied), the hero falls back to the generic
+        // "Your area" / "Your local council" labels and the data
+        // section still renders against their items.
+        Task { @MainActor in
+            // 1. Hydrate the Community area if it hasn't been loaded.
+            if AreaService.shared.currentArea == nil,
+               let userId = authManager.currentUserId {
+                _ = try? await AreaService.shared.loadCurrentArea(for: userId)
+            }
+            if let area = AreaService.shared.currentArea {
+                let locality = area.locality?.isEmpty == false ? area.locality! : area.name
+                localityLabel = locality
+                councilDisplayName = CouncilLookup.councilName(
+                    locality: locality,
+                    countryCode: area.countryCode
+                )
+            }
+            report = CouncilDataService.shared.generateReport(
+                items: items,
+                binEntries: binLogService.entries,
+                // Pass the locality through the existing `postcode:`
+                // parameter so we don't have to fork the service
+                // signature. Server-side aggregation already keys
+                // off the string verbatim.
+                postcode: localityLabel
+            )
+        }
+    }
+}
+
+// MARK: - CouncilLookup
+//
+// Maps a (locality, countryCode) pair to the human-readable name of
+// its local authority. Covers the most common UK / US / EU
+// localities the app currently sees in production; falls back to
+// "<Locality> Council" / "<Locality> City Council" / "<Locality>
+// Authority" depending on country conventions.
+//
+// Static dictionary instead of a network round-trip — there's no
+// public open-data API that maps every locality to its council
+// reliably across countries, and the "right" data for the user is
+// almost always cached at compile time. New entries can be added
+// without a re-build via remote config in a future release.
+
+enum CouncilLookup {
+    /// Hand-curated overrides — these win over the country-template
+    /// fallback. Keys are lowercased, whitespace-trimmed locality
+    /// names. UK list covers London boroughs + the largest English
+    /// cities + Scottish/Welsh/NI capitals.
+    nonisolated(unsafe) private static let overrides: [String: String] = [
+        // ── London (33 boroughs, each a unitary authority) ──────────
+        "barking and dagenham":   "Barking and Dagenham Council",
+        "barnet":                 "Barnet Council",
+        "bexley":                 "Bexley Council",
+        "brent":                  "Brent Council",
+        "bromley":                "Bromley Council",
+        "camden":                 "Camden Council",
+        "city of london":         "City of London Corporation",
+        "croydon":                "Croydon Council",
+        "ealing":                 "Ealing Council",
+        "enfield":                "Enfield Council",
+        "greenwich":              "Royal Borough of Greenwich",
+        "hackney":                "Hackney Council",
+        "hammersmith and fulham": "Hammersmith and Fulham Council",
+        "haringey":               "Haringey Council",
+        "harrow":                 "Harrow Council",
+        "havering":               "Havering Council",
+        "hillingdon":             "Hillingdon Council",
+        "hounslow":               "Hounslow Council",
+        "islington":              "Islington Council",
+        "kensington and chelsea": "Royal Borough of Kensington and Chelsea",
+        "kingston upon thames":   "Royal Borough of Kingston upon Thames",
+        "lambeth":                "Lambeth Council",
+        "lewisham":               "Lewisham Council",
+        "merton":                 "Merton Council",
+        "newham":                 "Newham Council",
+        "redbridge":              "Redbridge Council",
+        "richmond upon thames":   "Richmond upon Thames Council",
+        "southwark":              "Southwark Council",
+        "sutton":                 "Sutton Council",
+        "tower hamlets":          "Tower Hamlets Council",
+        "waltham forest":         "Waltham Forest Council",
+        "wandsworth":             "Wandsworth Council",
+        "westminster":            "Westminster City Council",
+        "london":                 "Greater London Authority",
+
+        // ── England — major cities ──────────────────────────────────
+        "leeds":         "Leeds City Council",
+        "manchester":    "Manchester City Council",
+        "birmingham":    "Birmingham City Council",
+        "liverpool":     "Liverpool City Council",
+        "sheffield":     "Sheffield City Council",
+        "bristol":       "Bristol City Council",
+        "newcastle":     "Newcastle City Council",
+        "newcastle upon tyne": "Newcastle City Council",
+        "nottingham":    "Nottingham City Council",
+        "leicester":     "Leicester City Council",
+        "coventry":      "Coventry City Council",
+        "bradford":      "Bradford Council",
+        "wakefield":     "Wakefield Council",
+        "york":          "City of York Council",
+        "brighton":      "Brighton & Hove City Council",
+        "brighton and hove": "Brighton & Hove City Council",
+        "oxford":        "Oxford City Council",
+        "cambridge":     "Cambridge City Council",
+        "southampton":   "Southampton City Council",
+        "portsmouth":    "Portsmouth City Council",
+        "plymouth":      "Plymouth City Council",
+        "stoke-on-trent": "Stoke-on-Trent City Council",
+        "wirral":        "Wirral Metropolitan Borough Council",
+        "moreton":       "Wirral Metropolitan Borough Council",
+
+        // ── Scotland / Wales / NI ───────────────────────────────────
+        "edinburgh":     "City of Edinburgh Council",
+        "glasgow":       "Glasgow City Council",
+        "aberdeen":      "Aberdeen City Council",
+        "dundee":        "Dundee City Council",
+        "cardiff":       "Cardiff Council",
+        "swansea":       "Swansea Council",
+        "newport":       "Newport City Council",
+        "belfast":       "Belfast City Council",
+    ]
+
+    /// Resolve the council display name for a given locality +
+    /// ISO country code.
+    static func councilName(locality: String?, countryCode: String?) -> String {
+        let trimmed = (locality ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return String(localized: "Your local council") }
+
+        // 1. Exact override hit (UK boroughs / cities).
+        if let hit = overrides[trimmed.lowercased()] {
+            return hit
+        }
+
+        // 2. Country-template fallback. UK = "<X> Council"; US =
+        // "<X> City Council"; everywhere else = "<X> Authority".
+        let cc = (countryCode ?? "").uppercased()
+        switch cc {
+        case "GB":
+            return String(localized: "\(trimmed) Council")
+        case "US":
+            return String(localized: "\(trimmed) City Council")
+        case "IE":
+            return String(localized: "\(trimmed) County Council")
+        case "AU", "NZ":
+            return String(localized: "\(trimmed) City Council")
+        case "FR":
+            return String(localized: "Mairie de \(trimmed)")
+        case "DE", "AT":
+            return String(localized: "Stadt \(trimmed)")
+        case "ES":
+            return String(localized: "Ayuntamiento de \(trimmed)")
+        case "IT":
+            return String(localized: "Comune di \(trimmed)")
+        case "NL":
+            return String(localized: "Gemeente \(trimmed)")
+        default:
+            return String(localized: "\(trimmed) Authority")
+        }
     }
 }
 

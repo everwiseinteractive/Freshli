@@ -8,6 +8,11 @@ struct IngredientPingView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var karmaService = KarmaCreditService.shared
     @State private var podService = CommunityPodsService.shared
+    /// Real area-broadcasting service — replaces the previous fake
+    /// `karmaService.spend(...)`-only flow. Subscribed neighbours
+    /// in the same `community_areas` row receive a time-sensitive
+    /// local notification when this view sends.
+    @State private var pingService = PingService.shared
     @State private var ingredientName: String = ""
     @State private var quantity: String = "1"
     @State private var selectedUrgency: Urgency = .today
@@ -259,21 +264,25 @@ struct IngredientPingView: View {
     }
 
     private var pingButton: some View {
-        let isEnabled = !ingredientName.isEmpty && selectedPodId != nil && karmaService.canAfford(cost)
+        // Pod selection is optional now that pings broadcast by area.
+        // The send button needs only an ingredient name + enough
+        // Karma. Disabled-state messaging is handled by the parent
+        // (Karma balance row) so we can keep the CTA copy tight.
+        let isEnabled = !ingredientName.isEmpty && karmaService.canAfford(cost) && !pingService.isSending
         return Button {
             PSHaptics.shared.mediumTap()
             guard isEnabled else { return }
-            let podName = podService.nearbyPods.first(where: { $0.id == selectedPodId })?.name
-            _ = karmaService.spend(itemName: ingredientName, amount: cost, otherParty: podName)
-            withAnimation { showSuccessToast = true }
-            Task { @MainActor in
-                try? await Task.sleep(for: .seconds(1.5))
-                dismiss()
-            }
+            Task { await sendPing() }
         } label: {
             HStack(spacing: PSSpacing.sm) {
-                Image(systemName: "paperplane.fill")
-                Text("Send Ping")
+                if pingService.isSending {
+                    ProgressView().controlSize(.small).tint(.white)
+                } else {
+                    Image(systemName: "paperplane.fill")
+                }
+                Text(pingService.isSending
+                     ? String(localized: "Sending…")
+                     : String(localized: "Send Ping"))
             }
             .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
             .foregroundStyle(.white)
@@ -285,6 +294,39 @@ struct IngredientPingView: View {
         }
         .buttonStyle(PressableButtonStyle())
         .disabled(!isEnabled)
+    }
+
+    /// Real broadcast path. Inserts into `ingredient_requests` via
+    /// `PingService` (area-scoped, RLS-protected), spends Karma on
+    /// success, and surfaces any error inline. Subscribed neighbours
+    /// in the same area receive a time-sensitive local notification
+    /// the moment Realtime delivers the row.
+    private func sendPing() async {
+        let urgencyKey: String
+        switch selectedUrgency {
+        case .now:       urgencyKey = "now"
+        case .today:     urgencyKey = "today"
+        case .thisWeek:  urgencyKey = "this_week"
+        }
+        let success = await pingService.sendPing(
+            itemName: ingredientName,
+            quantity: quantity.isEmpty ? "1" : quantity,
+            urgency: urgencyKey,
+            note: note.isEmpty ? nil : note,
+            karmaCost: cost
+        )
+        guard success else {
+            // Defer error surfacing to the existing inline error
+            // banner; PingService.lastError is observable.
+            return
+        }
+        let podName = podService.nearbyPods.first(where: { $0.id == selectedPodId })?.name
+        _ = karmaService.spend(itemName: ingredientName, amount: cost, otherParty: podName)
+        withAnimation { showSuccessToast = true }
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(1.5))
+            dismiss()
+        }
     }
 
     private var howItWorksNote: some View {
