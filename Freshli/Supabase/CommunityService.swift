@@ -61,7 +61,7 @@ final class CommunityService {
                 .execute()
                 .value
             listings = results
-            logger.info("Fetched \(results.count) listings for page \(page) (area: \(areaId?.uuidString ?? "all", privacy: .public))")
+            logger.info("Fetched \(results.count) listings for page \(page) (area: \(areaId?.uuidString ?? "all"))")
         } catch {
             logger.error("FetchFeed failed: \(error.localizedDescription)")
             self.error = "Could not load community feed. Please try again."
