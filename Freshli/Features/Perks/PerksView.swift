@@ -80,7 +80,7 @@ struct PerksView: View {
         VStack(spacing: PSSpacing.lg) {
             HStack {
                 VStack(alignment: .leading, spacing: PSSpacing.xs) {
-                    Text("Your Points Balance")
+                    Text(String(localized: "Your Points Balance"))
                         .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
                         .foregroundStyle(.white.opacity(0.7))
                     HStack(alignment: .firstTextBaseline, spacing: PSSpacing.xs) {
@@ -107,7 +107,7 @@ struct PerksView: View {
                 Image(systemName: "plus.circle.fill")
                     .font(.system(size: PSLayout.scaledFont(14)))
                     .foregroundStyle(.white.opacity(0.8))
-                Text("Earn 10 pts for every item you rescue from waste")
+                Text(String(localized: "Earn 10 pts for every item you rescue from waste"))
                     .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
                     .foregroundStyle(.white.opacity(0.8))
                 Spacer()
@@ -132,7 +132,7 @@ struct PerksView: View {
                 Image(systemName: "building.columns.fill")
                     .font(.system(size: PSLayout.scaledFont(13)))
                     .foregroundStyle(Color(hex: 0xA855F7))
-                Text("Employer Wellness")
+                Text(String(localized: "Employer Wellness"))
                     .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
                     .foregroundStyle(PSColors.textSecondary)
                     .textCase(.uppercase).tracking(0.5)
@@ -230,7 +230,7 @@ struct PerksView: View {
                 Image(systemName: "gift.fill")
                     .font(.system(size: PSLayout.scaledFont(13)))
                     .foregroundStyle(PSColors.secondaryAmber)
-                Text("Reward Catalog")
+                Text(String(localized: "Reward Catalog"))
                     .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
                     .foregroundStyle(PSColors.textSecondary)
                     .textCase(.uppercase).tracking(0.5)

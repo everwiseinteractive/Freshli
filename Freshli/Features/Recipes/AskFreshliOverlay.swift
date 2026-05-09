@@ -545,6 +545,19 @@ struct AskFreshliOverlay: View {
     }
 
     private func startOrbAnimations() {
+        // Skip the three repeatForever animations entirely on serious
+        // / critical thermal states. They're decorative — the rest of
+        // the overlay still functions, the user just doesn't see the
+        // ring rotation, breathing pulse and glow pulse. Saves real
+        // CPU + battery on hot devices and during demanding tasks.
+        let thermal = ProcessInfo.processInfo.thermalState
+        guard thermal == .nominal || thermal == .fair else {
+            // Park the values at sensible static positions.
+            orbRotation = 0
+            orbPulse = 1.0
+            centerGlow = 0.5
+            return
+        }
         // Continuous ring rotation
         withAnimation(.linear(duration: 8.0).repeatForever(autoreverses: false)) {
             orbRotation = 360
@@ -560,6 +573,12 @@ struct AskFreshliOverlay: View {
     }
 
     private func startTypewriter() {
+        // Singleton: cancel any in-flight typewriter before starting a
+        // new one. Without this guard, `retryGeneration` could spawn
+        // a second concurrent typewriter while the first was still
+        // running its character-by-character `Task.sleep` loop —
+        // doubling the per-character timer rate until one finished.
+        typewriterTask?.cancel()
         let messages = [
             String(localized: "Reviewing your pantry items..."),
             String(localized: "Finding the best combinations..."),
@@ -800,7 +819,17 @@ private struct AIOrbField: View {
     @State private var orbs: [AIOrbParticle] = []
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 60.0)) { timeline in
+        // Gate the 60 Hz particle field on `isGenerating` (only run
+        // hot when the user actually has an in-flight AI request) and
+        // pause entirely when the timeline isn't moving. Reduces this
+        // surface from a sustained Metal/CPU drain to a one-shot
+        // burst per generation cycle.
+        TimelineView(
+            .animation(
+                minimumInterval: isGenerating ? 1.0 / 60.0 : 1.0 / 15.0,
+                paused: !isGenerating
+            )
+        ) { timeline in
             Canvas { context, size in
                 let elapsed = timeline.date.timeIntervalSinceReferenceDate
                 let centerX = size.width / 2

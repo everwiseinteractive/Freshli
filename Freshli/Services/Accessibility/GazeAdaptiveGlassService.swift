@@ -491,9 +491,9 @@ struct GazeTrackingToggle: View {
                 Toggle(isOn: Bindable(gazeService).isEnabled) {
                     Label {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Gaze-Adaptive UI")
+                            Text(String(localized: "Gaze-Adaptive UI"))
                                 .font(.system(.body, design: .rounded, weight: .semibold))
-                            Text("Glass surfaces respond to where you look. Uses the TrueDepth camera — all processing stays on-device.")
+                            Text(String(localized: "Glass surfaces respond to where you look. Uses the TrueDepth camera — all processing stays on-device."))
                                 .font(.system(.caption, design: .rounded))
                                 .foregroundStyle(.secondary)
                         }
@@ -504,7 +504,7 @@ struct GazeTrackingToggle: View {
                 }
                 .tint(PSColors.primaryGreen)
             } header: {
-                Text("Apple Intelligence")
+                Text(String(localized: "Apple Intelligence"))
             }
         }
     }

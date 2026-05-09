@@ -65,7 +65,7 @@ struct CommunityMilestoneCard: View {
             }
 
             VStack(alignment: .leading, spacing: 1) {
-                Text("Global Food Rescue")
+                Text(String(localized: "Global Food Rescue"))
                     .font(.system(size: PSLayout.scaledFont(16), weight: .black))
                     .foregroundStyle(.white)
                 Text(monthLabel)
@@ -80,7 +80,7 @@ struct CommunityMilestoneCard: View {
                 Circle()
                     .fill(Color(hex: 0x4ADE80))
                     .frame(width: 6, height: 6)
-                Text("LIVE")
+                Text(String(localized: "LIVE"))
                     .font(.system(size: PSLayout.scaledFont(9), weight: .black))
                     .tracking(1)
                     .foregroundStyle(Color(hex: 0x4ADE80))
@@ -158,7 +158,7 @@ struct CommunityMilestoneCard: View {
             Image(systemName: "heart.fill")
                 .font(.system(size: PSLayout.scaledFont(11)))
                 .foregroundStyle(Color(hex: 0xFB7185))
-            Text("Together we're building a zero-waste world")
+            Text(String(localized: "Together we're building a zero-waste world"))
                 .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
                 .foregroundStyle(.white.opacity(0.65))
         }

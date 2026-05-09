@@ -32,7 +32,7 @@ struct ReceiptPhotoScannerView: View {
                                 ProgressView()
                                     .tint(PSColors.primaryGreen)
 
-                                Text("Scanning receipt with OCR...")
+                                Text(String(localized: "Scanning receipt with OCR..."))
                                     .font(PSTypography.callout)
                                     .foregroundStyle(PSColors.textSecondary)
                             }
@@ -44,7 +44,7 @@ struct ReceiptPhotoScannerView: View {
                                 ProgressView()
                                     .tint(PSColors.primaryGreen)
 
-                                Text("Extracting items...")
+                                Text(String(localized: "Extracting items..."))
                                     .font(PSTypography.callout)
                                     .foregroundStyle(PSColors.textSecondary)
                             }
@@ -56,7 +56,7 @@ struct ReceiptPhotoScannerView: View {
                         if case .complete = receiptScanner.scanningState, !receiptScanner.scannedItems.isEmpty {
                             VStack(alignment: .leading, spacing: PSSpacing.md) {
                                 HStack(spacing: PSSpacing.md) {
-                                    Text("Detected Items")
+                                    Text(String(localized: "Detected Items"))
                                         .font(PSTypography.headline)
                                         .foregroundStyle(PSColors.textPrimary)
 
@@ -108,7 +108,7 @@ struct ReceiptPhotoScannerView: View {
                                     .foregroundStyle(PSColors.expiredRed)
 
                                 VStack(spacing: PSSpacing.sm) {
-                                    Text("Scan Failed")
+                                    Text(String(localized: "Scan Failed"))
                                         .font(PSTypography.headline)
                                         .foregroundStyle(PSColors.textPrimary)
 
@@ -147,7 +147,7 @@ struct ReceiptPhotoScannerView: View {
                             }
 
                             PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-                                Text("Choose Another Photo")
+                                Text(String(localized: "Choose Another Photo"))
                                     .font(.system(size: 16, weight: .semibold, design: .rounded))
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 12)
@@ -177,11 +177,11 @@ struct ReceiptPhotoScannerView: View {
                                     .foregroundStyle(PSColors.primaryGreen)
 
                                 VStack(spacing: PSSpacing.sm) {
-                                    Text("Position Receipt in Frame")
+                                    Text(String(localized: "Position Receipt in Frame"))
                                         .font(PSTypography.headline)
                                         .foregroundStyle(PSColors.textPrimary)
 
-                                    Text("Align the entire receipt within the frame and ensure good lighting for best results")
+                                    Text(String(localized: "Align the entire receipt within the frame and ensure good lighting for best results"))
                                         .font(PSTypography.callout)
                                         .foregroundStyle(PSColors.textSecondary)
                                         .multilineTextAlignment(.center)

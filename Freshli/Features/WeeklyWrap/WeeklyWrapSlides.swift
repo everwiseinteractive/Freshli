@@ -57,7 +57,7 @@ struct BigNumberSlide: View {
             }
 
             // Week label
-            Text("THIS WEEK")
+            Text(String(localized: "THIS WEEK"))
                 .font(.system(size: 14, weight: .bold, design: .rounded))
                 .foregroundColor(.white.opacity(0.6))
                 .tracking(3)
@@ -412,7 +412,7 @@ struct EnvironmentalImpactSlide: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.6)
 
-                    Text("CO\u{2082} kept out of\nthe atmosphere")
+                    Text(String(localized: "CO\u{2082} kept out of\nthe atmosphere"))
                         .font(.system(size: PSLayout.scaledFont(18), weight: .semibold, design: .rounded))
                         .foregroundColor(.white.opacity(0.85))
                         .multilineTextAlignment(.center)
@@ -452,7 +452,7 @@ struct EnvironmentalImpactSlide: View {
                     Button(action: onShare) {
                         HStack(spacing: PSSpacing.sm) {
                             Image(systemName: "square.and.arrow.up")
-                            Text("Share to Stories")
+                            Text(String(localized: "Share to Stories"))
                         }
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white)
@@ -464,7 +464,7 @@ struct EnvironmentalImpactSlide: View {
                     .pressable()
 
                     Button(action: onDone) {
-                        Text("Done")
+                        Text(String(localized: "Done"))
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.white.opacity(0.8))
                     }

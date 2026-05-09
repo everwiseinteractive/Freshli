@@ -83,7 +83,7 @@ struct DonationAnalyticsView: View {
 
     private var monthlyChartSection: some View {
         VStack(spacing: PSSpacing.md) {
-            Text("Monthly Breakdown")
+            Text(String(localized: "Monthly Breakdown"))
                 .font(PSTypography.headline)
                 .foregroundStyle(PSColors.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -139,7 +139,7 @@ struct DonationAnalyticsView: View {
 
     private var categoryBreakdownSection: some View {
         VStack(spacing: PSSpacing.md) {
-            Text("By Category")
+            Text(String(localized: "By Category"))
                 .font(PSTypography.headline)
                 .foregroundStyle(PSColors.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -196,7 +196,7 @@ struct DonationAnalyticsView: View {
                     Text(String(format: "$%.2f", value))
                         .font(PSTypography.callout)
                         .foregroundStyle(PSColors.textPrimary)
-                    Text("Donated")
+                    Text(String(localized: "Donated"))
                         .font(PSTypography.caption2)
                         .foregroundStyle(PSColors.textSecondary)
                 }
@@ -208,7 +208,7 @@ struct DonationAnalyticsView: View {
 
     private var taxReportSection: some View {
         VStack(spacing: PSSpacing.md) {
-            Text("Tax Report")
+            Text(String(localized: "Tax Report"))
                 .font(PSTypography.headline)
                 .foregroundStyle(PSColors.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -242,7 +242,7 @@ struct DonationAnalyticsView: View {
                             Divider()
                                 .padding(.vertical, PSSpacing.sm)
 
-                            Text("Category Breakdown")
+                            Text(String(localized: "Category Breakdown"))
                                 .font(PSTypography.caption1)
                                 .foregroundStyle(PSColors.textSecondary)
 
@@ -307,7 +307,7 @@ struct DonationAnalyticsView: View {
 
     private var recentDonationsSection: some View {
         VStack(spacing: PSSpacing.md) {
-            Text("Recent Donations")
+            Text(String(localized: "Recent Donations"))
                 .font(PSTypography.headline)
                 .foregroundStyle(PSColors.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)

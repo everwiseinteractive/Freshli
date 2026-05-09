@@ -120,7 +120,7 @@ struct FreshliSplashView: View {
         .opacity(exitOpacity)
         .scaleEffect(exitScale)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(Text("Freshli is loading"))
+        .accessibilityLabel(Text(String(localized: "Freshli is loading")))
         .onAppear {
             prepareHaptics()
             if reduceMotion {
@@ -286,7 +286,7 @@ struct FreshliSplashView: View {
     // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     private var wordmarkLabel: some View {
-        Text("Freshli")
+        Text(String(localized: "Freshli"))
             .font(.system(size: PSLayout.scaledFont(38), weight: .bold, design: .rounded))
             .foregroundStyle(
                 LinearGradient(

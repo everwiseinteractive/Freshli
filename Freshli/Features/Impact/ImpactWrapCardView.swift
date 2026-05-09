@@ -78,7 +78,7 @@ struct ImpactWrapCardView: View {
 
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: PSSpacing.sm) {
-            Text("Your Week of Impact")
+            Text(String(localized: "Your Week of Impact"))
                 .font(.system(size: 24, weight: .semibold, design: .default))
                 .foregroundColor(PSColors.textOnPrimary)
 
@@ -100,7 +100,7 @@ struct ImpactWrapCardView: View {
                     .foregroundColor(PSColors.textOnPrimary)
                     .lineLimit(1)
 
-                Text("Items Rescued")
+                Text(String(localized: "Items Rescued"))
                     .font(.system(size: 14, weight: .medium, design: .default))
                     .foregroundColor(PSColors.textOnPrimary.opacity(0.9))
             }
@@ -135,7 +135,7 @@ struct ImpactWrapCardView: View {
 
     private var topCategorySection: some View {
         VStack(spacing: PSSpacing.sm) {
-            Text("Your Top Category")
+            Text(String(localized: "Your Top Category"))
                 .font(.system(size: 12, weight: .semibold, design: .default))
                 .foregroundColor(PSColors.textOnPrimary.opacity(0.8))
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -172,12 +172,12 @@ struct ImpactWrapCardView: View {
             HStack(spacing: PSSpacing.xs) {
                 Image(systemName: "leaf.fill")
                     .font(.system(size: 12, weight: .bold))
-                Text("Freshli")
+                Text(String(localized: "Freshli"))
                     .font(.system(size: 12, weight: .bold, design: .default))
             }
             .foregroundColor(PSColors.textOnPrimary)
 
-            Text("Join me in reducing food waste")
+            Text(String(localized: "Join me in reducing food waste"))
                 .font(.system(size: 11, weight: .medium, design: .default))
                 .foregroundColor(PSColors.textOnPrimary.opacity(0.8))
                 .lineLimit(1)

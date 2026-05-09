@@ -87,7 +87,7 @@ struct FreshliCommunityMarketplaceView: View {
                 PSHaptics.shared.mediumTap()
             }
         } message: { _ in
-            Text("You won't see listings from this user anymore. You can unblock them in settings.")
+            Text(String(localized: "You won't see listings from this user anymore. You can unblock them in settings."))
         }
         .task {
             await viewModel.loadListings()
@@ -105,7 +105,7 @@ struct FreshliCommunityMarketplaceView: View {
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: PSSpacing.md) {
             HStack(alignment: .center, spacing: PSSpacing.md) {
-                Text("Community\nMarketplace")
+                Text(String(localized: "Community\nMarketplace"))
                     .font(PSTypography.title1)
                     .lineLimit(2)
 
@@ -194,7 +194,7 @@ struct FreshliCommunityMarketplaceView: View {
                 // Recent Near You Section
                 if !viewModel.recentNearYou.isEmpty {
                     VStack(alignment: .leading, spacing: PSSpacing.md) {
-                        Text("Recent Near You")
+                        Text(String(localized: "Recent Near You"))
                             .font(PSTypography.headline)
                             .padding(.horizontal, PSSpacing.screenHorizontal)
 
@@ -215,7 +215,7 @@ struct FreshliCommunityMarketplaceView: View {
 
                 // All Listings Section
                 VStack(alignment: .leading, spacing: PSSpacing.md) {
-                    Text("All Listings")
+                    Text(String(localized: "All Listings"))
                         .font(PSTypography.headline)
                         .padding(.horizontal, PSSpacing.screenHorizontal)
 
@@ -464,7 +464,7 @@ struct FreshliCommunityMarketplaceView: View {
             // Description
             if let description = listing.itemDescription, !description.isEmpty {
                 VStack(alignment: .leading, spacing: PSSpacing.sm) {
-                    Text("Details")
+                    Text(String(localized: "Details"))
                         .font(PSTypography.headline)
                         .foregroundColor(PSColors.textPrimary)
 
@@ -477,7 +477,7 @@ struct FreshliCommunityMarketplaceView: View {
             // Pickup Info
             if let pickupAddress = listing.pickupAddress {
                 VStack(alignment: .leading, spacing: PSSpacing.sm) {
-                    Text("Pickup Location")
+                    Text(String(localized: "Pickup Location"))
                         .font(PSTypography.headline)
                         .foregroundColor(PSColors.textPrimary)
 
@@ -493,7 +493,7 @@ struct FreshliCommunityMarketplaceView: View {
 
             if let pickupNotes = listing.pickupNotes, !pickupNotes.isEmpty {
                 VStack(alignment: .leading, spacing: PSSpacing.sm) {
-                    Text("Pickup Notes")
+                    Text(String(localized: "Pickup Notes"))
                         .font(PSTypography.headline)
                         .foregroundColor(PSColors.textPrimary)
 
@@ -522,11 +522,11 @@ struct FreshliCommunityMarketplaceView: View {
                 .foregroundColor(PSColors.textTertiary)
 
             VStack(spacing: PSSpacing.sm) {
-                Text("No Listings Found")
+                Text(String(localized: "No Listings Found"))
                     .font(PSTypography.headline)
                     .foregroundColor(PSColors.textPrimary)
 
-                Text("Try adjusting your filters or check back soon")
+                Text(String(localized: "Try adjusting your filters or check back soon"))
                     .font(PSTypography.body)
                     .foregroundColor(PSColors.textSecondary)
                     .multilineTextAlignment(.center)

@@ -99,7 +99,7 @@ struct ShoppingListView: View {
                             // Missing Ingredients Section
                             if !viewModel.service.missingIngredients.isEmpty {
                                 VStack(alignment: .leading, spacing: PSSpacing.md) {
-                                    Text("Missing from Rescue Mission")
+                                    Text(String(localized: "Missing from Rescue Mission"))
                                         .font(PSTypography.headline)
                                         .foregroundStyle(PSColors.expiredRed)
                                         .padding(.horizontal, PSSpacing.screenHorizontal)
@@ -123,7 +123,7 @@ struct ShoppingListView: View {
                             // Needed Items Section
                             if !neededItems.isEmpty {
                                 VStack(alignment: .leading, spacing: PSSpacing.md) {
-                                    Text("Needed")
+                                    Text(String(localized: "Needed"))
                                         .font(PSTypography.headline)
                                         .foregroundStyle(PSColors.textPrimary)
                                         .padding(.horizontal, PSSpacing.screenHorizontal)
@@ -144,7 +144,7 @@ struct ShoppingListView: View {
                             // Purchased Items Section
                             if !purchasedItems.isEmpty {
                                 VStack(alignment: .leading, spacing: PSSpacing.md) {
-                                    Text("Purchased")
+                                    Text(String(localized: "Purchased"))
                                         .font(PSTypography.headline)
                                         .foregroundStyle(PSColors.textSecondary)
                                         .padding(.horizontal, PSSpacing.screenHorizontal)
@@ -168,11 +168,11 @@ struct ShoppingListView: View {
                                     // Auto-Replenish Toggle
                                     HStack(spacing: PSSpacing.md) {
                                         VStack(alignment: .leading, spacing: PSSpacing.xs) {
-                                            Text("Auto-Replenish")
+                                            Text(String(localized: "Auto-Replenish"))
                                                 .font(PSTypography.callout)
                                                 .foregroundStyle(PSColors.textPrimary)
 
-                                            Text("Sync with Apple Reminders")
+                                            Text(String(localized: "Sync with Apple Reminders"))
                                                 .font(PSTypography.caption1)
                                                 .foregroundStyle(PSColors.textSecondary)
                                         }
@@ -223,7 +223,7 @@ struct ShoppingListView: View {
                                                 .font(.system(size: 12))
                                                 .foregroundStyle(PSColors.warningAmber)
 
-                                            Text("Enable in Settings to sync with Reminders")
+                                            Text(String(localized: "Enable in Settings to sync with Reminders"))
                                                 .font(PSTypography.caption1)
                                                 .foregroundStyle(PSColors.textSecondary)
 
@@ -344,7 +344,7 @@ struct DeliveryBanner: View {
         PSCard {
             HStack(spacing: PSSpacing.md) {
                 VStack(alignment: .leading, spacing: PSSpacing.xs) {
-                    Text("Get it now")
+                    Text(String(localized: "Get it now"))
                         .font(PSTypography.callout)
                         .foregroundStyle(PSColors.textSecondary)
 
@@ -385,7 +385,7 @@ struct AddShoppingItemSheet: View {
                 PSCard {
                     VStack(spacing: PSSpacing.md) {
                         VStack(alignment: .leading, spacing: PSSpacing.sm) {
-                            Text("Item Name")
+                            Text(String(localized: "Item Name"))
                                 .font(PSTypography.callout)
                                 .foregroundStyle(PSColors.textPrimary)
 
@@ -403,7 +403,7 @@ struct AddShoppingItemSheet: View {
 
                         HStack(spacing: PSSpacing.md) {
                             VStack(alignment: .leading, spacing: PSSpacing.sm) {
-                                Text("Quantity")
+                                Text(String(localized: "Quantity"))
                                     .font(PSTypography.callout)
                                     .foregroundStyle(PSColors.textPrimary)
 
@@ -421,7 +421,7 @@ struct AddShoppingItemSheet: View {
                             }
 
                             VStack(alignment: .leading, spacing: PSSpacing.sm) {
-                                Text("Unit")
+                                Text(String(localized: "Unit"))
                                     .font(PSTypography.callout)
                                     .foregroundStyle(PSColors.textPrimary)
 

@@ -58,14 +58,14 @@ struct PreservationGuideView: View {
                 Text(item.name)
                     .font(.system(size: PSLayout.scaledFont(20), weight: .black))
                     .foregroundStyle(PSColors.textPrimary)
-                Text("Preservation options to extend shelf life")
+                Text(String(localized: "Preservation options to extend shelf life"))
                     .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
                     .foregroundStyle(PSColors.textSecondary)
                 if item.expiryStatus != .fresh {
                     HStack(spacing: PSSpacing.xxs) {
                         Image(systemName: "clock.fill")
                             .font(.system(size: PSLayout.scaledFont(10)))
-                        Text("Expires soon — act now!")
+                        Text(String(localized: "Expires soon — act now!"))
                             .font(.system(size: PSLayout.scaledFont(11), weight: .semibold))
                     }
                     .foregroundStyle(PSColors.expiredRed)
@@ -82,7 +82,7 @@ struct PreservationGuideView: View {
 
     private var methodsGrid: some View {
         VStack(alignment: .leading, spacing: PSSpacing.sm) {
-            Text("Choose a Method")
+            Text(String(localized: "Choose a Method"))
                 .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
                 .foregroundStyle(PSColors.textSecondary)
                 .textCase(.uppercase)
@@ -202,10 +202,10 @@ struct PreservationGuideView: View {
             Image(systemName: "questionmark.circle.fill")
                 .font(.system(size: PSLayout.scaledFont(40)))
                 .foregroundStyle(PSColors.textTertiary)
-            Text("No specific guide yet")
+            Text(String(localized: "No specific guide yet"))
                 .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
                 .foregroundStyle(PSColors.textPrimary)
-            Text("When in doubt, freeze it! Most foods last 1–3 months when sealed properly and frozen.")
+            Text(String(localized: "When in doubt, freeze it! Most foods last 1–3 months when sealed properly and frozen."))
                 .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
                 .foregroundStyle(PSColors.textSecondary)
                 .multilineTextAlignment(.center)

@@ -19,7 +19,7 @@ struct ImpactDiagnosticView: View {
             Section {
                 HStack {
                     VStack(alignment: .leading, spacing: PSSpacing.xs) {
-                        Text("Impact Validation Suite")
+                        Text(String(localized: "Impact Validation Suite"))
                             .font(.system(size: 17, weight: .bold))
                         Text("\(passCount) passed · \(failCount) failed · \(results.count) total")
                             .font(.system(size: 13, weight: .medium))
@@ -35,7 +35,7 @@ struct ImpactDiagnosticView: View {
                     }
                 }
             } header: {
-                Text("Diagnostics")
+                Text(String(localized: "Diagnostics"))
             }
 
             if !results.isEmpty {
@@ -66,7 +66,7 @@ struct ImpactDiagnosticView: View {
                         .padding(.vertical, 2)
                     }
                 } header: {
-                    Text("Results")
+                    Text(String(localized: "Results"))
                 }
             }
         }

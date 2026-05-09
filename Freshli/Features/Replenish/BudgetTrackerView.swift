@@ -18,7 +18,7 @@ struct BudgetTrackerView: View {
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(PSColors.primaryGreen)
 
-                    Text("Budget Tracker")
+                    Text(String(localized: "Budget Tracker"))
                         .font(PSTypography.headline)
                         .foregroundStyle(PSColors.textPrimary)
 

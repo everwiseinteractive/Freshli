@@ -23,11 +23,11 @@ import SwiftUI
 /// as the user has added any items — no nag on returning users.
 struct AddItemTip: Tip {
     var title: Text {
-        Text("Add your first item")
+        Text(String(localized: "Add your first item"))
     }
 
     var message: Text? {
-        Text("Tap the green + button to track anything in your fridge, freezer, or cupboard. It takes about 5 seconds.")
+        Text(String(localized: "Tap the green + button to track anything in your fridge, freezer, or cupboard. It takes about 5 seconds."))
     }
 
     var image: Image? {
@@ -55,11 +55,11 @@ struct AddItemTip: Tip {
 /// moment without them needing to stumble onto the Rescue Chef tab.
 struct RescueChefTip: Tip {
     var title: Text {
-        Text("Rescue Chef is ready")
+        Text(String(localized: "Rescue Chef is ready"))
     }
 
     var message: Text? {
-        Text("You've got items expiring soon. Ask Apple Intelligence to write recipes for your exact pantry — on-device, private, no internet needed.")
+        Text(String(localized: "You've got items expiring soon. Ask Apple Intelligence to write recipes for your exact pantry — on-device, private, no internet needed."))
     }
 
     var image: Image? {
@@ -81,11 +81,11 @@ struct RescueChefTip: Tip {
 /// payoff so the share loop kicks in.
 struct WeeklyWrapTip: Tip {
     var title: Text {
-        Text("Your first Weekly Wrap")
+        Text(String(localized: "Your first Weekly Wrap"))
     }
 
     var message: Text? {
-        Text("Tap the chart icon in the header to see your impact story — items saved, CO₂ avoided, and what you've rescued this week.")
+        Text(String(localized: "Tap the chart icon in the header to see your impact story — items saved, CO₂ avoided, and what you've rescued this week."))
     }
 
     var image: Image? {

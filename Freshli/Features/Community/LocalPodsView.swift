@@ -87,10 +87,10 @@ struct LocalPodsView: View {
                     .foregroundStyle(Color(hex: 0x3B82F6))
             }
             VStack(spacing: PSSpacing.xs) {
-                Text("Your Building, Your Community")
+                Text(String(localized: "Your Building, Your Community"))
                     .font(.system(size: PSLayout.scaledFont(19), weight: .black, design: .rounded))
                     .foregroundStyle(PSColors.textPrimary)
-                Text("Share food with neighbours one flight of stairs away — no travel, no awkward handoffs.")
+                Text(String(localized: "Share food with neighbours one flight of stairs away — no travel, no awkward handoffs."))
                     .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
                     .foregroundStyle(PSColors.textSecondary)
                     .multilineTextAlignment(.center)
@@ -109,7 +109,7 @@ struct LocalPodsView: View {
                 Button { showCodeSheet = true } label: {
                     HStack(spacing: PSSpacing.xxs) {
                         Image(systemName: "number").font(.system(size: PSLayout.scaledFont(11)))
-                        Text("Enter Code")
+                        Text(String(localized: "Enter Code"))
                             .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
                     }
                     .foregroundStyle(Color(hex: 0x3B82F6))
@@ -196,10 +196,10 @@ struct LocalPodsView: View {
                     .font(.system(size: PSLayout.scaledFont(24)))
                     .foregroundStyle(PSColors.primaryGreen)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Start a Pod")
+                    Text(String(localized: "Start a Pod"))
                         .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
                         .foregroundStyle(PSColors.textPrimary)
-                    Text("Set up a micro-community for your building or street")
+                    Text(String(localized: "Set up a micro-community for your building or street"))
                         .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
                         .foregroundStyle(PSColors.textSecondary)
                 }
@@ -328,9 +328,9 @@ struct LocalPodsView: View {
                     Image(systemName: "number.circle.fill")
                         .font(.system(size: PSLayout.scaledFont(50)))
                         .foregroundStyle(Color(hex: 0x3B82F6))
-                    Text("Join with a Pod Code")
+                    Text(String(localized: "Join with a Pod Code"))
                         .font(.system(size: PSLayout.scaledFont(20), weight: .black, design: .rounded))
-                    Text("Your neighbour can share a 6-character code to invite you to their pod.")
+                    Text(String(localized: "Your neighbour can share a 6-character code to invite you to their pod."))
                         .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
                         .foregroundStyle(PSColors.textSecondary)
                         .multilineTextAlignment(.center)
@@ -348,7 +348,7 @@ struct LocalPodsView: View {
                     PSHaptics.shared.mediumTap()
                     showCodeSheet = false
                 } label: {
-                    Text("Join Pod")
+                    Text(String(localized: "Join Pod"))
                         .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)

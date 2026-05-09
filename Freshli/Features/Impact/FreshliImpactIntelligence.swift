@@ -112,11 +112,11 @@ struct FreshliInsightTip: Tip {
     static var insightShown: Bool = false
 
     var title: Text {
-        Text("Freshli Insight")
+        Text(String(localized: "Freshli Insight"))
     }
 
     var message: Text? {
-        Text("Swipe across the chart to explore your daily savings breakdown.")
+        Text(String(localized: "Swipe across the chart to explore your daily savings breakdown."))
     }
 
     var image: Image? {
@@ -203,7 +203,7 @@ struct FreshliImpactIntelligenceView: View {
     @ViewBuilder
     private var savingsChartSection: some View {
         VStack(alignment: .leading, spacing: PSSpacing.md) {
-            Text("Savings Growth")
+            Text(String(localized: "Savings Growth"))
                 .font(.freshliDisplayMedium)
 
             if viewModel.isLoading {
@@ -337,7 +337,7 @@ struct FreshliImpactIntelligenceView: View {
     private func selectedPointCard(_ point: ImpactDataPoint) -> some View {
         HStack(spacing: PSSpacing.lg) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Money Saved")
+                Text(String(localized: "Money Saved"))
                     .font(.freshliCaption)
                     .foregroundStyle(.secondary)
                 Text("£\(point.moneySaved, specifier: "%.2f")")
@@ -348,7 +348,7 @@ struct FreshliImpactIntelligenceView: View {
             Divider().frame(height: 40)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("CO₂ Avoided")
+                Text(String(localized: "CO₂ Avoided"))
                     .font(.freshliCaption)
                     .foregroundStyle(.secondary)
                 Text("\(point.co2Avoided, specifier: "%.1f") kg")

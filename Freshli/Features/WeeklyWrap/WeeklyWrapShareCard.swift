@@ -130,7 +130,7 @@ struct WeeklyWrapShareCard: View {
             HStack(spacing: 6) {
                 Image(systemName: "leaf.fill")
                     .font(.system(size: 14, weight: .bold))
-                Text("Freshli Weekly Wrap")
+                Text(String(localized: "Freshli Weekly Wrap"))
                     .font(.system(size: 14, weight: .bold, design: .rounded))
             }
             .foregroundColor(.white.opacity(0.9))
@@ -163,7 +163,7 @@ struct WeeklyWrapShareCard: View {
                 .font(.system(size: 88, weight: .heavy, design: .rounded))
                 .foregroundColor(.white)
 
-            Text("Items Saved This Week")
+            Text(String(localized: "Items Saved This Week"))
                 .font(.system(size: 16, weight: .semibold, design: .rounded))
                 .foregroundColor(.white.opacity(0.85))
 
@@ -351,12 +351,12 @@ struct WeeklyWrapShareCard: View {
             HStack(spacing: 4) {
                 Image(systemName: "leaf.fill")
                     .font(.system(size: 12, weight: .bold))
-                Text("Freshli")
+                Text(String(localized: "Freshli"))
                     .font(.system(size: 12, weight: .bold, design: .rounded))
             }
             .foregroundColor(.white)
 
-            Text("Track your food. Reduce waste. Save the planet.")
+            Text(String(localized: "Track your food. Reduce waste. Save the planet."))
                 .font(.system(size: 10, weight: .medium))
                 .foregroundColor(.white.opacity(0.5))
         }

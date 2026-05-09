@@ -62,7 +62,7 @@ struct FreshliConfirmPredictionView: View {
                     HStack(spacing: PSSpacing.xs) {
                         Image(systemName: "arrow.counterclockwise")
                             .font(.system(size: 13, weight: .semibold))
-                        Text("Refill")
+                        Text(String(localized: "Refill"))
                             .font(PSTypography.subheadlineMedium)
                     }
                     .foregroundStyle(PSColors.primaryGreen)
@@ -86,7 +86,7 @@ struct FreshliConfirmPredictionView: View {
                             Image(systemName: "checkmark.circle")
                                 .font(.system(size: 13, weight: .semibold))
                         }
-                        Text("Consumed")
+                        Text(String(localized: "Consumed"))
                             .font(PSTypography.subheadlineMedium)
                     }
                     .foregroundStyle(PSColors.textSecondary)
@@ -126,7 +126,7 @@ struct FreshliConfirmPredictionView: View {
                         .font(PSTypography.title3)
                         .foregroundStyle(PSColors.textPrimary)
 
-                    Text("Set the new quantity after restocking")
+                    Text(String(localized: "Set the new quantity after restocking"))
                         .font(PSTypography.callout)
                         .foregroundStyle(PSColors.textSecondary)
                 }
@@ -340,7 +340,7 @@ struct FreshliConfirmPredictionButton: View {
             HStack(spacing: PSSpacing.xxs) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 10, weight: .bold))
-                Text("Confirm")
+                Text(String(localized: "Confirm"))
                     .font(PSTypography.caption2)
                     .fontWeight(.semibold)
             }

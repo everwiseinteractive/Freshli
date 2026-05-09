@@ -374,6 +374,10 @@ struct FreshliApp: App {
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willResignActiveNotification)) { _ in
                 // Pause ARKit gaze tracking to save battery when backgrounded
                 GazeTrackingService.shared.pause()
+                // Drain any buffered analytics events before iOS
+                // suspends us — otherwise events queued in the last
+                // 30-second window of foregrounded time would be lost.
+                AnalyticsService.shared.flushPending()
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
                 GazeTrackingService.shared.resume()

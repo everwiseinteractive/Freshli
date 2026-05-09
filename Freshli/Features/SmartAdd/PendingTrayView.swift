@@ -47,7 +47,7 @@ struct PendingTrayView: View {
                         .background(PSColors.primaryGreen)
                         .clipShape(Circle())
 
-                    Text("Pending Items")
+                    Text(String(localized: "Pending Items"))
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(PSColors.textPrimary)
 

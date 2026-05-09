@@ -97,7 +97,7 @@ struct CircleDetailView: View {
     private var membersSection: some View {
         VStack(alignment: .leading, spacing: PSSpacing.sm) {
             HStack {
-                Text("Members")
+                Text(String(localized: "Members"))
                     .font(PSTypography.headline)
                     .foregroundStyle(PSColors.textPrimary)
 
@@ -147,7 +147,7 @@ struct CircleDetailView: View {
     private var listingsSection: some View {
         VStack(alignment: .leading, spacing: PSSpacing.sm) {
             HStack {
-                Text("Shared Items")
+                Text(String(localized: "Shared Items"))
                     .font(PSTypography.headline)
                     .foregroundStyle(PSColors.textPrimary)
 
@@ -165,10 +165,10 @@ struct CircleDetailView: View {
                         Image(systemName: "tray")
                             .font(.system(size: 28))
                             .foregroundStyle(PSColors.textTertiary)
-                        Text("No items shared yet")
+                        Text(String(localized: "No items shared yet"))
                             .font(PSTypography.subheadline)
                             .foregroundStyle(PSColors.textSecondary)
-                        Text("Tap + to share food with your circle")
+                        Text(String(localized: "Tap + to share food with your circle"))
                             .font(PSTypography.caption1)
                             .foregroundStyle(PSColors.textTertiary)
                     }
@@ -269,7 +269,7 @@ private struct CircleListingRow: View {
                         Button {
                             onClaim()
                         } label: {
-                            Text("Claim")
+                            Text(String(localized: "Claim"))
                                 .font(PSTypography.subheadlineMedium)
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, PSSpacing.md)
@@ -314,7 +314,7 @@ private struct AddCircleListingView: View {
             ScrollView {
                 VStack(spacing: PSSpacing.xxl) {
                     VStack(alignment: .leading, spacing: PSSpacing.xs) {
-                        Text("Item Name")
+                        Text(String(localized: "Item Name"))
                             .font(PSTypography.subheadlineMedium)
                             .foregroundStyle(PSColors.textSecondary)
                         TextField("e.g. Homemade soup, Extra bananas", text: $itemName)
@@ -325,7 +325,7 @@ private struct AddCircleListingView: View {
                     }
 
                     VStack(alignment: .leading, spacing: PSSpacing.xs) {
-                        Text("Description (optional)")
+                        Text(String(localized: "Description (optional)"))
                             .font(PSTypography.subheadlineMedium)
                             .foregroundStyle(PSColors.textSecondary)
                         TextField("Any details for circle members", text: $itemDescription, axis: .vertical)
@@ -337,7 +337,7 @@ private struct AddCircleListingView: View {
                     }
 
                     VStack(alignment: .leading, spacing: PSSpacing.xs) {
-                        Text("Quantity (optional)")
+                        Text(String(localized: "Quantity (optional)"))
                             .font(PSTypography.subheadlineMedium)
                             .foregroundStyle(PSColors.textSecondary)
                         TextField("e.g. 2 jars, 1 bag", text: $quantity)
@@ -348,7 +348,7 @@ private struct AddCircleListingView: View {
                     }
 
                     Toggle(isOn: $hasExpiry) {
-                        Text("Expires")
+                        Text(String(localized: "Expires"))
                             .font(PSTypography.bodyMedium)
                             .foregroundStyle(PSColors.textPrimary)
                     }

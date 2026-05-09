@@ -81,7 +81,7 @@ struct CreateCircleView: View {
 
     private var nameField: some View {
         VStack(alignment: .leading, spacing: PSSpacing.xs) {
-            Text("Circle Name")
+            Text(String(localized: "Circle Name"))
                 .font(PSTypography.subheadlineMedium)
                 .foregroundStyle(PSColors.textSecondary)
 
@@ -95,7 +95,7 @@ struct CreateCircleView: View {
 
     private var descriptionField: some View {
         VStack(alignment: .leading, spacing: PSSpacing.xs) {
-            Text("Description (optional)")
+            Text(String(localized: "Description (optional)"))
                 .font(PSTypography.subheadlineMedium)
                 .foregroundStyle(PSColors.textSecondary)
 
@@ -115,7 +115,7 @@ struct CreateCircleView: View {
             Image(systemName: "lock.shield.fill")
                 .foregroundStyle(PSColors.primaryGreen)
 
-            Text("Everything shared in your circle stays private. Items are only visible to members unless you choose \"Global Share.\"")
+            Text(String(localized: "Everything shared in your circle stays private. Items are only visible to members unless you choose \"Global Share.\""))
                 .font(PSTypography.caption1)
                 .foregroundStyle(PSColors.textSecondary)
         }

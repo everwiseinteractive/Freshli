@@ -477,7 +477,7 @@ struct ReplenishItemRow: View {
                 .font(PSTypography.caption2)
                 .foregroundStyle(PSColors.textTertiary)
 
-            Text("Last")
+            Text(String(localized: "Last"))
                 .font(PSTypography.caption2)
                 .foregroundStyle(PSColors.textTertiary)
 

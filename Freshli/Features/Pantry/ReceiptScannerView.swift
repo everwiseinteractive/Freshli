@@ -85,7 +85,7 @@ struct ReceiptScannerView: View {
         VStack(spacing: 0) {
             HStack(spacing: PSSpacing.md) {
                 VStack(alignment: .leading, spacing: PSSpacing.xs) {
-                    Text("Receipt Scanner")
+                    Text(String(localized: "Receipt Scanner"))
                         .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(PSColors.textPrimary)
 
@@ -398,14 +398,14 @@ struct ReceiptScannerView: View {
                     PSShimmerView(height: 120, cornerRadius: PSSpacing.radiusMd)
                         .padding(PSSpacing.screenHorizontal)
 
-                    Text("Scanning receipt...")
+                    Text(String(localized: "Scanning receipt..."))
                         .font(.system(size: 16, weight: .medium))
                         .foregroundStyle(PSColors.textPrimary)
                 } else if case .parsing = receiptScanner.scanningState {
                     PSShimmerView(height: 120, cornerRadius: PSSpacing.radiusMd)
                         .padding(PSSpacing.screenHorizontal)
 
-                    Text("Extracting items...")
+                    Text(String(localized: "Extracting items..."))
                         .font(.system(size: 16, weight: .medium))
                         .foregroundStyle(PSColors.textPrimary)
                 } else if case .error(let message) = receiptScanner.scanningState {
@@ -414,7 +414,7 @@ struct ReceiptScannerView: View {
                         .foregroundStyle(PSColors.expiredRed)
 
                     VStack(spacing: PSSpacing.sm) {
-                        Text("Scan Failed")
+                        Text(String(localized: "Scan Failed"))
                             .font(.system(size: 18, weight: .bold))
                             .foregroundStyle(PSColors.textPrimary)
 
@@ -559,7 +559,7 @@ struct ReceiptScannerView: View {
         VStack(spacing: PSSpacing.md) {
             // Item name
             VStack(alignment: .leading, spacing: PSSpacing.xs) {
-                Text("Item Name")
+                Text(String(localized: "Item Name"))
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(PSColors.textSecondary)
 
@@ -579,7 +579,7 @@ struct ReceiptScannerView: View {
 
             // Quantity
             VStack(alignment: .leading, spacing: PSSpacing.xs) {
-                Text("Quantity")
+                Text(String(localized: "Quantity"))
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(PSColors.textSecondary)
 
@@ -619,7 +619,7 @@ struct ReceiptScannerView: View {
 
             // Category
             VStack(alignment: .leading, spacing: PSSpacing.xs) {
-                Text("Category")
+                Text(String(localized: "Category"))
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(PSColors.textSecondary)
 
@@ -641,7 +641,7 @@ struct ReceiptScannerView: View {
             Button(action: {
                 editingItemId = nil
             }) {
-                Text("Done")
+                Text(String(localized: "Done"))
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(PSColors.primaryGreen)
                     .frame(maxWidth: .infinity)

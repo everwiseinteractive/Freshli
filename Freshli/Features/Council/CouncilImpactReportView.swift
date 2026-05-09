@@ -152,7 +152,7 @@ struct CouncilImpactReportView: View {
             sectionHeader("vs. Average", icon: "chart.xyaxis.line", color: PSColors.accentTeal)
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Your Rank")
+                    Text(String(localized: "Your Rank"))
                         .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
                         .foregroundStyle(PSColors.textSecondary)
                     HStack(alignment: .firstTextBaseline, spacing: 2) {
@@ -166,13 +166,13 @@ struct CouncilImpactReportView: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("National avg")
+                    Text(String(localized: "National avg"))
                         .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
                         .foregroundStyle(PSColors.textTertiary)
                     Text("\(comparison.nationalAverage) items/month")
                         .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
                         .foregroundStyle(PSColors.textPrimary)
-                    Text("Regional avg")
+                    Text(String(localized: "Regional avg"))
                         .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
                         .foregroundStyle(PSColors.textTertiary)
                         .padding(.top, 2)
@@ -197,7 +197,7 @@ struct CouncilImpactReportView: View {
         VStack(alignment: .leading, spacing: PSSpacing.md) {
             sectionHeader("Top Wasted Categories", icon: "chart.pie.fill", color: PSColors.secondaryAmber)
             if report.topWastedCategories.isEmpty {
-                Text("No category breakdown yet.")
+                Text(String(localized: "No category breakdown yet."))
                     .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
                     .foregroundStyle(PSColors.textTertiary)
             } else {
@@ -245,7 +245,7 @@ struct CouncilImpactReportView: View {
         VStack(alignment: .leading, spacing: PSSpacing.md) {
             sectionHeader("Why Food Is Wasted Locally", icon: "questionmark.circle.fill", color: Color(hex: 0xA855F7))
             if report.topReasons.isEmpty {
-                Text("No reason data yet — log items in the bin to unlock insights.")
+                Text(String(localized: "No reason data yet — log items in the bin to unlock insights."))
                     .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
                     .foregroundStyle(PSColors.textTertiary)
             } else {
@@ -279,10 +279,10 @@ struct CouncilImpactReportView: View {
                 .font(.system(size: PSLayout.scaledFont(22)))
                 .foregroundStyle(Color(hex: 0x3B82F6))
             VStack(alignment: .leading, spacing: 2) {
-                Text("Share Anonymous Data")
+                Text(String(localized: "Share Anonymous Data"))
                     .font(.system(size: PSLayout.scaledFont(14), weight: .bold))
                     .foregroundStyle(PSColors.textPrimary)
-                Text("Help your council reduce local waste — no personal info is ever shared.")
+                Text(String(localized: "Help your council reduce local waste — no personal info is ever shared."))
                     .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
                     .foregroundStyle(PSColors.textSecondary)
             }
@@ -303,9 +303,9 @@ struct CouncilImpactReportView: View {
             Image(systemName: "chart.bar.xaxis")
                 .font(.system(size: PSLayout.scaledFont(40)))
                 .foregroundStyle(PSColors.textTertiary)
-            Text("No data yet")
+            Text(String(localized: "No data yet"))
                 .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
-            Text("Add and track items to generate your council impact report.")
+            Text(String(localized: "Add and track items to generate your council impact report."))
                 .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
                 .foregroundStyle(PSColors.textSecondary)
                 .multilineTextAlignment(.center)

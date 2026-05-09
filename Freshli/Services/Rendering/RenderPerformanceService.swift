@@ -383,7 +383,7 @@ struct MetalPerformanceHUD: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Metal Performance")
+            Text(String(localized: "Metal Performance"))
                 .font(.system(size: 10, weight: .bold, design: .monospaced))
                 .foregroundStyle(.white)
 
@@ -412,7 +412,7 @@ struct MetalPerformanceHUD: View {
                     .foregroundStyle(thermalColor)
 
                 if ProcessInfo.processInfo.isLowPowerModeEnabled {
-                    Text("LPM")
+                    Text(String(localized: "LPM"))
                         .font(.system(size: 9, design: .monospaced))
                         .foregroundStyle(.orange)
                 }

@@ -112,23 +112,42 @@ final class AnalyticsService {
         properties: [String: AnyCodable] = [:]
     ) {
         Task.detached(priority: .background) { [event, properties] in
-            await Self.shared.performTrack(event, properties: properties)
+            await Self.shared.enqueue(event, properties: properties)
         }
     }
 
-    // MARK: - Private
+    /// Force-flush the buffer immediately. Called from
+    /// `UIApplication.willResignActiveNotification` so we don't lose
+    /// in-flight events when the app backgrounds.
+    nonisolated func flushPending() {
+        Task.detached(priority: .background) {
+            await Self.shared.drain()
+        }
+    }
 
-    private func performTrack(
-        _ event: AnalyticsEvent,
-        properties: [String: AnyCodable]
-    ) async {
+    // MARK: - Private — batching
+    //
+    // Previous implementation: every `track()` spawned a detached
+    // Task that opened a Supabase HTTPS connection and INSERTed one
+    // row. Pantry-tab onAppear alone fired ≥6 events; the resulting
+    // burst of TLS handshakes was a measurable battery + cellular
+    // cost. We now buffer up to `batchSize` events (or `batchInterval`
+    // seconds, whichever comes first) and flush as a single bulk
+    // insert. Buffer is drained on app-background so events aren't
+    // lost mid-session.
+
+    /// Maximum number of events to buffer before forcing a flush.
+    private let batchSize: Int = 10
+    /// Maximum time an event can sit in the buffer before being
+    /// flushed, even if `batchSize` hasn't been reached.
+    private let batchInterval: TimeInterval = 30
+
+    private var pending: [AnalyticsEventDTO] = []
+    private var flushTask: Task<Void, Never>?
+
+    private func enqueue(_ event: AnalyticsEvent, properties: [String: AnyCodable]) async {
         guard isEnabled else { return }
-
-        // Read the authenticated user from the Supabase session directly.
-        // If there is no session (pre-auth onboarding, etc.) user_id is
-        // nil and the row lands as an anonymous event keyed to sessionId.
         let userId: UUID? = try? await AppSupabase.client.auth.session.user.id
-
         let payload = AnalyticsEventDTO(
             userId: userId,
             sessionId: sessionId,
@@ -138,16 +157,41 @@ final class AnalyticsService {
             platform: "ios",
             createdAt: Date()
         )
+        pending.append(payload)
+        if pending.count >= batchSize {
+            await drain()
+        } else {
+            scheduleDeferredFlushIfNeeded()
+        }
+    }
+
+    private func scheduleDeferredFlushIfNeeded() {
+        guard flushTask == nil else { return }
+        let interval = batchInterval
+        flushTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(interval))
+            guard let self else { return }
+            await self.drain()
+        }
+    }
+
+    private func drain() async {
+        flushTask?.cancel()
+        flushTask = nil
+        guard !pending.isEmpty else { return }
+        let batch = pending
+        pending.removeAll()
 
         do {
             try await AppSupabase.client
                 .from("analytics_events")
-                .insert(payload)
+                .insert(batch)
                 .execute()
-            logger.debug("analytics: \(event.rawValue, privacy: .public)")
+            logger.debug("analytics: flushed \(batch.count, privacy: .public) event(s)")
         } catch {
-            // Best-effort. Log and move on.
-            logger.debug("analytics write failed (\(event.rawValue, privacy: .public)): \(error.localizedDescription, privacy: .public)")
+            // Best-effort. On failure, drop the batch — re-queueing
+            // would risk infinite retry loops if the schema is bad.
+            logger.debug("analytics flush failed (\(batch.count, privacy: .public) events): \(error.localizedDescription, privacy: .public)")
         }
     }
 }

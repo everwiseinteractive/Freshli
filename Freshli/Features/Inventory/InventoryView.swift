@@ -74,7 +74,7 @@ struct InventoryView: View {
             await viewModel.loadItems(userId: userId)
         }
         .sheet(isPresented: $showAddItem) {
-            Text("Add Item")
+            Text(String(localized: "Add Item"))
                 .presentationDragIndicator(.visible)
                 .sheetTransition()
         }

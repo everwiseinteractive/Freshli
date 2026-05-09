@@ -60,7 +60,7 @@ struct FreshliItemCell: View {
                 VStack(spacing: PSSpacing.xs) {
                     Image(systemName: "square.and.arrow.up.fill")
                         .font(.system(size: PSLayout.scaledFont(22), weight: .semibold))
-                    Text("Share")
+                    Text(String(localized: "Share"))
                         .font(.system(size: PSLayout.scaledFont(11), weight: .semibold, design: .rounded))
                 }
                 .foregroundStyle(.white)
@@ -75,7 +75,7 @@ struct FreshliItemCell: View {
                 VStack(spacing: PSSpacing.xs) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: PSLayout.scaledFont(22), weight: .semibold))
-                    Text("Consumed")
+                    Text(String(localized: "Consumed"))
                         .font(.system(size: PSLayout.scaledFont(11), weight: .semibold, design: .rounded))
                 }
                 .foregroundStyle(.white)

@@ -85,7 +85,7 @@ struct ImpactWrapView: View {
 
             // Tap to continue text (shows on first screen only)
             if currentScreen == 0 {
-                Text("Tap or swipe to continue")
+                Text(String(localized: "Tap or swipe to continue"))
                     .font(.system(size: 14, weight: .medium, design: .default))
                     .foregroundColor(.white.opacity(0.7))
                     .transition(.asymmetric(
@@ -225,7 +225,7 @@ private struct IntroScreen: View {
 
                 // Title with animation
                 VStack(spacing: PSSpacing.md) {
-                    Text("Your Week")
+                    Text(String(localized: "Your Week"))
                         .font(.system(size: PSLayout.scaledFont(48), weight: .bold, design: .default))
                         .foregroundColor(.white)
                         .lineLimit(1)
@@ -261,7 +261,7 @@ private struct IntroScreen: View {
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white.opacity(0.6))
 
-                    Text("Swipe to continue")
+                    Text(String(localized: "Swipe to continue"))
                         .font(.system(size: 12, weight: .medium, design: .default))
                         .foregroundColor(.white.opacity(0.6))
                 }
@@ -402,7 +402,7 @@ private struct MoneySavedScreen: View {
                     let y = CGFloat.random(in: 0...size.height)
                     var stringContext = context
                     stringContext.translateBy(x: x, y: y)
-                    stringContext.draw(Text("$").font(.system(size: 32, weight: .bold)).foregroundColor(.white.opacity(0.1)), at: .zero)
+                    stringContext.draw(Text(String(localized: "$")).font(.system(size: 32, weight: .bold)).foregroundColor(.white.opacity(0.1)), at: .zero)
                 }
             }
 
@@ -419,7 +419,7 @@ private struct MoneySavedScreen: View {
                         .contentTransition(.numericText())
                         .compositingGroup()
 
-                    Text("Money Saved")
+                    Text(String(localized: "Money Saved"))
                         .font(.system(size: 20, weight: .semibold, design: .default))
                         .foregroundColor(.white.opacity(0.95))
                 }
@@ -485,7 +485,7 @@ private struct EnvironmentalImpactScreen: View {
                         .contentTransition(.numericText())
                         .compositingGroup()
 
-                    Text("CO₂ Avoided")
+                    Text(String(localized: "CO₂ Avoided"))
                         .font(.system(size: 20, weight: .semibold, design: .default))
                         .foregroundColor(.white.opacity(0.95))
                 }
@@ -554,7 +554,7 @@ private struct TopCategoryScreen: View {
             VStack(spacing: PSSpacing.xxxl) {
                 Spacer()
 
-                Text("Your Top Category")
+                Text(String(localized: "Your Top Category"))
                     .font(.system(size: 18, weight: .semibold, design: .default))
                     .foregroundColor(.white.opacity(0.8))
 
@@ -685,7 +685,7 @@ private struct StreakScreen: View {
                                     .contentTransition(.numericText())
                                     .compositingGroup()
 
-                                Text("Day Streak")
+                                Text(String(localized: "Day Streak"))
                                     .font(.system(size: 18, weight: .semibold, design: .default))
                                     .foregroundColor(.white.opacity(0.9))
                             }
@@ -773,7 +773,7 @@ private struct SummaryScreen: View {
                     Button(action: onShare) {
                         HStack(spacing: PSSpacing.sm) {
                             Image(systemName: "square.and.arrow.up")
-                            Text("Share Your Impact")
+                            Text(String(localized: "Share Your Impact"))
                         }
                         .font(.system(size: 16, weight: .semibold, design: .default))
                         .foregroundColor(PSColors.textOnPrimary)
@@ -784,7 +784,7 @@ private struct SummaryScreen: View {
                     }
 
                     Button(action: onDone) {
-                        Text("Done")
+                        Text(String(localized: "Done"))
                             .font(.system(size: 16, weight: .semibold, design: .default))
                             .foregroundColor(PSColors.textOnPrimary)
                             .frame(maxWidth: .infinity)

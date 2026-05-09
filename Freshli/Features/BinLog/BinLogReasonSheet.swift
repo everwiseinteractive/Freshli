@@ -48,7 +48,7 @@ struct BinLogReasonSheet: View {
                 Text(item.name)
                     .font(.system(size: PSLayout.scaledFont(20), weight: .black))
                     .foregroundStyle(PSColors.textPrimary)
-                Text("Help us stop this from happening again. Your answer builds your Bin Log — no judgement.")
+                Text(String(localized: "Help us stop this from happening again. Your answer builds your Bin Log — no judgement."))
                     .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
                     .foregroundStyle(PSColors.textSecondary)
                     .multilineTextAlignment(.center)
@@ -111,7 +111,7 @@ struct BinLogReasonSheet: View {
             onDismiss(reason)
             dismiss()
         } label: {
-            Text("Log & Continue")
+            Text(String(localized: "Log & Continue"))
                 .font(.system(size: PSLayout.scaledFont(16), weight: .bold))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
@@ -150,7 +150,7 @@ struct BinLogDashboardView: View {
             $0.date >= (Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date())
         }.count
         return VStack(alignment: .leading, spacing: PSSpacing.md) {
-            Text("LAST 30 DAYS")
+            Text(String(localized: "LAST 30 DAYS"))
                 .font(.system(size: PSLayout.scaledFont(11), weight: .black))
                 .foregroundStyle(.white.opacity(0.7))
                 .tracking(1.5)
@@ -183,13 +183,13 @@ struct BinLogDashboardView: View {
                 Image(systemName: "hand.raised.fill")
                     .font(.system(size: PSLayout.scaledFont(13)))
                     .foregroundStyle(PSColors.expiredRed)
-                Text("Stop Buying These")
+                Text(String(localized: "Stop Buying These"))
                     .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
                     .foregroundStyle(PSColors.textSecondary)
                     .textCase(.uppercase).tracking(0.5)
             }
             if alerts.isEmpty {
-                Text("No repeat offenders yet. Keep tracking to unlock personalised alerts.")
+                Text(String(localized: "No repeat offenders yet. Keep tracking to unlock personalised alerts."))
                     .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
                     .foregroundStyle(PSColors.textTertiary)
                     .padding(PSSpacing.lg)
@@ -243,13 +243,13 @@ struct BinLogDashboardView: View {
                 Image(systemName: "chart.pie.fill")
                     .font(.system(size: PSLayout.scaledFont(13)))
                     .foregroundStyle(PSColors.accentTeal)
-                Text("Why Food Goes Bad")
+                Text(String(localized: "Why Food Goes Bad"))
                     .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
                     .foregroundStyle(PSColors.textSecondary)
                     .textCase(.uppercase).tracking(0.5)
             }
             if breakdown.isEmpty {
-                Text("Log items when you bin them to see patterns emerge.")
+                Text(String(localized: "Log items when you bin them to see patterns emerge."))
                     .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
                     .foregroundStyle(PSColors.textTertiary)
                     .padding(PSSpacing.lg)

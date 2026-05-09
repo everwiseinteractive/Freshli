@@ -107,7 +107,7 @@ struct IdentityBadgeView: View {
 
             // Text
             VStack(spacing: PSSpacing.sm) {
-                Text("Verify Your Identity")
+                Text(String(localized: "Verify Your Identity"))
                     .font(PSTypography.title2)
                     .foregroundStyle(PSColors.textPrimary)
 
@@ -173,7 +173,7 @@ struct IdentityBadgeCompact: View {
             HStack(spacing: 3) {
                 Image(systemName: "checkmark.seal.fill")
                     .font(.system(size: 12))
-                Text("Verified")
+                Text(String(localized: "Verified"))
                     .font(PSTypography.caption2Medium)
             }
             .foregroundStyle(PSColors.primaryGreen)

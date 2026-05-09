@@ -211,7 +211,7 @@ struct FLRecipesPage: View {
                 HStack(spacing: PSSpacing.xxs) {
                     Image(systemName: "trophy.fill")
                         .font(.system(size: 9, weight: .bold))
-                    Text("HERO")
+                    Text(String(localized: "HERO"))
                         .font(.system(size: 9, weight: .black))
                         .tracking(0.5)
                 }
@@ -403,7 +403,7 @@ struct FLRecipesPage: View {
                                     .padding(.vertical, PSSpacing.xxxs)
                                     .background(.white.opacity(0.12))
                                     .clipShape(RoundedRectangle(cornerRadius: PSSpacing.xs))
-                                Text("Healthy")
+                                Text(String(localized: "Healthy"))
                                     .font(.system(size: PSLayout.scaledFont(11)))
                                     .foregroundStyle(.white.opacity(0.8))
                                     .padding(.horizontal, PSSpacing.sm)

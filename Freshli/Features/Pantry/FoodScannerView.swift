@@ -86,7 +86,7 @@ struct FoodScannerView: View {
         VStack(spacing: 0) {
             HStack(spacing: FLSpacing.md) {
                 VStack(alignment: .leading, spacing: FLSpacing.xs) {
-                    Text("Food Scanner")
+                    Text(String(localized: "Food Scanner"))
                         .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(FLColors.textPrimary)
 
@@ -353,7 +353,7 @@ struct FoodScannerView: View {
                     FLShimmerView(height: 120, cornerRadius: FLSpacing.radiusMd)
                         .padding(FLSpacing.screenHorizontal)
 
-                    Text("Analyzing image...")
+                    Text(String(localized: "Analyzing image..."))
                         .font(.system(size: 16, weight: .medium))
                         .foregroundStyle(FLColors.textPrimary)
                 } else if case .error(let message) = foodScanner.identificationState {
@@ -362,7 +362,7 @@ struct FoodScannerView: View {
                         .foregroundStyle(FLColors.expiredRed)
 
                     VStack(spacing: FLSpacing.sm) {
-                        Text("Identification Failed")
+                        Text(String(localized: "Identification Failed"))
                             .font(.system(size: 18, weight: .bold))
                             .foregroundStyle(FLColors.textPrimary)
 
@@ -514,7 +514,7 @@ struct FoodScannerView: View {
             // Category & Storage
             HStack(spacing: FLSpacing.md) {
                 VStack(alignment: .leading, spacing: FLSpacing.xs) {
-                    Text("Category")
+                    Text(String(localized: "Category"))
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(FLColors.textSecondary)
 
@@ -530,7 +530,7 @@ struct FoodScannerView: View {
                 Spacer()
 
                 VStack(alignment: .leading, spacing: FLSpacing.xs) {
-                    Text("Storage")
+                    Text(String(localized: "Storage"))
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(FLColors.textSecondary)
 
@@ -546,7 +546,7 @@ struct FoodScannerView: View {
 
             // Quantity
             VStack(alignment: .leading, spacing: FLSpacing.xs) {
-                Text("Quantity")
+                Text(String(localized: "Quantity"))
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(FLColors.textSecondary)
 
@@ -596,7 +596,7 @@ struct FoodScannerView: View {
             }) {
                 HStack(spacing: FLSpacing.sm) {
                     Image(systemName: "plus.circle.fill")
-                    Text("Add This Item")
+                    Text(String(localized: "Add This Item"))
                 }
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.white)

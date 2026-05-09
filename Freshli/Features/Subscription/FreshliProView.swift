@@ -113,7 +113,7 @@ struct FreshliProView: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Restore your previous Freshli+ purchases from the App Store.")
+            Text(String(localized: "Restore your previous Freshli+ purchases from the App Store."))
         }
         .alert("Purchase Error", isPresented: $showErrorAlert, presenting: subscriptionService.error) { _ in
             Button("OK") { subscriptionService.error = nil }
@@ -147,7 +147,7 @@ struct FreshliProView: View {
             }
 
             VStack(alignment: .leading, spacing: 1) {
-                Text("Loved by food savers")
+                Text(String(localized: "Loved by food savers"))
                     .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
                     .foregroundStyle(PSColors.textPrimary)
                 HStack(spacing: 2) {
@@ -237,7 +237,7 @@ struct FreshliProView: View {
             .metalShimmer(duration: 2.0, pause: 3.0)
 
             VStack(spacing: PSSpacing.sm) {
-                Text("Freshli+")
+                Text(String(localized: "Freshli+"))
                     .font(.system(size: PSLayout.scaledFont(38), weight: .black))
                     .tracking(-1.0)
                     .foregroundStyle(PSColors.textPrimary)
@@ -359,7 +359,7 @@ struct FreshliProView: View {
                 )
             }
             if subscriptionService.products.isEmpty && !subscriptionService.isLoading {
-                Text("Unable to load pricing. Check your connection and try again.")
+                Text(String(localized: "Unable to load pricing. Check your connection and try again."))
                     .font(PSTypography.caption1)
                     .foregroundStyle(PSColors.textSecondary)
                     .multilineTextAlignment(.center)
@@ -376,10 +376,10 @@ struct FreshliProView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: PSSpacing.xs) {
                             HStack(spacing: PSSpacing.xs) {
-                                Text("Family Pro")
+                                Text(String(localized: "Family Pro"))
                                     .font(.system(size: PSLayout.scaledFont(17), weight: .black))
                                     .foregroundStyle(PSColors.textPrimary)
-                                Text("UP TO 6 MEMBERS")
+                                Text(String(localized: "UP TO 6 MEMBERS"))
                                     .font(.system(size: PSLayout.scaledFont(10), weight: .bold))
                                     .foregroundStyle(.white)
                                     .padding(.horizontal, PSSpacing.sm)
@@ -387,7 +387,7 @@ struct FreshliProView: View {
                                     .background(PSColors.primaryGreen)
                                     .clipShape(Capsule())
                             }
-                            Text("Share everything with your household")
+                            Text(String(localized: "Share everything with your household"))
                                 .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
                                 .foregroundStyle(PSColors.textSecondary)
                         }
@@ -443,7 +443,7 @@ struct FreshliProView: View {
                         HStack(spacing: PSSpacing.xxs) {
                             Image(systemName: "flame.fill")
                                 .font(.system(size: PSLayout.scaledFont(10), weight: .bold))
-                            Text("MOST POPULAR")
+                            Text(String(localized: "MOST POPULAR"))
                                 .font(.system(size: PSLayout.scaledFont(10), weight: .black))
                                 .tracking(0.5)
                         }
@@ -492,7 +492,7 @@ struct FreshliProView: View {
                                     .clipShape(Capsule())
                             }
                             if isBestValue && savingsPercent == nil {
-                                Text("BEST VALUE")
+                                Text(String(localized: "BEST VALUE"))
                                     .font(.system(size: PSLayout.scaledFont(10), weight: .black))
                                     .foregroundStyle(.white)
                                     .padding(.horizontal, PSSpacing.sm)
@@ -543,10 +543,10 @@ struct FreshliProView: View {
     private var featuresSection: some View {
         VStack(alignment: .leading, spacing: PSSpacing.lg) {
             VStack(alignment: .leading, spacing: PSSpacing.xxs) {
-                Text("Everything in Freshli+")
+                Text(String(localized: "Everything in Freshli+"))
                     .font(.system(size: PSLayout.scaledFont(22), weight: .black))
                     .foregroundStyle(PSColors.textPrimary)
-                Text("Designed to help you waste less & save more")
+                Text(String(localized: "Designed to help you waste less & save more"))
                     .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
                     .foregroundStyle(PSColors.textSecondary)
             }
@@ -578,7 +578,7 @@ struct FreshliProView: View {
                         .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
                         .foregroundStyle(PSColors.textPrimary)
                     if feature.proOnly {
-                        Text("PRO")
+                        Text(String(localized: "PRO"))
                             .font(.system(size: PSLayout.scaledFont(9), weight: .black))
                             .foregroundStyle(PSColors.primaryGreen)
                             .padding(.horizontal, 5)
@@ -618,10 +618,10 @@ struct FreshliProView: View {
                     Image(systemName: "checkmark.seal.fill")
                         .font(.system(size: 36))
                         .foregroundStyle(PSColors.primaryGreen)
-                    Text("You're a Freshli+ Member!")
+                    Text(String(localized: "You're a Freshli+ Member!"))
                         .font(.system(size: PSLayout.scaledFont(20), weight: .black))
                         .foregroundStyle(PSColors.textPrimary)
-                    Text("Thank you for supporting a sustainable future. 🌱")
+                    Text(String(localized: "Thank you for supporting a sustainable future. 🌱"))
                         .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
                         .foregroundStyle(PSColors.textSecondary)
                         .multilineTextAlignment(.center)
@@ -701,7 +701,7 @@ struct FreshliProView: View {
                 Button {
                     showRestoreAlert = true
                 } label: {
-                    Text("Restore Purchases")
+                    Text(String(localized: "Restore Purchases"))
                         .font(.system(size: PSLayout.scaledFont(14), weight: .semibold))
                         .foregroundStyle(PSColors.primaryGreen)
                 }
@@ -734,7 +734,7 @@ struct FreshliProView: View {
 
             // Subscription terms
             VStack(alignment: .leading, spacing: PSSpacing.md) {
-                Text("Subscription Details")
+                Text(String(localized: "Subscription Details"))
                     .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
                     .foregroundStyle(PSColors.textSecondary)
 
@@ -752,7 +752,7 @@ struct FreshliProView: View {
                     Image(systemName: "info.circle.fill")
                         .font(.system(size: PSLayout.scaledFont(12)))
                         .foregroundStyle(PSColors.textTertiary)
-                    Text("To cancel, go to **Settings → Apple ID → Subscriptions** and turn off auto-renewal at least 24 hours before the end of your billing period.")
+                    Text(String(localized: "To cancel, go to **Settings → Apple ID → Subscriptions** and turn off auto-renewal at least 24 hours before the end of your billing period."))
                         .font(.system(size: PSLayout.scaledFont(12), weight: .regular))
                         .foregroundStyle(PSColors.textTertiary)
                 }
@@ -766,7 +766,7 @@ struct FreshliProView: View {
             HStack(spacing: PSSpacing.sm) {
                 if let termsURL = URL(string: "https://freshli.app/terms.html") {
                     Link(destination: termsURL) {
-                        Text("Terms of Use (EULA)")
+                        Text(String(localized: "Terms of Use (EULA)"))
                             .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
                             .foregroundStyle(PSColors.primaryGreen)
                     }
@@ -779,7 +779,7 @@ struct FreshliProView: View {
 
                 if let privacyURL = URL(string: "https://freshli.app/privacy.html") {
                     Link(destination: privacyURL) {
-                        Text("Privacy Policy")
+                        Text(String(localized: "Privacy Policy"))
                             .font(.system(size: PSLayout.scaledFont(12), weight: .semibold))
                             .foregroundStyle(PSColors.primaryGreen)
                     }

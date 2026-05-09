@@ -622,7 +622,7 @@ struct FLPantryPage: View {
                     PSHaptics.shared.lightTap()
                     autoListTarget = item
                 } label: {
-                    Text("List")
+                    Text(String(localized: "List"))
                         .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, PSSpacing.md)

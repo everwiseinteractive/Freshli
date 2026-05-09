@@ -176,7 +176,7 @@ struct HeroBadgeGrid: View {
             // Section header
             HStack {
                 Label {
-                    Text("Hero Badges")
+                    Text(String(localized: "Hero Badges"))
                         .font(PSTypography.headline)
                 } icon: {
                     Image(systemName: "trophy.fill")
@@ -249,7 +249,7 @@ struct ReputationScoreView: View {
                 // Score header
                 HStack(alignment: .firstTextBaseline) {
                     VStack(alignment: .leading, spacing: PSSpacing.xxs) {
-                        Text("Reputation Score")
+                        Text(String(localized: "Reputation Score"))
                             .font(PSTypography.footnoteMedium)
                             .foregroundStyle(PSColors.textSecondary)
 

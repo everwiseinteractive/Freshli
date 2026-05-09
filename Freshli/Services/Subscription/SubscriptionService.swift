@@ -447,11 +447,11 @@ struct ProFeatureGateModifier: ViewModifier {
                                 .font(.system(size: 28, weight: .semibold))
                                 .foregroundStyle(FLColors.primaryGreen)
 
-                            Text("Freshli+ Feature")
+                            Text(String(localized: "Freshli+ Feature"))
                                 .font(FLTypography.headline)
                                 .foregroundStyle(FLColors.textPrimary)
 
-                            Text("Upgrade to unlock this feature")
+                            Text(String(localized: "Upgrade to unlock this feature"))
                                 .font(FLTypography.caption1)
                                 .foregroundStyle(FLColors.textSecondary)
                                 .multilineTextAlignment(.center)

@@ -583,7 +583,7 @@ struct CookingScreenView: View {
                 VStack(spacing: PSSpacing.xxs) {
                     Image(systemName: "list.bullet")
                         .font(.system(size: PSLayout.scaledFont(20), weight: .medium))
-                    Text("Ingredients")
+                    Text(String(localized: "Ingredients"))
                         .font(.system(size: PSLayout.scaledFont(10), weight: .medium, design: .rounded))
                 }
                 .foregroundStyle(.white.opacity(0.75))
@@ -600,12 +600,12 @@ struct CookingScreenView: View {
             } label: {
                 HStack(spacing: PSSpacing.sm) {
                     if isLastStep {
-                        Text("Finish Cooking 🎉")
+                        Text(String(localized: "Finish Cooking 🎉"))
                             .font(.system(size: PSLayout.scaledFont(16), weight: .bold, design: .rounded))
                     } else {
                         Image(systemName: "checkmark")
                             .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
-                        Text("Complete Step")
+                        Text(String(localized: "Complete Step"))
                             .font(.system(size: PSLayout.scaledFont(16), weight: .bold, design: .rounded))
                     }
                 }
@@ -632,7 +632,7 @@ struct CookingScreenView: View {
                 VStack(spacing: PSSpacing.xxs) {
                     Image(systemName: "music.note")
                         .font(.system(size: PSLayout.scaledFont(20), weight: .medium))
-                    Text("Music")
+                    Text(String(localized: "Music"))
                         .font(.system(size: PSLayout.scaledFont(10), weight: .medium, design: .rounded))
                 }
                 .foregroundStyle(.white.opacity(0.75))
@@ -688,7 +688,7 @@ struct CookingScreenView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.top, PSSpacing.md)
 
-                    Text("Ingredients")
+                    Text(String(localized: "Ingredients"))
                         .font(.system(size: PSLayout.scaledFont(22), weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                         .padding(.horizontal, PSSpacing.cardPadding)
@@ -716,7 +716,7 @@ struct CookingScreenView: View {
                                 Spacer()
 
                                 if isInPantry {
-                                    Text("In Pantry")
+                                    Text(String(localized: "In Pantry"))
                                         .font(.system(size: PSLayout.scaledFont(11), weight: .semibold, design: .rounded))
                                         .foregroundStyle(PSColors.primaryGreen)
                                         .padding(.horizontal, PSSpacing.sm)
@@ -769,7 +769,7 @@ struct CookingScreenView: View {
                     .frame(width: 38, height: 5)
                     .padding(.top, PSSpacing.lg)
 
-                Text("Play Music While Cooking")
+                Text(String(localized: "Play Music While Cooking"))
                     .font(.system(size: PSLayout.scaledFont(20), weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
 
@@ -802,7 +802,7 @@ struct CookingScreenView: View {
                 }
                 .padding(.horizontal, PSSpacing.lg)
 
-                Text("Opens your music app — come right back and keep cooking!")
+                Text(String(localized: "Opens your music app — come right back and keep cooking!"))
                     .font(.system(size: PSLayout.scaledFont(12), weight: .medium, design: .rounded))
                     .foregroundStyle(.white.opacity(0.40))
                     .multilineTextAlignment(.center)
@@ -839,10 +839,10 @@ struct CookingScreenView: View {
                 // Header row
                 HStack {
                     VStack(alignment: .leading, spacing: PSSpacing.xs) {
-                        Text("Voice Chef")
+                        Text(String(localized: "Voice Chef"))
                             .font(.system(size: PSLayout.scaledFont(22), weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
-                        Text("Your personal sous chef")
+                        Text(String(localized: "Your personal sous chef"))
                             .font(.system(size: PSLayout.scaledFont(13), weight: .medium, design: .rounded))
                             .foregroundStyle(.white.opacity(0.45))
                     }
@@ -862,7 +862,7 @@ struct CookingScreenView: View {
 
                 if voiceEnabled {
                     VStack(alignment: .leading, spacing: PSSpacing.md) {
-                        Text("Voice Style")
+                        Text(String(localized: "Voice Style"))
                             .font(.system(size: PSLayout.scaledFont(14), weight: .semibold, design: .rounded))
                             .foregroundStyle(.white.opacity(0.60))
                             .padding(.horizontal, PSSpacing.cardPadding)
@@ -998,7 +998,7 @@ struct CookingScreenView: View {
 
                         // Title
                         VStack(spacing: PSSpacing.sm) {
-                            Text("Recipe Complete!")
+                            Text(String(localized: "Recipe Complete!"))
                                 .font(.system(size: PSLayout.scaledFont(34), weight: .black, design: .rounded))
                                 .foregroundStyle(.white)
 
@@ -1034,7 +1034,7 @@ struct CookingScreenView: View {
 
                         // Star rating
                         VStack(spacing: PSSpacing.md) {
-                            Text("How did it taste?")
+                            Text(String(localized: "How did it taste?"))
                                 .font(.system(size: PSLayout.scaledFont(15), weight: .semibold, design: .rounded))
                                 .foregroundStyle(.white.opacity(0.65))
 
@@ -1068,7 +1068,7 @@ struct CookingScreenView: View {
                             speechSynthesizer.stopSpeaking(at: .immediate)
                             dismiss()
                         } label: {
-                            Text("Done Cooking 🙌")
+                            Text(String(localized: "Done Cooking 🙌"))
                                 .font(.system(size: PSLayout.scaledFont(17), weight: .black, design: .rounded))
                                 .foregroundStyle(.black)
                                 .frame(maxWidth: .infinity)
@@ -1417,7 +1417,7 @@ private struct MusicServiceButton: View {
 
                 Spacer()
 
-                Text("Open")
+                Text(String(localized: "Open"))
                     .font(.system(size: PSLayout.scaledFont(13), weight: .medium, design: .rounded))
                     .foregroundStyle(accentColor)
                     .padding(.horizontal, PSSpacing.md)

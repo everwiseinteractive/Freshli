@@ -57,10 +57,10 @@ struct CirclesView: View {
 
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: PSSpacing.xs) {
-            Text("Your Circles")
+            Text(String(localized: "Your Circles"))
                 .font(PSTypography.title2)
                 .foregroundStyle(PSColors.textPrimary)
-            Text("Private food sharing with people you trust")
+            Text(String(localized: "Private food sharing with people you trust"))
                 .font(PSTypography.subheadline)
                 .foregroundStyle(PSColors.textSecondary)
         }
@@ -107,11 +107,11 @@ struct CirclesView: View {
                     .font(.system(size: 48))
                     .foregroundStyle(PSColors.primaryGreen)
 
-                Text("No circles yet")
+                Text(String(localized: "No circles yet"))
                     .font(PSTypography.headline)
                     .foregroundStyle(PSColors.textPrimary)
 
-                Text("Create a circle to start sharing food with family, friends, or neighbors privately.")
+                Text(String(localized: "Create a circle to start sharing food with family, friends, or neighbors privately."))
                     .font(PSTypography.body)
                     .foregroundStyle(PSColors.textSecondary)
                     .multilineTextAlignment(.center)
@@ -126,7 +126,7 @@ struct CirclesView: View {
         VStack(spacing: PSSpacing.md) {
             ProgressView()
                 .tint(PSColors.primaryGreen)
-            Text("Loading your circles...")
+            Text(String(localized: "Loading your circles..."))
                 .font(PSTypography.subheadline)
                 .foregroundStyle(PSColors.textSecondary)
         }
@@ -188,11 +188,11 @@ private struct JoinCircleView: View {
                         .font(.system(size: 40))
                         .foregroundStyle(PSColors.primaryGreen)
 
-                    Text("Join a Circle")
+                    Text(String(localized: "Join a Circle"))
                         .font(PSTypography.title2)
                         .foregroundStyle(PSColors.textPrimary)
 
-                    Text("Enter the invite code shared by a circle member")
+                    Text(String(localized: "Enter the invite code shared by a circle member"))
                         .font(PSTypography.subheadline)
                         .foregroundStyle(PSColors.textSecondary)
                         .multilineTextAlignment(.center)

@@ -84,7 +84,7 @@ struct FreshliImpactDashboardView: View {
     @ViewBuilder
     private var impactCardsSection: some View {
         VStack(alignment: .leading, spacing: PSSpacing.md) {
-            Text("Your Impact")
+            Text(String(localized: "Your Impact"))
                 .font(PSTypography.headline)
                 .foregroundStyle(PSColors.textPrimary)
                 .padding(.horizontal, PSSpacing.sm)
@@ -209,7 +209,7 @@ struct FreshliImpactDashboardView: View {
     @ViewBuilder
     private var freshnessChartSection: some View {
         VStack(alignment: .leading, spacing: PSSpacing.md) {
-            Text("Weekly Freshness")
+            Text(String(localized: "Weekly Freshness"))
                 .font(PSTypography.headline)
                 .foregroundStyle(PSColors.textPrimary)
                 .padding(.horizontal, PSSpacing.sm)
@@ -252,7 +252,7 @@ struct FreshliImpactDashboardView: View {
     @ViewBuilder
     private var activityFeedSection: some View {
         VStack(alignment: .leading, spacing: PSSpacing.md) {
-            Text("Recent Activity")
+            Text(String(localized: "Recent Activity"))
                 .font(PSTypography.headline)
                 .foregroundStyle(PSColors.textPrimary)
                 .padding(.horizontal, PSSpacing.sm)
@@ -263,7 +263,7 @@ struct FreshliImpactDashboardView: View {
                         .font(.system(size: 32, weight: .semibold))
                         .foregroundStyle(PSColors.primaryGreen.opacity(0.5))
 
-                    Text("No activities yet")
+                    Text(String(localized: "No activities yet"))
                         .font(PSTypography.calloutMedium)
                         .foregroundStyle(PSColors.textSecondary)
                 }
@@ -354,7 +354,7 @@ struct FreshliImpactDashboardView: View {
 
                 // Content
                 VStack(spacing: PSSpacing.md) {
-                    Text("Milestone Unlocked!")
+                    Text(String(localized: "Milestone Unlocked!"))
                         .font(PSTypography.title2)
                         .foregroundStyle(PSColors.textPrimary)
 

@@ -79,7 +79,7 @@ struct EcoShareCard: View {
 
             // Header
             VStack(spacing: 8) {
-                Text("My Week of Impact")
+                Text(String(localized: "My Week of Impact"))
                     .font(.system(size: 24, weight: .semibold, design: .default))
                     .foregroundColor(PSColors.textOnPrimary)
             }
@@ -133,12 +133,12 @@ struct EcoShareCard: View {
                 HStack(spacing: 6) {
                     Image(systemName: "leaf.fill")
                         .font(.system(size: 14, weight: .bold))
-                    Text("Freshli")
+                    Text(String(localized: "Freshli"))
                         .font(.system(size: 14, weight: .bold, design: .default))
                 }
                 .foregroundColor(PSColors.textOnPrimary)
 
-                Text("Join me in reducing food waste")
+                Text(String(localized: "Join me in reducing food waste"))
                     .font(.system(size: 12, weight: .medium, design: .default))
                     .foregroundColor(PSColors.textOnPrimary.opacity(0.8))
                     .multilineTextAlignment(.center)
@@ -184,7 +184,7 @@ struct EcoShareCard: View {
 
             // Milestone text
             VStack(spacing: 12) {
-                Text("I just hit")
+                Text(String(localized: "I just hit"))
                     .font(.system(size: 18, weight: .medium, design: .default))
                     .foregroundColor(PSColors.textOnPrimary.opacity(0.9))
 
@@ -223,7 +223,7 @@ struct EcoShareCard: View {
                 HStack(spacing: 6) {
                     Image(systemName: "leaf.fill")
                         .font(.system(size: 12, weight: .bold))
-                    Text("Freshli")
+                    Text(String(localized: "Freshli"))
                         .font(.system(size: 12, weight: .bold, design: .default))
                 }
                 .foregroundColor(PSColors.textOnPrimary)
@@ -257,7 +257,7 @@ struct EcoShareCard: View {
                             .font(.system(size: 56, weight: .bold, design: .rounded))
                             .foregroundColor(PSColors.textOnPrimary)
 
-                        Text("Day Streak")
+                        Text(String(localized: "Day Streak"))
                             .font(.system(size: 16, weight: .semibold, design: .default))
                             .foregroundColor(PSColors.textOnPrimary.opacity(0.9))
                     }
@@ -271,7 +271,7 @@ struct EcoShareCard: View {
 
             // Calendar dot grid (last 30 days representation)
             VStack(spacing: 8) {
-                Text("Keep it going!")
+                Text(String(localized: "Keep it going!"))
                     .font(.system(size: 14, weight: .medium, design: .default))
                     .foregroundColor(PSColors.textOnPrimary.opacity(0.8))
 
@@ -300,11 +300,11 @@ struct EcoShareCard: View {
 
             // Motivational tagline
             VStack(spacing: 8) {
-                Text("Every day counts")
+                Text(String(localized: "Every day counts"))
                     .font(.system(size: 16, weight: .semibold, design: .default))
                     .foregroundColor(PSColors.textOnPrimary)
 
-                Text("Keep reducing waste, one day at a time")
+                Text(String(localized: "Keep reducing waste, one day at a time"))
                     .font(.system(size: 12, weight: .regular, design: .default))
                     .foregroundColor(PSColors.textOnPrimary.opacity(0.75))
                     .multilineTextAlignment(.center)
@@ -317,7 +317,7 @@ struct EcoShareCard: View {
                 HStack(spacing: 6) {
                     Image(systemName: "leaf.fill")
                         .font(.system(size: 12, weight: .bold))
-                    Text("Freshli")
+                    Text(String(localized: "Freshli"))
                         .font(.system(size: 12, weight: .bold, design: .default))
                 }
                 .foregroundColor(PSColors.textOnPrimary)

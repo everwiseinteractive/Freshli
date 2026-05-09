@@ -26,7 +26,7 @@ struct KarmaCreditsView: View {
 
     private var balanceCard: some View {
         VStack(spacing: PSSpacing.lg) {
-            Text("YOUR BALANCE")
+            Text(String(localized: "YOUR BALANCE"))
                 .font(.system(size: PSLayout.scaledFont(11), weight: .black))
                 .foregroundStyle(.white.opacity(0.7))
                 .tracking(1.5)
@@ -93,7 +93,7 @@ struct KarmaCreditsView: View {
 
     private var howItWorksCard: some View {
         VStack(alignment: .leading, spacing: PSSpacing.md) {
-            Text("How It Works")
+            Text(String(localized: "How It Works"))
                 .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
                 .foregroundStyle(PSColors.textSecondary)
                 .textCase(.uppercase).tracking(0.5)
@@ -131,13 +131,13 @@ struct KarmaCreditsView: View {
 
     private var transactionHistory: some View {
         VStack(alignment: .leading, spacing: PSSpacing.sm) {
-            Text("Recent Activity")
+            Text(String(localized: "Recent Activity"))
                 .font(.system(size: PSLayout.scaledFont(13), weight: .bold))
                 .foregroundStyle(PSColors.textSecondary)
                 .textCase(.uppercase).tracking(0.5)
 
             if service.transactions.isEmpty {
-                Text("No activity yet. Share your first item to start earning credits.")
+                Text(String(localized: "No activity yet. Share your first item to start earning credits."))
                     .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
                     .foregroundStyle(PSColors.textTertiary)
                     .padding(PSSpacing.lg)

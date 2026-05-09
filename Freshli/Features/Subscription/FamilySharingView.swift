@@ -52,7 +52,7 @@ struct FamilySharingView: View {
             case .idle:
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(PSColors.primaryGreen)
-                Text("Ready")
+                Text(String(localized: "Ready"))
                     .font(PSTypography.caption1)
                     .foregroundStyle(PSColors.textSecondary)
 
@@ -66,7 +66,7 @@ struct FamilySharingView: View {
             case .synced:
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(PSColors.primaryGreen)
-                Text("Synced")
+                Text(String(localized: "Synced"))
                     .font(PSTypography.caption1)
                     .foregroundStyle(PSColors.textSecondary)
 
@@ -130,7 +130,7 @@ struct FamilySharingView: View {
                                 .foregroundStyle(PSColors.textSecondary)
 
                             if familyService.isFamilyOwner {
-                                Text("Owner")
+                                Text(String(localized: "Owner"))
                                     .font(PSTypography.caption2)
                                     .foregroundStyle(PSColors.primaryGreen)
                             }
@@ -244,7 +244,7 @@ struct FamilySharingView: View {
 
     private var inviteSection: some View {
         VStack(spacing: PSSpacing.md) {
-            Text("Invite Family Members")
+            Text(String(localized: "Invite Family Members"))
                 .font(PSTypography.headline)
                 .foregroundStyle(PSColors.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -254,7 +254,7 @@ struct FamilySharingView: View {
                     if let inviteURL = familyService.inviteURL {
                         HStack(spacing: PSSpacing.md) {
                             VStack(alignment: .leading, spacing: PSSpacing.xs) {
-                                Text("Invite Link")
+                                Text(String(localized: "Invite Link"))
                                     .font(PSTypography.caption1)
                                     .foregroundStyle(PSColors.textSecondary)
 
@@ -282,8 +282,8 @@ struct FamilySharingView: View {
 
                                 ShareLink(
                                     item: inviteURL,
-                                    subject: Text("Join Freshli Family"),
-                                    message: Text("Join my Freshli family to share pantry items!"),
+                                    subject: Text(String(localized: "Join Freshli Family")),
+                                    message: Text(String(localized: "Join my Freshli family to share pantry items!")),
                                     label: {
                                         Image(systemName: "square.and.arrow.up")
                                             .font(.system(size: 16, weight: .semibold))
@@ -300,7 +300,7 @@ struct FamilySharingView: View {
                         .background(PSColors.green50)
                         .clipShape(RoundedRectangle(cornerRadius: PSSpacing.radiusMd, style: .continuous))
                     } else {
-                        Text("No invite link available")
+                        Text(String(localized: "No invite link available"))
                             .font(PSTypography.caption1)
                             .foregroundStyle(PSColors.textSecondary)
                     }
@@ -313,7 +313,7 @@ struct FamilySharingView: View {
 
     private var sharedPantrySection: some View {
         VStack(spacing: PSSpacing.md) {
-            Text("Shared Pantry")
+            Text(String(localized: "Shared Pantry"))
                 .font(PSTypography.headline)
                 .foregroundStyle(PSColors.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -321,11 +321,11 @@ struct FamilySharingView: View {
             PSCard {
                 HStack {
                     VStack(alignment: .leading, spacing: PSSpacing.xs) {
-                        Text("Sync Pantry Across Devices")
+                        Text(String(localized: "Sync Pantry Across Devices"))
                             .font(PSTypography.callout)
                             .foregroundStyle(PSColors.textPrimary)
 
-                        Text("All family members see the same pantry")
+                        Text(String(localized: "All family members see the same pantry"))
                             .font(PSTypography.caption1)
                             .foregroundStyle(PSColors.textSecondary)
                     }
@@ -356,7 +356,7 @@ struct FamilySharingView: View {
 
     private var dangerZone: some View {
         VStack(spacing: PSSpacing.md) {
-            Text("Family Management")
+            Text(String(localized: "Family Management"))
                 .font(PSTypography.headline)
                 .foregroundStyle(PSColors.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -369,7 +369,7 @@ struct FamilySharingView: View {
                         HStack(spacing: PSSpacing.md) {
                             Image(systemName: "arrow.uturn.left")
                                 .font(.system(size: 16, weight: .semibold))
-                            Text("Leave Family")
+                            Text(String(localized: "Leave Family"))
                                 .font(PSTypography.callout)
                             Spacer()
                         }
@@ -391,7 +391,7 @@ struct FamilySharingView: View {
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("You'll no longer have access to the shared pantry. You can rejoin with an invite link later.")
+                Text(String(localized: "You'll no longer have access to the shared pantry. You can rejoin with an invite link later."))
             }
         }
     }

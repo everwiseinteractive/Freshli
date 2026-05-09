@@ -21,11 +21,11 @@ struct MissingIngredientSheet: View {
                         .foregroundStyle(PSColors.expiredRed)
 
                     VStack(spacing: PSSpacing.sm) {
-                        Text("Missing Ingredient")
+                        Text(String(localized: "Missing Ingredient"))
                             .font(PSTypography.title2)
                             .foregroundStyle(PSColors.textPrimary)
 
-                        Text("You need this to complete your Rescue Chef mission")
+                        Text(String(localized: "You need this to complete your Rescue Chef mission"))
                             .font(PSTypography.callout)
                             .foregroundStyle(PSColors.textSecondary)
                             .multilineTextAlignment(.center)
@@ -58,7 +58,7 @@ struct MissingIngredientSheet: View {
                     VStack(spacing: PSSpacing.xl) {
                         // Get It Now Section
                         VStack(alignment: .leading, spacing: PSSpacing.md) {
-                            Text("Get It Now")
+                            Text(String(localized: "Get It Now"))
                                 .font(PSTypography.headline)
                                 .foregroundStyle(PSColors.textPrimary)
                                 .padding(.horizontal, PSSpacing.screenHorizontal)
@@ -99,7 +99,7 @@ struct MissingIngredientSheet: View {
 
                         // Skip Option
                         Button(action: { dismiss() }) {
-                            Text("Skip — I'll manage without it")
+                            Text(String(localized: "Skip — I'll manage without it"))
                                 .font(PSTypography.callout)
                                 .foregroundStyle(PSColors.textSecondary)
                         }
@@ -137,7 +137,7 @@ struct MissingIngredientSheet: View {
                         )
 
                         Button(action: { dismiss() }) {
-                            Text("Cancel")
+                            Text(String(localized: "Cancel"))
                                 .font(PSTypography.callout)
                                 .foregroundStyle(PSColors.textSecondary)
                         }
@@ -181,7 +181,7 @@ struct DeliveryOptionCard: View {
                                 .foregroundStyle(PSColors.textSecondary)
                         }
 
-                        Text("Available now")
+                        Text(String(localized: "Available now"))
                             .font(PSTypography.caption2)
                             .foregroundStyle(PSColors.textTertiary)
                     }

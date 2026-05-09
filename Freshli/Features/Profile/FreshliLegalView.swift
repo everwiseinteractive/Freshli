@@ -59,11 +59,11 @@ struct FreshliAboutView: View {
             }
 
             VStack(spacing: PSSpacing.xs) {
-                Text("Freshli")
+                Text(String(localized: "Freshli"))
                     .font(.system(size: PSLayout.scaledFont(28), weight: .bold, design: .rounded))
                     .foregroundStyle(PSColors.textPrimary)
 
-                Text("Never waste. Always fresh.")
+                Text(String(localized: "Never waste. Always fresh."))
                     .font(.system(size: PSLayout.scaledFont(14), weight: .medium))
                     .foregroundStyle(PSColors.textSecondary)
 
@@ -80,7 +80,7 @@ struct FreshliAboutView: View {
 
     private var legalLinks: some View {
         VStack(spacing: PSSpacing.md) {
-            Text("Legal")
+            Text(String(localized: "Legal"))
                 .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
                 .foregroundStyle(PSColors.textTertiary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -140,7 +140,7 @@ struct FreshliAboutView: View {
 
     private var creditsSection: some View {
         VStack(spacing: PSSpacing.md) {
-            Text("Made with ♥ to fight food waste")
+            Text(String(localized: "Made with ♥ to fight food waste"))
                 .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
                 .foregroundStyle(PSColors.textSecondary)
                 .multilineTextAlignment(.center)
@@ -374,7 +374,7 @@ private struct FreshliLegalDocumentView: View {
                 }
 
                 // Footer
-                Text("Questions? Contact us at support@freshli.app")
+                Text(String(localized: "Questions? Contact us at support@freshli.app"))
                     .font(.system(size: PSLayout.scaledFont(12)))
                     .foregroundStyle(PSColors.textTertiary)
                     .multilineTextAlignment(.center)

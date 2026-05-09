@@ -241,7 +241,7 @@ struct FreshliOfflineView: View {
             Label("You're Offline", systemImage: "wifi.slash")
                 .symbolRenderingMode(.hierarchical)
         } description: {
-            Text("Freshli is waiting for a connection to sync your pantry. You can still browse and edit your local inventory below.")
+            Text(String(localized: "Freshli is waiting for a connection to sync your pantry. You can still browse and edit your local inventory below."))
                 .font(.freshliSubheadline)
         } actions: {
             Button("Try Again") {
@@ -275,7 +275,7 @@ struct FreshliOfflineBanner: View {
             Image(systemName: "wifi.slash")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.orange)
-            Text("Offline — changes will sync when you reconnect")
+            Text(String(localized: "Offline — changes will sync when you reconnect"))
                 .font(.freshliCaption)
                 .foregroundStyle(.secondary)
         }

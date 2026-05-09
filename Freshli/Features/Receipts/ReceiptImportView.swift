@@ -21,11 +21,11 @@ struct ReceiptImportView: View {
             VStack(spacing: 0) {
                 // Header
                 VStack(spacing: PSSpacing.md) {
-                    Text("Import Receipt")
+                    Text(String(localized: "Import Receipt"))
                         .font(PSTypography.title1)
                         .foregroundStyle(PSColors.textPrimary)
 
-                    Text("Add items to your pantry from grocery receipts")
+                    Text(String(localized: "Add items to your pantry from grocery receipts"))
                         .font(PSTypography.body)
                         .foregroundStyle(PSColors.textSecondary)
                 }
@@ -34,9 +34,9 @@ struct ReceiptImportView: View {
 
                 // Tab Selection
                 Picker("Import Method", selection: $viewModel.selectedTab) {
-                    Text("Scan Receipt").tag(0)
-                    Text("Enter Manually").tag(1)
-                    Text("Connect Service").tag(2)
+                    Text(String(localized: "Scan Receipt")).tag(0)
+                    Text(String(localized: "Enter Manually")).tag(1)
+                    Text(String(localized: "Connect Service")).tag(2)
                 }
                 .pickerStyle(.segmented)
                 .padding(PSSpacing.screenHorizontal)
@@ -63,7 +63,7 @@ struct ReceiptImportView: View {
                 // Recent Imports
                 if !viewModel.service.recentReceipts.isEmpty {
                     VStack(alignment: .leading, spacing: PSSpacing.md) {
-                        Text("Recent Imports")
+                        Text(String(localized: "Recent Imports"))
                             .font(PSTypography.headline)
                             .foregroundStyle(PSColors.textPrimary)
                             .padding(.horizontal, PSSpacing.screenHorizontal)
@@ -134,11 +134,11 @@ struct ScanReceiptTabView: View {
                         .font(.system(size: 40))
                         .foregroundStyle(PSColors.primaryGreen)
 
-                    Text("Scan Receipt Photo")
+                    Text(String(localized: "Scan Receipt Photo"))
                         .font(PSTypography.headline)
                         .foregroundStyle(PSColors.textPrimary)
 
-                    Text("Take a photo of your receipt and we'll extract the items automatically")
+                    Text(String(localized: "Take a photo of your receipt and we'll extract the items automatically"))
                         .font(PSTypography.callout)
                         .foregroundStyle(PSColors.textSecondary)
                         .multilineTextAlignment(.center)
@@ -175,7 +175,7 @@ struct ManualEntryTabView: View {
             PSCard {
                 VStack(spacing: PSSpacing.md) {
                     VStack(alignment: .leading, spacing: PSSpacing.sm) {
-                        Text("Store Name")
+                        Text(String(localized: "Store Name"))
                             .font(PSTypography.callout)
                             .foregroundStyle(PSColors.textPrimary)
 
@@ -192,7 +192,7 @@ struct ManualEntryTabView: View {
                     }
 
                     VStack(alignment: .leading, spacing: PSSpacing.sm) {
-                        Text("Receipt Items")
+                        Text(String(localized: "Receipt Items"))
                             .font(PSTypography.callout)
                             .foregroundStyle(PSColors.textPrimary)
 
@@ -248,7 +248,7 @@ struct ConnectedServicesTabView: View {
     var body: some View {
         VStack(spacing: PSSpacing.lg) {
             VStack(alignment: .leading, spacing: PSSpacing.md) {
-                Text("Connected Services")
+                Text(String(localized: "Connected Services"))
                     .font(PSTypography.headline)
                     .foregroundStyle(PSColors.textPrimary)
 

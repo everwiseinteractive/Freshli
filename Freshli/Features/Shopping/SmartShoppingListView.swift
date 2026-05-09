@@ -49,10 +49,10 @@ struct SmartShoppingListView: View {
                 .font(.system(size: PSLayout.scaledFont(40)))
                 .foregroundStyle(PSColors.primaryGreen)
             VStack(spacing: PSSpacing.xs) {
-                Text("Buy Smarter, Waste Less")
+                Text(String(localized: "Buy Smarter, Waste Less"))
                     .font(.system(size: PSLayout.scaledFont(20), weight: .black, design: .rounded))
                     .foregroundStyle(PSColors.textPrimary)
-                Text("AI-powered suggestions based on your waste patterns and what you already have.")
+                Text(String(localized: "AI-powered suggestions based on your waste patterns and what you already have."))
                     .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
                     .foregroundStyle(PSColors.textSecondary)
                     .multilineTextAlignment(.center)
@@ -141,7 +141,7 @@ struct SmartShoppingListView: View {
             // Waste bar
             VStack(alignment: .leading, spacing: PSSpacing.xs) {
                 HStack {
-                    Text("Waste rate")
+                    Text(String(localized: "Waste rate"))
                         .font(.system(size: PSLayout.scaledFont(12), weight: .medium))
                         .foregroundStyle(PSColors.textSecondary)
                     Spacer()
@@ -206,7 +206,7 @@ struct SmartShoppingListView: View {
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: PSSpacing.xs) {
-                        Text("Buy")
+                        Text(String(localized: "Buy"))
                             .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
                             .foregroundStyle(PSColors.textSecondary)
                         Text(s.itemToBuy)
@@ -285,7 +285,7 @@ struct SmartShoppingListView: View {
     private var footerNote: some View {
         HStack(spacing: PSSpacing.sm) {
             Image(systemName: "sparkles").font(.system(size: PSLayout.scaledFont(14))).foregroundStyle(PSColors.textTertiary)
-            Text("Recommendations improve as you track more items in your pantry.")
+            Text(String(localized: "Recommendations improve as you track more items in your pantry."))
                 .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
                 .foregroundStyle(PSColors.textTertiary)
                 .lineSpacing(2)

@@ -69,7 +69,7 @@ struct ProUpgradeNudge: View {
                 HStack(spacing: PSSpacing.xxs) {
                     Image(systemName: "crown.fill")
                         .font(.system(size: PSLayout.scaledFont(10), weight: .black))
-                    Text("FRESHLI+")
+                    Text(String(localized: "FRESHLI+"))
                         .font(.system(size: PSLayout.scaledFont(10), weight: .black))
                         .tracking(0.8)
                 }
@@ -259,7 +259,7 @@ private struct AnalyticsPreview: View {
         VStack(spacing: PSSpacing.md) {
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("$127")
+                    Text(String(localized: "$127"))
                         .font(.system(size: PSLayout.scaledFont(28), weight: .black))
                         .foregroundStyle(PSColors.textPrimary)
                     Text("saved this month")

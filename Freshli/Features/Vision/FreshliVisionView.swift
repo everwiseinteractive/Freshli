@@ -379,7 +379,7 @@ struct FreshliVisionView: View {
                     Circle()
                         .fill(viewModel.isScanning ? PSColors.primaryGreen : .red)
                         .frame(width: 8, height: 8)
-                    Text("FRESHLI VISION")
+                    Text(String(localized: "FRESHLI VISION"))
                         .font(.system(size: 11, weight: .black, design: .monospaced))
                         .foregroundStyle(.white)
                         .tracking(1.2)

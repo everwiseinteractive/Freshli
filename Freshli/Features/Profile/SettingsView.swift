@@ -18,6 +18,18 @@ struct SettingsView: View {
     @State private var appeared = false
     @State private var notificationAuthStatus: UNAuthorizationStatus = .notDetermined
 
+    /// Binding for the marketing-push opt-in toggle. The underlying
+    /// UserDefaults key (`freshli.marketingPushOptIn`) is read by
+    /// any future promotional push payload before scheduling so we
+    /// stay clear of App Review guideline 4.5.4 (no marketing pushes
+    /// without explicit opt-in).
+    private var marketingPushOptInBinding: Binding<Bool> {
+        Binding(
+            get: { UserDefaults.standard.bool(forKey: "freshli.marketingPushOptIn") },
+            set: { UserDefaults.standard.set($0, forKey: "freshli.marketingPushOptIn") }
+        )
+    }
+
     private let logger = Logger(subsystem: "com.freshli.app", category: "SettingsView")
 
     var body: some View {
@@ -117,6 +129,32 @@ struct SettingsView: View {
                             .labelsHidden()
                             .tint(PSColors.primaryGreen)
                         }
+
+                        // Marketing-notifications opt-in. Independent
+                        // from the iOS push permission and the
+                        // expiry-reminder toggle. Defaults to OFF;
+                        // any future promotional push payload must
+                        // check this flag before scheduling. Required
+                        // by App Review guideline 4.5.4 to keep
+                        // promotional pushes opt-in.
+                        Toggle(isOn: marketingPushOptInBinding) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "megaphone.fill")
+                                    .font(.system(size: PSLayout.scaledFont(16)))
+                                    .foregroundStyle(PSColors.accentTeal)
+                                    .frame(width: 28, height: 28)
+                                    .background(PSColors.accentTeal.opacity(0.12))
+                                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(String(localized: "Tips & promotions"))
+                                        .font(.system(size: PSLayout.scaledFont(16), weight: .medium))
+                                    Text(String(localized: "Weekly recipe ideas and Freshli news"))
+                                        .font(.system(size: PSLayout.scaledFont(12)))
+                                        .foregroundStyle(PSColors.textSecondary)
+                                }
+                            }
+                        }
+                        .tint(PSColors.primaryGreen)
                     }
                 }
             } header: {
@@ -197,7 +235,7 @@ struct SettingsView: View {
                     ImpactDiagnosticView()
                 } label: {
                     Label {
-                        Text("Impact Diagnostics")
+                        Text(String(localized: "Impact Diagnostics"))
                             .font(.system(size: 15, weight: .medium))
                     } icon: {
                         Image(systemName: "stethoscope")
@@ -205,7 +243,7 @@ struct SettingsView: View {
                     }
                 }
             } header: {
-                Text("Debug")
+                Text(String(localized: "Debug"))
             }
             #endif
         }

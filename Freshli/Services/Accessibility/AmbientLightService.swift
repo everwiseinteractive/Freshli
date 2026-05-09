@@ -133,8 +133,15 @@ final class AmbientLightService {
     // MARK: - Lifecycle
 
     /// Start monitoring ambient light changes.
-    /// Called once from FreshliApp on launch.
+    /// Called once from FreshliApp on launch. Internally registers
+    /// scene-phase observers so the 4 Hz timer suspends whenever the
+    /// app is backgrounded — without this, the brightness poll runs
+    /// 24/7 and constitutes meaningful battery drain.
     func startMonitoring() {
+        // Idempotent — guard against repeat calls (scene-phase
+        // observers re-fire `startMonitoring` on every foregrounding).
+        if brightnessTimer != nil { return }
+
         // Poll UIScreen.brightness at 4Hz — sufficient for smooth transitions
         // without burning battery. UIScreen brightness is updated by iOS's
         // ambient light sensor at ~10Hz internally.
@@ -154,13 +161,41 @@ final class AmbientLightService {
             }
         }
 
+        // Bind scene-phase observers exactly once. The flag
+        // `scenePhaseBound` keeps repeat `startMonitoring()` calls
+        // (e.g. on every foregrounding) from stacking observers.
+        if !scenePhaseBound {
+            NotificationCenter.default.addObserver(
+                forName: UIApplication.didEnterBackgroundNotification,
+                object: nil, queue: .main
+            ) { [weak self] _ in
+                self?.stopMonitoring()
+            }
+            NotificationCenter.default.addObserver(
+                forName: UIApplication.didBecomeActiveNotification,
+                object: nil, queue: .main
+            ) { [weak self] _ in
+                self?.startMonitoring()
+            }
+            scenePhaseBound = true
+        }
+
         logger.info("Ambient light monitoring started (brightness: \(self.screenBrightness, format: .fixed(precision: 2)))")
     }
+
+    /// Tracks whether the foreground/background scene-phase observers
+    /// have already been registered, so consecutive `startMonitoring`
+    /// calls don't pile up duplicate handlers.
+    private var scenePhaseBound: Bool = false
 
     func stopMonitoring() {
         brightnessTimer?.invalidate()
         brightnessTimer = nil
         NotificationCenter.default.removeObserver(self, name: UIScreen.brightnessDidChangeNotification, object: nil)
+        // Note: we deliberately do NOT remove the
+        // didEnterBackground / didBecomeActive observers — they
+        // need to keep firing to wake the timer back up on next
+        // foregrounding.
     }
 
     // MARK: - Sampling

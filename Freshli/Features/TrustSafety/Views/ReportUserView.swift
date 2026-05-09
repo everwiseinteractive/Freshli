@@ -47,7 +47,7 @@ struct ReportUserView: View {
                     dismiss()
                 }
             } message: {
-                Text("Thank you for helping keep Freshli safe. We'll review this report and take action if needed.")
+                Text(String(localized: "Thank you for helping keep Freshli safe. We'll review this report and take action if needed."))
             }
         }
     }
@@ -72,7 +72,7 @@ struct ReportUserView: View {
                     .font(PSTypography.title3)
                     .foregroundStyle(PSColors.textPrimary)
 
-                Text("Help us understand what happened so we can take appropriate action.")
+                Text(String(localized: "Help us understand what happened so we can take appropriate action."))
                     .font(PSTypography.body)
                     .foregroundStyle(PSColors.textSecondary)
                     .multilineTextAlignment(.center)
@@ -86,7 +86,7 @@ struct ReportUserView: View {
     @ViewBuilder
     private var reasonSelection: some View {
         VStack(alignment: .leading, spacing: PSSpacing.md) {
-            Text("What's the issue?")
+            Text(String(localized: "What's the issue?"))
                 .font(PSTypography.headline)
                 .foregroundStyle(PSColors.textPrimary)
                 .padding(.horizontal, PSSpacing.screenHorizontal)
@@ -149,7 +149,7 @@ struct ReportUserView: View {
     @ViewBuilder
     private var detailsSection: some View {
         VStack(alignment: .leading, spacing: PSSpacing.sm) {
-            Text("Additional details (optional)")
+            Text(String(localized: "Additional details (optional)"))
                 .font(PSTypography.footnoteMedium)
                 .foregroundStyle(PSColors.textSecondary)
 
@@ -176,7 +176,7 @@ struct ReportUserView: View {
                 .font(.system(size: 14))
                 .foregroundStyle(PSColors.textTertiary)
 
-            Text("Your report is confidential. The reported user will not see who filed this report.")
+            Text(String(localized: "Your report is confidential. The reported user will not see who filed this report."))
                 .font(PSTypography.caption1)
                 .foregroundStyle(PSColors.textTertiary)
         }

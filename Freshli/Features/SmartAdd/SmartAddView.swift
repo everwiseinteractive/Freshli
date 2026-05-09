@@ -100,7 +100,7 @@ struct SmartAddView: View {
                 }
 
                 ToolbarItem(placement: .principal) {
-                    Text("Smart Add")
+                    Text(String(localized: "Smart Add"))
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(.white)
                 }
@@ -129,7 +129,7 @@ struct SmartAddView: View {
             .alert("Scanner Not Available", isPresented: $showUnsupportedAlert) {
                 Button("OK", role: .cancel) {}
             } message: {
-                Text("Live text scanning requires an iPhone or iPad with an A12 chip or later. You can still add items manually using the search bar below.")
+                Text(String(localized: "Live text scanning requires an iPhone or iPad with an A12 chip or later. You can still add items manually using the search bar below."))
             }
         }
     }
@@ -162,11 +162,11 @@ struct SmartAddView: View {
                     .foregroundStyle(.white.opacity(0.4))
 
                 VStack(spacing: PSSpacing.sm) {
-                    Text("Camera Not Available")
+                    Text(String(localized: "Camera Not Available"))
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.8))
 
-                    Text("Use the search bar below to add items manually")
+                    Text(String(localized: "Use the search bar below to add items manually"))
                         .font(.system(size: 14))
                         .foregroundStyle(.white.opacity(0.5))
                         .multilineTextAlignment(.center)
@@ -189,7 +189,7 @@ struct SmartAddView: View {
                 } label: {
                     HStack(spacing: PSSpacing.sm) {
                         Image(systemName: "text.viewfinder")
-                        Text("Demo Scan")
+                        Text(String(localized: "Demo Scan"))
                     }
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.white)
@@ -212,7 +212,7 @@ struct SmartAddView: View {
             case .idle:
                 Image(systemName: "viewfinder")
                     .foregroundStyle(.white.opacity(0.7))
-                Text("Point at a receipt or label")
+                Text(String(localized: "Point at a receipt or label"))
                     .foregroundStyle(.white.opacity(0.7))
 
             case .scanning:
@@ -227,7 +227,7 @@ struct SmartAddView: View {
                 ProgressView()
                     .tint(.white)
                     .scaleEffect(0.7)
-                Text("Recognizing items...")
+                Text(String(localized: "Recognizing items..."))
                     .foregroundStyle(.white.opacity(0.9))
             }
         }

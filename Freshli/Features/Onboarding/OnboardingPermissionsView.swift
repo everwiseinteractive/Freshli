@@ -239,6 +239,17 @@ struct OnboardingPermissionsView: View {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, _ in
             DispatchQueue.main.async {
                 notificationGranted = granted
+                // Marketing-notifications opt-in is **separate** from
+                // iOS's push authorisation — App Review guideline
+                // 4.5.4 requires explicit opt-in for promotional
+                // content and bars apps from sending marketing
+                // pushes via the notifications permission alone.
+                // We default to FALSE here; the user can flip it on
+                // in Settings (`freshli.marketingPushOptIn`). Any
+                // promotional push payload must check this flag.
+                if UserDefaults.standard.object(forKey: "freshli.marketingPushOptIn") == nil {
+                    UserDefaults.standard.set(false, forKey: "freshli.marketingPushOptIn")
+                }
                 PSHaptics.shared.success()
                 advanceOrComplete()
             }

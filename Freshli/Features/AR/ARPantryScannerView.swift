@@ -270,7 +270,7 @@ struct ARPantryScannerView: View {
                 Spacer()
                 HStack(spacing: 6) {
                     Circle().fill(Color(hex: 0x22D3EE)).frame(width: 8, height: 8)
-                    Text("AR SCAN")
+                    Text(String(localized: "AR SCAN"))
                         .font(.system(size: 12, weight: .black, design: .monospaced))
                         .foregroundStyle(.white)
                         .tracking(1.5)
@@ -294,7 +294,7 @@ struct ARPantryScannerView: View {
                 Image(systemName: "viewfinder.circle.fill")
                     .font(.system(size: 32))
                     .foregroundStyle(Color(hex: 0x22D3EE))
-                Text("Tap a tag for details")
+                Text(String(localized: "Tap a tag for details"))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.white)
                 Text("\(activeItems.count) items detected in your pantry")
@@ -332,7 +332,7 @@ struct ARPantryScannerView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "sparkles")
                         .foregroundStyle(Color(hex: 0x22D3EE))
-                    Text("Recipe match: 3 rescue recipes available")
+                    Text(String(localized: "Recipe match: 3 rescue recipes available"))
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.85))
                 }

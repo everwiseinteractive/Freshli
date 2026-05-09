@@ -100,7 +100,7 @@ struct ReplenishDeliverySheet: View {
 
     private var deliveryOptionsSection: some View {
         VStack(alignment: .leading, spacing: PSSpacing.md) {
-            Text("Delivery Options")
+            Text(String(localized: "Delivery Options"))
                 .font(PSTypography.headline)
                 .foregroundStyle(PSColors.textPrimary)
                 .padding(.horizontal, PSSpacing.screenHorizontal)
@@ -127,7 +127,7 @@ struct ReplenishDeliverySheet: View {
         PSGlassCard {
             VStack(spacing: PSSpacing.md) {
                 HStack {
-                    Text("Item")
+                    Text(String(localized: "Item"))
                         .font(PSTypography.callout)
                         .foregroundStyle(PSColors.textSecondary)
                     Spacer()
@@ -138,7 +138,7 @@ struct ReplenishDeliverySheet: View {
 
                 if let option = selectedOption {
                     HStack {
-                        Text("Delivery")
+                        Text(String(localized: "Delivery"))
                             .font(PSTypography.callout)
                             .foregroundStyle(PSColors.textSecondary)
                         Spacer()
@@ -152,7 +152,7 @@ struct ReplenishDeliverySheet: View {
                     Divider()
 
                     HStack {
-                        Text("Total")
+                        Text(String(localized: "Total"))
                             .font(PSTypography.headline)
                             .foregroundStyle(PSColors.textPrimary)
                         Spacer()
@@ -206,7 +206,7 @@ struct ReplenishDeliverySheet: View {
             )
 
             Button(action: { dismiss() }) {
-                Text("Add to list instead")
+                Text(String(localized: "Add to list instead"))
                     .font(PSTypography.callout)
                     .foregroundStyle(PSColors.textSecondary)
             }

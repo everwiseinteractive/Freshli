@@ -316,7 +316,7 @@ struct DiscoverView: View {
                         .font(.system(size: PSLayout.scaledFont(15), weight: .bold))
                         .foregroundStyle(PSColors.textPrimary)
                     if isBeta {
-                        Text("BETA")
+                        Text(String(localized: "BETA"))
                             .font(.system(size: PSLayout.scaledFont(9), weight: .black))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 5)

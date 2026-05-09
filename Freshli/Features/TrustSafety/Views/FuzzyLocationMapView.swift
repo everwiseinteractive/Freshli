@@ -103,7 +103,7 @@ struct FuzzyLocationMapView: View {
                 .font(.system(size: 14))
                 .foregroundStyle(PSColors.textTertiary)
 
-            Text("Approximate location (100m radius)")
+            Text(String(localized: "Approximate location (100m radius)"))
                 .font(PSTypography.footnote)
                 .foregroundStyle(PSColors.textSecondary)
         }
@@ -133,7 +133,7 @@ struct FuzzyLocationMapView: View {
                 Image(systemName: "lock.open.fill")
                     .font(.system(size: 14, weight: .semibold))
 
-                Text("Reveal Safe Handoff Point")
+                Text(String(localized: "Reveal Safe Handoff Point"))
                     .font(PSTypography.calloutMedium)
             }
             .foregroundStyle(PSColors.primaryGreen)
@@ -184,7 +184,7 @@ struct FuzzyLocationCard: View {
             VStack(spacing: PSSpacing.md) {
                 HStack {
                     Label {
-                        Text("Location")
+                        Text(String(localized: "Location"))
                             .font(PSTypography.footnoteMedium)
                     } icon: {
                         Image(systemName: "location.circle.fill")

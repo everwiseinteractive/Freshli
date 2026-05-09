@@ -90,9 +90,9 @@ struct IngredientPingView: View {
                     .foregroundStyle(Color(hex: 0x8B5CF6))
             }
             VStack(spacing: PSSpacing.xs) {
-                Text("Ping Your Pod")
+                Text(String(localized: "Ping Your Pod"))
                     .font(.system(size: PSLayout.scaledFont(20), weight: .black, design: .rounded))
-                Text("Need one egg for a cake? Your neighbours probably have a spare. Faster than the shop.")
+                Text(String(localized: "Need one egg for a cake? Your neighbours probably have a spare. Faster than the shop."))
                     .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
                     .foregroundStyle(PSColors.textSecondary)
                     .multilineTextAlignment(.center)
@@ -103,7 +103,7 @@ struct IngredientPingView: View {
 
     private var ingredientField: some View {
         VStack(alignment: .leading, spacing: PSSpacing.sm) {
-            Text("WHAT DO YOU NEED?")
+            Text(String(localized: "WHAT DO YOU NEED?"))
                 .font(.system(size: PSLayout.scaledFont(11), weight: .black))
                 .foregroundStyle(PSColors.textSecondary).tracking(0.8)
 
@@ -132,7 +132,7 @@ struct IngredientPingView: View {
 
     private var urgencyPicker: some View {
         VStack(alignment: .leading, spacing: PSSpacing.sm) {
-            Text("HOW SOON?")
+            Text(String(localized: "HOW SOON?"))
                 .font(.system(size: PSLayout.scaledFont(11), weight: .black))
                 .foregroundStyle(PSColors.textSecondary).tracking(0.8)
 
@@ -167,7 +167,7 @@ struct IngredientPingView: View {
 
     private var podPicker: some View {
         VStack(alignment: .leading, spacing: PSSpacing.sm) {
-            Text("BROADCAST TO POD")
+            Text(String(localized: "BROADCAST TO POD"))
                 .font(.system(size: PSLayout.scaledFont(11), weight: .black))
                 .foregroundStyle(PSColors.textSecondary).tracking(0.8)
 
@@ -177,7 +177,7 @@ struct IngredientPingView: View {
                     Image(systemName: "exclamationmark.circle.fill")
                         .font(.system(size: PSLayout.scaledFont(18)))
                         .foregroundStyle(PSColors.secondaryAmber)
-                    Text("Join a pod first to ping your neighbours.")
+                    Text(String(localized: "Join a pod first to ping your neighbours."))
                         .font(.system(size: PSLayout.scaledFont(13), weight: .medium))
                         .foregroundStyle(PSColors.textSecondary)
                     Spacer()
@@ -251,7 +251,7 @@ struct IngredientPingView: View {
                     .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
                     .foregroundStyle(PSColors.primaryGreen)
             } else {
-                Text("Low balance")
+                Text(String(localized: "Low balance"))
                     .font(.system(size: PSLayout.scaledFont(12), weight: .bold))
                     .foregroundStyle(PSColors.expiredRed)
             }
@@ -334,7 +334,7 @@ struct IngredientPingView: View {
             Image(systemName: "info.circle.fill")
                 .font(.system(size: PSLayout.scaledFont(12)))
                 .foregroundStyle(PSColors.textTertiary)
-            Text("Your pod gets notified instantly. Whoever responds first gets the credit — faster than a shop, better than waste.")
+            Text(String(localized: "Your pod gets notified instantly. Whoever responds first gets the credit — faster than a shop, better than waste."))
                 .font(.system(size: PSLayout.scaledFont(11), weight: .medium))
                 .foregroundStyle(PSColors.textTertiary)
                 .lineSpacing(2)
@@ -346,7 +346,7 @@ struct IngredientPingView: View {
         HStack(spacing: PSSpacing.sm) {
             Image(systemName: "checkmark.circle.fill")
                 .foregroundStyle(PSColors.primaryGreen)
-            Text("Ping sent! Your pod has been notified.")
+            Text(String(localized: "Ping sent! Your pod has been notified."))
                 .font(.system(size: PSLayout.scaledFont(13), weight: .semibold))
                 .foregroundStyle(PSColors.textPrimary)
         }

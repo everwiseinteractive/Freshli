@@ -176,7 +176,7 @@ struct FreshnessReviewSummaryCard: View {
                 // Header
                 HStack {
                     VStack(alignment: .leading, spacing: PSSpacing.xxs) {
-                        Text("Freshness Rating")
+                        Text(String(localized: "Freshness Rating"))
                             .font(PSTypography.footnoteMedium)
                             .foregroundStyle(PSColors.textSecondary)
 
@@ -283,7 +283,7 @@ struct SubmitFreshnessReviewView: View {
                         }
 
                         VStack(spacing: PSSpacing.xs) {
-                            Text("Rate Your Pickup")
+                            Text(String(localized: "Rate Your Pickup"))
                                 .font(PSTypography.title2)
                                 .foregroundStyle(PSColors.textPrimary)
 
@@ -309,7 +309,7 @@ struct SubmitFreshnessReviewView: View {
 
                     // Comment
                     VStack(alignment: .leading, spacing: PSSpacing.sm) {
-                        Text("Comments (optional)")
+                        Text(String(localized: "Comments (optional)"))
                             .font(PSTypography.footnoteMedium)
                             .foregroundStyle(PSColors.textSecondary)
 

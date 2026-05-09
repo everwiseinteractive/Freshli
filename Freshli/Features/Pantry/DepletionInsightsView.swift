@@ -198,13 +198,13 @@ struct DepletionInsightsView: View {
     private func timeLabel(for prediction: DepletionPrediction) -> some View {
         switch prediction.suggestion {
         case .likelyEmpty:
-            return Text("Likely empty")
+            return Text(String(localized: "Likely empty"))
         case .runningLow:
             return Text("~\(prediction.estimatedDaysRemaining) day\(prediction.estimatedDaysRemaining == 1 ? "" : "s") left")
         case .plentiful:
             return Text("~\(prediction.estimatedDaysRemaining) day\(prediction.estimatedDaysRemaining == 1 ? "" : "s") left")
         case .unknown:
-            return Text("No data")
+            return Text(String(localized: "No data"))
         }
     }
 
@@ -268,7 +268,7 @@ struct DepletionInsightsView: View {
             Divider()
 
             VStack(spacing: PSSpacing.md) {
-                Text("Help improve predictions")
+                Text(String(localized: "Help improve predictions"))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(PSColors.textSecondary)
 
@@ -297,7 +297,7 @@ struct DepletionInsightsView: View {
                 )
 
                 Button(action: { showingFeedbackItem = nil }) {
-                    Text("Cancel")
+                    Text(String(localized: "Cancel"))
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(PSColors.textSecondary)
                         .frame(maxWidth: .infinity)
