@@ -508,8 +508,15 @@ final class AuthManager {
                 try await Task.sleep(for: .seconds(seconds))
                 throw TimeoutError()
             }
-            // First result wins; cancel the other.
-            let result = try await group.next()!
+            // First result wins; cancel the other. `group.next()` can
+            // technically return `nil` when both child tasks have
+            // already been cancelled (e.g. parent task cancellation
+            // during sign-in) — in that case we surface a TimeoutError
+            // rather than crash on a force-unwrap.
+            guard let result = try await group.next() else {
+                group.cancelAll()
+                throw TimeoutError()
+            }
             group.cancelAll()
             return result
         }

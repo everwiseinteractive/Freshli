@@ -391,29 +391,37 @@ final class SubscriptionService {
 
     // MARK: - Persistence
 
+    /// Persistence is intentionally LIMITED to non-entitlement state.
+    ///
+    /// We previously persisted `currentTier` to UserDefaults so the app
+    /// could render Pro UI before the StoreKit `Transaction.currentEntitlements`
+    /// async stream resolved. App Review (guideline 3.1.1) treats this
+    /// as a Pro-bypass — a backup-restore would carry the persisted
+    /// `tier=pro` value into a fresh install with no active receipt.
+    ///
+    /// New rule: every entitlement decision flows through StoreKit's
+    /// `Transaction.currentEntitlements`. We persist only:
+    ///   • `expirationDate` — UI-only hint for "Renews in N days" copy.
+    ///   • `familyMemberCount` — non-sensitive UX preference.
+    /// `purchasedProductIDs` is rebuilt from StoreKit on every launch
+    /// so we no longer cache it either. `currentTier` and
+    /// `subscriptionStatus` start at `.free`/`.free` and are flipped
+    /// to `.pro` only by `updateEntitlements()` after StoreKit
+    /// confirms the active subscription.
     private func saveSubscriptionState() {
-        UserDefaults.standard.set(currentTier.rawValue, forKey: userDefaultsKey)
         UserDefaults.standard.set(expirationDate, forKey: expirationDateKey)
         UserDefaults.standard.set(familyMemberCount, forKey: familyMemberCountKey)
-
-        let productIDArray = Array(purchasedProductIDs)
-        UserDefaults.standard.set(productIDArray, forKey: purchasedProductIDsKey)
     }
 
     private func loadSubscriptionState() {
-        if let tierRaw = UserDefaults.standard.string(forKey: userDefaultsKey),
-           let tier = SubscriptionTier(rawValue: tierRaw) {
-            currentTier = tier
-        } else {
-            currentTier = .free
-        }
+        // currentTier intentionally NOT restored — see saveSubscriptionState() comment.
+        // Until StoreKit confirms otherwise, the user is .free.
+        currentTier = .free
+        subscriptionStatus = .free
+        purchasedProductIDs.removeAll()
 
         expirationDate = UserDefaults.standard.object(forKey: expirationDateKey) as? Date
         familyMemberCount = UserDefaults.standard.integer(forKey: familyMemberCountKey)
-
-        if let productIDArray = UserDefaults.standard.array(forKey: purchasedProductIDsKey) as? [String] {
-            purchasedProductIDs = Set(productIDArray)
-        }
     }
 }
 

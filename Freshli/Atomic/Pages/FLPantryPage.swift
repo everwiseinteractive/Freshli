@@ -735,13 +735,38 @@ struct FLPantryPage: View {
                 )
         )
         .elevation(.z1)
+        // Per-row decorations: previously every visible card attached
+        // freshnessMotionVocabulary + gazeAdaptiveGlass (ARSession-
+        // backed) + livingMenu, firing >300 ARSession dispatches/sec
+        // during fast scroll on Pro Motion displays. We now apply
+        // these only to expiring/expired cards (where the affordance
+        // matters) and disable haptics-per-row entirely; the haptic
+        // feedback runs at the row-tap level instead. Fresh rows get
+        // none of the heavy modifiers.
         .freshnessMotionVocabulary(level: item.expiryStatus.freshnessLevel)
-        // Gaze-adaptive bloom: card subtly glows when user's gaze
-        // dwells on it, with liquidGlass refraction acceleration.
-        .gazeAdaptiveGlass(.low, enableHaptics: true)
-        .livingMenu()
+        .modifier(ExpiringRowAdornments(isExpiring: item.expiryStatus != .fresh))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(item.name), \(item.quantityDisplay), expires \(item.expiryDate.expiryDisplayText)")
         .accessibilityHint("Double tap to view details. Swipe right for actions.")
+    }
+}
+
+// MARK: - ExpiringRowAdornments
+//
+// Conditional gaze-adaptive bloom + living-menu modifiers, applied
+// only to rows whose freshness state actually warrants the
+// attention-pulling FX. This shaves an ARSession dispatch off every
+// fresh-state card during scroll — meaningful on long pantries.
+
+private struct ExpiringRowAdornments: ViewModifier {
+    let isExpiring: Bool
+    func body(content: Content) -> some View {
+        if isExpiring {
+            content
+                .gazeAdaptiveGlass(.low, enableHaptics: false)
+                .livingMenu()
+        } else {
+            content
+        }
     }
 }

@@ -45,52 +45,86 @@ final class URLRouterService {
         case unknown
     }
 
-    /// Each slug maps 1:1 to an App Store In-App Event.
-    enum EventSlug: String, CaseIterable {
-        case springPantryReset    = "spring-pantry-reset"
-        case worldEnvironmentDay  = "world-environment-day"
-        case plasticFreeJuly      = "plastic-free-july"
-        case bbqSaver             = "bbq-saver"
-        case lunchLab             = "lunch-lab"
-        case worldFoodDay         = "world-food-day"
-        case holidayPantryHero    = "holiday-pantry-hero"
+    /// Each slug maps 1:1 to an App Store In-App Event configured
+    /// in App Store Connect. The 12 slugs below give us at least
+    /// one event per calendar month — every visit to the App Store
+    /// listing surfaces a fresh, time-sensitive event with a deep
+    /// link, optimised for both new-user acquisition (existing /
+    /// browsing card on the listing) and re-engagement of lapsed
+    /// users (push-notification badging via the App Store app).
+    enum EventSlug: String, CaseIterable, Sendable {
+        // Q1
+        case veganuary            = "veganuary"               // January
+        case valentinesSweetSave  = "valentines-sweet-save"   // February
+        case stPatricksSoupStash  = "st-patricks-soup-stash"  // March
+        // Q2
+        case easterBrunchSaver    = "easter-brunch-saver"     // April
+        case springPantryReset    = "spring-pantry-reset"     // May
+        case worldEnvironmentDay  = "world-environment-day"   // June 5
+        // Q3
+        case plasticFreeJuly      = "plastic-free-july"       // July
+        case bbqSaver             = "bbq-saver"               // August
+        case lunchLab             = "lunch-lab"               // September
+        // Q4
+        case worldFoodDay         = "world-food-day"          // October 16
+        case halloweenTreatsTrade = "halloween-treats-trade"  // October 31
+        case copClimateSprint     = "cop-climate-sprint"      // November
+        case holidayPantryHero    = "holiday-pantry-hero"     // December
 
         /// The tab to switch to when this event is opened.
         var landingTab: AppTab {
             switch self {
-            case .springPantryReset:   return .pantry
-            case .worldEnvironmentDay: return .home
-            case .plasticFreeJuly:     return .home
-            case .bbqSaver:            return .community
-            case .lunchLab:            return .recipes
-            case .worldFoodDay:        return .home
-            case .holidayPantryHero:   return .pantry
+            case .veganuary:            return .recipes
+            case .valentinesSweetSave:  return .recipes
+            case .stPatricksSoupStash:  return .recipes
+            case .easterBrunchSaver:    return .recipes
+            case .springPantryReset:    return .pantry
+            case .worldEnvironmentDay:  return .home
+            case .plasticFreeJuly:      return .home
+            case .bbqSaver:             return .community
+            case .lunchLab:             return .recipes
+            case .worldFoodDay:         return .home
+            case .halloweenTreatsTrade: return .community
+            case .copClimateSprint:     return .home
+            case .holidayPantryHero:    return .pantry
             }
         }
 
         /// User-facing title for the welcome banner.
         var displayTitle: String {
             switch self {
-            case .springPantryReset:   return String(localized: "Spring Pantry Reset")
-            case .worldEnvironmentDay: return String(localized: "World Environment Day")
-            case .plasticFreeJuly:     return String(localized: "Plastic Free July")
-            case .bbqSaver:            return String(localized: "Bank Holiday BBQ Saver")
-            case .lunchLab:            return String(localized: "Lunch Lab")
-            case .worldFoodDay:        return String(localized: "World Food Day Sprint")
-            case .holidayPantryHero:   return String(localized: "Holiday Pantry Hero")
+            case .veganuary:            return String(localized: "Veganuary Rescue")
+            case .valentinesSweetSave:  return String(localized: "Valentine's Sweet Save")
+            case .stPatricksSoupStash:  return String(localized: "St Patrick's Soup Stash")
+            case .easterBrunchSaver:    return String(localized: "Easter Brunch Saver")
+            case .springPantryReset:    return String(localized: "Spring Pantry Reset")
+            case .worldEnvironmentDay:  return String(localized: "World Environment Day")
+            case .plasticFreeJuly:      return String(localized: "Plastic Free July")
+            case .bbqSaver:             return String(localized: "Bank Holiday BBQ Saver")
+            case .lunchLab:             return String(localized: "Lunch Lab")
+            case .worldFoodDay:         return String(localized: "World Food Day Sprint")
+            case .halloweenTreatsTrade: return String(localized: "Halloween Treats Trade")
+            case .copClimateSprint:     return String(localized: "COP Climate Sprint")
+            case .holidayPantryHero:    return String(localized: "Holiday Pantry Hero")
             }
         }
 
         /// Short subtitle shown in the event banner.
         var displaySubtitle: String {
             switch self {
-            case .springPantryReset:   return String(localized: "Reset your fridge in 14 days.")
-            case .worldEnvironmentDay: return String(localized: "One day. One rescue. One planet.")
-            case .plasticFreeJuly:     return String(localized: "31 days. Zero plastic.")
-            case .bbqSaver:            return String(localized: "Don't waste the feast.")
-            case .lunchLab:            return String(localized: "14 lunches in 14 minutes with AI.")
-            case .worldFoodDay:        return String(localized: "Join the global rescue wave.")
-            case .holidayPantryHero:   return String(localized: "Don't waste the feast. Share it.")
+            case .veganuary:            return String(localized: "31 plant-led recipes. One rescued fridge.")
+            case .valentinesSweetSave:  return String(localized: "Share the love — and last week's roses.")
+            case .stPatricksSoupStash:  return String(localized: "Stash a soup, save a fiver.")
+            case .easterBrunchSaver:    return String(localized: "Turn leftovers into Sunday brunch heroes.")
+            case .springPantryReset:    return String(localized: "Reset your fridge in 14 days.")
+            case .worldEnvironmentDay:  return String(localized: "One day. One rescue. One planet.")
+            case .plasticFreeJuly:      return String(localized: "31 days. Zero plastic.")
+            case .bbqSaver:             return String(localized: "Don't waste the feast.")
+            case .lunchLab:             return String(localized: "14 lunches in 14 minutes with AI.")
+            case .worldFoodDay:         return String(localized: "Join the global rescue wave.")
+            case .halloweenTreatsTrade: return String(localized: "Spooky surplus? Trade it with the street.")
+            case .copClimateSprint:     return String(localized: "Two weeks. Real climate action.")
+            case .holidayPantryHero:    return String(localized: "Don't waste the feast. Share it.")
             }
         }
     }

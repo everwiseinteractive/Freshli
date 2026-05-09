@@ -34,6 +34,11 @@ struct FLCommunityPage: View {
     /// Driving an item-binding sheet means the sheet is presented iff
     /// this is non-nil and dismissed by clearing it.
     @State private var reportUserTarget: CommunityListingDTO?
+    /// Wall-clock time of the most recent successful feed fetch. Used
+    /// to debounce `.task` re-runs caused by tab switches —
+    /// previously every visit hit Supabase three times. We now
+    /// throttle to once per 60 seconds.
+    @State private var lastFeedFetch: Date?
     /// True while the area-picker sheet (header pill tap) is showing.
     @State private var showAreaPicker = false
     /// Mirror of `AreaService.shared.currentArea`. We can't observe
@@ -141,15 +146,19 @@ struct FLCommunityPage: View {
         .task {
             logger.info("FLCommunityPage appeared — tab: \(activeTab)")
             // Hydrate the area switcher's header label before
-            // refreshFeed() runs (refreshFeed loads the area too,
-            // but doing it here means the pill renders with a
-            // value on first paint instead of after the network
-            // round-trip).
+            // refreshFeed() runs.
             if let userId = authManager.currentUserId {
                 _ = try? await AreaService.shared.loadCurrentArea(for: userId)
             }
             headerArea = AreaService.shared.currentArea
+
+            // Debounce: skip the network round-trip if we fetched
+            // within the last 60 seconds. Pull-to-refresh always
+            // bypasses this — see refreshControl path.
+            let shouldFetch = lastFeedFetch.map { Date().timeIntervalSince($0) > 60 } ?? true
+            guard shouldFetch else { return }
             await refreshFeed()
+            lastFeedFetch = Date()
         }
         .sheet(isPresented: $showAreaPicker) {
             AreaPickerSheet(initial: nil) { row in
@@ -349,10 +358,13 @@ struct FLCommunityPage: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .onSubmit { Task { @MainActor in await searchFeed() } }
-                        .onChange(of: searchText) { _, newValue in
-                            if newValue.isEmpty {
-                                Task { @MainActor in await refreshFeed() }
-                            }
+                        .onChange(of: searchText) { oldValue, newValue in
+                            // Re-fetch only on the non-empty → empty
+                            // transition. Without the `oldValue` check
+                            // every backspace at the empty state fired
+                            // a fresh network round-trip.
+                            guard !oldValue.isEmpty, newValue.isEmpty else { return }
+                            Task { @MainActor in await refreshFeed() }
                         }
 
                     if !searchText.isEmpty {

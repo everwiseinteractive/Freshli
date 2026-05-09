@@ -39,7 +39,6 @@ enum RewardCategory: String, CaseIterable, Identifiable, Sendable {
     case appearance = "Appearance"
     case badges     = "Badges"
     case planet     = "Planet"
-    case freshli    = "Freshli+"
 
     var id: String { rawValue }
 
@@ -48,7 +47,6 @@ enum RewardCategory: String, CaseIterable, Identifiable, Sendable {
         case .appearance: return "paintpalette.fill"
         case .badges:     return "checkmark.seal.fill"
         case .planet:     return "leaf.fill"
-        case .freshli:    return "crown.fill"
         }
     }
 }
@@ -68,11 +66,12 @@ enum RewardAction: Sendable {
     /// directly. We don't handle their card details — the charity's
     /// own donation page does. URL must be HTTPS.
     case openCharityDonation(URL)
-    /// Grant a one-month Freshli+ trial via the subscription store
-    /// promo offer. Caller redeems through SubscriptionService;
-    /// the perks view shows a "Trial activated — enjoy Freshli+
-    /// for 30 days" toast.
-    case grantFreshliPlusTrial
+    // NOTE: A previous version included a `.grantFreshliPlusTrial` case
+    // that wrote `freshli.plusTrial.expiresAt` to UserDefaults and
+    // claimed to grant a Freshli+ trial outside StoreKit. That violates
+    // App Review guideline 3.1.1 (subscription bypass) and has been
+    // removed. Real trial offers must be configured as a StoreKit
+    // introductory offer on the subscription product itself.
 }
 
 struct WasteReward: Identifiable, Sendable {
@@ -234,18 +233,10 @@ final class PerksService {
             action: .openCharityDonation(URL(string: "https://thefelixproject.org/donate")!)
         ),
 
-        // ── Freshli+ reward ─────────────────────────────────────────
-        WasteReward(
-            title: String(localized: "1-month Freshli+ trial"),
-            description: String(localized: "Unlock every Pro feature — premium recipes, advanced shaders, family sharing — for 30 days, on us."),
-            pointsCost: 1000,
-            providerLabel: "Freshli+",
-            providerColor: Color(hex: 0xA855F7),
-            providerLogo: "👑",
-            summaryValue: String(localized: "30 days"),
-            category: .freshli,
-            action: .grantFreshliPlusTrial
-        ),
+        // (Trial-grant reward intentionally omitted — see RewardAction
+        //  comment.) Future Freshli+ promo offers will be StoreKit
+        //  introductory offers presented natively on the paywall, not
+        //  redeemed via Karma.
     ]
 
     // MARK: - Employer Perks
@@ -312,17 +303,6 @@ final class PerksService {
             return opened
                 ? String(localized: "Opening \(reward.providerLabel) — thank you for donating.")
                 : nil
-
-        case .grantFreshliPlusTrial:
-            // Mark the trial in UserDefaults; SubscriptionService
-            // reads this on launch to flip `isProUser` for the next
-            // 30 days. Keeping it client-side is fine because perks
-            // can't be earned without already-rescued items.
-            let now = Date()
-            let expiry = now.addingTimeInterval(60 * 60 * 24 * 30)
-            UserDefaults.standard.set(now,    forKey: "freshli.plusTrial.startedAt")
-            UserDefaults.standard.set(expiry, forKey: "freshli.plusTrial.expiresAt")
-            return String(localized: "Freshli+ trial activated — enjoy Pro features for the next 30 days.")
         }
     }
 

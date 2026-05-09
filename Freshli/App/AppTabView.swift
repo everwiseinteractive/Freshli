@@ -113,7 +113,13 @@ struct AppTabView: View {
             }
         }
         .transition(FLMotion.tabMeltTransition(reduceMotion: reduceMotion))
-        .id(selectedTab)
+        // `.id(selectedTab)` was previously here to force the
+        // tab-melt transition between switches, but it had the
+        // unintended cost of remounting every NavigationStack on
+        // every tab switch — defeating the prefetch coordinator
+        // and forcing every tab's `.task` to re-run network calls.
+        // The `.transition` modifier above is enough to drive the
+        // visual; we keep the underlying view instances alive.
         .ignoresSafeArea(.keyboard)
         .sensoryFeedback(.selection, trigger: selectedTab)
         .sheet(isPresented: $showAddItem) {

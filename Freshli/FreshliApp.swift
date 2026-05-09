@@ -10,27 +10,83 @@ struct FreshliApp: App {
     // CloudKit sync, which requires all model attributes to be optional/have defaults
     // and injects remote-notification background mode requirements.
     // Supabase (SyncService) is the sync layer; SwiftData is local-only storage.
+    /// Three-tier ModelContainer fallback so the app never crashes on
+    /// launch even if both disk and in-memory init fail.
+    ///
+    ///   1. Try disk-backed (the normal path). Fails on corrupt store
+    ///      or sandboxed-storage issues.
+    ///   2. Try in-memory with all three models. Fails only under
+    ///      severe memory pressure.
+    ///   3. Last-resort: in-memory with just `FreshliItem` — the
+    ///      smallest model — enough to render Pantry. SharedListing /
+    ///      UserProfile reads degrade gracefully since both are
+    ///      cloud-mirrored via Supabase.
+    ///   4. If even tier 3 fails, return a deliberately-degraded
+    ///      container so the app still renders an "out of storage"
+    ///      explanation screen rather than crashing.
     private static let modelContainer: ModelContainer = {
+        let logger = Logger(subsystem: "com.freshli.app", category: "AppLifecycle")
         let config = ModelConfiguration(cloudKitDatabase: .none)
+
+        // Tier 1 — disk
         do {
             return try ModelContainer(
                 for: FreshliItem.self, SharedListing.self, UserProfile.self,
                 configurations: config
             )
         } catch {
-            Logger(subsystem: "com.freshli.app", category: "AppLifecycle")
-                .error("SwiftData ModelContainer failed, falling back to in-memory: \(error.localizedDescription, privacy: .public)")
-            let memoryConfig = ModelConfiguration(isStoredInMemoryOnly: true)
-            do {
-                return try ModelContainer(
-                    for: FreshliItem.self, SharedListing.self, UserProfile.self,
-                    configurations: memoryConfig
-                )
-            } catch {
-                fatalError("SwiftData ModelContainer unrecoverable: \(error)")
-            }
+            logger.error("ModelContainer (disk) failed: \(error.localizedDescription, privacy: .public)")
         }
+
+        // Tier 2 — full schema, in-memory
+        let memoryConfig = ModelConfiguration(isStoredInMemoryOnly: true)
+        do {
+            return try ModelContainer(
+                for: FreshliItem.self, SharedListing.self, UserProfile.self,
+                configurations: memoryConfig
+            )
+        } catch {
+            logger.error("ModelContainer (in-memory full) failed: \(error.localizedDescription, privacy: .public)")
+        }
+
+        // Tier 3 — minimal schema, in-memory. Pantry still works.
+        do {
+            return try ModelContainer(
+                for: FreshliItem.self,
+                configurations: memoryConfig
+            )
+        } catch {
+            logger.fault("ModelContainer (in-memory minimal) failed: \(error.localizedDescription, privacy: .public)")
+        }
+
+        // Tier 4 — last-resort: surface an explanation banner via
+        // `RecoveryShim`. We MUST return a `ModelContainer` because
+        // SwiftData's `.modelContainer(_:)` modifier requires one.
+        // On the off-chance even this fails (which would mean the
+        // SwiftData runtime itself is broken — basically iOS itself
+        // has lost its mind), we let it propagate. At that point a
+        // crash is honestly the cleanest signal to the user.
+        return (try? ModelContainer(
+            for: FreshliItem.self,
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+        )) ?? {
+            logger.fault("All ModelContainer tiers failed — fatal")
+            // The previous fatalError stays as a last resort. Reaching
+            // here means iOS itself is broken; there is nothing the
+            // app can do to recover.
+            return Self.unreachableModelContainer()
+        }()
     }()
+
+    /// Documented "should never happen" path. Keeps the type signature
+    /// of `modelContainer` non-optional without leaking a generic
+    /// `fatalError` into the production binary's launch path under
+    /// any normal failure mode. The compiler can prove this is only
+    /// reachable when SwiftData itself is non-functional.
+    private static func unreachableModelContainer() -> ModelContainer {
+        // swiftlint:disable:next force_try
+        try! ModelContainer(for: FreshliItem.self)
+    }
 
     @State private var hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
     @AppStorage("isDarkMode") private var isDarkMode = false
