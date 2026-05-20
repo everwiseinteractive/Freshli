@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /404.html
+
+# Apple's app-store crawlers
+User-agent: Applebot
+Allow: /
+
+# Reference for crawlers
+Sitemap: https://freshli.app/sitemap.xml

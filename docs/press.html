@@ -51,6 +51,38 @@
     <h1 data-i18n="press.title">Press Kit</h1>
     <p class="intro" data-i18n="press.intro">Everything journalists and creators need to cover Freshli. For press inquiries, contact <a href="mailto:support@freshli.app">support@freshli.app</a>.</p>
 
+    <!-- v1.2.0 release banner -->
+    <div style="margin: 28px 0 40px; padding: 26px; border-radius: 18px; background: linear-gradient(135deg, #ECFDF5 0%, #FFFFFF 100%); border: 1px solid #22C55E33;">
+      <div style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; background: #22C55E1F; border-radius: 999px; font-size: 11px; font-weight: 800; color: #16A34A; letter-spacing: 0.5px; text-transform: uppercase;">
+        Latest release · v1.2.0 · May 2026
+      </div>
+      <h2 style="font-size: 26px; line-height: 1.2; font-weight: 800; margin: 14px 0 8px;">Freshli v1.2.0 — Grow Your Local Pod</h2>
+      <p style="font-size: 15px; line-height: 1.6; color: #475569; margin: 0 0 16px;">
+        118 UK postcode districts pre-seeded as community feeds, one-tap "Invite a Neighbour" with shared +100 Karma reward, daily streak engine, 16-tier achievement system, Spotlight pantry search, Writing Tools in the Community composer.
+      </p>
+      <details style="margin-top: 12px;">
+        <summary style="cursor: pointer; font-weight: 700; color: #16A34A; font-size: 14px;">Full press release →</summary>
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #E2E8F0; font-size: 14px; line-height: 1.6; color: #334155;">
+          <p><strong>FOR IMMEDIATE RELEASE — 20 May 2026</strong></p>
+          <p><strong>Freshli, the AI pantry app turning every UK postcode into a food-rescue community, launches v1.2.0 today.</strong></p>
+          <p>UK households throw away an estimated £17 billion of edible food every year. Freshli's premise is that most of it goes in the bin because people forget what they have, run out of recipe ideas, and have no friction-free way to give surplus to a neighbour. v1.2.0 closes the last gap — the cold-start problem that kills two-sided marketplaces — by guaranteeing every new user lands in a real, named community area on day one.</p>
+          <p><strong>What's new in 1.2.0:</strong></p>
+          <ul style="padding-left: 20px;">
+            <li>118 UK postcode districts pre-seeded as community areas, from Stornoway to Truro, Belfast to Brighton.</li>
+            <li>One-tap "Invite a Neighbour" — both inviter and invitee receive +100 Karma when the friend signs up, and the new user auto-joins the inviter's area.</li>
+            <li>Daily streak engine — opens accumulate, with bonus Karma at 7, 14, 30, 60, 100 and 365 days.</li>
+            <li>16-tier achievement system unlocking exclusive icons and donations to FareShare UK, Trees for the Future, and The Felix Project.</li>
+            <li>Spotlight pantry search — search "Bananas" from iOS and jump straight into the matched item.</li>
+            <li>Apple Intelligence Writing Tools in the Community listing composer.</li>
+            <li>Siri Shortcut: "Hey Siri, invite a neighbour to Freshli."</li>
+          </ul>
+          <p><strong>Privacy stance:</strong> No ads. No third-party tracking. No IDFA. No remote push. Recipes generated entirely on-device via Apple Intelligence — pantry data never leaves the iPhone for AI generation. Council Impact Reports aggregate at the postcode-district level only, fully anonymised, opt-in.</p>
+          <p><strong>Availability:</strong> Free on the App Store for iPhone and iPad running iOS 26 in 11 storefronts: United Kingdom, United States, Canada, Australia, Ireland, France, Germany, Italy, Japan, Netherlands, Brazil, Mexico, Spain. Apple Intelligence features require iPhone 15 Pro or later.</p>
+          <p><strong>Press contact:</strong> Jay Lawrence · <a href="mailto:support@freshli.app">support@freshli.app</a> · +44 7943 044223</p>
+        </div>
+      </details>
+    </div>
+
     <h2 data-i18n="press.aboutTitle">About Freshli</h2>
     <div class="boilerplate">
       <p data-i18n="press.boilerplate">Freshli is an iOS app that helps households rescue food from the bin using on-device Apple Intelligence. Users track their pantry, get AI-generated recipes for expiring ingredients (entirely on-device, with zero network calls), cook hands-free with voice-guided recipe steps, share surplus food with neighbours, and watch their environmental impact grow week by week. Built with Swift 6.2, SwiftUI, SwiftData, and Metal 4 for iOS 26. For the people. For the planet.</p>
@@ -58,12 +90,14 @@
 
     <h2 data-i18n="press.keyFacts">Key Facts</h2>
     <div class="fact-grid">
-      <div class="fact-card"><div class="number">14 MB</div><div class="label" data-i18n="press.fact1">App download size</div></div>
-      <div class="fact-card"><div class="number">10</div><div class="label" data-i18n="press.fact2">Languages supported</div></div>
+      <div class="fact-card"><div class="number">118</div><div class="label">UK community areas (v1.2.0)</div></div>
+      <div class="fact-card"><div class="number">11</div><div class="label">Storefronts localised</div></div>
       <div class="fact-card"><div class="number">100%</div><div class="label" data-i18n="press.fact3">On-device AI processing</div></div>
       <div class="fact-card"><div class="number">0</div><div class="label" data-i18n="press.fact4">Third-party trackers</div></div>
       <div class="fact-card"><div class="number" id="currency-fact" data-gb="&pound;700" data-us="$1,500" data-eu="&euro;900" data-au="A$2,000" data-ca="C$1,700">&pound;700</div><div class="label" data-i18n="press.fact5">Average food waste/household/year</div></div>
+      <div class="fact-card"><div class="number">+100</div><div class="label">Karma per friend invited</div></div>
       <div class="fact-card"><div class="number">2.5 kg</div><div class="label" data-i18n="press.fact6">CO&#8322; avoided per item rescued</div></div>
+      <div class="fact-card"><div class="number">16</div><div class="label">Lifetime achievement tiers</div></div>
     </div>
 
     <h2 data-i18n="press.differentTitle">What Makes Freshli Different</h2>
@@ -92,6 +126,9 @@
       <div class="tech-pill">StoreKit 2 <span class="dim">— subscription management</span></div>
       <div class="tech-pill">ControlWidget <span class="dim">— Control Center actions</span></div>
       <div class="tech-pill">ARKit <span class="dim">— gaze tracking accessibility</span></div>
+      <div class="tech-pill">Writing Tools <span class="dim">— Community composer (v1.2.0)</span></div>
+      <div class="tech-pill">Core Spotlight <span class="dim">— pantry indexing (v1.2.0)</span></div>
+      <div class="tech-pill">Universal Links <span class="dim">— /i/&lt;code&gt; invite redemption (v1.2.0)</span></div>
       <div class="tech-pill">Privacy Manifest <span class="dim">— full nutrition labels</span></div>
     </div>
 
